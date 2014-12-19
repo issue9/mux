@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/caixw/lib.go/assert"
+	"github.com/issue9/assert"
 )
 
 func TestContext(t *testing.T) {

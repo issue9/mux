@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/caixw/lib.go/assert"
+	"github.com/issue9/assert"
 )
 
 func TestParseCaptures(t *testing.T) {
