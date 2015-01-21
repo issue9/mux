@@ -11,6 +11,8 @@ import (
 	"github.com/issue9/assert"
 )
 
+var _ Matcher = &Host{}
+
 func TestHost(t *testing.T) {
 	defHandler := func(w http.ResponseWriter, r *http.Request) bool {
 		return true

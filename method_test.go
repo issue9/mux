@@ -11,6 +11,8 @@ import (
 	"github.com/issue9/assert"
 )
 
+var _ Matcher = &Method{}
+
 func TestMethod(t *testing.T) {
 	defHandler := func(w http.ResponseWriter, r *http.Request) bool {
 		return true

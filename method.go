@@ -20,8 +20,6 @@ type Method struct {
 	entries map[string]Matches
 }
 
-var _ Matcher = &Method{}
-
 func NewMethod() *Method {
 	return &Method{entries: make(map[string]Matches)}
 }

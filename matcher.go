@@ -50,8 +50,6 @@ type matche struct {
 	h http.Handler
 }
 
-var _ Matcher = &matche{}
-
 func (m *matche) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	m.h.ServeHTTP(w, r)
 }

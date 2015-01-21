@@ -15,8 +15,6 @@ type Path struct {
 	pathExpr *regexp.Regexp
 }
 
-var _ Matcher = &Path{}
-
 // NewPath新建一个Path实例。
 // pattern用于匹配http.Request.URL.Path的正则表达式，可以用命名表达式。
 func NewPath(matcher Matcher, pattern string) *Path {

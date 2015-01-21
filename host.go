@@ -24,8 +24,6 @@ type Host struct {
 	hostExpr *regexp.Regexp
 }
 
-var _ Matcher = &Host{}
-
 // host参数为匹配的域名，可以是正则表达式。
 func NewHost(handler Matcher, host string) *Host {
 	return &Host{
