@@ -19,31 +19,25 @@ func TestContext(t *testing.T) {
 	a.NotNil(req1)
 
 	ctx1 := GetContext(req1)
+	ok := ctx1.Add("key", "val")
+	a.True(ok).Equal(ctx1.MustGet("key", "default").(string), "val")
 
-	ctx1.Set("key", "val")
-	a.Equal(ctx1.MustGet("key", "default").(string), "val")
+	// 添加一个相同的值，失败
+	a.False(ctx1.Add("key", "val1"))
+	a.Equal(len(ctx1.items), 1)
 
+	// 测试set
+	ctx1.Set("key2", "val")
+	ctx1.Set("key2", "val2")
+	v, found := ctx1.Get("key2")
+	a.True(found).Equal(v, "val2")
+
+	// 同一个Request，应该是相同的值
 	ctx2 := GetContext(req1)
 	a.Equal(ctx2.MustGet("key", "default").(string), "val")
 
-	freeContext(req1)
+	FreeContext(req1)
 
 	ctx3 := GetContext(req1)
 	a.Equal(ctx3.MustGet("key", "default").(string), "default")
-}
-
-func BenchmarkContextWithPool(b *testing.B) {
-	req, _ := http.NewRequest("GET", "/abc/", nil)
-	for i := 0; i < b.N; i++ {
-		ctx := GetContext(req)
-		ctx.Set("abc", "abc")
-		freeContext(req)
-	}
-}
-
-func BenchmarkContextWithoutPool(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		ctx := &context{items: make(map[interface{}]interface{})}
-		ctx.Set("abc", "abc")
-	}
 }
