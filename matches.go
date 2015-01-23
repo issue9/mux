@@ -15,6 +15,7 @@ import (
 //  http.ListenAndServe("8080", actions)
 type Matches []Matcher
 
+// 新建Matches实例。
 func NewMatches(matches ...Matcher) Matches {
 	return matches
 }
