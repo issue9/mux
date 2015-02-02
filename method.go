@@ -46,10 +46,10 @@ func NewMethod(err ErrorHandler) *Method {
 // 添加一条数据。
 // methods参数应该只能为http.Request.Method中合法的字符串以及
 // 代表所有方法的"*"，其它任何字符串都是无效的，但不会提示错误。
-// 当methods或是h为空时，将返回触发panic。
+// 当methods或是h为空时，将返回错误信息。
 func (m *Method) Add(pattern string, h http.Handler, methods ...string) error {
 	if h == nil {
-		panic("h参数不能为nil")
+		return errors.New("h参数不能为nil")
 	}
 
 	if len(methods) == 0 {

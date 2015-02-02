@@ -5,6 +5,7 @@
 package mux
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"sync"
@@ -47,10 +48,10 @@ func NewHost(err ErrorHandler) *Host {
 // 添加相应域名的处理函数。
 // 若该域名已经存在，则返回错误信息。
 // pattern，为域名信息，若以?开头，则表示这是个正则表达式匹配。
-// h 当值为空时，触发panic。
+// h 当值为空时，返回错误信息。
 func (host *Host) Add(pattern string, h http.Handler) error {
 	if h == nil {
-		panic("参数handler不能为空")
+		return errors.New("参数handler不能为空")
 	}
 
 	host.mu.Lock()

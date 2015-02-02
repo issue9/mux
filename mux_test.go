@@ -12,33 +12,43 @@ import (
 	"github.com/issue9/assert"
 )
 
-func T1estHost_Add(t *testing.T) {
+// 测试NewHost()和Host.Add()
+func TestHost_New_Add(t *testing.T) {
 	a := assert.New(t)
 
+	// 默认的ErrorHandler为defaultErrorHandler
 	h := NewHost(nil)
-	a.NotNil(h).Equal(0, len(h.entries))
+	a.NotNil(h).
+		Equal(0, len(h.entries)).
+		Equal(h.errorHandler, ErrorHandler(defaultErrorHandler))
 
-	a.NotError(h.Add("abc.example.com", nil))
-	a.Equal(1, len(h.entries))
+	// 空的handler指针
+	a.Error(h.Add("abc.example.com", nil))
+	a.Equal(0, len(h.entries)).
+		Equal(0, len(h.namedEntries))
+
+	fn := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {})
+
+	a.NotError(h.Add("abc.example.com", fn))
+	a.Equal(1, len(h.entries)).
+		Equal(1, len(h.namedEntries))
 
 	// 添加相同名称的
-	a.Error(h.Add("abc.example.com", nil))
-	a.Equal(1, len(h.entries))
+	a.Error(h.Add("abc.example.com", fn))
+	a.Equal(1, len(h.entries)).
+		Equal(1, len(h.namedEntries))
 
 	// 添加不同的域名
-	a.NotError(h.Add("?\\w+.example.com", nil))
-	a.Equal(2, len(h.entries))
+	a.NotError(h.Add("?\\w+.example.com", fn))
+	a.Equal(2, len(h.entries)).
+		Equal(2, len(h.namedEntries))
 }
 
-func T1estMethod_Add(t *testing.T) {
+func TestMethod_Add(t *testing.T) {
 	a := assert.New(t)
 	m := NewMethod(nil)
 	a.NotNil(m)
 
-	// 未指定method，panic
-	a.Panic(func() {
-		m.Add("test", nil)
-	})
 }
 
 func errorHandler1(w http.ResponseWriter, msg string, code int) {

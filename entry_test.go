@@ -10,7 +10,27 @@ import (
 	"github.com/issue9/assert"
 )
 
-func TestEntry_match(t *testing.T) {
+func TestNewEntry(t *testing.T) {
+	a := assert.New(t)
+
+	// 普通情况
+	e := newEntry("abc", nil)
+	a.Equal(e.pattern, "abc")
+
+	// 首字符为?的非正则匹配
+	e = newEntry("\\?abc", nil)
+	a.Equal("?abc", e.pattern)
+
+	// 首字符为?的非正则匹配
+	e = newEntry(`\?abc`, nil)
+	a.Equal("?abc", e.pattern)
+
+	// 正则匹配
+	e = newEntry("?abc", nil)
+	a.Equal("abc", e.pattern)
+}
+
+func TestEntry_match_getNamedCapture(t *testing.T) {
 	a := assert.New(t)
 
 	type test struct {
