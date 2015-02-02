@@ -5,44 +5,84 @@
 package mux
 
 import (
+	"fmt"
 	"net/http"
-	"regexp"
+	"sync"
 )
 
-// 用于匹配http.Request.Host的Handler
-//  m1 := mux.NewMethod().
+// 用于匹配域名的http.Handler
+//
+//  m1 := mux.NewMethod(nil).
 //            Get(h1).
 //            Post(h2)
-//  m2 := mux.NewMethod().
+//  m2 := mux.NewMethod(nil).
 //            Get(h3).
 //            Get(h4)
-//  h1 := mux.NewHost(m1, "api.example.com")
-//  h2 := mux.NewHost(m2, "www.example.com")
-//  http.ListenAndServe("8080", NewMatches(h1, h2))
+//  host := mux.NewHost(nil)
+//  host.Add("abc.example.com", m1)
+//  host.Add("?(?P<site>.*).example.com", m2) // 正则
+//  http.ListenAndServe("8080", host)
 type Host struct {
-	h        Matcher
-	hostExpr *regexp.Regexp
+	mu           sync.Mutex
+	errorHandler ErrorHandler
+
+	entries      []*entry
+	namedEntries map[string]*entry
 }
 
-// host参数为匹配的域名，可以是正则表达式。
-func NewHost(handler Matcher, host string) *Host {
+// 新建Host实例。
+// err为错误处理状态函数。
+func NewHost(err ErrorHandler) *Host {
+	if err == nil {
+		err = defaultErrorHandler
+	}
+
 	return &Host{
-		h:        handler,
-		hostExpr: regexp.MustCompile(host),
+		errorHandler: err,
+		entries:      make([]*entry, 0, 2),
+		namedEntries: make(map[string]*entry, 2),
 	}
 }
 
-func (h *Host) ServeHTTP2(w http.ResponseWriter, r *http.Request) bool {
-	if h.hostExpr.MatchString(r.Host) {
-		// 分析域名。
-		ctx := GetContext(r)
-		ctx.Set("domains", parseCaptures(h.hostExpr, r.Host))
-		return h.h.ServeHTTP2(w, r)
+// 添加相应域名的处理函数。
+// 若该域名已经存在，则返回错误信息。
+// pattern，为域名信息，若以?开头，则表示这是个正则表达式匹配。
+// h 当值为空时，触发panic。
+func (host *Host) Add(pattern string, h http.Handler) error {
+	if h == nil {
+		panic("参数handler不能为空")
 	}
 
-	return false
+	host.mu.Lock()
+	defer host.mu.Unlock()
+
+	_, found := host.namedEntries[pattern]
+	if found {
+		return fmt.Errorf("该表达式[%v]已经存在", pattern)
+	}
+
+	entry := newEntry(pattern, h)
+	host.namedEntries[pattern] = entry
+	host.entries = append(host.entries, entry)
+
+	return nil
 }
 
-func (h *Host) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	h.ServeHTTP2(w, r)
+// implement http.Handler.ServeHTTP()
+func (host *Host) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	host.mu.Lock()
+	defer host.mu.Unlock()
+
+	for _, entry := range host.entries {
+		if !entry.match(req.Host) {
+			continue
+		}
+
+		ctx := GetContext(req)
+		ctx.Set("domains", entry.getNamedCapture(req.Host))
+		entry.handler.ServeHTTP(w, req)
+		return
+	}
+
+	host.errorHandler(w, "没有找到与之匹配的主机名", 404)
 }
