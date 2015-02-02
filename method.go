@@ -83,8 +83,33 @@ func (m *Method) Add(pattern string, h http.Handler, methods ...string) error {
 	return nil
 }
 
-// 供Get/Post等方法使用。
-func (m *Method) mustAdd(pattern string, h http.Handler, method string) *Method {
+// Get相当于m.Add(h, "GET")的简易写法
+func (m *Method) Get(pattern string, h http.Handler) error {
+	return m.Add(pattern, h, "GET")
+}
+
+// Post相当于m.Add(h, "POST")的简易写法
+func (m *Method) Post(pattern string, h http.Handler) error {
+	return m.Add(pattern, h, "POST")
+}
+
+// Delete相当于m.Add(h, "DELETE")的简易写法
+func (m *Method) Delete(pattern string, h http.Handler) error {
+	return m.Add(pattern, h, "DELETE")
+}
+
+// Put相当于m.Add(h, "PUT")的简易写法
+func (m *Method) Put(pattern string, h http.Handler) error {
+	return m.Add(pattern, h, "PUT")
+}
+
+// Any相当于m.Add(h, "*")的简易写法
+func (m *Method) Any(pattern string, h http.Handler) error {
+	return m.Add(pattern, h, "*")
+}
+
+// 相当于Add，但是在发生错误时不返回错误信息，直接panic
+func (m *Method) MustAdd(pattern string, h http.Handler, method string) *Method {
 	if err := m.Add(pattern, h, method); err != nil {
 		panic(err)
 	}
@@ -92,29 +117,29 @@ func (m *Method) mustAdd(pattern string, h http.Handler, method string) *Method 
 	return m
 }
 
-// Get相当于m.Add(h, "GET")的简易写法
-func (m *Method) Get(pattern string, h http.Handler) *Method {
-	return m.mustAdd(pattern, h, "GET")
+// Get相当于m.MustAdd(h, "GET")的简易写法
+func (m *Method) MustGet(pattern string, h http.Handler) *Method {
+	return m.MustAdd(pattern, h, "GET")
 }
 
-// Post相当于m.Add(h, "POST")的简易写法
-func (m *Method) Post(pattern string, h http.Handler) *Method {
-	return m.mustAdd(pattern, h, "POST")
+// Post相当于m.MustAdd(h, "POST")的简易写法
+func (m *Method) MustPost(pattern string, h http.Handler) *Method {
+	return m.MustAdd(pattern, h, "POST")
 }
 
-// Delete相当于m.Add(h, "DELETE")的简易写法
-func (m *Method) Delete(pattern string, h http.Handler) *Method {
-	return m.mustAdd(pattern, h, "DELETE")
+// Delete相当于m.MustAdd(h, "DELETE")的简易写法
+func (m *Method) MustDelete(pattern string, h http.Handler) *Method {
+	return m.MustAdd(pattern, h, "DELETE")
 }
 
-// Put相当于m.Add(h, "PUT")的简易写法
-func (m *Method) Put(pattern string, h http.Handler) *Method {
-	return m.mustAdd(pattern, h, "PUT")
+// Put相当于m.MustAdd(h, "PUT")的简易写法
+func (m *Method) MustPut(pattern string, h http.Handler) *Method {
+	return m.MustAdd(pattern, h, "PUT")
 }
 
-// Any相当于m.Add(h, "*")的简易写法
-func (m *Method) Any(pattern string, h http.Handler) *Method {
-	return m.mustAdd(pattern, h, "*")
+// Any相当于m.MustAdd(h, "*")的简易写法
+func (m *Method) MustAny(pattern string, h http.Handler) *Method {
+	return m.MustAdd(pattern, h, "*")
 }
 
 // implement http.Handler.ServerHTTP()
@@ -124,8 +149,11 @@ func (m *Method) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	entries, found := m.entries[req.Method]
 	if !found {
-		m.errHandler(w, "没有找到与之匹配的方法："+req.Method, 404)
-		return
+		entries, found = m.entries["*"]
+		if !found { // 也不存在于*中，则表示未找到与之匹配的method
+			m.errHandler(w, "没有找到与之匹配的方法："+req.Method, 404)
+			return
+		}
 	}
 
 	for _, entry := range entries.list {

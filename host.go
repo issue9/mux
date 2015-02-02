@@ -13,11 +13,11 @@ import (
 // 用于匹配域名的http.Handler
 //
 //  m1 := mux.NewMethod(nil).
-//            Get(h1).
-//            Post(h2)
+//            MustGet(h1).
+//            MustPost(h2)
 //  m2 := mux.NewMethod(nil).
-//            Get(h3).
-//            Get(h4)
+//            MustGet(h3).
+//            MustGet(h4)
 //  host := mux.NewHost(nil)
 //  host.Add("abc.example.com", m1)
 //  host.Add("?(?P<site>.*).example.com", m2) // 正则

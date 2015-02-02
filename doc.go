@@ -10,8 +10,8 @@
 //
 //  // 声明一个带method匹配的实例
 //  m1 := mux.NewMethod(nil).
-//            Get("api/logout", h1).
-//            Post("api/login", h2)
+//            MustGet("api/logout", h1).
+//            MustPost("api/login", h2)
 //
 //  // net/http包里的默认ServeMux实例
 //  srv := http.NewServeMux()
@@ -25,4 +25,4 @@
 //  http.ListenAndServe("8080", h)
 package mux
 
-const Version = "0.2.3.150202"
+const Version = "0.3.4.150202"
