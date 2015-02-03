@@ -10,7 +10,7 @@ import (
 	"github.com/issue9/assert"
 )
 
-func TestNewEntry(t *testing.T) {
+func TestEntry_New(t *testing.T) {
 	a := assert.New(t)
 
 	// 普通情况

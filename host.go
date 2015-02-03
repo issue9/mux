@@ -40,18 +40,18 @@ func NewHost(err ErrorHandler) *Host {
 
 	return &Host{
 		errorHandler: err,
-		entries:      make([]*entry, 0, 2),
-		namedEntries: make(map[string]*entry, 2),
+		entries:      make([]*entry, 0, 1),
+		namedEntries: make(map[string]*entry, 1),
 	}
 }
 
 // 添加相应域名的处理函数。
 // 若该域名已经存在，则返回错误信息。
 // pattern，为域名信息，若以?开头，则表示这是个正则表达式匹配。
-// h 当值为空时，返回错误信息。
+// 当h值为空时，返回错误信息。
 func (host *Host) Add(pattern string, h http.Handler) error {
 	if h == nil {
-		return errors.New("参数handler不能为空")
+		return errors.New("Add:参数handler不能为空")
 	}
 
 	host.mu.Lock()
@@ -59,7 +59,7 @@ func (host *Host) Add(pattern string, h http.Handler) error {
 
 	_, found := host.namedEntries[pattern]
 	if found {
-		return fmt.Errorf("该表达式[%v]已经存在", pattern)
+		return fmt.Errorf("Add:该表达式[%v]已经存在", pattern)
 	}
 
 	entry := newEntry(pattern, h)
@@ -85,5 +85,5 @@ func (host *Host) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	host.errorHandler(w, "没有找到与之匹配的主机名", 404)
+	host.errorHandler(w, fmt.Sprintf("没有找到与之匹配的主机名:[%v]", req.Host), 404)
 }

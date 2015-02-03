@@ -15,14 +15,14 @@ import (
 // 用于指定特定method的handler
 //
 //  m := mux.NewMethod(nil)
-//  m.Get(h1).
-//    Post(h2).
-//    Add(h3, "GET", "POST")
+//  m.MustGet(h1).
+//    MustPost(h2).
+//    MustAdd(h3, "GET", "POST")
 //  http.ListenAndServe(m)
 type Method struct {
 	mu         sync.Mutex
 	errHandler ErrorHandler
-	entries    map[string]*methodEntries // 某一method对应的所有Handler
+	entries    map[string]*methodEntries
 }
 
 type methodEntries struct {
@@ -61,6 +61,7 @@ func (m *Method) Add(pattern string, h http.Handler, methods ...string) error {
 
 	for _, method := range methods {
 		method = strings.ToUpper(method)
+
 		entries, found := m.entries[method]
 		if !found {
 			entries = &methodEntries{
@@ -70,15 +71,14 @@ func (m *Method) Add(pattern string, h http.Handler, methods ...string) error {
 			m.entries[method] = entries
 		}
 
-		_, found = entries.named[pattern]
-		if found {
+		if _, found = entries.named[pattern]; found {
 			return fmt.Errorf("该表达式[%v]已经存在", pattern)
 		}
 
 		entry := newEntry(pattern, h)
 		entries.list = append(entries.list, entry)
 		entries.named[pattern] = entry
-	}
+	} // end for methods
 
 	return nil
 }
@@ -147,10 +147,11 @@ func (m *Method) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
+	// 找到与req.Method对应的map，若不存在，则尝试找*
 	entries, found := m.entries[req.Method]
 	if !found {
 		entries, found = m.entries["*"]
-		if !found { // 也不存在于*中，则表示未找到与之匹配的method
+		if !found { // 也不存在*
 			m.errHandler(w, "没有找到与之匹配的方法："+req.Method, 404)
 			return
 		}

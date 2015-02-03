@@ -37,14 +37,12 @@ func newEntry(pattern string, h http.Handler) *entry {
 }
 
 // 当前实例是否与参数匹配。
-// 若是正则匹配，则还返回一个保存命名捕获的map。
 func (entry *entry) match(pattern string) bool {
 	// 简单的字符串匹配
 	if entry.expr == nil {
 		return entry.pattern == pattern
 	}
 
-	// 未匹配正则
 	return entry.expr.MatchString(pattern)
 }
 
@@ -54,7 +52,6 @@ func (entry *entry) getNamedCapture(pattern string) map[string]string {
 		return nil
 	}
 
-	// 正确匹配正则，获取命名捕获组。
 	ret := make(map[string]string)
 	subexps := entry.expr.SubexpNames()
 	args := entry.expr.FindStringSubmatch(pattern)
