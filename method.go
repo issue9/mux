@@ -12,7 +12,18 @@ import (
 	"sync"
 )
 
-// 用于指定特定method的handler
+// 用于处理特定method的handler
+// 定义了六个函数：
+//  Add(...) //
+//  Get()    //
+//  Post()
+//  Delete()
+//  Put()
+//  Any()
+// 以及根据这些函数延伸出来的一系列函数：
+// *Func...
+// Must*...
+// Must*Func...
 //
 //  m := mux.NewMethod(nil)
 //  m.MustGet(h1).

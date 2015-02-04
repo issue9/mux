@@ -2,8 +2,7 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
-// mux提供了一系列http.Handler接口的实现：
-// 多域名匹配(Host)、根据请求方法匹配(Method)等操作。
+// mux提供了一系列http.Handler接口的实现。
 //
 // 一个多域名路由的示例：
 //  var h1, h2, h3, h4 http.Handler
