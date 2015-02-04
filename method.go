@@ -48,10 +48,6 @@ func NewMethod(err ErrorHandler) *Method {
 // 代表所有方法的"*"，其它任何字符串都是无效的，但不会提示错误。
 // 当methods或是h为空时，将返回错误信息。
 func (m *Method) Add(pattern string, h http.Handler, methods ...string) error {
-	if h == nil {
-		return errors.New("h参数不能为nil")
-	}
-
 	if len(methods) == 0 {
 		return errors.New("请至少指定一个methods参数")
 	}
@@ -75,7 +71,10 @@ func (m *Method) Add(pattern string, h http.Handler, methods ...string) error {
 			return fmt.Errorf("该表达式[%v]已经存在", pattern)
 		}
 
-		entry := newEntry(pattern, h)
+		entry, err := newEntry(pattern, h)
+		if err != nil {
+			return err
+		}
 		entries.list = append(entries.list, entry)
 		entries.named[pattern] = entry
 	} // end for methods
@@ -108,9 +107,33 @@ func (m *Method) Any(pattern string, h http.Handler) error {
 	return m.Add(pattern, h, "*")
 }
 
+func (m *Method) AddFunc(pattern string, fun func(http.ResponseWriter, *http.Request), methods ...string) error {
+	return m.Add(pattern, http.HandlerFunc(fun), methods...)
+}
+
+func (m *Method) GetFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) error {
+	return m.AddFunc(pattern, fun, "GET")
+}
+
+func (m *Method) PutFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) error {
+	return m.AddFunc(pattern, fun, "PUT")
+}
+
+func (m *Method) PostFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) error {
+	return m.AddFunc(pattern, fun, "POST")
+}
+
+func (m *Method) DeleteFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) error {
+	return m.AddFunc(pattern, fun, "DELETE")
+}
+
+func (m *Method) AnyFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) error {
+	return m.AddFunc(pattern, fun, "*")
+}
+
 // 相当于Add，但是在发生错误时不返回错误信息，直接panic
-func (m *Method) MustAdd(pattern string, h http.Handler, method string) *Method {
-	if err := m.Add(pattern, h, method); err != nil {
+func (m *Method) MustAdd(pattern string, h http.Handler, methods ...string) *Method {
+	if err := m.Add(pattern, h, methods...); err != nil {
 		panic(err)
 	}
 
@@ -140,6 +163,30 @@ func (m *Method) MustPut(pattern string, h http.Handler) *Method {
 // Any相当于m.MustAdd(h, "*")的简易写法
 func (m *Method) MustAny(pattern string, h http.Handler) *Method {
 	return m.MustAdd(pattern, h, "*")
+}
+
+func (m *Method) MustAddFunc(pattern string, fun func(http.ResponseWriter, *http.Request), methods ...string) *Method {
+	return m.MustAdd(pattern, http.HandlerFunc(fun), methods...)
+}
+
+func (m *Method) MustGetFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Method {
+	return m.MustAddFunc(pattern, fun, "GET")
+}
+
+func (m *Method) MustPostFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Method {
+	return m.MustAddFunc(pattern, fun, "POST")
+}
+
+func (m *Method) MustPutFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Method {
+	return m.MustAddFunc(pattern, fun, "PUT")
+}
+
+func (m *Method) MustDeleteFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Method {
+	return m.MustAddFunc(pattern, fun, "DELETE")
+}
+
+func (m *Method) MustAnyFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Method {
+	return m.MustAddFunc(pattern, fun, "*")
 }
 
 // implement http.Handler.ServerHTTP()

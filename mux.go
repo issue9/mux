@@ -19,10 +19,24 @@
 //
 //  // 添加到各自的域名下
 //  h := mux.NewHost(nil)
-//  h.Add("api.example.com", m1)
-//  h.Add("?(\\w+).example.com", srv)
+//  h.Handle("api.example.com", m1)
+//  h.Handle("?(\\w+).example.com", srv)
 //
 //  http.ListenAndServe("8080", h)
 package mux
 
-const Version = "0.3.5.150202"
+import (
+	"net/http"
+)
+
+const Version = "0.4.6.150204"
+
+// 错误状态处理函数。
+//
+// msg详细的错误信息；code错误状态码。
+type ErrorHandler func(w http.ResponseWriter, msg string, code int)
+
+// 默认的ErrorHandler实现，直接调用http.Error()实现。
+func defaultErrorHandler(w http.ResponseWriter, msg string, code int) {
+	http.Error(w, msg, code)
+}

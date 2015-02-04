@@ -5,6 +5,7 @@
 package mux
 
 import (
+	"errors"
 	"net/http"
 	"regexp"
 )
@@ -16,8 +17,16 @@ type entry struct {
 	handler http.Handler
 }
 
-// 不检测h值是否为空，调用函数需要保证h值的合法性！
-func newEntry(pattern string, h http.Handler) *entry {
+// 当pattern或是h为空时，将返回错误信息。
+func newEntry(pattern string, h http.Handler) (*entry, error) {
+	if len(pattern) == 0 {
+		return nil, errors.New("newEntry:参数pattern不能为空值")
+	}
+
+	if h == nil {
+		return nil, errors.New("newEntry:参数h不能为空值")
+	}
+
 	entry := &entry{
 		pattern: pattern,
 		handler: h,
@@ -26,6 +35,9 @@ func newEntry(pattern string, h http.Handler) *entry {
 
 	switch {
 	case pattern[0] == '?':
+		if len(pattern) == 1 {
+			return nil, errors.New("newEntry:pattern正则内容不能为空")
+		}
 		entry.pattern = pattern[1:]
 		entry.expr = regexp.MustCompile(pattern[1:])
 	case pattern[:2] == "\\?":
@@ -33,7 +45,7 @@ func newEntry(pattern string, h http.Handler) *entry {
 	default:
 	}
 
-	return entry
+	return entry, nil
 }
 
 // 当前实例是否与参数匹配。

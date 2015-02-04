@@ -5,7 +5,6 @@
 package mux
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"sync"
@@ -20,8 +19,8 @@ import (
 //            MustGet(h3).
 //            MustGet(h4)
 //  host := mux.NewHost(nil)
-//  host.Add("abc.example.com", m1)
-//  host.Add("?(?P<site>.*).example.com", m2) // 正则
+//  host.Handle("abc.example.com", m1)
+//  host.Hnadle("?(?P<site>.*).example.com", m2) // 正则
 //  http.ListenAndServe("8080", host)
 type Host struct {
 	mu           sync.Mutex
@@ -50,10 +49,6 @@ func NewHost(err ErrorHandler) *Host {
 // pattern，为域名信息，若以?开头，则表示这是个正则表达式匹配。
 // 当h值为空时，返回错误信息。
 func (host *Host) Add(pattern string, h http.Handler) error {
-	if h == nil {
-		return errors.New("Add:参数handler不能为空")
-	}
-
 	host.mu.Lock()
 	defer host.mu.Unlock()
 
@@ -62,11 +57,19 @@ func (host *Host) Add(pattern string, h http.Handler) error {
 		return fmt.Errorf("Add:该表达式[%v]已经存在", pattern)
 	}
 
-	entry := newEntry(pattern, h)
+	entry, err := newEntry(pattern, h)
+	if err != nil {
+		return err
+	}
 	host.namedEntries[pattern] = entry
 	host.entries = append(host.entries, entry)
 
 	return nil
+}
+
+// 等同host.Add，但第二个参数为一个函数。
+func (host *Host) AddFunc(pattern string, h func(http.ResponseWriter, *http.Request)) error {
+	return host.Add(pattern, http.HandlerFunc(h))
 }
 
 // implement http.Handler.ServeHTTP()
