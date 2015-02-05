@@ -24,21 +24,13 @@ import (
 //  http.ListenAndServe("8080", host)
 type Host struct {
 	mu           sync.Mutex
-	errorHandler ErrorHandler
-
 	entries      []*entry
 	namedEntries map[string]*entry
 }
 
 // 新建Host实例。
-// err为错误处理状态函数。
-func NewHost(err ErrorHandler) *Host {
-	if err == nil {
-		err = defaultErrorHandler
-	}
-
+func NewHost() *Host {
 	return &Host{
-		errorHandler: err,
 		entries:      make([]*entry, 0, 1),
 		namedEntries: make(map[string]*entry, 1),
 	}
@@ -78,15 +70,14 @@ func (host *Host) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	defer host.mu.Unlock()
 
 	for _, entry := range host.entries {
-		if !entry.match(req.Host) {
-			continue
+		if ok, mapped := entry.match(req.Host); ok {
+			ctx := GetContext(req)
+			ctx.Set("domains", mapped)
+			entry.handler.ServeHTTP(w, req)
+			return
 		}
 
-		ctx := GetContext(req)
-		ctx.Set("domains", entry.getNamedCapture(req.Host))
-		entry.handler.ServeHTTP(w, req)
-		return
 	}
 
-	host.errorHandler(w, fmt.Sprintf("没有找到与之匹配的主机名:[%v]", req.Host), 404)
+	panic(NewStatusError(404, fmt.Sprintf("没有找到与之匹配的主机名:[%v]", req.Host)))
 }

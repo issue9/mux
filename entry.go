@@ -49,30 +49,25 @@ func newEntry(pattern string, h http.Handler) (*entry, error) {
 }
 
 // 当前实例是否与参数匹配。
-func (entry *entry) match(pattern string) bool {
-	// 简单的字符串匹配
-	if entry.expr == nil {
-		return entry.pattern == pattern
+// 若是匹配，还将返回符合正则表达式的命名匹配，如果存在的话。
+func (entry *entry) match(pattern string) (bool, map[string]string) {
+	if entry.expr == nil { // 简单的字符串匹配
+		return entry.pattern == pattern, nil
 	}
 
-	return entry.expr.MatchString(pattern)
-}
-
-// 获取pattern中的命名捕获
-func (entry *entry) getNamedCapture(pattern string) map[string]string {
-	if entry.expr == nil {
-		return nil
+	if !entry.expr.MatchString(pattern) {
+		return false, nil
 	}
 
+	// 获取命名匹配变量。
 	ret := make(map[string]string)
 	subexps := entry.expr.SubexpNames()
 	args := entry.expr.FindStringSubmatch(pattern)
 	for index, name := range subexps {
-		if len(name) == 0 {
-			continue
+		if len(name) > 0 {
+			ret[name] = args[index]
 		}
-
-		ret[name] = args[index]
 	}
-	return ret
+
+	return true, ret
 }

@@ -18,10 +18,8 @@ func TestHost_New_Handle(t *testing.T) {
 	a := assert.New(t)
 
 	// 默认的ErrorHandler为defaultErrorHandler
-	h := NewHost(nil)
-	a.NotNil(h).
-		Equal(0, len(h.entries)).
-		Equal(h.errorHandler, ErrorHandler(defaultErrorHandler))
+	h := NewHost()
+	a.NotNil(h).Equal(0, len(h.entries))
 
 	// 空的handler指针
 	a.Error(h.Add("abc.example.com", nil))
@@ -48,12 +46,6 @@ func TestHost_New_Handle(t *testing.T) {
 func TestHost_ServeHTTP(t *testing.T) {
 	a := assert.New(t)
 
-	// 错误处理函数。向response写入hostErrorHandler
-	hostErrorHandler := func(w http.ResponseWriter, msg string, code int) {
-		w.WriteHeader(code)
-		w.Write([]byte("hostErrorHandler"))
-	}
-
 	// 默认的handler，向response写入host1Handler或是错误信息。
 	host1Handler := func(w http.ResponseWriter, req *http.Request) {
 		ctx := GetContext(req)
@@ -64,29 +56,32 @@ func TestHost_ServeHTTP(t *testing.T) {
 			a.True(ok)
 			port, found := ports["port"]
 			a.True(found)
-			a.T().Logf("host port:[%v]", port)
+			t.Logf("host port:[%v]", port)
 			w.Write([]byte("host1Handler"))
 		} else {
 			w.Write([]byte("错误，未捕获端口信息"))
 		}
 	}
+
 	// 正常匹配正则
-	host := NewHost(hostErrorHandler)
-	a.NotNil(host).
-		Equal(ErrorHandler(hostErrorHandler), host.errorHandler)
+	host := NewHost()
+	a.NotNil(host)
 	a.NotError(host.AddFunc("?127.0.0.1:(?P<port>\\d+)", host1Handler))
 	a.Equal(getHostResponse(a, host), "host1Handler")
 
-	// 无法匹配的域名，缺少端口号，输出errorHandler中的内容
-	host = NewHost(hostErrorHandler)
+	// 无法匹配的域名，缺少端口号，触发errorHandler
+	host = NewHost()
 	a.NotNil(host)
 	a.NotError(host.AddFunc("127.0.0.1", host1Handler))
-	a.Equal(getHostResponse(a, host), "hostErrorHandler")
+	e := ErrorHandler(host, func(w http.ResponseWriter, msg interface{}) {
+		w.Write([]byte("error"))
+	})
+	a.Equal(getHostResponse(a, e), "error")
 }
 
-func getHostResponse(a *assert.Assertion, host *Host) []byte {
+func getHostResponse(a *assert.Assertion, h http.Handler) []byte {
 	// 创建测试服务器
-	srv := httptest.NewServer(host)
+	srv := httptest.NewServer(h)
 	a.NotNil(srv)
 	defer srv.Close()
 

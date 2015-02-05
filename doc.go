@@ -3,6 +3,7 @@
 // license that can be found in the LICENSE file.
 
 // mux提供了一系列http.Handler接口的实现。
+// 以及一个根据http.Request切换的Context。
 //
 // 一个多域名路由的示例：
 //  var h1, h2, h3, h4 http.Handler
@@ -24,18 +25,4 @@
 //  http.ListenAndServe("8080", h)
 package mux
 
-import (
-	"net/http"
-)
-
-const Version = "0.4.6.150204"
-
-// 错误状态处理函数。
-//
-// msg详细的错误信息；code错误状态码。
-type ErrorHandler func(w http.ResponseWriter, msg string, code int)
-
-// 默认的ErrorHandler实现，直接调用http.Error()实现。
-func defaultErrorHandler(w http.ResponseWriter, msg string, code int) {
-	http.Error(w, msg, code)
-}
+const Version = "0.4.7.150205"

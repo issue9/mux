@@ -49,7 +49,7 @@ func TestEntry_New(t *testing.T) {
 	a.Error(err).Nil(e)
 }
 
-func TestEntry_match_getNamedCapture(t *testing.T) {
+func TestEntry_match(t *testing.T) {
 	a := assert.New(t)
 
 	makeEntry := func(pattern string) *entry {
@@ -68,22 +68,9 @@ func TestEntry_match_getNamedCapture(t *testing.T) {
 	tests := []*test{
 		&test{
 			str:   "hello world",
-			entry: makeEntry("?h(?P<n1>e)[a-z]+(?P<n2> )world"),
-			val:   map[string]string{"n1": "e", "n2": " "},
+			entry: makeEntry("hello world"),
+			val:   nil,
 		},
-
-		&test{
-			str:   "hello world",
-			entry: makeEntry("?(?P<1>\\w+)\\s(?P<2>\\w+)"),
-			val:   map[string]string{"1": "hello", "2": "world"},
-		},
-
-		&test{ // 带一个未命名的捕获组
-			str:   "hello world",
-			entry: makeEntry("?(?P<1>\\w+)(\\s+)(?P<2>\\w+)"),
-			val:   map[string]string{"1": "hello", "2": "world"},
-		},
-
 		&test{
 			str:   "bj.example.com",
 			entry: makeEntry("?(?P<city>\\w+)\\.example\\.com"),
@@ -94,12 +81,27 @@ func TestEntry_match_getNamedCapture(t *testing.T) {
 			entry: makeEntry("?(?P<city>[a-z]*)\\.(?P<prov>[a-z]*)\\.example\\.com"),
 			val:   map[string]string{"city": "hz", "prov": "zj"},
 		},
+
+		&test{ // 数字命名
+			str:   "hz.zj.example.com",
+			entry: makeEntry("?(?P<2>[a-z]*)\\.(?P<1>[a-z]*)\\.example\\.com"),
+			val:   map[string]string{"2": "hz", "1": "zj"},
+		},
+
+		&test{ // 带一个未命名捕获
+			str:   "yh.hz.zj.example.com",
+			entry: makeEntry("?([a-z]*)\\.(?P<city>[a-z]*)\\.(?P<prov>[a-z]*)\\.example\\.com"),
+			val:   map[string]string{"city": "hz", "prov": "zj"},
+		},
 	}
 
 	for index, v := range tests {
-		ok := v.entry.match(v.str)
-		a.True(ok)
-		mapped := v.entry.getNamedCapture(v.str)
-		a.Equal(mapped, v.val, "第[%v]个元素的值不相等:\nv1=%v\nv2=%v\n", index, mapped, v.val)
+		ok, mapped := v.entry.match(v.str)
+		a.True(ok).
+			Equal(mapped, v.val, "第[%v]个元素的值不相等:\nv1=%#v\nv2=%#v\n", index, mapped, v.val)
 	}
+
+	// 不能正确匹配
+	ok, mapped := tests[2].entry.match("hellow world")
+	a.False(ok).Nil(mapped)
 }

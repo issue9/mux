@@ -14,7 +14,7 @@ import (
 
 func TestMethod_Add(t *testing.T) {
 	a := assert.New(t)
-	m := NewMethod(nil)
+	m := NewMethod()
 	a.NotNil(m)
 
 	// handler不能为空
@@ -41,11 +41,6 @@ func TestMethod_Add(t *testing.T) {
 func TestMethod_ServeHTTP(t *testing.T) {
 	a := assert.New(t)
 
-	// 错误处理函数
-	errorHandler := func(w http.ResponseWriter, msg string, code int) {
-		w.Write([]byte("methodErrorHandler"))
-	}
-
 	// 默认的handler，向response写入method1Handler或是错误信息。
 	method1Handler := func(w http.ResponseWriter, req *http.Request) {
 		ctx := GetContext(req)
@@ -60,7 +55,7 @@ func TestMethod_ServeHTTP(t *testing.T) {
 		}
 	}
 
-	m := NewMethod(errorHandler)
+	m := NewMethod()
 	a.NotNil(m)
 
 	a.NotError(m.Add("/abc", http.HandlerFunc(method1Handler), "GET"))

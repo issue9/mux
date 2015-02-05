@@ -31,9 +31,8 @@ import (
 //    MustAdd(h3, "GET", "POST")
 //  http.ListenAndServe(m)
 type Method struct {
-	mu         sync.Mutex
-	errHandler ErrorHandler
-	entries    map[string]*methodEntries
+	mu      sync.Mutex
+	entries map[string]*methodEntries
 }
 
 type methodEntries struct {
@@ -42,15 +41,10 @@ type methodEntries struct {
 }
 
 // 声明一个新的Method
-func NewMethod(err ErrorHandler) *Method {
-	if err == nil {
-		err = defaultErrorHandler
-	}
-
+func NewMethod() *Method {
 	return &Method{
 		// 至少5个：get/post/delete/put/*
-		entries:    make(map[string]*methodEntries, 5),
-		errHandler: err,
+		entries: make(map[string]*methodEntries, 5),
 	}
 }
 
@@ -210,21 +204,18 @@ func (m *Method) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if !found {
 		entries, found = m.entries["*"]
 		if !found { // 也不存在*
-			m.errHandler(w, "没有找到与之匹配的方法："+req.Method, 404)
-			return
+			panic(NewStatusError(404, "没有找到与之匹配的方法："+req.Method))
 		}
 	}
 
 	for _, entry := range entries.list {
-		if !entry.match(req.URL.Path) {
-			continue
+		if ok, mapped := entry.match(req.URL.Path); ok {
+			ctx := GetContext(req)
+			ctx.Set("params", mapped)
+			entry.handler.ServeHTTP(w, req)
+			return
 		}
-
-		ctx := GetContext(req)
-		ctx.Set("params", entry.getNamedCapture(req.URL.Path))
-		entry.handler.ServeHTTP(w, req)
-		return
 	}
 
-	m.errHandler(w, "没有找到与之前匹配的路径："+req.URL.Path, 404)
+	panic(NewStatusError(404, "没有找到与之前匹配的路径："+req.URL.Path))
 }
