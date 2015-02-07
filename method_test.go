@@ -6,7 +6,6 @@ package mux
 
 import (
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/issue9/assert"
@@ -41,28 +40,53 @@ func TestMethod_Add(t *testing.T) {
 func TestMethod_ServeHTTP(t *testing.T) {
 	a := assert.New(t)
 
-	// 默认的handler，向response写入method1Handler或是错误信息。
-	method1Handler := func(w http.ResponseWriter, req *http.Request) {
-		ctx := GetContext(req)
-		params, found := ctx.Get("params")
-		a.True(found)
-		if params != nil {
-			_, ok := params.(map[string]string)
-			a.True(ok)
-			w.Write([]byte("method1Handler"))
-		} else {
-			w.Write([]byte("错误，未捕获端口信息"))
-		}
+	newMethod := func(pattern string) http.Handler {
+		h := NewMethod()
+		a.NotError(h.AddFunc(pattern, defaultHandler, "GET"))
+		return h
 	}
 
-	m := NewMethod()
-	a.NotNil(m)
+	tests := []*handlerTester{
+		&handlerTester{
+			name:       "普通匹配",
+			h:          newMethod("/abc"),
+			query:      "/abc",
+			response:   "OK",
+			statusCode: 200,
+		},
+		&handlerTester{
+			name:       "普通不匹配",
+			h:          newMethod("/abc"),
+			query:      "/abcd",
+			response:   "error",
+			statusCode: 404,
+		},
+		&handlerTester{
+			name:       "正则匹配数字",
+			h:          newMethod("?/api/(?P<version>\\d+)"),
+			query:      "/api/2",
+			response:   "OK",
+			statusCode: 200,
+			ctxName:    "params",
+			ctxMap:     map[string]string{"version": "2"},
+		},
+		&handlerTester{
+			name:       "正则匹配多个名称",
+			h:          newMethod("?/api/(?P<version>\\d+)/(?P<name>\\w+)"),
+			query:      "/api/2/login",
+			response:   "OK",
+			statusCode: 200,
+			ctxName:    "params",
+			ctxMap:     map[string]string{"version": "2", "name": "login"},
+		},
+		&handlerTester{
+			name:       "正则不匹配多个名称",
+			h:          newMethod("?/api/(?P<version>\\d+)/(?P<name>\\w+)"),
+			query:      "/api/2.0/login",
+			response:   "error",
+			statusCode: 404,
+		},
+	}
 
-	a.NotError(m.Add("/abc", http.HandlerFunc(method1Handler), "GET"))
-
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		//t.Error(req.URL.Path)
-	}))
-	defer srv.Close()
-	http.Get(srv.URL + "/abc")
+	runHandlerTester(a, tests)
 }

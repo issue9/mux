@@ -76,7 +76,6 @@ func (host *Host) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			entry.handler.ServeHTTP(w, req)
 			return
 		}
-
 	}
 
 	panic(NewStatusError(404, fmt.Sprintf("没有找到与之匹配的主机名:[%v]", req.Host)))
