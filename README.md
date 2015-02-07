@@ -7,8 +7,8 @@ var h1, h2, h3, h4 http.Handler
 
 // 声明一个带method匹配的实例
 m1 := mux.NewMethod().
-          Get("api/logout", h1).
-          Post("api/login", h2)
+          MustGet("api/logout", h1).
+          MustPost("api/login", h2)
 
 srv := http.NewServeMux()
 srv.Handle(h3, "/")
