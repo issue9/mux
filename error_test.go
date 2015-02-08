@@ -35,5 +35,6 @@ func TestErrorHandler(t *testing.T) {
 
 	// 指定fun参数为nil，能正确设置其值
 	eh := ErrorHandler(&Host{}, nil)
-	a.NotNil(eh.errFunc)
+	e, ok := eh.(*errorHandler)
+	a.True(ok).NotNil(e.errFunc)
 }
