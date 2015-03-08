@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
+
+	"github.com/issue9/context"
 )
 
 // 用于匹配域名的http.Handler
@@ -71,7 +73,7 @@ func (host *Host) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	for _, entry := range host.entries {
 		if ok, mapped := entry.match(req.Host); ok {
-			ctx := GetContext(req)
+			ctx := context.Get(req)
 			ctx.Set("domains", mapped)
 			entry.handler.ServeHTTP(w, req)
 			return

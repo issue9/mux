@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 
 	"github.com/issue9/assert"
+	"github.com/issue9/context"
 )
 
 // http.Handler测试工具，测试h返回值是否与response相同。
@@ -35,7 +36,7 @@ func (ch *ctxHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	/* 在正主执行ServeHTTP之后，才会有context存在 */
 
-	ctx := GetContext(req)
+	ctx := context.Get(req)
 	mapped, found := ctx.Get(ch.test.ctxName)
 	ch.a.True(found)
 

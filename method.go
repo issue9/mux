@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+
+	"github.com/issue9/context"
 )
 
 // 用于处理特定method的handler
@@ -210,7 +212,7 @@ func (m *Method) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	for _, entry := range entries.list {
 		if ok, mapped := entry.match(req.URL.Path); ok {
-			ctx := GetContext(req)
+			ctx := context.Get(req)
 			ctx.Set("params", mapped)
 			entry.handler.ServeHTTP(w, req)
 			return
