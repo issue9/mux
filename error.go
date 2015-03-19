@@ -17,7 +17,7 @@ type StatusError struct {
 }
 
 func (e *StatusError) Error() string {
-	return strconv.Itoa(e.Code) + " " + e.Message
+	return strconv.Itoa(e.Code) + ":" + e.Message
 }
 
 // 错误处理函数。

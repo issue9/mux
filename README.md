@@ -14,7 +14,7 @@ srv := http.NewServeMux()
 srv.Handle(h3, "/")
 
 // 添加到各自的域名下
-h := mux.NewHost(nil)
+h := mux.NewHost()
 h.Add("api.example.com", m1)
 h.Add("?(\\w+).example.com", srv)
 
