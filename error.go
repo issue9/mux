@@ -37,7 +37,7 @@ type errorHandler struct {
 
 // 声明一个错误处理的handler，h参数中发生的panic将被截获并处理，不会再向上级反映。
 // 当h参数为空时，直接panic
-func ErrorHandler(h http.Handler, fun ErrorHandlerFunc) http.Handler {
+func ErrorHandle(h http.Handler, fun ErrorHandlerFunc) http.Handler {
 	if h == nil {
 		panic("参数h不能为空")
 	}

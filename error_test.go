@@ -31,11 +31,11 @@ func TestErrorHandler(t *testing.T) {
 
 	// h参数传递空值
 	a.Panic(func() {
-		ErrorHandler(nil, nil)
+		ErrorHandle(nil, nil)
 	})
 
 	// 指定fun参数为nil，能正确设置其值
-	eh := ErrorHandler(&Host{}, nil)
+	eh := ErrorHandle(&Host{}, nil)
 	e, ok := eh.(*errorHandler)
 	a.True(ok).NotNil(e.errFunc)
 }
