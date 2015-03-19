@@ -5,7 +5,6 @@
 package mux
 
 import (
-	"fmt"
 	"net/http"
 )
 
@@ -13,19 +12,23 @@ import (
 // msg为输出的错误信息，可能是任意类型的数据。
 type RecoverFunc func(w http.ResponseWriter, msg interface{})
 
-// ErrorHandlerFunc的默认实现。
-// msg为一个从recover()中返回的值。
+// ErrorHandlerFunc的默认实现。为一个500的错误信息。
+// msg参数不启作用。
 func defaultRecoverFunc(w http.ResponseWriter, msg interface{}) {
-	http.Error(w, fmt.Sprint(msg), 404)
+	http.Error(w, http.StatusText(500), 500)
 }
 
+// 捕获并处理panic信息。
 type Recovery struct {
 	handler     http.Handler
 	recoverFunc RecoverFunc
 }
 
 // 声明一个错误处理的handler，h参数中发生的panic将被截获并处理，不会再向上级反映。
-// 当h参数为空时，直接panic
+// 当h参数为空时，直接panic。
+// rf参数用于指定处理panic信息的函数，其原型为RecoverFunc，
+// 当将rf指定为nil时，将使用默认的处理函数，
+// 仅仅向客户端输出500的错误信息，没有具体内容。
 func NewRecovery(h http.Handler, rf RecoverFunc) *Recovery {
 	if h == nil {
 		panic("NewRecovery:参数h不能为空")
