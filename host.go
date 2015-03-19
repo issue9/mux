@@ -14,13 +14,13 @@ import (
 
 // 用于匹配域名的http.Handler
 //
-//  m1 := mux.NewMethod(nil).
+//  m1 := mux.NewMethod().
 //            MustGet(h1).
 //            MustPost(h2)
-//  m2 := mux.NewMethod(nil).
+//  m2 := mux.NewMethod().
 //            MustGet(h3).
 //            MustGet(h4)
-//  host := mux.NewHost(nil)
+//  host := mux.NewHost()
 //  host.Handle("abc.example.com", m1)
 //  host.Hnadle("?(?P<site>.*).example.com", m2) // 正则
 //  http.ListenAndServe("8080", host)

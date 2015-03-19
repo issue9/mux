@@ -23,7 +23,7 @@ import (
 //  Any()    / AnyFunc()
 //
 //
-//  m := mux.NewMethod(nil)
+//  m := mux.NewMethod()
 //  m.MustGet(h1).
 //    MustPost(h2).
 //    MustAdd(h3, "GET", "POST")
