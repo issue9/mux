@@ -15,14 +15,16 @@ import (
 
 // http.Handler测试工具，测试h返回值是否与response相同。
 type handlerTester struct {
-	name       string
-	h          http.Handler
-	query      string
-	response   string
-	statusCode int
+	name  string       // 该测试组的名称，方便定位
+	h     http.Handler // 用于测试的http.Handler实例
+	query string       // 访问测试所用的查询字符串
 
-	ctxName string
-	ctxMap  map[string]string
+	// 返回值部分
+	response   string // 从h返回的response内容，仅包含主体部分，不包含头信息
+	statusCode int    // 返回的状态码
+
+	ctxName string            // h在context中设置的变量名称，若没有，则为空值。
+	ctxMap  map[string]string // 以及该变量对应的值
 }
 
 type ctxHandler struct {
@@ -64,9 +66,11 @@ func runHandlerTester(a *assert.Assertion, tests []*handlerTester) {
 		resp, err := http.Get(srv.URL + test.query)
 		a.NotError(err).NotNil(resp)
 
+		// 比较statusCode
 		errStr := "在执行[%v]时，其返回的状态码不相等，预期值:[%v]，实际值:[%v]"
 		a.Equal(resp.StatusCode, test.statusCode, errStr, test.name, test.statusCode, resp.StatusCode)
 
+		// 比较response
 		p, err := ioutil.ReadAll(resp.Body)
 		a.NotError(err)
 		errStr = "在执行[%v]时，其返回的内容不相等，预期值:[%v]，实际值:[%v]"
