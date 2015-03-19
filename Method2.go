@@ -71,31 +71,38 @@ func (m *Method2) Any(pattern string, h http.Handler) *Method2 {
 	return m.Add(pattern, h, "*")
 }
 
+// 功能同Add()，但是将第二个参数从http.Handler换成了func(http.ResponseWriter, *http.Request)
 func (m *Method2) AddFunc(pattern string, fun func(http.ResponseWriter, *http.Request), methods ...string) *Method2 {
 	return m.Add(pattern, http.HandlerFunc(fun), methods...)
 }
 
+// GetFunc相当于m.AddFunc(h, "GET")的简易写法
 func (m *Method2) GetFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Method2 {
 	return m.AddFunc(pattern, fun, "GET")
 }
 
+// PostFunc相当于m.AddFunc(h, "POST")的简易写法
 func (m *Method2) PostFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Method2 {
 	return m.AddFunc(pattern, fun, "POST")
 }
 
+// PutFunc相当于m.AddFunc(h, "PUT")的简易写法
 func (m *Method2) PutFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Method2 {
 	return m.AddFunc(pattern, fun, "PUT")
 }
 
+// DeleteFunc相当于m.AddFunc(h, "DELETE")的简易写法
 func (m *Method2) DeleteFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Method2 {
 	return m.AddFunc(pattern, fun, "DELETE")
 }
 
+// AnyFunc相当于m.AddFunc(h, "*")的简易写法
 func (m *Method2) AnyFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Method2 {
 	return m.AddFunc(pattern, fun, "*")
 }
 
 // implement http.Handler.ServerHTTP()
+// 若有错误，则会panic
 func (m *Method2) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if m.HasError() {
 		panic("ServeHTTP:存在错误信息，具体请调用Method2.Errors()函数查看！")

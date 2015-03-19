@@ -46,10 +46,14 @@ func NewMethod() *Method {
 	}
 }
 
-// 添加一条数据。
-// methods参数应该只能为http.Request.Method中合法的字符串以及
-// 代表所有方法的"*"，其它任何字符串都是无效的，但不会提示错误。
-// 当methods或是h为空时，将返回错误信息。
+// 添加一条路由数据。
+//
+// pattern为路由匹配模式，可以是正则匹配也可以是字符串匹配，
+// 以第一个字符来确定是否为一个正则匹配，若第一个字符为'?'，
+// 则将'?'之后的所有字符当作一个正则表达式来匹配路由；
+// 否则为一个普通的字符串匹配；若pattern以'\?'开头，则'\'仅当转换字符。
+// methods参数应该只能为http.Request.Method中合法的字符串以及代表所有方法的"*"，
+// 其它任何字符串都是无效的，但不会提示错误。当methods或是h为空时，将返回错误信息。
 func (m *Method) Add(pattern string, h http.Handler, methods ...string) error {
 	if len(methods) == 0 {
 		return errors.New("Add:请至少指定一个methods参数")
@@ -110,26 +114,32 @@ func (m *Method) Any(pattern string, h http.Handler) error {
 	return m.Add(pattern, h, "*")
 }
 
+// 功能同Add()，但是将第二个参数从http.Handler换成了func(http.ResponseWriter, *http.Request)
 func (m *Method) AddFunc(pattern string, fun func(http.ResponseWriter, *http.Request), methods ...string) error {
 	return m.Add(pattern, http.HandlerFunc(fun), methods...)
 }
 
+// GetFunc相当于m.Add(h, "GET")的简易写法
 func (m *Method) GetFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) error {
 	return m.AddFunc(pattern, fun, "GET")
 }
 
+// PutFunc相当于m.Add(h, "PUT")的简易写法
 func (m *Method) PutFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) error {
 	return m.AddFunc(pattern, fun, "PUT")
 }
 
+// PostFunc相当于m.Add(h, "POST")的简易写法
 func (m *Method) PostFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) error {
 	return m.AddFunc(pattern, fun, "POST")
 }
 
+// DeleteFunc相当于m.Add(h, "DELETE")的简易写法
 func (m *Method) DeleteFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) error {
 	return m.AddFunc(pattern, fun, "DELETE")
 }
 
+// AnyFunc相当于m.Add(h, "*")的简易写法
 func (m *Method) AnyFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) error {
 	return m.AddFunc(pattern, fun, "*")
 }

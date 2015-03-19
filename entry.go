@@ -18,6 +18,10 @@ type entry struct {
 }
 
 // 当pattern或是h为空时，将返回错误信息。
+// pattern为路由的匹配模式，包含以下三种情况：
+// - 以?字符开头：表示一个正则匹配，将?所有的字符串转换成正则表达式；
+// - 以\?开头：表示一个普通字符串匹配，但不包含第一个字符\；
+// - 其它情况：表示一个普通的字符串匹配；
 func newEntry(pattern string, h http.Handler) (*entry, error) {
 	if len(pattern) == 0 {
 		return nil, errors.New("newEntry:参数pattern不能为空值")
@@ -30,17 +34,16 @@ func newEntry(pattern string, h http.Handler) (*entry, error) {
 	entry := &entry{
 		pattern: pattern,
 		handler: h,
-		expr:    nil,
 	}
 
 	switch {
-	case pattern[0] == '?':
+	case pattern[0] == '?': // 若以？开头，则表示是一个正则表达式
 		if len(pattern) == 1 {
 			return nil, errors.New("newEntry:pattern正则内容不能为空")
 		}
 		entry.pattern = pattern[1:]
 		entry.expr = regexp.MustCompile(pattern[1:])
-	case pattern[:2] == "\\?":
+	case pattern[:2] == "\\?": // 若以\?开头，则是普通的字符串
 		entry.pattern = pattern[1:]
 	default:
 	}
