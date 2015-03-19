@@ -12,7 +12,8 @@ import (
 )
 
 func TestStatusError(t *testing.T) {
-	err := NewStatusError(404, "not found")
+	//err := NewStatusError(404, "not found")
+	err := &StatusError{Code: 404, Message: "not found"}
 	assert.Equal(t, err.Error(), "404 not found")
 }
 

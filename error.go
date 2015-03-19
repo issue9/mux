@@ -16,19 +16,13 @@ type StatusError struct {
 	Message string
 }
 
-func NewStatusError(code int, msg string) error {
-	return &StatusError{
-		Code:    code,
-		Message: msg,
-	}
-}
-
 func (e *StatusError) Error() string {
 	return strconv.Itoa(e.Code) + " " + e.Message
 }
 
-// 错误处理函数
-type ErrorHandlerFunc func(http.ResponseWriter, interface{})
+// 错误处理函数。
+// msg为输出的错误信息，可能是任意类型的数据。
+type ErrorHandlerFunc func(w http.ResponseWriter, msg interface{})
 
 // ErrorHandlerFunc的默认实现。
 // msg为一个从recover()中返回的值。
