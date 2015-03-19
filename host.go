@@ -80,5 +80,5 @@ func (host *Host) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	panic(&StatusError{Code: 404, Message: fmt.Sprintf("没有找到与之匹配的主机名:[%v]", req.Host)})
+	panic(fmt.Sprintf("没有找到与之匹配的主机名:[%v]", req.Host))
 }

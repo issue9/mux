@@ -154,7 +154,7 @@ func (m *Method) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if !found {
 		entries, found = m.entries["*"]
 		if !found { // 也不存在*
-			panic(&StatusError{Code: 404, Message: "没有找到与之匹配的方法：" + req.Method})
+			panic("没有找到与之匹配的方法：" + req.Method)
 		}
 	}
 
@@ -166,5 +166,5 @@ func (m *Method) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 	}
-	panic(&StatusError{Code: 404, Message: "没有找到与之前匹配的路径：" + req.URL.Path})
+	panic("没有找到与之前匹配的路径：" + req.URL.Path)
 }
