@@ -17,18 +17,18 @@ type entry struct {
 	handler http.Handler
 }
 
-// 当pattern或是h为空时，将返回错误信息。
+// 新建一个Entry实例。
+//
 // pattern为路由的匹配模式，包含以下三种情况：
 // - 以?字符开头：表示一个正则匹配，将?所有的字符串转换成正则表达式；
 // - 以\?开头：表示一个普通字符串匹配，但不包含第一个字符\；
 // - 其它情况：表示一个普通的字符串匹配；
+//
+// 当pattern为空时，将返回错误信息。
+// 调用方必须保证参数h不为空值！
 func newEntry(pattern string, h http.Handler) (*entry, error) {
 	if len(pattern) == 0 {
 		return nil, errors.New("newEntry:参数pattern不能为空值")
-	}
-
-	if h == nil {
-		return nil, errors.New("newEntry:参数h不能为空值")
 	}
 
 	entry := &entry{

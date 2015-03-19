@@ -36,10 +36,6 @@ func TestEntry_New(t *testing.T) {
 	e, err = newEntry("?abc", fn)
 	a.NotError(err).Equal("abc", e.pattern)
 
-	// handler为空
-	e, err = newEntry("?abc", nil)
-	a.Error(err).Nil(e)
-
 	// pattern为空
 	e, err = newEntry("", fn)
 	a.Error(err).Nil(e)

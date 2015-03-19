@@ -53,10 +53,16 @@ func NewMethod() *Method {
 // 则将'?'之后的所有字符当作一个正则表达式来匹配路由；
 // 否则为一个普通的字符串匹配；若pattern以'\?'开头，则'\'仅当转换字符。
 // methods参数应该只能为http.Request.Method中合法的字符串以及代表所有方法的"*"，
-// 其它任何字符串都是无效的，但不会提示错误。当methods或是h为空时，将返回错误信息。
+// 其它任何字符串都是无效的，但不会提示错误。
+//
+// 当methods或是h为空时，将返回错误信息。
 func (m *Method) Add(pattern string, h http.Handler, methods ...string) error {
 	if len(methods) == 0 {
 		return errors.New("Add:请至少指定一个methods参数")
+	}
+
+	if h == nil {
+		return errors.New("Add:参数h不能为空")
 	}
 
 	m.mu.Lock()

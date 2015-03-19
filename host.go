@@ -5,6 +5,7 @@
 package mux
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"sync"
@@ -43,6 +44,10 @@ func NewHost() *Host {
 // pattern，为域名信息，若以?开头，则表示这是个正则表达式匹配。
 // 当h值为空时，返回错误信息。
 func (host *Host) Add(pattern string, h http.Handler) error {
+	if h == nil {
+		return errors.New("参数h不能为空值")
+	}
+
 	host.mu.Lock()
 	defer host.mu.Unlock()
 
