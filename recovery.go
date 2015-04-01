@@ -9,11 +9,11 @@ import (
 )
 
 // 错误处理函数。
-// msg为输出的错误信息，可能是任意类型的数据。
+// msg为输出的错误信息，可能是任意类型的数据，一般为从recover()返回的数据。
 type RecoverFunc func(w http.ResponseWriter, msg interface{})
 
-// ErrorHandlerFunc的默认实现。为一个500的错误信息。
-// msg参数不启作用。
+// ErrorHandlerFunc的默认实现。
+// 为一个简单的500错误信息。不会输出msg参数的内容。
 func defaultRecoverFunc(w http.ResponseWriter, msg interface{}) {
 	http.Error(w, http.StatusText(500), 500)
 }
@@ -44,6 +44,7 @@ func NewRecovery(h http.Handler, rf RecoverFunc) *Recovery {
 	}
 }
 
+// implement net/http.Handler.ServeHTTP(...)
 func (r *Recovery) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	defer func() {
 		if err := recover(); err != nil {
