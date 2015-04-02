@@ -22,8 +22,8 @@ import (
 //            MustGet(h3).
 //            MustGet(h4)
 //  host := mux.NewHost()
-//  host.Handle("abc.example.com", m1)
-//  host.Hnadle("?(?P<site>.*).example.com", m2) // 正则
+//  host.Add("abc.example.com", m1)
+//  host.Add("?(?P<site>.*).example.com", m2) // 正则
 //  http.ListenAndServe("8080", host)
 type Host struct {
 	mu           sync.Mutex
