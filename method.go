@@ -24,9 +24,9 @@ import (
 //
 //
 //  m := mux.NewMethod()
-//  m.MustGet(h1).
-//    MustPost(h2).
-//    MustAdd(h3, "GET", "POST")
+//  m.Get(h1).
+//    Post(h2).
+//    Add(h3, "GET", "POST")
 //  http.ListenAndServe(m)
 type Method struct {
 	mu      sync.Mutex
