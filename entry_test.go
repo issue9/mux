@@ -20,18 +20,6 @@ func TestEntry_New(t *testing.T) {
 	e, err := newEntry("abc", fn)
 	a.NotError(err).Equal(e.pattern, "abc")
 
-	// 首字符为?的非正则匹配
-	e, err = newEntry("\\?abc", fn)
-	a.NotError(err).Equal("?abc", e.pattern)
-
-	// 首字符为?的非正则匹配
-	e, err = newEntry("\\?", fn)
-	a.NotError(err).Equal("?", e.pattern)
-
-	// 首字符为?的非正则匹配
-	e, err = newEntry(`\?abc`, fn)
-	a.NotError(err).Equal("?abc", e.pattern)
-
 	// 正则匹配
 	e, err = newEntry("?abc", fn)
 	a.NotError(err).Equal("abc", e.pattern)
