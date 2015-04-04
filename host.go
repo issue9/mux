@@ -15,12 +15,12 @@ import (
 
 // 用于匹配域名的http.Handler
 //
-//  m1 := mux.NewMethod().
-//            MustGet(h1).
-//            MustPost(h2)
+//  m1 := mux.NewMethod2().
+//            Get(h1).
+//            Post(h2)
 //  m2 := mux.NewMethod().
-//            MustGet(h3).
-//            MustGet(h4)
+//            Get(h3).
+//            Get(h4)
 //  host := mux.NewHost()
 //  host.Add("abc.example.com", m1)
 //  host.Add("?(?P<site>.*).example.com", m2) // 正则
@@ -45,7 +45,7 @@ func NewHost() *Host {
 // 当h值为空时，返回错误信息。
 func (host *Host) Add(pattern string, h http.Handler) error {
 	if h == nil {
-		return errors.New("参数h不能为空值")
+		return errors.New("Add:参数h不能为空值")
 	}
 
 	host.mu.Lock()
