@@ -19,7 +19,7 @@ type Prefix struct {
 	defaultHandler http.Handler
 }
 
-// 声明一个Prefix变量
+// 声明一个Prefix实例。
 func NewPrefix() *Prefix {
 	return &Prefix{
 		items: map[string]http.Handler{},
