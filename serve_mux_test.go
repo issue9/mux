@@ -11,9 +11,9 @@ import (
 	"github.com/issue9/assert"
 )
 
-func TestMethod_Add(t *testing.T) {
+func TestServeMux_Add(t *testing.T) {
 	a := assert.New(t)
-	m := NewMethod()
+	m := NewServeMux()
 	a.NotNil(m)
 
 	// handler不能为空
@@ -37,11 +37,11 @@ func TestMethod_Add(t *testing.T) {
 	a.True(found).Equal(2, len(es.list))
 }
 
-func TestMethod_ServeHTTP(t *testing.T) {
+func TestServeMux_ServeHTTP(t *testing.T) {
 	a := assert.New(t)
 
-	newMethod := func(pattern string) http.Handler {
-		h := NewMethod()
+	newServeMux := func(pattern string) http.Handler {
+		h := NewServeMux()
 		a.NotError(h.AddFunc(pattern, defaultHandler, "GET"))
 		return h
 	}
@@ -49,19 +49,19 @@ func TestMethod_ServeHTTP(t *testing.T) {
 	tests := []*handlerTester{
 		&handlerTester{
 			name:       "普通匹配",
-			h:          newMethod("/abc"),
+			h:          newServeMux("/abc"),
 			query:      "/abc",
 			statusCode: 200,
 		},
 		&handlerTester{
 			name:       "普通不匹配",
-			h:          newMethod("/abc"),
+			h:          newServeMux("/abc"),
 			query:      "/abcd",
 			statusCode: 404,
 		},
 		&handlerTester{
 			name:       "正则匹配数字",
-			h:          newMethod("?/api/(?P<version>\\d+)"),
+			h:          newServeMux("?/api/(?P<version>\\d+)"),
 			query:      "/api/2",
 			statusCode: 200,
 			ctxName:    "params",
@@ -69,7 +69,7 @@ func TestMethod_ServeHTTP(t *testing.T) {
 		},
 		&handlerTester{
 			name:       "正则匹配多个名称",
-			h:          newMethod("?/api/(?P<version>\\d+)/(?P<name>\\w+)"),
+			h:          newServeMux("?/api/(?P<version>\\d+)/(?P<name>\\w+)"),
 			query:      "/api/2/login",
 			statusCode: 200,
 			ctxName:    "params",
@@ -77,25 +77,25 @@ func TestMethod_ServeHTTP(t *testing.T) {
 		},
 		&handlerTester{
 			name:       "正则不匹配多个名称",
-			h:          newMethod("?/api/(?P<version>\\d+)/(?P<name>\\w+)"),
+			h:          newServeMux("?/api/(?P<version>\\d+)/(?P<name>\\w+)"),
 			query:      "/api/2.0/login",
 			statusCode: 404,
 		},
 		&handlerTester{
 			name:       "带域名的字符串不匹配", //无法匹配端口信息
-			h:          newMethod("127.0.0.1/abc"),
+			h:          newServeMux("127.0.0.1/abc"),
 			query:      "/abc",
 			statusCode: 404,
 		},
 		&handlerTester{
 			name:       "带域名的正则匹配", //无法匹配端口信息
-			h:          newMethod("?127.0.0.1:\\d+/abc"),
+			h:          newServeMux("?127.0.0.1:\\d+/abc"),
 			query:      "/abc",
 			statusCode: 200,
 		},
 		&handlerTester{
 			name:       "带域名的命名正则匹配", //无法匹配端口信息
-			h:          newMethod("?127.0.0.1:\\d+/api/v(?P<version>\\d+)/login"),
+			h:          newServeMux("?127.0.0.1:\\d+/api/v(?P<version>\\d+)/login"),
 			query:      "/api/v2/login",
 			statusCode: 200,
 			ctxName:    "params",

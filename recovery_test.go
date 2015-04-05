@@ -30,6 +30,6 @@ func TestNewRecovery(t *testing.T) {
 	})
 
 	// 指定fun参数为nil，能正确设置其值
-	r := NewRecovery(&Method{}, nil)
+	r := NewRecovery(&ServeMux{}, nil)
 	a.NotNil(r.recoverFunc)
 }
