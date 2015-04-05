@@ -93,6 +93,14 @@ func TestMethod_ServeHTTP(t *testing.T) {
 			query:      "/abc",
 			statusCode: 200,
 		},
+		&handlerTester{
+			name:       "带域名的命名正则匹配", //无法匹配端口信息
+			h:          newMethod("?127.0.0.1:\\d+/api/v(?P<version>\\d+)/login"),
+			query:      "/api/v2/login",
+			statusCode: 200,
+			ctxName:    "params",
+			ctxMap:     map[string]string{"version": "2"},
+		},
 	}
 
 	runHandlerTester(a, tests)
