@@ -5,6 +5,7 @@
 package mux
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -19,9 +20,7 @@ type handlerTester struct {
 	h     http.Handler // 用于测试的http.Handler实例
 	query string       // 访问测试所用的查询字符串
 
-	// 返回值部分
-	response   string // 从h返回的response内容，仅包含主体部分，不包含头信息
-	statusCode int    // 返回的状态码
+	statusCode int // 通过返回的状态码，判断是否是需要的值。
 
 	ctxName string            // h在context中设置的变量名称，若没有，则为空值。
 	ctxMap  map[string]string // 以及该变量对应的值
@@ -66,15 +65,10 @@ func runHandlerTester(a *assert.Assertion, tests []*handlerTester) {
 		resp, err := http.Get(srv.URL + test.query)
 		a.NotError(err).NotNil(resp)
 
-		// 比较statusCode
-		errStr := "在执行[%v]时，其返回的状态码不相等，预期值:[%v]，实际值:[%v]"
-		a.Equal(resp.StatusCode, test.statusCode, errStr, test.name, test.statusCode, resp.StatusCode)
-
-		// 比较response
-		p, err := ioutil.ReadAll(resp.Body)
+		msg, err := ioutil.ReadAll(resp.Body)
 		a.NotError(err)
-		errStr = "在执行[%v]时，其返回的内容不相等，预期值:[%v]，实际值:[%v]"
-		a.Equal(p, []byte(test.response), errStr, test.name, test.response, string(p))
+		errStr := "在执行[%v]时，其返回的状态码[%v]与预期值[%v]不相等;提示信息为：[%v]"
+		a.Equal(resp.StatusCode, test.statusCode, errStr, test.name, resp.StatusCode, test.statusCode, string(msg))
 
 		srv.Close() // 在for的最后关闭当前的srv
 	}
@@ -82,11 +76,10 @@ func runHandlerTester(a *assert.Assertion, tests []*handlerTester) {
 
 func errHandler(w http.ResponseWriter, msg interface{}) {
 	w.WriteHeader(404)
-	w.Write([]byte("error"))
+	fmt.Fprint(w, msg)
 }
 
 // 默认的handler，向response输出ok。
 func defaultHandler(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(200)
-	w.Write([]byte("OK"))
 }

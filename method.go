@@ -160,17 +160,44 @@ func (m *Method) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if !found {
 		entries, found = m.entries["*"]
 		if !found { // 也不存在*
-			panic("没有找到与之匹配的方法：" + req.Method)
+			panic("ServeHTTP:没有找到与之匹配的方法：" + req.Method)
 		}
 	}
 
+	pattern := req.URL.Path
 	for _, entry := range entries.list {
-		if ok, mapped := entry.match(req.URL.Path); ok {
+		if entry.pattern[0] != '/' {
+			pattern = req.Host + req.URL.Path
+		}
+
+		if entry.expr == nil { // 普通字符串匹配
+			if entry.pattern != pattern {
+				continue
+			}
 			ctx := context.Get(req)
-			ctx.Set("params", mapped)
+			ctx.Set("params", nil)
 			entry.handler.ServeHTTP(w, req)
 			return
 		}
-	}
-	panic("没有找到与之前匹配的路径：" + req.URL.Path)
+
+		if !entry.expr.MatchString(pattern) { //不能匹配正则表达式
+			continue
+		}
+
+		// 正确匹配正则表达式，则获相关的正则表达式命名变量。
+		mapped := make(map[string]string)
+		subexps := entry.expr.SubexpNames()
+		args := entry.expr.FindStringSubmatch(pattern)
+		for index, name := range subexps {
+			if len(name) > 0 {
+				mapped[name] = args[index]
+			}
+		}
+		ctx := context.Get(req)
+		ctx.Set("params", mapped)
+		entry.handler.ServeHTTP(w, req)
+		return
+	} // end for entries.list
+
+	panic("没有找到与之前匹配的路径：" + pattern)
 }

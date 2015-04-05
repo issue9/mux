@@ -51,21 +51,18 @@ func TestMethod_ServeHTTP(t *testing.T) {
 			name:       "普通匹配",
 			h:          newMethod("/abc"),
 			query:      "/abc",
-			response:   "OK",
 			statusCode: 200,
 		},
 		&handlerTester{
 			name:       "普通不匹配",
 			h:          newMethod("/abc"),
 			query:      "/abcd",
-			response:   "error",
 			statusCode: 404,
 		},
 		&handlerTester{
 			name:       "正则匹配数字",
 			h:          newMethod("?/api/(?P<version>\\d+)"),
 			query:      "/api/2",
-			response:   "OK",
 			statusCode: 200,
 			ctxName:    "params",
 			ctxMap:     map[string]string{"version": "2"},
@@ -74,7 +71,6 @@ func TestMethod_ServeHTTP(t *testing.T) {
 			name:       "正则匹配多个名称",
 			h:          newMethod("?/api/(?P<version>\\d+)/(?P<name>\\w+)"),
 			query:      "/api/2/login",
-			response:   "OK",
 			statusCode: 200,
 			ctxName:    "params",
 			ctxMap:     map[string]string{"version": "2", "name": "login"},
@@ -83,8 +79,19 @@ func TestMethod_ServeHTTP(t *testing.T) {
 			name:       "正则不匹配多个名称",
 			h:          newMethod("?/api/(?P<version>\\d+)/(?P<name>\\w+)"),
 			query:      "/api/2.0/login",
-			response:   "error",
 			statusCode: 404,
+		},
+		&handlerTester{
+			name:       "带域名的字符串不匹配", //无法匹配端口信息
+			h:          newMethod("127.0.0.1/abc"),
+			query:      "/abc",
+			statusCode: 404,
+		},
+		&handlerTester{
+			name:       "带域名的正则匹配", //无法匹配端口信息
+			h:          newMethod("?127.0.0.1:\\d+/abc"),
+			query:      "/abc",
+			statusCode: 200,
 		},
 	}
 
