@@ -51,13 +51,12 @@ func NewServeMux() *ServeMux {
 // 添加一条路由数据。
 //
 // pattern为路由匹配模式，可以是正则匹配也可以是字符串匹配，
-// 以第一个字符来确定是否为一个正则匹配，若第一个字符为'?'，
-// 则将'?'之后的所有字符当作一个正则表达式来匹配路由；
-// 否则为一个普通的字符串匹配。
+// 若第一个字符为'?'，则将第一个字符去掉之后，
+// 将其后的字符串当作一个正则表达式来处理；
+// 否则整个字符串就当作一个普通的字符串来进行比较。
+// pattern可以带上域名，当第一个字符为'/'当作是一个路径，否则就将'/'之前的当作域名或IP。
 // methods参数应该只能为http.Request.Method中合法的字符串以及代表所有方法的"*"，
-// 其它任何字符串都是无效的，但不会提示错误。
-//
-// 当methods或是h为空时，将返回错误信息。
+// 其它任何字符串都是无效的，但不会提示错误。当methods或是h为空时，将返回错误信息。
 func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) error {
 	if len(methods) == 0 {
 		return errors.New("Add:请至少指定一个methods参数")
