@@ -171,24 +171,35 @@ func (mux *ServeMux) AnyFunc(pattern string, fun func(http.ResponseWriter, *http
 	return mux.AddFunc(pattern, fun, "*")
 }
 
+// 获取符合当前Method的所有路由项。即req.Method与"*"的内容
+// 仅供ServeHTTP()调用。
+func (mux *ServeMux) getList(req *http.Request) (list []*entry) {
+	if methods, found := mux.methods[req.Method]; found {
+		list = append(list, methods.list...)
+	}
+
+	if methods, found := mux.methods["*"]; found {
+		list = append(list, methods.list...)
+	}
+
+	if len(list) == 0 {
+		panic("ServeHTTP:没有找到与之匹配的方法：" + req.Method)
+	}
+
+	return
+}
+
 // implement http.Handler.ServerHTTP()
 func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	mux.mu.Lock()
 	defer mux.mu.Unlock()
 
-	// 找到与req.ServeMux对应的map，若不存在，则尝试找*
-	methods, found := mux.methods[req.Method]
-	if !found {
-		methods, found = mux.methods["*"]
-		if !found { // 也不存在*
-			panic("ServeHTTP:没有找到与之匹配的方法：" + req.Method)
-		}
-	}
-
-	pattern := req.URL.Path
-	for _, entry := range methods.list {
+	list := mux.getList(req)
+	hostPattern := req.Host + req.URL.Path
+	for _, entry := range list {
+		pattern := req.URL.Path
 		if entry.pattern[0] != '/' {
-			pattern = req.Host + req.URL.Path
+			pattern = hostPattern
 		}
 
 		if entry.expr == nil { // 普通字符串匹配
@@ -220,5 +231,5 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	} // end for methods.list
 
-	panic("没有找到与之前匹配的路径：" + pattern)
+	panic(fmt.Sprintf("没有找到与之前匹配的路径，Host:[%v],Path:[%v]", req.Host, req.URL.Path))
 }
