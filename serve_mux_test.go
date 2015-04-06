@@ -19,21 +19,43 @@ func TestServeMux_Add(t *testing.T) {
 	// handler不能为空
 	a.Error(m.Add("abc", nil, "GET"))
 
-	fn := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {})
+	fn := func(w http.ResponseWriter, req *http.Request) {}
+	h := http.HandlerFunc(fn)
+
+	a.Error(m.Add("", h, "GET"))
+	a.Error(m.Add("?", h, "GET"))
 
 	// methods为空
-	a.Error(m.Add("abc", fn))
+	a.Error(m.Add("abc", h))
 
-	a.NotError(m.Add("abc", fn, "GET", "POST"))
-	_, found := m.entries["GET"]
+	// 向Get和Post添加一个路由abc
+	a.NotError(m.Add("abc", h, "GET", "POST"))
+	_, found := m.methods["GET"]
 	a.True(found)
-	_, found = m.entries["POST"]
+	_, found = m.methods["POST"]
 	a.True(found)
-	_, found = m.entries["DELETE"]
+	_, found = m.methods["DELETE"]
 	a.False(found)
 
-	a.NotError(m.Get("def", fn))
-	es, found := m.entries["GET"]
+	// 再次向Get添加一条同名路由，会出错
+	a.Error(m.Get("abc", h))
+
+	a.NotError(m.Get("def", h))
+	es, found := m.methods["GET"]
+	a.True(found).Equal(2, len(es.list))
+
+	// Delete
+	a.NotError(m.Delete("abc", h))
+	es, found = m.methods["DELETE"]
+	a.True(found).Equal(1, len(es.list))
+	a.NotError(m.DeleteFunc("abcd", fn))
+	a.True(found).Equal(2, len(es.list))
+
+	//Put
+	a.NotError(m.Put("abc", h))
+	es, found = m.methods["PUT"]
+	a.True(found).Equal(1, len(es.list))
+	a.NotError(m.PutFunc("abcd", fn))
 	a.True(found).Equal(2, len(es.list))
 }
 

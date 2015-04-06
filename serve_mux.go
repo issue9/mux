@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 	"sync"
 
@@ -32,19 +33,25 @@ import (
 // 还有一个功能与之相同的ServeMux2，用法上有些稍微的差别。具体可参考ServeMux的文档。
 type ServeMux struct {
 	mu      sync.Mutex
-	entries map[string]*methodEntries
+	methods map[string]*entries
 }
 
-type methodEntries struct {
+type entries struct {
 	list  []*entry
 	named map[string]*entry
+}
+
+type entry struct {
+	pattern string
+	expr    *regexp.Regexp
+	handler http.Handler
 }
 
 // 声明一个新的ServeMux
 func NewServeMux() *ServeMux {
 	return &ServeMux{
 		// 至少5个：get/post/delete/put/*
-		entries: make(map[string]*methodEntries, 5),
+		methods: make(map[string]*entries, 5),
 	}
 }
 
@@ -66,31 +73,44 @@ func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) erro
 		return errors.New("Add:参数h不能为空")
 	}
 
+	if len(pattern) == 0 {
+		return errors.New("Add:pattern正则内容不能为空")
+	}
+
+	e := &entry{
+		pattern: pattern,
+		handler: h,
+	}
+
+	if pattern[0] == '?' { // 若以？开头，则表示是一个正则表达式
+		if len(pattern) == 1 {
+			return errors.New("newEntry:pattern正则内容不能为空")
+		}
+		e.pattern = pattern[1:]
+		e.expr = regexp.MustCompile(pattern[1:])
+	}
+
 	mux.mu.Lock()
 	defer mux.mu.Unlock()
 
 	for _, method := range methods {
 		method = strings.ToUpper(method)
 
-		entries, found := mux.entries[method]
-		if !found {
-			entries = &methodEntries{
+		methodEntries, found := mux.methods[method]
+		if !found { // 为新的method分配空间
+			methodEntries = &entries{
 				list:  []*entry{},
 				named: map[string]*entry{},
 			}
-			mux.entries[method] = entries
+			mux.methods[method] = methodEntries
 		}
 
-		if _, found = entries.named[pattern]; found {
+		if _, found = methodEntries.named[pattern]; found {
 			return fmt.Errorf("Add:该表达式[%v]已经存在", pattern)
 		}
 
-		entry, err := newEntry(pattern, h)
-		if err != nil {
-			return err
-		}
-		entries.list = append(entries.list, entry)
-		entries.named[pattern] = entry
+		methodEntries.list = append(methodEntries.list, e)
+		methodEntries.named[pattern] = e
 	} // end for methods
 
 	return nil
@@ -157,16 +177,16 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	defer mux.mu.Unlock()
 
 	// 找到与req.ServeMux对应的map，若不存在，则尝试找*
-	entries, found := mux.entries[req.Method]
+	methods, found := mux.methods[req.Method]
 	if !found {
-		entries, found = mux.entries["*"]
+		methods, found = mux.methods["*"]
 		if !found { // 也不存在*
 			panic("ServeHTTP:没有找到与之匹配的方法：" + req.Method)
 		}
 	}
 
 	pattern := req.URL.Path
-	for _, entry := range entries.list {
+	for _, entry := range methods.list {
 		if entry.pattern[0] != '/' {
 			pattern = req.Host + req.URL.Path
 		}
@@ -198,7 +218,7 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		ctx.Set("params", mapped)
 		entry.handler.ServeHTTP(w, req)
 		return
-	} // end for entries.list
+	} // end for methods.list
 
 	panic("没有找到与之前匹配的路径：" + pattern)
 }
