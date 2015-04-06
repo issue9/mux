@@ -59,6 +59,34 @@ func TestServeMux_Add(t *testing.T) {
 	a.True(found).Equal(2, len(es.list))
 }
 
+func TestServeMux_Remove(t *testing.T) {
+	a := assert.New(t)
+	m := NewServeMux()
+	a.NotNil(m)
+
+	fn := func(w http.ResponseWriter, req *http.Request) {}
+	h := http.HandlerFunc(fn)
+
+	// 向Get和Post添加一个路由abc
+	a.NotError(m.Add("abc", h, "GET", "POST", "DELETE"))
+	a.NotError(m.Add("abcd", h, "GET", "POST", "DELETE"))
+	a.Equal(2, len(m.methods["GET"].list))
+	a.Equal(2, len(m.methods["POST"].list))
+	a.Equal(2, len(m.methods["DELETE"].list))
+
+	// 删除Get,Post下的匹配项
+	m.Remove("abc", "GET", "POST")
+	a.Equal(1, len(m.methods["GET"].list))
+	a.Equal(1, len(m.methods["POST"].list))
+	a.Equal(2, len(m.methods["DELETE"].list))
+
+	// 删除任意method下的匹配项。
+	m.Remove("abcd", "GET", "*")
+	a.Equal(0, len(m.methods["GET"].list))
+	a.Equal(0, len(m.methods["POST"].list))
+	a.Equal(1, len(m.methods["DELETE"].list))
+}
+
 func TestServeMux_ServeHTTP(t *testing.T) {
 	a := assert.New(t)
 

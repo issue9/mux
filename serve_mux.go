@@ -171,22 +171,60 @@ func (mux *ServeMux) AnyFunc(pattern string, fun func(http.ResponseWriter, *http
 	return mux.AddFunc(pattern, fun, "*")
 }
 
+// 仅供Remove()使用
+func deleteFromEntries(entries *entries, pattern string) {
+	delete(entries.named, pattern)
+
+	for index, entry := range entries.list {
+		if entry.pattern == pattern {
+			entries.list = append(entries.list[:index], entries.list[index+1:]...)
+			return
+		}
+	}
+}
+
+// 移除指定的路由项，通过路由表达式和method来匹配。
+// 当未指定methods时，将不发生任何删除操作。
+func (mux *ServeMux) Remove(pattern string, methods ...string) {
+	mux.mu.Lock()
+	defer mux.mu.Unlock()
+
+	// 若存在匹配任意method，则从任何method中删除路由项
+	for _, m := range methods {
+		if m != "*" {
+			continue
+		}
+
+		for _, entries := range mux.methods {
+			deleteFromEntries(entries, pattern)
+		}
+		return
+	}
+
+	// 否则只从匹配的method中删除路由项。
+	for _, method := range methods {
+		if entries, found := mux.methods[method]; found {
+			deleteFromEntries(entries, pattern)
+		}
+
+	}
+}
+
 // 获取符合当前Method的所有路由项。即req.Method与"*"的内容
 // 仅供ServeHTTP()调用。
-func (mux *ServeMux) getList(req *http.Request) (list []*entry) {
+func (mux *ServeMux) getList(req *http.Request) []*entry {
 	if methods, found := mux.methods[req.Method]; found {
-		list = append(list, methods.list...)
+		if anyMethods, found := mux.methods["*"]; found {
+			return append(methods.list, anyMethods.list...)
+		}
+		return methods.list
 	}
 
 	if methods, found := mux.methods["*"]; found {
-		list = append(list, methods.list...)
+		return methods.list
 	}
 
-	if len(list) == 0 {
-		panic("ServeHTTP:没有找到与之匹配的方法：" + req.Method)
-	}
-
-	return
+	panic("ServeHTTP:没有找到与之匹配的方法：" + req.Method)
 }
 
 // implement http.Handler.ServerHTTP()

@@ -101,6 +101,11 @@ func (m *ServeMux2) AnyFunc(pattern string, fun func(http.ResponseWriter, *http.
 	return m.AddFunc(pattern, fun, "*")
 }
 
+// 移除指定匹配的路由项。
+func (m *ServeMux2) Remove(pattern string, methods ...string) {
+	m.mux.Remove(pattern, methods...)
+}
+
 // implement http.Handler.ServerHTTP()
 // 若有错误，则会panic
 func (m *ServeMux2) ServeHTTP(w http.ResponseWriter, req *http.Request) {
