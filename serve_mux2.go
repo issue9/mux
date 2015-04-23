@@ -37,7 +37,7 @@ func (m *ServeMux2) Errors() []error {
 }
 
 // 添加一条路由数据。
-// 具体参数可参考ServeMux.Add()方法。
+// 具体参数可参考ServeMux2.Add()方法。
 func (m *ServeMux2) Add(pattern string, h http.Handler, muxs ...string) *ServeMux2 {
 	if err := m.mux.Add(pattern, h, muxs...); err != nil {
 		m.errors = append(m.errors, err)
@@ -46,27 +46,27 @@ func (m *ServeMux2) Add(pattern string, h http.Handler, muxs ...string) *ServeMu
 	return m
 }
 
-// Get相当于m.Add(h, "GET")的简易写法
+// Get相当于ServeMux2.Add(pattern, h, "GET")的简易写法
 func (m *ServeMux2) Get(pattern string, h http.Handler) *ServeMux2 {
 	return m.Add(pattern, h, "GET")
 }
 
-// Post相当于m.Add(h, "POST")的简易写法
+// Post相当于ServeMux2.Add(pattern, h, "POST")的简易写法
 func (m *ServeMux2) Post(pattern string, h http.Handler) *ServeMux2 {
 	return m.Add(pattern, h, "POST")
 }
 
-// Delete相当于m.Add(h, "DELETE")的简易写法
+// Delete相当于ServeMux2.Add(pattern, h, "DELETE")的简易写法
 func (m *ServeMux2) Delete(pattern string, h http.Handler) *ServeMux2 {
 	return m.Add(pattern, h, "DELETE")
 }
 
-// Put相当于m.Add(h, "PUT")的简易写法
+// Put相当于ServeMux2.Add(pattern, h, "PUT")的简易写法
 func (m *ServeMux2) Put(pattern string, h http.Handler) *ServeMux2 {
 	return m.Add(pattern, h, "PUT")
 }
 
-// Any相当于m.Add(h, "*")的简易写法
+// Any相当于ServeMux2.Add(pattern, h, "*")的简易写法
 func (m *ServeMux2) Any(pattern string, h http.Handler) *ServeMux2 {
 	return m.Add(pattern, h, "*")
 }
@@ -76,27 +76,27 @@ func (m *ServeMux2) AddFunc(pattern string, fun func(http.ResponseWriter, *http.
 	return m.Add(pattern, http.HandlerFunc(fun), muxs...)
 }
 
-// GetFunc相当于m.AddFunc(h, "GET")的简易写法
+// GetFunc相当于ServeMux2.AddFunc(pattern, fun, "GET")的简易写法
 func (m *ServeMux2) GetFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *ServeMux2 {
 	return m.AddFunc(pattern, fun, "GET")
 }
 
-// PostFunc相当于m.AddFunc(h, "POST")的简易写法
+// PostFunc相当于ServeMux2.AddFunc(pattern, fun, "POST")的简易写法
 func (m *ServeMux2) PostFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *ServeMux2 {
 	return m.AddFunc(pattern, fun, "POST")
 }
 
-// PutFunc相当于m.AddFunc(h, "PUT")的简易写法
+// PutFunc相当于ServeMux2.AddFunc(pattern, fun, "PUT")的简易写法
 func (m *ServeMux2) PutFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *ServeMux2 {
 	return m.AddFunc(pattern, fun, "PUT")
 }
 
-// DeleteFunc相当于m.AddFunc(h, "DELETE")的简易写法
+// DeleteFunc相当于ServeMux2.AddFunc(pattern, fun, "DELETE")的简易写法
 func (m *ServeMux2) DeleteFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *ServeMux2 {
 	return m.AddFunc(pattern, fun, "DELETE")
 }
 
-// AnyFunc相当于m.AddFunc(h, "*")的简易写法
+// AnyFunc相当于ServeMux2.AddFunc(pattern, fun, "*")的简易写法
 func (m *ServeMux2) AnyFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *ServeMux2 {
 	return m.AddFunc(pattern, fun, "*")
 }
