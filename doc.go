@@ -13,6 +13,9 @@
 //            Post("www.example/api/login", h2)
 //
 //  http.ListenAndServe("8080", m)
+//
+//  /post-{id:\d+}/
+//  /post/{id}
 package mux
 
 const Version = "0.7.15.150423"

@@ -6,6 +6,7 @@ package mux
 
 import (
 	"net/http"
+	"regexp"
 	"testing"
 
 	"github.com/issue9/assert"
@@ -154,4 +155,52 @@ func TestServeMux_ServeHTTP(t *testing.T) {
 	}
 
 	runHandlerTester(a, tests)
+}
+
+func BenchmarkAccessMap(b *testing.B) {
+	m := map[string]string{
+		"1": "1",
+		"2": "2",
+	}
+	for i := 0; i < b.N; i++ {
+		m["1"] = m["2"]
+	}
+}
+
+func BenchmarkAccessSlice(b *testing.B) {
+	type a struct {
+		a string
+		b string
+	}
+
+	m := []*a{
+		&a{a: "a", b: "b"},
+		&a{a: "a", b: "b"},
+	}
+	for i := 0; i < b.N; i++ {
+		m[0].a = m[1].a
+	}
+}
+
+func BenchmarkRegexp1(b *testing.B) {
+	exp := regexp.MustCompile("/blog/(?P<action>\\w+)/(?P<id>\\d+)")
+	ii := 0
+	for i := 0; i < b.N; i++ {
+		if exp.MatchString("/blog/post/1") {
+			ii++
+		}
+	}
+}
+
+func BenchmarkRegexp2(b *testing.B) {
+	idExpr := regexp.MustCompile("(?P<id>\\d+)")
+	actExpr := regexp.MustCompile("(?P<action>\\w+)")
+	str := "/blog/post/1"
+	ii := 0
+	for i := 0; i < b.N; i++ {
+		if str[0:5] == "/blog" && actExpr.MatchString(str[5:10]) && idExpr.MatchString(str[10:]) {
+			ii++
+		}
+		//TODO
+	}
 }
