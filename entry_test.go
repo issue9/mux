@@ -27,5 +27,4 @@ func TestNewEntry(t *testing.T) {
 	a := assert.New(t)
 
 	a.Equal(newEntry("/blog/post/1"), staticEntry("/blog/post/1"))
-	//a.Equal(newEntry("/blog/{post}/1"), ("/blog/{post/1"))
 }

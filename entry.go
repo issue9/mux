@@ -28,49 +28,77 @@ func (e staticEntry) match(url string) (int, map[string]string) {
 	return -1, nil
 }
 
-type node struct {
-	ntype int // 1:普通字符串;2:匹配任意值;3:正则表达式
-	expr  *regexp.Regexp
-	value string
+type regexpEntry struct {
+	expr      *regexp.Regexp
+	hasParams bool
 }
-
-func (n node) isMatch(str string) bool {
-	switch n.ntype {
-	case 1:
-		return n.value == str
-	case 2:
-		return n.value == str
-	case 3:
-		return n.expr.MatchString(str)
-	default:
-		panic("node.isMatch:错误的ntype")
-	}
-}
-
-// /blog/{post:\\w+}-{:\\d+}
-// /blog/(<?P<post>\\w+)-(\\d+)
-type regexpEntry []node
 
 // {action:\\w+}{id:\\d+}/page
 // post1/page
 func (e regexpEntry) match(url string) (int, map[string]string) {
-	for _, v := range e {
-		if v.ntype == 1 {
-			if len(v.value) > len(url) || v.value != url[:len(v.value)] {
-				return -1, nil
-			}
-			url = url[len(v.value):]
+	loc := e.expr.FindStringIndex(url)
+	if loc == nil {
+		return -1, nil
+	}
+
+	r := len(url) - loc[1]
+	if !e.hasParams {
+		return r, nil
+	}
+
+	// 正确匹配正则表达式，则获相关的正则表达式命名变量。
+	mapped := make(map[string]string)
+	subexps := e.expr.SubexpNames()
+	args := e.expr.FindStringSubmatch(url)
+	for index, name := range subexps {
+		if len(name) > 0 {
+			mapped[name] = args[index]
+		}
+	}
+	return r, nil
+}
+
+func newEntry(pattern string) entryer {
+	strs := split(pattern)
+
+	if len(strs) == 1 { // 静态路由
+		return staticEntry(pattern)
+	}
+
+	pattern = pattern[:0]
+	hasParams := false
+	for _, v := range strs {
+		lastIndex := len(v) - 1
+		if v[0] != '{' || v[lastIndex] != '}' { // 普通字符串
+			pattern += v
 			continue
 		}
 
-		if v.ntype == 2 {
+		v = v[1:lastIndex] // 去掉首尾的{}符号
+
+		index := strings.IndexByte(v, ':')
+		if index < 0 { // 只存在命名，而不存在正则表达式，默认匹配[^/]
+			pattern += "(?P<" + v + ">[^/]+)"
+			hasParams = true
+			continue
 		}
+
+		if index == 0 { // 不存在命名，但有正则表达式
+			pattern += v[1:]
+			continue
+		}
+
+		pattern += "(?P<" + v[:index] + ">" + v[index+1:] + ")"
+		hasParams = true
 	}
 
-	return 0, nil
+	return &regexpEntry{
+		expr:      regexp.MustCompile(pattern),
+		hasParams: hasParams,
+	}
 }
 
-// 将pattern以{和}为分隔符进行分隔。
+// 将str以{和}为分隔符进行分隔。
 // 符号{和}必须成对出现，且不能嵌套，否则结果是未知的。
 func split(str string) []string {
 	ret := []string{}
@@ -103,33 +131,4 @@ func split(str string) []string {
 	}
 
 	return ret
-}
-
-func newEntry(pattern string) entryer {
-	strs := split(pattern)
-
-	if len(strs) == 1 { // 静态路由
-		return staticEntry(pattern)
-	}
-
-	nodes := make([]node, 0, len(strs))
-	for _, v := range strs {
-		lastIndex := len(v) - 1
-		if v[0] != '{' || v[lastIndex] != '}' { // 普通字符串
-			nodes = append(nodes, node{ntype: 1, value: v, expr: nil})
-			continue
-		}
-
-		v = v[1:lastIndex] // 去掉首尾的{}符号
-
-		index := strings.IndexByte(v, ':')
-		if index < 0 { // 不存在正则表达式
-			nodes = append(nodes, node{ntype: 2, value: v, expr: nil})
-			continue
-		}
-
-		expr := regexp.MustCompile(v[index+1:])
-		nodes = append(nodes, node{ntype: 3, value: v[:index], expr: expr})
-	}
-	return &regexpEntry{}
 }
