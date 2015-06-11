@@ -55,7 +55,7 @@ func (e regexpEntry) match(url string) (int, map[string]string) {
 			mapped[name] = args[index]
 		}
 	}
-	return r, nil
+	return r, mapped
 }
 
 func newEntry(pattern string) entryer {
@@ -65,8 +65,19 @@ func newEntry(pattern string) entryer {
 		return staticEntry(pattern)
 	}
 
-	pattern = pattern[:0]
+	pattern, hasParams := toPattern(strs)
+	return &regexpEntry{
+		expr:      regexp.MustCompile(pattern),
+		hasParams: hasParams,
+	}
+}
+
+// 将strs按照顺序合并成一个正则表达式
+// 返回参数正则表达式的字符串和一个bool值用以表式正则中是否包含了命名匹配。
+func toPattern(strs []string) (string, bool) {
+	pattern := ""
 	hasParams := false
+
 	for _, v := range strs {
 		lastIndex := len(v) - 1
 		if v[0] != '{' || v[lastIndex] != '}' { // 普通字符串
@@ -92,10 +103,7 @@ func newEntry(pattern string) entryer {
 		hasParams = true
 	}
 
-	return &regexpEntry{
-		expr:      regexp.MustCompile(pattern),
-		hasParams: hasParams,
-	}
+	return pattern, hasParams
 }
 
 // 将str以{和}为分隔符进行分隔。
