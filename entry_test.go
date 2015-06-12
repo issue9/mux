@@ -5,6 +5,7 @@
 package mux
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/issue9/assert"
@@ -40,12 +41,18 @@ func TestToPattern(t *testing.T) {
 
 func TestNewEntry(t *testing.T) {
 	a := assert.New(t)
+	h := func(w http.ResponseWriter, r *http.Request) {
+	}
+	hf := http.HandlerFunc(h)
 
 	// 静态路由
-	a.Equal(newEntry("/blog/post/1"), staticEntry("/blog/post/1"))
+	e := newEntry("/blog/post/1", hf)
+	se, ok := e.(staticEntry)
+	a.True(ok)
+	a.Equal(se.pattern, "/blog/post/1")
 
 	// 正则路由
-	e := newEntry("/blog/post/{id}")
+	e = newEntry("/blog/post/{id}", hf)
 	r, arg := e.match("/blog/post/1")
 	a.Equal(r, 0).Equal(arg, map[string]string{"id": "1"})
 
@@ -56,7 +63,7 @@ func TestNewEntry(t *testing.T) {
 	a.Equal(r, -1).Nil(arg)
 
 	// 多个命名正则表达式
-	e = newEntry("/blog/{action:\\w+}-{id:\\d+}/")
+	e = newEntry("/blog/{action:\\w+}-{id:\\d+}/", hf)
 	r, arg = e.match("/blog/post-1/page-2")
 	a.Equal(r, 6).Equal(arg, map[string]string{"action": "post", "id": "1"})
 

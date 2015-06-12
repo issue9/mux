@@ -5,32 +5,42 @@
 package mux
 
 import (
+	"net/http"
 	"regexp"
 	"strings"
 )
 
 type entryer interface {
 	match(url string) (int, map[string]string)
+	handle(w http.ResponseWriter, r *http.Request)
 }
 
 // /post/1
-type staticEntry string
+type staticEntry struct {
+	pattern string
+	handler http.Handler
+}
 
 func (e staticEntry) match(url string) (int, map[string]string) {
-	if len(url) < len(e) {
+	if len(url) < len(e.pattern) {
 		return -1, nil
 	}
 
-	if string(e) == url[:len(e)] {
-		return len(url) - len(e), nil
+	if e.pattern == url[:len(e.pattern)] {
+		return len(url) - len(e.pattern), nil
 	}
 
 	return -1, nil
 }
 
+func (e staticEntry) handle(w http.ResponseWriter, r *http.Request) {
+	e.handler.ServeHTTP(w, r)
+}
+
 type regexpEntry struct {
 	expr      *regexp.Regexp
 	hasParams bool
+	handler   http.Handler
 }
 
 // {action:\\w+}{id:\\d+}/page
@@ -58,11 +68,18 @@ func (e regexpEntry) match(url string) (int, map[string]string) {
 	return r, mapped
 }
 
-func newEntry(pattern string) entryer {
+func (e regexpEntry) handle(w http.ResponseWriter, r *http.Request) {
+	e.handler.ServeHTTP(w, r)
+}
+
+func newEntry(pattern string, h http.Handler) entryer {
 	strs := split(pattern)
 
 	if len(strs) == 1 { // 静态路由
-		return staticEntry(pattern)
+		return staticEntry{
+			pattern: pattern,
+			handler: h,
+		}
 	}
 
 	pattern, hasParams := toPattern(strs)
