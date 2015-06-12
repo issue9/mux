@@ -64,9 +64,7 @@ func NewServeMux() *ServeMux {
 // 添加一条路由数据。
 //
 // pattern为路由匹配模式，可以是正则匹配也可以是字符串匹配，
-// 若第一个字符为'?'，则将第一个字符去掉之后，将其后的字符串当作一个正则表达式来处理；
-// 否则整个字符串就当作一个普通的字符串来进行比较。
-// pattern可以带上域名，当第一个字符为'/'当作是一个路径，否则就将'/'之前的当作域名或IP。
+// 可以带上域名，当第一个字符为'/'当作是一个路径，否则就将'/'之前的当作域名或IP。
 // methods参数应该只能为http.Request.Method中合法的字符串以及代表所有方法的"*"，
 // 其它任何字符串都是无效的，但不会提示错误。当methods或是h为空时，将返回错误信息。
 func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) error {
@@ -145,26 +143,29 @@ func (mux *ServeMux) GetFunc(pattern string, fun func(http.ResponseWriter, *http
 	return mux.AddFunc(pattern, fun, "GET")
 }
 
-// PutFunc相当于ServeMux.Add(pattern, func, "PUT")的简易写法
+// PutFunc相当于ServeMux.AddFunc(pattern, func, "PUT")的简易写法
 func (mux *ServeMux) PutFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) error {
 	return mux.AddFunc(pattern, fun, "PUT")
 }
 
-// PostFunc相当于ServeMux.Add(pattern, func, "POST")的简易写法
+// PostFunc相当于ServeMux.AddFunc(pattern, func, "POST")的简易写法
 func (mux *ServeMux) PostFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) error {
 	return mux.AddFunc(pattern, fun, "POST")
 }
 
-// DeleteFunc相当于ServeMux.Add(pattern, func, "DELETE")的简易写法
+// DeleteFunc相当于ServeMux.AddFunc(pattern, func, "DELETE")的简易写法
 func (mux *ServeMux) DeleteFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) error {
 	return mux.AddFunc(pattern, fun, "DELETE")
 }
 
-// AnyFunc相当于ServeMux.Add(pattern, func, "*")的简易写法
+// AnyFunc相当于ServeMux.AddFunc(pattern, func, "*")的简易写法
 func (mux *ServeMux) AnyFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) error {
 	return mux.AddFunc(pattern, fun, "*")
 }
 
+// 创建一个路由组，该组中所有的操作，都会加上前缀prefix
+//  g := srv.Group("/api")
+//  g.Get("/users") // 相当于 srv.Get("/api/users")
 func (mux *ServeMux) Group(prefix string) *Group {
 	return &Group{
 		mux:    mux,
