@@ -47,28 +47,28 @@ func TestNewEntry(t *testing.T) {
 
 	// 静态路由
 	e := newEntry("/blog/post/1", hf)
-	r := e.isMatch("/blog/post/1")
+	r := e.match("/blog/post/1")
 	a.Equal(r, 0).Nil(e.getParams("/blog/post/1"))
 
-	r = e.isMatch("/blog/post/1/page/2")
+	r = e.match("/blog/post/1/page/2")
 	a.Equal(r, 7).Nil(e.getParams("/blog/post/1/page/2"))
 
 	// 正则路由
 	e = newEntry("/blog/post/{id}", hf)
-	r = e.isMatch("/blog/post/1")
+	r = e.match("/blog/post/1")
 	a.Equal(r, 0).Equal(e.getParams("/blog/post/1"), map[string]string{"id": "1"})
 
-	r = e.isMatch("/blog/post/2/page/1")
+	r = e.match("/blog/post/2/page/1")
 	a.Equal(r, 7).Equal(e.getParams("/blog/post/2/page/1"), map[string]string{"id": "2"})
 
-	r = e.isMatch("/plog/post/2") // 不匹配
+	r = e.match("/plog/post/2") // 不匹配
 	a.Equal(r, -1).Equal(0, len(e.getParams("/plog/post/2")))
 
 	// 多个命名正则表达式
 	e = newEntry("/blog/{action:\\w+}-{id:\\d+}/", hf)
-	r = e.isMatch("/blog/post-1/page-2")
+	r = e.match("/blog/post-1/page-2")
 	a.Equal(r, 6).Equal(e.getParams("/blog/post-1/page-2"), map[string]string{"action": "post", "id": "1"})
 
-	r = e.isMatch("/blog/post-1d/") // 不匹配
+	r = e.match("/blog/post-1d/") // 不匹配
 	a.Equal(r, -1).Equal(0, len(e.getParams("/blog/post-1d/")))
 }

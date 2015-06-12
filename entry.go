@@ -20,7 +20,7 @@ type entry struct {
 // 匹配程度
 // {action:\\w+}{id:\\d+}/page
 // post1/page
-func (e *entry) isMatch(url string) int {
+func (e *entry) match(url string) int {
 	if e.expr == nil {
 		if len(url) < len(e.pattern) {
 			return -1

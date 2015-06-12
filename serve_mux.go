@@ -225,7 +225,7 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			url = hostURL
 		}
 
-		s := entry.isMatch(url)
+		s := entry.match(url)
 		if s == 0 { // 完全匹配，可以中止匹配过程
 			size = 0
 			e = entry
