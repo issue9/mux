@@ -47,13 +47,15 @@ func TestNewEntry(t *testing.T) {
 
 	// 静态路由
 	e := newEntry("/blog/post/1", hf)
-	se, ok := e.(staticEntry)
-	a.True(ok)
-	a.Equal(se.pattern, "/blog/post/1")
+	r, arg := e.match("/blog/post/1")
+	a.Equal(r, 0).Nil(arg)
+
+	r, arg = e.match("/blog/post/1/page/2")
+	a.Equal(r, 7).Nil(arg)
 
 	// 正则路由
 	e = newEntry("/blog/post/{id}", hf)
-	r, arg := e.match("/blog/post/1")
+	r, arg = e.match("/blog/post/1")
 	a.Equal(r, 0).Equal(arg, map[string]string{"id": "1"})
 
 	r, arg = e.match("/blog/post/2/page/1")

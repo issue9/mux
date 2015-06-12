@@ -10,34 +10,8 @@ import (
 	"strings"
 )
 
-type entryer interface {
-	match(url string) (int, map[string]string)
-	handle(w http.ResponseWriter, r *http.Request)
-}
-
-// /post/1
-type staticEntry struct {
-	pattern string
-	handler http.Handler
-}
-
-func (e staticEntry) match(url string) (int, map[string]string) {
-	if len(url) < len(e.pattern) {
-		return -1, nil
-	}
-
-	if e.pattern == url[:len(e.pattern)] {
-		return len(url) - len(e.pattern), nil
-	}
-
-	return -1, nil
-}
-
-func (e staticEntry) handle(w http.ResponseWriter, r *http.Request) {
-	e.handler.ServeHTTP(w, r)
-}
-
-type regexpEntry struct {
+type entry struct {
+	pattern   string
 	expr      *regexp.Regexp
 	hasParams bool
 	handler   http.Handler
@@ -45,7 +19,19 @@ type regexpEntry struct {
 
 // {action:\\w+}{id:\\d+}/page
 // post1/page
-func (e regexpEntry) match(url string) (int, map[string]string) {
+func (e *entry) match(url string) (int, map[string]string) {
+	if e.expr == nil {
+		if len(url) < len(e.pattern) {
+			return -1, nil
+		}
+
+		if e.pattern == url[:len(e.pattern)] {
+			return len(url) - len(e.pattern), nil
+		}
+
+		return -1, nil
+	}
+
 	loc := e.expr.FindStringIndex(url)
 	if loc == nil {
 		return -1, nil
@@ -68,22 +54,22 @@ func (e regexpEntry) match(url string) (int, map[string]string) {
 	return r, mapped
 }
 
-func (e regexpEntry) handle(w http.ResponseWriter, r *http.Request) {
+func (e *entry) handle(w http.ResponseWriter, r *http.Request) {
 	e.handler.ServeHTTP(w, r)
 }
 
-func newEntry(pattern string, h http.Handler) entryer {
+func newEntry(pattern string, h http.Handler) *entry {
 	strs := split(pattern)
 
 	if len(strs) == 1 { // 静态路由
-		return staticEntry{
+		return &entry{
 			pattern: pattern,
 			handler: h,
 		}
 	}
 
 	pattern, hasParams := toPattern(strs)
-	return &regexpEntry{
+	return &entry{
 		expr:      regexp.MustCompile(pattern),
 		hasParams: hasParams,
 	}
