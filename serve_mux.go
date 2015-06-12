@@ -165,6 +165,13 @@ func (mux *ServeMux) AnyFunc(pattern string, fun func(http.ResponseWriter, *http
 	return mux.AddFunc(pattern, fun, "*")
 }
 
+func (mux *ServeMux) Group(prefix string) *Group {
+	return &Group{
+		mux:    mux,
+		prefix: prefix,
+	}
+}
+
 // 仅供Remove()使用
 func deleteFromEntries(entries *entries, pattern string) {
 	delete(entries.named, pattern)
