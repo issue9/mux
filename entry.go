@@ -18,10 +18,11 @@ type entry struct {
 }
 
 // 匹配程度
-// {action:\\w+}{id:\\d+}/page
-// post1/page
+//  -1 表示完全不匹配
+//  0  表示完全匹配
+//  >0 表示部分匹配，值越小表示匹配程度越高。
 func (e *entry) match(url string) int {
-	if e.expr == nil {
+	if e.expr == nil { // 静态匹配
 		if len(url) < len(e.pattern) {
 			return -1
 		}
@@ -33,6 +34,7 @@ func (e *entry) match(url string) int {
 		return -1
 	}
 
+	// 正则匹配
 	if loc := e.expr.FindStringIndex(url); loc != nil {
 		return len(url) - loc[1]
 	}

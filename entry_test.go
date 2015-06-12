@@ -39,7 +39,7 @@ func TestToPattern(t *testing.T) {
 	fn("/blog/{:\\w+}-{id}", "/blog/\\w+-(?P<id>[^/]+)", true)
 }
 
-func TestNewEntry(t *testing.T) {
+func TestEntry(t *testing.T) {
 	a := assert.New(t)
 	h := func(w http.ResponseWriter, r *http.Request) {
 	}

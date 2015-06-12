@@ -194,6 +194,9 @@ func (mux *ServeMux) Remove(pattern string, methods ...string) {
 // 获取符合当前Method的所有路由项。即req.Method与"*"的内容
 // 仅供ServeHTTP()调用。
 func (mux *ServeMux) getList(req *http.Request) []*entry {
+	mux.mu.Lock()
+	defer mux.mu.Unlock()
+
 	if methods, found := mux.methods[req.Method]; found {
 		if anyMethods, found := mux.methods["*"]; found {
 			return append(methods.list, anyMethods.list...)
@@ -210,9 +213,6 @@ func (mux *ServeMux) getList(req *http.Request) []*entry {
 
 // implement http.Handler.ServerHTTP()
 func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	mux.mu.Lock()
-	defer mux.mu.Unlock()
-
 	list := mux.getList(req)
 	hostURL := req.Host + req.URL.Path
 	size := -1
@@ -226,18 +226,17 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 
 		s := entry.match(url)
-		if s == 0 { // 完全匹配，可以中止匹配过程
-			size = 0
-			e = entry
-			p = url
-			break
-		}
-		if s < 0 || (size > 0 && s > size) { // 不匹配
+		if s < 0 || (size > 0 && s > size) { // 完全不匹配
 			continue
 		}
+
 		size = s
 		e = entry
 		p = url
+
+		if s == 0 { // 完全匹配，可以中止匹配过程
+			break
+		}
 	} // end for methods.list
 	if size < 0 {
 		panic(fmt.Sprintf("没有找到与之前匹配的路径，Host:[%v],Path:[%v]", req.Host, req.URL.Path))
