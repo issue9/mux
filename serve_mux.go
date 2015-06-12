@@ -14,7 +14,7 @@ import (
 	"github.com/issue9/context"
 )
 
-// http.ServeMux的升级版，可处理正则匹配和method匹配。定义了以下六组函数：
+// http.ServeMux的升级版，可处理对URL的正则匹配和根据METHOD进行过滤。定义了以下六组函数：
 //  Add()    / AddFunc()
 //  Get()    / GetFunc()
 //  Post()   / PostFunc()
@@ -25,11 +25,24 @@ import (
 // 简单的用法如下：
 //  m := mux.NewServeMux()
 //  m.Get("www.example.com/abc", h1). // 只匹配www.example.com域名下的路径
-//    Post("/abc/"", h2). // 不限定域名的路径匹配
-//    Add("api/1",h3, "GET", "POST")
+//    Post("/abc/"", h2).			  // 不限定域名的路径匹配
+//    Add("api/1",h3, "GET", "POST")  // 只匹配GET和POST
 //  http.ListenAndServe(m)
 //
 // 还有一个功能与之相同的ServeMux2，用法上有些稍微的差别。具体可参考ServeMux的文档。
+//
+//
+// 匹配规则：
+//
+// 可能会出现多条记录与同一请求都匹配的情况，这种情况下，
+// 系统会找到一条认为最匹配的路由来处理，判断规则如下：
+//  1.当只有部分匹配时，以匹配字符最多的项为准。
+//  2.当有多条完全匹配时，以静态路由优先。 // TODO
+//
+// 正则匹配语法：
+//  /post/{id}     // 匹配/post/开头的任意字符串，其后的字符串保存到id中；
+//  /post/{id:\d+} // 同上，但id的值只能为\d+；
+//  /post/{:\d+}   // 同上，但是没有命名；
 type ServeMux struct {
 	mu      sync.Mutex
 	methods map[string]*entries

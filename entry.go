@@ -59,6 +59,9 @@ func (e *entry) getParams(url string) map[string]string {
 	return mapped
 }
 
+// 声明一个entry实例
+// pattern 匹配内容。
+// h 对应的http.Handler，有外层调用者确保该值不能为nil.
 func newEntry(pattern string, h http.Handler) *entry {
 	strs := split(pattern)
 
