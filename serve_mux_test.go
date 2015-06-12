@@ -6,7 +6,6 @@ package mux
 
 import (
 	"net/http"
-	"regexp"
 	"testing"
 
 	"github.com/issue9/assert"
@@ -24,7 +23,6 @@ func TestServeMux_Add(t *testing.T) {
 	h := http.HandlerFunc(fn)
 
 	a.Error(m.Add("", h, "GET"))
-	a.Error(m.Add("?", h, "GET"))
 
 	// methods为空
 	a.Error(m.Add("abc", h))
@@ -105,14 +103,20 @@ func TestServeMux_ServeHTTP(t *testing.T) {
 			statusCode: 200,
 		},
 		&handlerTester{
-			name:       "普通不匹配",
+			name:       "普通部分匹配",
 			h:          newServeMux("/abc"),
 			query:      "/abcd",
+			statusCode: 200,
+		},
+		&handlerTester{
+			name:       "普通不匹配",
+			h:          newServeMux("/abc"),
+			query:      "/cba",
 			statusCode: 404,
 		},
 		&handlerTester{
 			name:       "正则匹配数字",
-			h:          newServeMux("?/api/(?P<version>\\d+)"),
+			h:          newServeMux("/api/{version:\\d+}"),
 			query:      "/api/2",
 			statusCode: 200,
 			ctxName:    "params",
@@ -120,7 +124,7 @@ func TestServeMux_ServeHTTP(t *testing.T) {
 		},
 		&handlerTester{
 			name:       "正则匹配多个名称",
-			h:          newServeMux("?/api/(?P<version>\\d+)/(?P<name>\\w+)"),
+			h:          newServeMux("/api/{version:\\d+}/{name:\\w+}"),
 			query:      "/api/2/login",
 			statusCode: 200,
 			ctxName:    "params",
@@ -128,25 +132,25 @@ func TestServeMux_ServeHTTP(t *testing.T) {
 		},
 		&handlerTester{
 			name:       "正则不匹配多个名称",
-			h:          newServeMux("?/api/(?P<version>\\d+)/(?P<name>\\w+)"),
+			h:          newServeMux("/api/{version:\\d+}/{name:\\w+}"),
 			query:      "/api/2.0/login",
 			statusCode: 404,
 		},
 		&handlerTester{
 			name:       "带域名的字符串不匹配", //无法匹配端口信息
 			h:          newServeMux("127.0.0.1/abc"),
-			query:      "/abc",
+			query:      "/cba",
 			statusCode: 404,
 		},
 		&handlerTester{
 			name:       "带域名的正则匹配", //无法匹配端口信息
-			h:          newServeMux("?127.0.0.1:\\d+/abc"),
+			h:          newServeMux("127.0.0.1:{:\\d+}/abc"),
 			query:      "/abc",
 			statusCode: 200,
 		},
 		&handlerTester{
 			name:       "带域名的命名正则匹配", //无法匹配端口信息
-			h:          newServeMux("?127.0.0.1:\\d+/api/v(?P<version>\\d+)/login"),
+			h:          newServeMux("127.0.0.1:{:\\d+}/api/v{version:\\d+}/login"),
 			query:      "/api/v2/login",
 			statusCode: 200,
 			ctxName:    "params",
@@ -155,52 +159,4 @@ func TestServeMux_ServeHTTP(t *testing.T) {
 	}
 
 	runHandlerTester(a, tests)
-}
-
-func BenchmarkAccessMap(b *testing.B) {
-	m := map[string]string{
-		"1": "1",
-		"2": "2",
-	}
-	for i := 0; i < b.N; i++ {
-		m["1"] = m["2"]
-	}
-}
-
-func BenchmarkAccessSlice(b *testing.B) {
-	type a struct {
-		a string
-		b string
-	}
-
-	m := []*a{
-		&a{a: "a", b: "b"},
-		&a{a: "a", b: "b"},
-	}
-	for i := 0; i < b.N; i++ {
-		m[0].a = m[1].a
-	}
-}
-
-func BenchmarkRegexp1(b *testing.B) {
-	exp := regexp.MustCompile("/blog/(?P<action>\\w+)/(?P<id>\\d+)")
-	ii := 0
-	for i := 0; i < b.N; i++ {
-		if exp.MatchString("/blog/post/1") {
-			ii++
-		}
-	}
-}
-
-func BenchmarkRegexp2(b *testing.B) {
-	idExpr := regexp.MustCompile("(?P<id>\\d+)")
-	actExpr := regexp.MustCompile("(?P<action>\\w+)")
-	str := "/blog/post/1"
-	ii := 0
-	for i := 0; i < b.N; i++ {
-		if str[0:5] == "/blog" && actExpr.MatchString(str[5:10]) && idExpr.MatchString(str[10:]) {
-			ii++
-		}
-		//TODO
-	}
 }

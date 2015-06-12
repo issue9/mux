@@ -18,4 +18,4 @@
 //  /post/{id}
 package mux
 
-const Version = "0.7.15.150423"
+const Version = "0.8.16.150612"

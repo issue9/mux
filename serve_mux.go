@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"regexp"
 	"strings"
 	"sync"
 
@@ -41,12 +40,6 @@ type entries struct {
 	named map[string]*entry
 }
 
-type entry struct {
-	pattern string
-	expr    *regexp.Regexp
-	handler http.Handler
-}
-
 // 声明一个新的ServeMux
 func NewServeMux() *ServeMux {
 	return &ServeMux{
@@ -76,18 +69,7 @@ func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) erro
 		return errors.New("Add:pattern正则内容不能为空")
 	}
 
-	e := &entry{
-		pattern: pattern,
-		handler: h,
-	}
-
-	if pattern[0] == '?' { // 若以？开头，则表示是一个正则表达式
-		if len(pattern) == 1 {
-			return errors.New("Add:pattern正则内容不能为空")
-		}
-		e.pattern = pattern[1:]
-		e.expr = regexp.MustCompile(pattern[1:])
-	}
+	e := newEntry(pattern, h)
 
 	mux.mu.Lock()
 	defer mux.mu.Unlock()
@@ -232,41 +214,36 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	defer mux.mu.Unlock()
 
 	list := mux.getList(req)
-	hostPattern := req.Host + req.URL.Path
+	hostURL := req.Host + req.URL.Path
+	size := -1
+	var e *entry
+	var p string
+
 	for _, entry := range list {
-		pattern := req.URL.Path
+		url := req.URL.Path
 		if entry.pattern[0] != '/' {
-			pattern = hostPattern
+			url = hostURL
 		}
 
-		if entry.expr == nil { // 普通字符串匹配
-			if entry.pattern != pattern {
-				continue
-			}
-			ctx := context.Get(req)
-			ctx.Set("params", nil)
-			entry.handler.ServeHTTP(w, req)
-			return
+		s := entry.isMatch(url)
+		if s == 0 { // 完全匹配，可以中止匹配过程
+			size = 0
+			e = entry
+			p = url
+			break
 		}
-
-		if !entry.expr.MatchString(pattern) { //不能匹配正则表达式
+		if s < 0 || (size > 0 && s > size) { // 不匹配
 			continue
 		}
-
-		// 正确匹配正则表达式，则获相关的正则表达式命名变量。
-		mapped := make(map[string]string)
-		subexps := entry.expr.SubexpNames()
-		args := entry.expr.FindStringSubmatch(pattern)
-		for index, name := range subexps {
-			if len(name) > 0 {
-				mapped[name] = args[index]
-			}
-		}
-		ctx := context.Get(req)
-		ctx.Set("params", mapped)
-		entry.handler.ServeHTTP(w, req)
-		return
+		size = s
+		e = entry
+		p = url
 	} // end for methods.list
+	if size < 0 {
+		panic(fmt.Sprintf("没有找到与之前匹配的路径，Host:[%v],Path:[%v]", req.Host, req.URL.Path))
+	}
 
-	panic(fmt.Sprintf("没有找到与之前匹配的路径，Host:[%v],Path:[%v]", req.Host, req.URL.Path))
+	ctx := context.Get(req)
+	ctx.Set("params", e.getParams(p))
+	e.handler.ServeHTTP(w, req)
 }

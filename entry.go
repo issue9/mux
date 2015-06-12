@@ -17,29 +17,32 @@ type entry struct {
 	handler   http.Handler
 }
 
+// 匹配程度
 // {action:\\w+}{id:\\d+}/page
 // post1/page
-func (e *entry) match(url string) (int, map[string]string) {
+func (e *entry) isMatch(url string) int {
 	if e.expr == nil {
 		if len(url) < len(e.pattern) {
-			return -1, nil
+			return -1
 		}
 
 		if e.pattern == url[:len(e.pattern)] {
-			return len(url) - len(e.pattern), nil
+			return len(url) - len(e.pattern)
 		}
 
-		return -1, nil
+		return -1
 	}
 
-	loc := e.expr.FindStringIndex(url)
-	if loc == nil {
-		return -1, nil
+	if loc := e.expr.FindStringIndex(url); loc != nil {
+		return len(url) - loc[1]
 	}
+	return -1
+}
 
-	r := len(url) - loc[1]
+// 只有在match返回大于1的情况下，调用此函数才能返回正确结果。否则可能panic
+func (e *entry) getParams(url string) map[string]string {
 	if !e.hasParams {
-		return r, nil
+		return nil
 	}
 
 	// 正确匹配正则表达式，则获相关的正则表达式命名变量。
@@ -47,15 +50,11 @@ func (e *entry) match(url string) (int, map[string]string) {
 	subexps := e.expr.SubexpNames()
 	args := e.expr.FindStringSubmatch(url)
 	for index, name := range subexps {
-		if len(name) > 0 {
+		if len(name) > 0 && index < len(args) {
 			mapped[name] = args[index]
 		}
 	}
-	return r, mapped
-}
-
-func (e *entry) handle(w http.ResponseWriter, r *http.Request) {
-	e.handler.ServeHTTP(w, r)
+	return mapped
 }
 
 func newEntry(pattern string, h http.Handler) *entry {
@@ -70,8 +69,10 @@ func newEntry(pattern string, h http.Handler) *entry {
 
 	pattern, hasParams := toPattern(strs)
 	return &entry{
+		pattern:   pattern,
 		expr:      regexp.MustCompile(pattern),
 		hasParams: hasParams,
+		handler:   h,
 	}
 }
 
