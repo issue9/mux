@@ -5,16 +5,72 @@
 package mux
 
 import (
+	"errors"
 	"net/http"
 	"regexp"
 	"strings"
 )
+
+type entries struct {
+	statics []*entry
+	regexps []*entry
+	named   map[string]*entry
+}
 
 type entry struct {
 	pattern   string
 	expr      *regexp.Regexp
 	hasParams bool
 	handler   http.Handler
+}
+
+func newEntries() *entries {
+	return &entries{
+		statics: []*entry{},
+		regexps: []*entry{},
+		named:   map[string]*entry{},
+	}
+}
+
+func (es *entries) add(pattern string, h http.Handler) error {
+	if _, found := es.named[pattern]; found {
+		return errors.New("该模式的路由项已经存在")
+	}
+
+	e := newEntry(pattern, h)
+	es.named[pattern] = e
+
+	if e.expr == nil {
+		es.statics = append(es.statics, e)
+	} else {
+		es.regexps = append(es.regexps, e)
+	}
+
+	return nil
+}
+
+func (es *entries) remove(pattern string) {
+	if _, found := es.named[pattern]; !found {
+		return
+	}
+
+	delete(es.named, pattern)
+
+	// 从es.statics中删除
+	for k, v := range es.statics {
+		if v.pattern == pattern {
+			es.statics = append(es.statics[:k], es.statics[k+1:]...)
+			break
+		}
+	}
+
+	// 从es.regexps中删除
+	for k, v := range es.regexps {
+		if v.pattern == pattern {
+			es.regexps = append(es.regexps[:k], es.regexps[k+1:]...)
+			break
+		}
+	}
 }
 
 // 匹配程度

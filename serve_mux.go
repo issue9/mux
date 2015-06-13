@@ -44,22 +44,15 @@ import (
 //  /post/{id:\d+} // 同上，但id的值只能为\d+；
 //  /post/{:\d+}   // 同上，但是没有命名；
 type ServeMux struct {
-	mu      sync.Mutex
-	statics map[string]*entries
-	regexps map[string]*entries
-}
-
-type entries struct {
-	list  []*entry
-	named map[string]*entry
+	mu    sync.Mutex
+	items map[string]*entries
 }
 
 // 声明一个新的ServeMux
 func NewServeMux() *ServeMux {
 	return &ServeMux{
 		// 至少5个：get/post/delete/put/*
-		statics: make(map[string]*entries, 5),
-		regexps: make(map[string]*entries, 5),
+		items: make(map[string]*entries, 5),
 	}
 }
 
@@ -82,35 +75,25 @@ func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) erro
 		return errors.New("Add:pattern匹配内容不能为空")
 	}
 
-	e := newEntry(pattern, h)
-
 	mux.mu.Lock()
 	defer mux.mu.Unlock()
 
-	m := mux.statics
-	if e.expr != nil {
-		m = mux.regexps
-	}
 	for _, method := range methods {
 		method = strings.ToUpper(method)
 
-		methodEntries, found := m[method]
+		methodEntries, found := mux.items[method]
 		if !found { // 为新的method分配空间
-			methodEntries = &entries{
-				list:  []*entry{},
-				named: map[string]*entry{},
-			}
+			methodEntries = newEntries()
 		} else {
-			if _, found := methodEntries.named[e.pattern]; found {
-				return fmt.Errorf("addToEntryMap:该表达式[%v]已经存在", e.pattern)
+			if _, found := methodEntries.named[pattern]; found {
+				return fmt.Errorf("addToEntryMap:该表达式[%v]已经存在", pattern)
 			}
 		}
 
-		methodEntries.list = append(methodEntries.list, e)
-		methodEntries.named[e.pattern] = e
+		methodEntries.add(pattern, h)
 
 		if !found {
-			m[method] = methodEntries
+			mux.items[method] = methodEntries
 		}
 	}
 	return nil
@@ -181,47 +164,30 @@ func (mux *ServeMux) Group(prefix string) *Group {
 	}
 }
 
-// 仅供Remove()使用
-func deleteFromEntries(entries *entries, pattern string) {
-	delete(entries.named, pattern)
-
-	for index, entry := range entries.list {
-		if entry.pattern == pattern {
-			entries.list = append(entries.list[:index], entries.list[index+1:]...)
-			return
-		}
-	}
-}
-
 // 移除指定的路由项，通过路由表达式和method来匹配。
 // 当未指定methods时，将不发生任何删除操作。
 func (mux *ServeMux) Remove(pattern string, methods ...string) {
 	mux.mu.Lock()
 	defer mux.mu.Unlock()
 
-	// 若存在method值为"*"的情部，则从任何一个method中删除路由项。
+	isAny := false // 是否从任何method中删除
 	for _, m := range methods {
-		if m != "*" {
-			continue
+		if m == "*" {
+			isAny = true
 		}
-
-		for _, entries := range mux.statics {
-			deleteFromEntries(entries, pattern)
-		}
-		for _, entries := range mux.regexps {
-			deleteFromEntries(entries, pattern)
-		}
-		return
 	}
 
-	// 否则只从匹配的method中删除路由项。
-	for _, method := range methods {
-		if entries, found := mux.statics[method]; found {
-			deleteFromEntries(entries, pattern)
+	if isAny {
+		for _, i := range mux.items {
+			i.remove(pattern)
 		}
+	} else {
+		for _, m := range methods {
+			if _, found := mux.items[m]; !found {
+				continue
+			}
 
-		if entries, found := mux.regexps[method]; found {
-			deleteFromEntries(entries, pattern)
+			mux.items[m].remove(pattern)
 		}
 	}
 }
@@ -234,20 +200,13 @@ func (mux *ServeMux) getList(req *http.Request) []*entry {
 
 	ret := []*entry{}
 
-	if methods, found := mux.statics[req.Method]; found {
-		ret = methods.list
+	if methods, found := mux.items[req.Method]; found {
+		ret = append(methods.statics, methods.regexps...)
 	}
 
-	if methods, found := mux.statics["*"]; found {
-		ret = append(ret, methods.list...)
-	}
-
-	if methods, found := mux.regexps[req.Method]; found {
-		ret = append(ret, methods.list...)
-	}
-
-	if methods, found := mux.regexps["*"]; found {
-		ret = append(ret, methods.list...)
+	if methods, found := mux.items["*"]; found {
+		ret = append(ret, methods.statics...)
+		ret = append(ret, methods.regexps...)
 	}
 
 	return ret

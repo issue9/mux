@@ -30,33 +30,33 @@ func TestServeMux_Add(t *testing.T) {
 
 	// 向Get和Post添加一个路由abc
 	a.NotError(m.Add("abc", h, "GET", "POST"))
-	_, found := m.statics["GET"]
+	_, found := m.items["GET"]
 	a.True(found)
-	_, found = m.statics["POST"]
+	_, found = m.items["POST"]
 	a.True(found)
-	_, found = m.statics["DELETE"]
+	_, found = m.items["DELETE"]
 	a.False(found)
 
 	// 再次向Get添加一条同名路由，会出错
 	a.Error(m.Get("abc", h))
 
 	a.NotError(m.Get("def", h))
-	es, found := m.statics["GET"]
-	a.True(found).Equal(2, len(es.list))
+	es, found := m.items["GET"]
+	a.True(found).Equal(2, len(es.statics))
 
 	// Delete
 	a.NotError(m.Delete("abc", h))
-	es, found = m.statics["DELETE"]
-	a.True(found).Equal(1, len(es.list))
+	es, found = m.items["DELETE"]
+	a.True(found).Equal(1, len(es.statics))
 	a.NotError(m.DeleteFunc("abcd", fn))
-	a.True(found).Equal(2, len(es.list))
+	a.True(found).Equal(2, len(es.statics))
 
 	//Put
 	a.NotError(m.Put("abc", h))
-	es, found = m.statics["PUT"]
-	a.True(found).Equal(1, len(es.list))
+	es, found = m.items["PUT"]
+	a.True(found).Equal(1, len(es.statics))
 	a.NotError(m.PutFunc("abcd", fn))
-	a.True(found).Equal(2, len(es.list))
+	a.True(found).Equal(2, len(es.statics))
 }
 
 func TestServeMux_Remove(t *testing.T) {
@@ -70,21 +70,21 @@ func TestServeMux_Remove(t *testing.T) {
 	// 向Get和Post添加一个路由abc
 	a.NotError(m.Add("abc", h, "GET", "POST", "DELETE"))
 	a.NotError(m.Add("abcd", h, "GET", "POST", "DELETE"))
-	a.Equal(2, len(m.statics["GET"].list))
-	a.Equal(2, len(m.statics["POST"].list))
-	a.Equal(2, len(m.statics["DELETE"].list))
+	a.Equal(2, len(m.items["GET"].statics))
+	a.Equal(2, len(m.items["POST"].statics))
+	a.Equal(2, len(m.items["DELETE"].statics))
 
 	// 删除Get,Post下的匹配项
 	m.Remove("abc", "GET", "POST")
-	a.Equal(1, len(m.statics["GET"].list))
-	a.Equal(1, len(m.statics["POST"].list))
-	a.Equal(2, len(m.statics["DELETE"].list))
+	a.Equal(1, len(m.items["GET"].statics))
+	a.Equal(1, len(m.items["POST"].statics))
+	a.Equal(2, len(m.items["DELETE"].statics))
 
 	// 删除任意method下的匹配项。
 	m.Remove("abcd", "GET", "*")
-	a.Equal(0, len(m.statics["GET"].list))
-	a.Equal(0, len(m.statics["POST"].list))
-	a.Equal(1, len(m.statics["DELETE"].list))
+	a.Equal(0, len(m.items["GET"].statics))
+	a.Equal(0, len(m.items["POST"].statics))
+	a.Equal(1, len(m.items["DELETE"].statics))
 }
 
 func TestServeMux_ServeHTTP(t *testing.T) {
