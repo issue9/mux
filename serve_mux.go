@@ -100,12 +100,12 @@ func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) erro
 	for _, method := range methods {
 		method = strings.ToUpper(method)
 
-		methodEntries, found := mux.items[method]
+		es, found := mux.items[method]
 		if !found { // 为新的method分配空间
 			return fmt.Errorf("Add:不支持的request.Method:[%v]", methods)
 		}
 
-		if err := methodEntries.add(pattern, h); err != nil {
+		if err := es.add(pattern, h); err != nil {
 			return err
 		}
 	}
@@ -171,6 +171,7 @@ func (mux *ServeMux) AnyFunc(pattern string, fun func(http.ResponseWriter, *http
 // 创建一个路由组，该组中所有的操作，都会加上前缀prefix
 //  g := srv.Group("/api")
 //  g.Get("/users") // 相当于 srv.Get("/api/users")
+//  g.Get("/user/1") // 相当于 srv.Get("/api/user/1")
 func (mux *ServeMux) Group(prefix string) *Group {
 	return &Group{
 		mux:    mux,
@@ -179,24 +180,25 @@ func (mux *ServeMux) Group(prefix string) *Group {
 }
 
 // 移除指定的路由项，通过路由表达式和method来匹配。
-// 当未指定methods时，将不发生任何删除操作。
+// 当未指定methods时，将删除所有method匹配的项。
 // 指定错误的method值，将自动忽略该值。
 func (mux *ServeMux) Remove(pattern string, methods ...string) {
 	mux.mu.Lock()
 	defer mux.mu.Unlock()
 
-	if len(methods) == 0 {
+	if len(methods) == 0 { // 删除所有method下匹配的项
 		for _, i := range mux.items {
 			i.remove(pattern)
 		}
-	} else {
-		for _, m := range methods {
-			if _, found := mux.items[m]; !found {
-				continue
-			}
+		return
+	}
 
-			mux.items[m].remove(pattern)
+	for _, m := range methods {
+		if _, found := mux.items[m]; !found {
+			continue
 		}
+
+		mux.items[m].remove(pattern)
 	}
 }
 

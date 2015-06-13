@@ -11,6 +11,7 @@ import (
 	"strings"
 )
 
+// entry列表。
 type entries struct {
 	statics []*entry          // 静态路由项
 	regexps []*entry          // 正则路由项
@@ -32,6 +33,7 @@ func newEntries() *entries {
 	}
 }
 
+// 向entry列表添加一个路由项。
 func (es *entries) add(pattern string, h http.Handler) error {
 	if _, found := es.named[pattern]; found {
 		return errors.New("该模式的路由项已经存在")
@@ -49,6 +51,8 @@ func (es *entries) add(pattern string, h http.Handler) error {
 	return nil
 }
 
+// 从entry列表中移除一个路由项。
+// 若没有与pattern匹配的路由项，将不发生任何操作。
 func (es *entries) remove(pattern string) {
 	if _, found := es.named[pattern]; !found {
 		return
@@ -60,7 +64,7 @@ func (es *entries) remove(pattern string) {
 	for k, v := range es.statics {
 		if v.pattern == pattern {
 			es.statics = append(es.statics[:k], es.statics[k+1:]...)
-			return // 必须只有一条，且只存在于statics或是regexps中的一个
+			return // 必定只有一条，且只存在于statics或是regexps中的一个
 		}
 	}
 
@@ -97,7 +101,7 @@ func (e *entry) match(url string) int {
 	return -1
 }
 
-// 只有在match返回大于1的情况下，调用此函数才能返回正确结果。否则可能panic
+// 将url与当前的表达式进行匹配，返回其命名参数的值。若不匹配，则返回nil
 func (e *entry) getParams(url string) map[string]string {
 	if !e.hasParams {
 		return nil
