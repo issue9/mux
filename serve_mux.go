@@ -87,16 +87,10 @@ func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) erro
 	mux.mu.Lock()
 	defer mux.mu.Unlock()
 
-	var err error
-	if e.expr == nil {
-		err = addToEntryMap(methods, e, mux.statics)
-	} else {
-		err = addToEntryMap(methods, e, mux.regexps)
+	m := mux.statics
+	if e.expr != nil {
+		m = mux.regexps
 	}
-	return err
-}
-
-func addToEntryMap(methods []string, e *entry, m map[string]*entries) error {
 	for _, method := range methods {
 		method = strings.ToUpper(method)
 
@@ -118,7 +112,7 @@ func addToEntryMap(methods []string, e *entry, m map[string]*entries) error {
 		if !found {
 			m[method] = methodEntries
 		}
-	} // end for methods
+	}
 	return nil
 }
 
