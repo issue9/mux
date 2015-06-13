@@ -133,9 +133,9 @@ func (mux *ServeMux) Put(pattern string, h http.Handler) error {
 	return mux.Add(pattern, h, "PUT")
 }
 
-// Any相当于ServeMux.Add(pattern, h, "*")的简易写法
+// Any相当于ServeMux.Add(pattern, h)的简易写法
 func (mux *ServeMux) Any(pattern string, h http.Handler) error {
-	return mux.Add(pattern, h, "*")
+	return mux.Add(pattern, h)
 }
 
 // 功能同ServeMux.Add()，但是将第二个参数从http.Handler换成了func(http.ResponseWriter, *http.Request)
@@ -163,9 +163,9 @@ func (mux *ServeMux) DeleteFunc(pattern string, fun func(http.ResponseWriter, *h
 	return mux.AddFunc(pattern, fun, "DELETE")
 }
 
-// AnyFunc相当于ServeMux.AddFunc(pattern, func, "*")的简易写法
+// AnyFunc相当于ServeMux.AddFunc(pattern, func)的简易写法
 func (mux *ServeMux) AnyFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) error {
-	return mux.AddFunc(pattern, fun, "*")
+	return mux.AddFunc(pattern, fun)
 }
 
 // 创建一个路由组，该组中所有的操作，都会加上前缀prefix
@@ -200,7 +200,7 @@ func (mux *ServeMux) Remove(pattern string, methods ...string) {
 	}
 }
 
-// 获取符合当前Method的所有路由项。即req.Method与"*"的内容
+// 获取符合当前Method的所有路由项。
 // 仅供ServeHTTP()调用。
 func (mux *ServeMux) getList(req *http.Request) []*entry {
 	mux.mu.Lock()

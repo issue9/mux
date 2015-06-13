@@ -66,9 +66,9 @@ func (m *ServeMux2) Put(pattern string, h http.Handler) *ServeMux2 {
 	return m.Add(pattern, h, "PUT")
 }
 
-// Any相当于ServeMux2.Add(pattern, h, "*")的简易写法
+// Any相当于ServeMux2.Add(pattern, h)的简易写法
 func (m *ServeMux2) Any(pattern string, h http.Handler) *ServeMux2 {
-	return m.Add(pattern, h, "*")
+	return m.Add(pattern, h)
 }
 
 // 功能同Add()，但是将第二个参数从http.Handler换成了func(http.ResponseWriter, *http.Request)
@@ -96,9 +96,9 @@ func (m *ServeMux2) DeleteFunc(pattern string, fun func(http.ResponseWriter, *ht
 	return m.AddFunc(pattern, fun, "DELETE")
 }
 
-// AnyFunc相当于ServeMux2.AddFunc(pattern, fun, "*")的简易写法
+// AnyFunc相当于ServeMux2.AddFunc(pattern, fun)的简易写法
 func (m *ServeMux2) AnyFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *ServeMux2 {
-	return m.AddFunc(pattern, fun, "*")
+	return m.AddFunc(pattern, fun)
 }
 
 // 移除指定匹配的路由项。
