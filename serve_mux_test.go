@@ -30,30 +30,30 @@ func TestServeMux_Add(t *testing.T) {
 
 	// 向Get和Post添加一个路由abc
 	a.NotError(m.Add("abc", h, "GET", "POST"))
-	_, found := m.methods["GET"]
+	_, found := m.statics["GET"]
 	a.True(found)
-	_, found = m.methods["POST"]
+	_, found = m.statics["POST"]
 	a.True(found)
-	_, found = m.methods["DELETE"]
+	_, found = m.statics["DELETE"]
 	a.False(found)
 
 	// 再次向Get添加一条同名路由，会出错
 	a.Error(m.Get("abc", h))
 
 	a.NotError(m.Get("def", h))
-	es, found := m.methods["GET"]
+	es, found := m.statics["GET"]
 	a.True(found).Equal(2, len(es.list))
 
 	// Delete
 	a.NotError(m.Delete("abc", h))
-	es, found = m.methods["DELETE"]
+	es, found = m.statics["DELETE"]
 	a.True(found).Equal(1, len(es.list))
 	a.NotError(m.DeleteFunc("abcd", fn))
 	a.True(found).Equal(2, len(es.list))
 
 	//Put
 	a.NotError(m.Put("abc", h))
-	es, found = m.methods["PUT"]
+	es, found = m.statics["PUT"]
 	a.True(found).Equal(1, len(es.list))
 	a.NotError(m.PutFunc("abcd", fn))
 	a.True(found).Equal(2, len(es.list))
@@ -70,21 +70,21 @@ func TestServeMux_Remove(t *testing.T) {
 	// 向Get和Post添加一个路由abc
 	a.NotError(m.Add("abc", h, "GET", "POST", "DELETE"))
 	a.NotError(m.Add("abcd", h, "GET", "POST", "DELETE"))
-	a.Equal(2, len(m.methods["GET"].list))
-	a.Equal(2, len(m.methods["POST"].list))
-	a.Equal(2, len(m.methods["DELETE"].list))
+	a.Equal(2, len(m.statics["GET"].list))
+	a.Equal(2, len(m.statics["POST"].list))
+	a.Equal(2, len(m.statics["DELETE"].list))
 
 	// 删除Get,Post下的匹配项
 	m.Remove("abc", "GET", "POST")
-	a.Equal(1, len(m.methods["GET"].list))
-	a.Equal(1, len(m.methods["POST"].list))
-	a.Equal(2, len(m.methods["DELETE"].list))
+	a.Equal(1, len(m.statics["GET"].list))
+	a.Equal(1, len(m.statics["POST"].list))
+	a.Equal(2, len(m.statics["DELETE"].list))
 
 	// 删除任意method下的匹配项。
 	m.Remove("abcd", "GET", "*")
-	a.Equal(0, len(m.methods["GET"].list))
-	a.Equal(0, len(m.methods["POST"].list))
-	a.Equal(1, len(m.methods["DELETE"].list))
+	a.Equal(0, len(m.statics["GET"].list))
+	a.Equal(0, len(m.statics["POST"].list))
+	a.Equal(1, len(m.statics["DELETE"].list))
 }
 
 func TestServeMux_ServeHTTP(t *testing.T) {
