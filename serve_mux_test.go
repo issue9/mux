@@ -39,21 +39,21 @@ func TestServeMux_Add(t *testing.T) {
 
 	a.NotError(m.Get("def", h))
 	es, found := m.items["GET"]
-	a.True(found).Equal(2, len(es.statics))
+	a.True(found).Equal(2, es.list.Len())
 
 	// Delete
 	a.NotError(m.Delete("abc", h))
 	es, found = m.items["DELETE"]
-	a.True(found).Equal(1, len(es.statics))
+	a.True(found).Equal(1, es.list.Len())
 	a.NotError(m.DeleteFunc("abcd", fn))
-	a.True(found).Equal(2, len(es.statics))
+	a.True(found).Equal(2, es.list.Len())
 
 	//Put
 	a.NotError(m.Put("abc", h))
 	es, found = m.items["PUT"]
-	a.True(found).Equal(1, len(es.statics))
+	a.True(found).Equal(1, es.list.Len())
 	a.NotError(m.PutFunc("abcd", fn))
-	a.True(found).Equal(2, len(es.statics))
+	a.True(found).Equal(2, es.list.Len())
 }
 
 func TestServeMux_Remove(t *testing.T) {
@@ -67,27 +67,27 @@ func TestServeMux_Remove(t *testing.T) {
 	// 向Get和Post添加一个路由abc
 	a.NotError(m.Add("abc", h, "GET", "POST", "DELETE"))
 	a.NotError(m.Add("abcd", h, "GET", "POST", "DELETE"))
-	a.Equal(2, len(m.items["GET"].statics))
-	a.Equal(2, len(m.items["POST"].statics))
-	a.Equal(2, len(m.items["DELETE"].statics))
+	a.Equal(2, m.items["GET"].list.Len())
+	a.Equal(2, m.items["POST"].list.Len())
+	a.Equal(2, m.items["DELETE"].list.Len())
 
 	// 删除Get,Post下的匹配项
 	m.Remove("abc", "GET", "POST")
-	a.Equal(1, len(m.items["GET"].statics))
-	a.Equal(1, len(m.items["POST"].statics))
-	a.Equal(2, len(m.items["DELETE"].statics))
+	a.Equal(1, m.items["GET"].list.Len())
+	a.Equal(1, m.items["POST"].list.Len())
+	a.Equal(2, m.items["DELETE"].list.Len())
 
 	// 删除GET下的匹配项。
 	m.Remove("abcd", "GET")
-	a.Equal(0, len(m.items["GET"].statics))
-	a.Equal(1, len(m.items["POST"].statics))
-	a.Equal(2, len(m.items["DELETE"].statics))
+	a.Equal(0, m.items["GET"].list.Len())
+	a.Equal(1, m.items["POST"].list.Len())
+	a.Equal(2, m.items["DELETE"].list.Len())
 
 	// 删除任意method下的匹配项。
 	m.Remove("abcd")
-	a.Equal(0, len(m.items["GET"].statics))
-	a.Equal(0, len(m.items["POST"].statics))
-	a.Equal(1, len(m.items["DELETE"].statics))
+	a.Equal(0, m.items["GET"].list.Len())
+	a.Equal(0, m.items["POST"].list.Len())
+	a.Equal(1, m.items["DELETE"].list.Len())
 }
 
 func TestServeMux_ServeHTTP(t *testing.T) {
@@ -166,7 +166,7 @@ func TestServeMux_ServeHTTP(t *testing.T) {
 }
 
 // 全静态匹配
-// BenchmarkServeMux_ServeHTTPStatic	 2000000	       843 ns/op
+// BenchmarkServeMux_ServeHTTPStatic	 2000000	       669 ns/op
 func BenchmarkServeMux_ServeHTTPStatic(b *testing.B) {
 	a := assert.New(b)
 
@@ -200,7 +200,7 @@ func BenchmarkServeMux_ServeHTTPStatic(b *testing.B) {
 }
 
 // 全正则匹配
-// BenchmarkServeMux_ServeHTTPRegexp	  300000	      4082 ns/op
+// BenchmarkServeMux_ServeHTTPRegexp	  500000	      3596 ns/op
 func BenchmarkServeMux_ServeHTTPRegexp(b *testing.B) {
 	a := assert.New(b)
 
@@ -234,7 +234,7 @@ func BenchmarkServeMux_ServeHTTPRegexp(b *testing.B) {
 }
 
 // 静态正则汇合匹配
-// BenchmarkServeMux_ServeHTTPAll	  500000	      2506 ns/op
+// BenchmarkServeMux_ServeHTTPAll	  500000	      2302 ns/op
 func BenchmarkServeMux_ServeHTTPAll(b *testing.B) {
 	a := assert.New(b)
 

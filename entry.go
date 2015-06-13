@@ -5,6 +5,7 @@
 package mux
 
 import (
+	"container/list"
 	"errors"
 	"net/http"
 	"regexp"
@@ -13,9 +14,8 @@ import (
 
 // entry列表。
 type entries struct {
-	statics []*entry          // 静态路由项
-	regexps []*entry          // 正则路由项
-	named   map[string]*entry // 所有路由项与其匹配模式的列表。
+	list  *list.List
+	named map[string]*entry // 所有路由项与其匹配模式的列表。
 }
 
 type entry struct {
@@ -27,9 +27,8 @@ type entry struct {
 
 func newEntries() *entries {
 	return &entries{
-		statics: []*entry{},
-		regexps: []*entry{},
-		named:   map[string]*entry{},
+		list:  list.New(),
+		named: map[string]*entry{},
 	}
 }
 
@@ -43,9 +42,9 @@ func (es *entries) add(pattern string, h http.Handler) error {
 	es.named[pattern] = e
 
 	if e.expr == nil {
-		es.statics = append(es.statics, e)
+		es.list.PushFront(e)
 	} else {
-		es.regexps = append(es.regexps, e)
+		es.list.PushBack(e)
 	}
 
 	return nil
@@ -60,18 +59,10 @@ func (es *entries) remove(pattern string) {
 
 	delete(es.named, pattern)
 
-	// 从es.statics中删除
-	for k, v := range es.statics {
-		if v.pattern == pattern {
-			es.statics = append(es.statics[:k], es.statics[k+1:]...)
-			return // 必定只有一条，且只存在于statics或是regexps中的一个
-		}
-	}
-
-	// 从es.regexps中删除
-	for k, v := range es.regexps {
-		if v.pattern == pattern {
-			es.regexps = append(es.regexps[:k], es.regexps[k+1:]...)
+	for item := es.list.Front(); item != nil; item = item.Next() {
+		e := item.Value.(*entry)
+		if e.pattern == pattern {
+			es.list.Remove(item)
 			return
 		}
 	}

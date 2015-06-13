@@ -202,24 +202,16 @@ func (mux *ServeMux) Remove(pattern string, methods ...string) {
 	}
 }
 
-// 获取符合当前Method的所有路由项。
-// 仅供ServeHTTP()调用。
-func (mux *ServeMux) getList(req *http.Request) []*entry {
-	mux.mu.Lock()
-	defer mux.mu.Unlock()
-
-	return append(mux.items[req.Method].statics, mux.items[req.Method].regexps...)
-}
-
 // implement http.Handler.ServerHTTP()
 func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	list := mux.getList(req)
+	//list := mux.getList(req)
 	hostURL := req.Host + req.URL.Path
 	size := -1
 	var e *entry
 	var p string
 
-	for _, entry := range list {
+	for item := mux.items[req.Method].list.Front(); item != nil; item = item.Next() {
+		entry := item.Value.(*entry)
 		url := req.URL.Path
 		if entry.pattern[0] != '/' {
 			url = hostURL
