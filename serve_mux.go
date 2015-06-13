@@ -14,6 +14,18 @@ import (
 	"github.com/issue9/context"
 )
 
+// 支持的所有请求方法
+var supportMethods = []string{
+	"GET",
+	"POST",
+	"HEAD",
+	"DELETE",
+	"PUT",
+	"OPTIONS",
+	"TRACE",
+	"PATCH",
+}
+
 // http.ServeMux的升级版，可处理对URL的正则匹配和根据METHOD进行过滤。定义了以下六组函数：
 //  Add()    / AddFunc()
 //  Get()    / GetFunc()
@@ -50,9 +62,13 @@ type ServeMux struct {
 
 // 声明一个新的ServeMux
 func NewServeMux() *ServeMux {
+	items := make(map[string]*entries, len(supportMethods))
+	for _, v := range supportMethods {
+		items[v] = newEntries()
+	}
+
 	return &ServeMux{
-		// 至少5个：get/post/delete/put/*
-		items: make(map[string]*entries, 5),
+		items: items,
 	}
 }
 
@@ -60,13 +76,9 @@ func NewServeMux() *ServeMux {
 //
 // pattern为路由匹配模式，可以是正则匹配也可以是字符串匹配，
 // 可以带上域名，当第一个字符为'/'当作是一个路径，否则就将'/'之前的当作域名或IP。
-// methods参数应该只能为http.Request.Method中合法的字符串以及代表所有方法的"*"，
-// 其它任何字符串都是无效的，但不会提示错误。当methods或是h为空时，将返回错误信息。
+// methods参数应该只能为supportMethods中的字符串，若不指定，默认为所有，
+// 当h为空时，将返回错误信息。
 func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) error {
-	if len(methods) == 0 {
-		return errors.New("Add:请至少指定一个methods参数")
-	}
-
 	if h == nil {
 		return errors.New("Add:参数h不能为空")
 	}
@@ -78,24 +90,26 @@ func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) erro
 	mux.mu.Lock()
 	defer mux.mu.Unlock()
 
+	if len(methods) == 0 {
+		for _, v := range mux.items {
+			v.add(pattern, h)
+		}
+		return nil
+	}
+
 	for _, method := range methods {
 		method = strings.ToUpper(method)
 
 		methodEntries, found := mux.items[method]
 		if !found { // 为新的method分配空间
-			methodEntries = newEntries()
-		} else {
-			if _, found := methodEntries.named[pattern]; found {
-				return fmt.Errorf("addToEntryMap:该表达式[%v]已经存在", pattern)
-			}
+			return fmt.Errorf("Add:不支持的request.Method:[%v]", methods)
 		}
 
-		methodEntries.add(pattern, h)
-
-		if !found {
-			mux.items[method] = methodEntries
+		if err := methodEntries.add(pattern, h); err != nil {
+			return err
 		}
 	}
+
 	return nil
 }
 
@@ -166,18 +180,12 @@ func (mux *ServeMux) Group(prefix string) *Group {
 
 // 移除指定的路由项，通过路由表达式和method来匹配。
 // 当未指定methods时，将不发生任何删除操作。
+// 指定错误的method值，将自动忽略该值。
 func (mux *ServeMux) Remove(pattern string, methods ...string) {
 	mux.mu.Lock()
 	defer mux.mu.Unlock()
 
-	isAny := false // 是否从任何method中删除
-	for _, m := range methods {
-		if m == "*" {
-			isAny = true
-		}
-	}
-
-	if isAny {
+	if len(methods) == 0 {
 		for _, i := range mux.items {
 			i.remove(pattern)
 		}
@@ -198,18 +206,7 @@ func (mux *ServeMux) getList(req *http.Request) []*entry {
 	mux.mu.Lock()
 	defer mux.mu.Unlock()
 
-	ret := []*entry{}
-
-	if methods, found := mux.items[req.Method]; found {
-		ret = append(methods.statics, methods.regexps...)
-	}
-
-	if methods, found := mux.items["*"]; found {
-		ret = append(ret, methods.statics...)
-		ret = append(ret, methods.regexps...)
-	}
-
-	return ret
+	return append(mux.items[req.Method].statics, mux.items[req.Method].regexps...)
 }
 
 // implement http.Handler.ServerHTTP()

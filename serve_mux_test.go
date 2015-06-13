@@ -25,17 +25,14 @@ func TestServeMux_Add(t *testing.T) {
 
 	a.Error(m.Add("", h, "GET"))
 
-	// methods为空
-	a.Error(m.Add("abc", h))
-
 	// 向Get和Post添加一个路由abc
 	a.NotError(m.Add("abc", h, "GET", "POST"))
-	_, found := m.items["GET"]
-	a.True(found)
-	_, found = m.items["POST"]
-	a.True(found)
-	_, found = m.items["DELETE"]
-	a.False(found)
+	entries, found := m.items["GET"]
+	a.True(found).Equal(1, len(entries.named))
+	entries, found = m.items["POST"]
+	a.True(found).Equal(1, len(entries.named))
+	entries, found = m.items["DELETE"]
+	a.True(found).Equal(0, len(entries.named))
 
 	// 再次向Get添加一条同名路由，会出错
 	a.Error(m.Get("abc", h))
@@ -80,8 +77,14 @@ func TestServeMux_Remove(t *testing.T) {
 	a.Equal(1, len(m.items["POST"].statics))
 	a.Equal(2, len(m.items["DELETE"].statics))
 
+	// 删除GET下的匹配项。
+	m.Remove("abcd", "GET")
+	a.Equal(0, len(m.items["GET"].statics))
+	a.Equal(1, len(m.items["POST"].statics))
+	a.Equal(2, len(m.items["DELETE"].statics))
+
 	// 删除任意method下的匹配项。
-	m.Remove("abcd", "GET", "*")
+	m.Remove("abcd")
 	a.Equal(0, len(m.items["GET"].statics))
 	a.Equal(0, len(m.items["POST"].statics))
 	a.Equal(1, len(m.items["DELETE"].statics))
