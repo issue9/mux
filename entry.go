@@ -60,7 +60,7 @@ func (es *entries) remove(pattern string) {
 	for k, v := range es.statics {
 		if v.pattern == pattern {
 			es.statics = append(es.statics[:k], es.statics[k+1:]...)
-			break
+			return // 必须只有一条，且只存在于statics或是regexps中的一个
 		}
 	}
 
@@ -68,7 +68,7 @@ func (es *entries) remove(pattern string) {
 	for k, v := range es.regexps {
 		if v.pattern == pattern {
 			es.regexps = append(es.regexps[:k], es.regexps[k+1:]...)
-			break
+			return
 		}
 	}
 }
