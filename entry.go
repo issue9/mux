@@ -12,15 +12,15 @@ import (
 )
 
 type entries struct {
-	statics []*entry
-	regexps []*entry
-	named   map[string]*entry
+	statics []*entry          // 静态路由项
+	regexps []*entry          // 正则路由项
+	named   map[string]*entry // 所有路由项与其匹配模式的列表。
 }
 
 type entry struct {
-	pattern   string
-	expr      *regexp.Regexp
-	hasParams bool
+	pattern   string         // 匹配字符串
+	expr      *regexp.Regexp // 若是正则匹配，则会被pattern字段转换成正则表达式，并保存在此变量中
+	hasParams bool           // 是否拥有命名参数
 	handler   http.Handler
 }
 
