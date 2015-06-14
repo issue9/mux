@@ -26,22 +26,23 @@ var supportMethods = []string{
 	"PATCH",
 }
 
-// http.ServeMux的升级版，可处理对URL的正则匹配和根据METHOD进行过滤。定义了以下六组函数：
-//  Add()    / AddFunc()
-//  Get()    / GetFunc()
-//  Post()   / PostFunc()
-//  Delete() / DeleteFunc()
-//  Put()    / PutFunc()
-//  Any()    / AnyFunc()
+// http.ServeMux的升级版，可处理对URL的正则匹配和根据METHOD进行过滤。
 //
-// 简单的用法如下：
+// 用法如下：
 //  m := mux.NewServeMux()
-//  m.Get("www.example.com/abc", h1). // 只匹配www.example.com域名下的路径
-//    Post("/abc/"", h2).			  // 不限定域名的路径匹配
-//    Add("api/1",h3, "GET", "POST")  // 只匹配GET和POST
+//  m.Get("www.example.com/abc", h1).              // 只匹配www.example.com域名下的路径
+//    Post("/abc/"", h2).                          // 不限定域名的路径匹配
+//    Add("api/{version:\\d+}",h3, "GET", "POST")  // 只匹配GET和POST
 //  http.ListenAndServe(m)
 //
-// 还有一个功能与之相同的ServeMux2，用法上有些稍微的差别。具体可参考ServeMux的文档。
+// 还有一个功能与之相同的ServeMux2，用法上有些稍微的差别。具体可参考ServeMux2的文档。
+//
+//
+// 路由参数：
+//
+// 路由参数可通过context包获取：
+//  ctx := context.Get(req)
+//  params := ctx.Get("params") // 若不存在路由参数，则返回一个空值
 //
 //
 // 匹配规则：
@@ -170,7 +171,7 @@ func (mux *ServeMux) AnyFunc(pattern string, fun func(http.ResponseWriter, *http
 
 // 创建一个路由组，该组中所有的操作，都会加上前缀prefix
 //  g := srv.Group("/api")
-//  g.Get("/users") // 相当于 srv.Get("/api/users")
+//  g.Get("/users")  // 相当于 srv.Get("/api/users")
 //  g.Get("/user/1") // 相当于 srv.Get("/api/user/1")
 func (mux *ServeMux) Group(prefix string) *Group {
 	return &Group{

@@ -14,14 +14,14 @@ import (
 
 // entry列表。
 type entries struct {
-	list  *list.List
-	named map[string]*entry // 所有路由项与其匹配模式的列表。
+	list  *list.List        // 路由列表，静态路由在前，正则路由在后。
+	named map[string]*entry // 路由的命名列表，方便查找。
 }
 
 type entry struct {
 	pattern   string         // 匹配字符串
 	expr      *regexp.Regexp // 若是正则匹配，则会被pattern字段转换成正则表达式，并保存在此变量中
-	hasParams bool           // 是否拥有命名参数
+	hasParams bool           // 是否拥有命名路由参数，仅在expr不为nil的时候有用
 	handler   http.Handler
 }
 
@@ -41,9 +41,9 @@ func (es *entries) add(pattern string, h http.Handler) error {
 	e := newEntry(pattern, h)
 	es.named[pattern] = e
 
-	if e.expr == nil {
+	if e.expr == nil { // 静态路由，在前端插入
 		es.list.PushFront(e)
-	} else {
+	} else { // 正则路由，在后端插入
 		es.list.PushBack(e)
 	}
 
@@ -92,7 +92,7 @@ func (e *entry) match(url string) int {
 	return -1
 }
 
-// 将url与当前的表达式进行匹配，返回其命名参数的值。若不匹配，则返回nil
+// 将url与当前的表达式进行匹配，返回其命名路由参数的值。若不匹配，则返回nil
 func (e *entry) getParams(url string) map[string]string {
 	if !e.hasParams {
 		return nil
