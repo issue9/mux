@@ -112,7 +112,7 @@ func (e *entry) getParams(url string) map[string]string {
 
 // 声明一个entry实例
 // pattern 匹配内容。
-// h 对应的http.Handler，有外层调用者确保该值不能为nil.
+// h 对应的http.Handler，外层调用者确保该值不能为nil.
 func newEntry(pattern string, h http.Handler) *entry {
 	strs := split(pattern)
 
@@ -173,23 +173,24 @@ func split(str string) []string {
 	var seq byte = '{'
 
 	for {
-		index := strings.IndexByte(str, seq)
-		if len(str) == 0 {
+		if len(str) == 0 { // 没有更多字符了，结束
 			break
 		}
 
-		if index < 0 {
+		index := strings.IndexByte(str, seq)
+		if index < 0 { // 未找到分隔符，结束
 			ret = append(ret, str)
 			break
 		}
 
-		if seq == '}' {
+		if seq == '}' { // 将}字符留在当前字符串中
 			index++
 		}
-		if index > 0 {
+
+		if index > 0 { // 为零表示当前字符串为空，无须理会。
 			ret = append(ret, str[:index])
+			str = str[index:]
 		}
-		str = str[index:]
 
 		if seq == '{' {
 			seq = '}'

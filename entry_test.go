@@ -27,19 +27,52 @@ func TestSplit(t *testing.T) {
 func TestToPattern(t *testing.T) {
 	a := assert.New(t)
 
-	fn := func(str, pattern string, hasParams bool) {
-		strs := split(str)
-		p, b := toPattern(strs)
+	fn := func(str []string, pattern string, hasParams bool) {
+		p, b := toPattern(str)
 		a.Equal(p, pattern).Equal(b, hasParams)
 	}
 
-	fn("/blog/post/{id}", "/blog/post/(?P<id>[^/]+)", true)
-	fn("/blog/post/{id:\\d+}", "/blog/post/(?P<id>\\d+)", true)
-	fn("/blog/{post}-{id}", "/blog/(?P<post>[^/]+)-(?P<id>[^/]+)", true)
-	fn("/blog/{:\\w+}-{id}", "/blog/\\w+-(?P<id>[^/]+)", true)
+	fn([]string{"/blog/post/1"}, "/blog/post/1", false)              // 静态
+	fn([]string{"/blog/post/", "{:\\d+}"}, "/blog/post/\\d+", false) // 无命名路由参数
+
+	fn([]string{"/blog/post/", "{id}"}, "/blog/post/(?P<id>[^/]+)", true)
+	fn([]string{"/blog/post/", "{id:\\d+}"}, "/blog/post/(?P<id>\\d+)", true)
+	fn([]string{"/blog/", "{post}", "-", "{id}"}, "/blog/(?P<post>[^/]+)-(?P<id>[^/]+)", true)
+	fn([]string{"/blog/", "{:\\w+}", "-", "{id}"}, "/blog/\\w+-(?P<id>[^/]+)", true)
 }
 
-func TestEntry(t *testing.T) {
+func TestEntry_match(t *testing.T) {
+	a := assert.New(t)
+	hf := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	})
+
+	// 静态路由
+	e := newEntry("/blog/post/1", hf)
+	a.Equal(e.match("/blog/post/1"), 0)
+
+	a.Equal(e.match("/blog/post/1/page/2"), 7)
+
+	// 不匹配，长度太短
+	a.Equal(e.match("/blog"), -1)
+
+	// 正则路由
+	e = newEntry("/blog/post/{id}", hf)
+	a.Equal(e.match("/blog/post/1"), 0)
+
+	a.Equal(e.match("/blog/post/2/page/1"), 7)
+
+	// 不匹配
+	a.Equal(e.match("/plog/post/2"), -1)
+
+	// 多个命名正则表达式
+	e = newEntry("/blog/{action:\\w+}-{id:\\d+}/", hf)
+	a.Equal(e.match("/blog/post-1/page-2"), 6)
+
+	// 正则，不匹配
+	a.Equal(e.match("/blog/post-1d/"), -1)
+}
+
+func TestEntry_getParams(t *testing.T) {
 	a := assert.New(t)
 	h := func(w http.ResponseWriter, r *http.Request) {
 	}
@@ -47,28 +80,46 @@ func TestEntry(t *testing.T) {
 
 	// 静态路由
 	e := newEntry("/blog/post/1", hf)
-	r := e.match("/blog/post/1")
-	a.Equal(r, 0).Nil(e.getParams("/blog/post/1"))
-
-	r = e.match("/blog/post/1/page/2")
-	a.Equal(r, 7).Nil(e.getParams("/blog/post/1/page/2"))
+	a.Nil(e.getParams("/blog/post/1"))
+	a.Nil(e.getParams("/blog/post/1/page/2"))
+	a.Nil(e.getParams("/blog"))
 
 	// 正则路由
 	e = newEntry("/blog/post/{id}", hf)
-	r = e.match("/blog/post/1")
-	a.Equal(r, 0).Equal(e.getParams("/blog/post/1"), map[string]string{"id": "1"})
-
-	r = e.match("/blog/post/2/page/1")
-	a.Equal(r, 7).Equal(e.getParams("/blog/post/2/page/1"), map[string]string{"id": "2"})
-
-	r = e.match("/plog/post/2") // 不匹配
-	a.Equal(r, -1).Equal(0, len(e.getParams("/plog/post/2")))
+	a.Equal(0, len(e.getParams("/plog/post/2")))             // 不匹配
+	a.Equal(e.getParams("/blog/post/"), map[string]string{}) // 匹配，但未指定参数，默认为空
+	a.Equal(e.getParams("/blog/post/1"), map[string]string{"id": "1"})
+	a.Equal(e.getParams("/blog/post/2/page/1"), map[string]string{"id": "2"})
 
 	// 多个命名正则表达式
 	e = newEntry("/blog/{action:\\w+}-{id:\\d+}/", hf)
-	r = e.match("/blog/post-1/page-2")
-	a.Equal(r, 6).Equal(e.getParams("/blog/post-1/page-2"), map[string]string{"action": "post", "id": "1"})
+	a.Equal(e.getParams("/blog/post-1/page-2"), map[string]string{"action": "post", "id": "1"})
+	a.Equal(0, len(e.getParams("/blog/post-1d/"))) // 不匹配
+}
 
-	r = e.match("/blog/post-1d/") // 不匹配
-	a.Equal(r, -1).Equal(0, len(e.getParams("/blog/post-1d/")))
+func TestEntries(t *testing.T) {
+	a := assert.New(t)
+	hf := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+
+	es := newEntries()
+	a.NotNil(es)
+
+	a.NotError(es.add("/blog/post/1", hf))
+	a.Equal(1, es.list.Len()).Equal(1, len(es.named))
+
+	// 添加相同的，应该返回错误信息
+	a.Error(es.add("/blog/post/1", hf))
+	a.Equal(1, es.list.Len()).Equal(1, len(es.named))
+
+	a.NotError(es.add("/blog/post/{id}", hf))
+	a.Equal(2, es.list.Len()).Equal(2, len(es.named))
+
+	es.remove("/plog/post/1") // 删除并不存在的元素
+	a.Equal(2, es.list.Len()).Equal(2, len(es.named))
+
+	// 删除一项
+	es.remove("/blog/post/1")
+	_, found := es.named["/blog/post/1"]
+	a.False(found)
+	a.Equal(1, es.list.Len()).Equal(1, len(es.named))
 }

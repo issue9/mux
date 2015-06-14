@@ -27,8 +27,7 @@ type recovery struct {
 // 声明一个错误处理的handler，h参数中发生的panic将被截获并处理，不会再向上级反映。
 // 当h参数为空时，直接panic。
 // rf参数用于指定处理panic信息的函数，其原型为RecoverFunc，
-// 当将rf指定为nil时，将使用默认的处理函数，
-// 仅仅向客户端输出500的错误信息，没有具体内容。
+// 当将rf指定为nil时，将使用默认的处理函数，仅仅向客户端输出500的错误信息，没有具体内容。
 func NewRecovery(h http.Handler, rf RecoverFunc) *recovery {
 	if h == nil {
 		panic("NewRecovery:参数h不能为空")
