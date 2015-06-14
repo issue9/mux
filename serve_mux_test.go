@@ -18,15 +18,15 @@ func TestServeMux_Add(t *testing.T) {
 	a.NotNil(m)
 
 	// handler不能为空
-	a.Error(m.Add("abc", nil, "GET"))
+	a.Panic(func() { m.Add("abc", nil, "GET") })
 
 	fn := func(w http.ResponseWriter, req *http.Request) {}
 	h := http.HandlerFunc(fn)
 
-	a.Error(m.Add("", h, "GET"))
+	a.Panic(func() { m.Add("", h, "GET") })
 
 	// 向Get和Post添加一个路由abc
-	a.NotError(m.Add("abc", h, "GET", "POST"))
+	a.NotPanic(func() { m.Add("abc", h, "GET", "POST") })
 	entries, found := m.items["GET"]
 	a.True(found).Equal(1, len(entries.named))
 	entries, found = m.items["POST"]
@@ -35,21 +35,21 @@ func TestServeMux_Add(t *testing.T) {
 	a.True(found).Equal(0, len(entries.named))
 
 	// 再次向Get添加一条同名路由，会出错
-	a.Error(m.Get("abc", h))
+	a.Panic(func() { m.Get("abc", h) })
 
-	a.NotError(m.Get("def", h))
+	a.NotPanic(func() { m.Get("def", h) })
 	es, found := m.items["GET"]
 	a.True(found).Equal(2, es.list.Len())
 
 	// Delete
-	a.NotError(m.Delete("abc", h))
+	a.NotPanic(func() { m.Delete("abc", h) })
 	es, found = m.items["DELETE"]
 	a.True(found).Equal(1, es.list.Len())
 	a.NotError(m.DeleteFunc("abcd", fn))
 	a.True(found).Equal(2, es.list.Len())
 
 	//Put
-	a.NotError(m.Put("abc", h))
+	a.NotPanic(func() { m.Put("abc", h) })
 	es, found = m.items["PUT"]
 	a.True(found).Equal(1, es.list.Len())
 	a.NotError(m.PutFunc("abcd", fn))
@@ -65,8 +65,8 @@ func TestServeMux_Remove(t *testing.T) {
 	h := http.HandlerFunc(fn)
 
 	// 向Get和Post添加一个路由abc
-	a.NotError(m.Add("abc", h, "GET", "POST", "DELETE"))
-	a.NotError(m.Add("abcd", h, "GET", "POST", "DELETE"))
+	m.Add("abc", h, "GET", "POST", "DELETE")
+	m.Add("abcd", h, "GET", "POST", "DELETE")
 	a.Equal(2, m.items["GET"].list.Len())
 	a.Equal(2, m.items["POST"].list.Len())
 	a.Equal(2, m.items["DELETE"].list.Len())
