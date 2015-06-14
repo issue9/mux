@@ -34,14 +34,14 @@ var supportMethods = []string{
 //    Add("api/{version:\\d+}",h3, "GET", "POST")  // 只匹配GET和POST
 //  http.ListenAndServe(m)
 //
-// 还有一个功能与之相同的ServeMux2，用法上有些稍微的差别。具体可参考ServeMux2的文档。
-//
 //
 // 路由参数：
 //
 // 路由参数可通过context包获取：
 //  ctx := context.Get(req)
 //  params := ctx.Get("params") // 若不存在路由参数，则返回一个空值
+// NOTE:记得在退出整个请求之前清除context中的内容：
+//  context.Free(req)
 //
 //
 // 匹配规则：
