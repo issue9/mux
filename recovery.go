@@ -5,7 +5,9 @@
 package mux
 
 import (
+	"fmt"
 	"net/http"
+	"os"
 )
 
 // 错误处理函数。
@@ -25,12 +27,16 @@ type recovery struct {
 }
 
 // 声明一个错误处理的handler，h参数中发生的panic将被截获并处理，不会再向上级反映。
-// 当h参数为空时，直接panic。
+//
+// 当h参数为空时，将直接退出程序。
 // rf参数用于指定处理panic信息的函数，其原型为RecoverFunc，
 // 当将rf指定为nil时，将使用默认的处理函数，仅仅向客户端输出500的错误信息，没有具体内容。
+//
+// Recovery应该处在所有http.Handler的最外层，用于处理所有没有被处理的panic。
 func NewRecovery(h http.Handler, rf RecoverFunc) *recovery {
 	if h == nil {
-		panic("NewRecovery:参数h不能为空")
+		fmt.Println("NewRecovery:参数h不能为空")
+		os.Exit(2)
 	}
 
 	if rf == nil {
