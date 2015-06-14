@@ -17,43 +17,43 @@ func TestServeMux_Add(t *testing.T) {
 	m := NewServeMux()
 	a.NotNil(m)
 
-	// handler不能为空
-	a.Panic(func() { m.Add("abc", nil, "GET") })
-
 	fn := func(w http.ResponseWriter, req *http.Request) {}
 	h := http.HandlerFunc(fn)
 
+	// handler不能为空
+	a.Panic(func() { m.Add("abc", nil, "GET") })
+	// pattern不能为空
 	a.Panic(func() { m.Add("", h, "GET") })
+	// 不支持的methods
+	a.Panic(func() { m.Add("", h, "GET123") })
 
 	// 向Get和Post添加一个路由abc
 	a.NotPanic(func() { m.Add("abc", h, "GET", "POST") })
-	entries, found := m.items["GET"]
-	a.True(found).Equal(1, len(entries.named))
-	entries, found = m.items["POST"]
-	a.True(found).Equal(1, len(entries.named))
-	entries, found = m.items["DELETE"]
-	a.True(found).Equal(0, len(entries.named))
-
+	a.Equal(1, m.items["GET"].list.Len())
+	a.Equal(1, m.items["POST"].list.Len())
+	a.Equal(0, m.items["DELETE"].list.Len())
 	// 再次向Get添加一条同名路由，会出错
 	a.Panic(func() { m.Get("abc", h) })
 
+	a.NotPanic(func() { m.Add("abcdefg", h) })
+	a.Equal(2, m.items["GET"].list.Len())
+	a.Equal(2, m.items["POST"].list.Len())
+	a.Equal(1, m.items["DELETE"].list.Len())
+
 	a.NotPanic(func() { m.Get("def", h) })
-	es, found := m.items["GET"]
-	a.True(found).Equal(2, es.list.Len())
+	a.Equal(3, m.items["GET"].list.Len())
+	a.Equal(2, m.items["POST"].list.Len())
+	a.Equal(1, m.items["DELETE"].list.Len())
 
-	// Delete
 	a.NotPanic(func() { m.Delete("abc", h) })
-	es, found = m.items["DELETE"]
-	a.True(found).Equal(1, es.list.Len())
-	a.NotError(m.DeleteFunc("abcd", fn))
-	a.True(found).Equal(2, es.list.Len())
+	a.Equal(3, m.items["GET"].list.Len())
+	a.Equal(2, m.items["POST"].list.Len())
+	a.Equal(2, m.items["DELETE"].list.Len())
 
-	//Put
-	a.NotPanic(func() { m.Put("abc", h) })
-	es, found = m.items["PUT"]
-	a.True(found).Equal(1, es.list.Len())
-	a.NotError(m.PutFunc("abcd", fn))
-	a.True(found).Equal(2, es.list.Len())
+	a.NotPanic(func() { m.Any("abcd", h) })
+	a.Equal(4, m.items["GET"].list.Len())
+	a.Equal(3, m.items["POST"].list.Len())
+	a.Equal(3, m.items["DELETE"].list.Len())
 }
 
 func TestServeMux_Remove(t *testing.T) {

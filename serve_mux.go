@@ -92,7 +92,9 @@ func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) *Ser
 
 	if len(methods) == 0 {
 		for _, v := range mux.items {
-			v.add(pattern, h)
+			if err := v.add(pattern, h); err != nil {
+				panic(err)
+			}
 		}
 		return mux
 	}
