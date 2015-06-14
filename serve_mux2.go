@@ -101,6 +101,17 @@ func (m *ServeMux2) AnyFunc(pattern string, fun func(http.ResponseWriter, *http.
 	return m.AddFunc(pattern, fun)
 }
 
+// 创建一个路由组，该组中所有的操作，都会加上前缀prefix
+//  g := srv.Group("/api")
+//  g.Get("/users")  // 相当于 srv.Get("/api/users")
+//  g.Get("/user/1") // 相当于 srv.Get("/api/user/1")
+func (m *ServeMux2) Group(prefix string) *Group2 {
+	return &Group2{
+		mux:    m,
+		prefix: prefix,
+	}
+}
+
 // 移除指定匹配的路由项。
 func (m *ServeMux2) Remove(pattern string, methods ...string) {
 	m.mux.Remove(pattern, methods...)
