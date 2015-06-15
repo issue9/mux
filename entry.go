@@ -23,6 +23,7 @@ type entry struct {
 	expr      *regexp.Regexp // 若是正则匹配，则会被pattern字段转换成正则表达式，并保存在此变量中
 	hasParams bool           // 是否拥有命名路由参数，仅在expr不为nil的时候有用
 	handler   http.Handler
+	group     *Group
 }
 
 func newEntries() *entries {
@@ -33,12 +34,13 @@ func newEntries() *entries {
 }
 
 // 向entry列表添加一个路由项。
-func (es *entries) add(pattern string, h http.Handler) error {
+func (es *entries) add(pattern string, h http.Handler, g *Group) error {
 	if _, found := es.named[pattern]; found {
 		return errors.New("该模式的路由项已经存在")
 	}
 
 	e := newEntry(pattern, h)
+	e.group = g
 	es.named[pattern] = e
 
 	if e.expr == nil { // 静态路由，在前端插入
@@ -69,8 +71,8 @@ func (es *entries) remove(pattern string) {
 }
 
 // 匹配程度
-//  -1 表示完全不匹配
-//  0  表示完全匹配
+//  -1 表示完全不匹配；
+//  0  表示完全匹配；
 //  >0 表示部分匹配，值越小表示匹配程度越高。
 func (e *entry) match(url string) int {
 	if e.expr == nil { // 静态匹配

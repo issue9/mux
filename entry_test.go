@@ -104,14 +104,14 @@ func TestEntries(t *testing.T) {
 	es := newEntries()
 	a.NotNil(es)
 
-	a.NotError(es.add("/blog/post/1", hf))
+	a.NotError(es.add("/blog/post/1", hf, nil))
 	a.Equal(1, es.list.Len()).Equal(1, len(es.named))
 
 	// 添加相同的，应该返回错误信息
-	a.Error(es.add("/blog/post/1", hf))
+	a.Error(es.add("/blog/post/1", hf, nil))
 	a.Equal(1, es.list.Len()).Equal(1, len(es.named))
 
-	a.NotError(es.add("/blog/post/{id}", hf))
+	a.NotError(es.add("/blog/post/{id}", hf, nil))
 	a.Equal(2, es.list.Len()).Equal(2, len(es.named))
 
 	es.remove("/plog/post/1") // 删除并不存在的元素

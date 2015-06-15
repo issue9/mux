@@ -72,13 +72,7 @@ func NewServeMux() *ServeMux {
 	}
 }
 
-// 添加一条路由数据。
-//
-// pattern为路由匹配模式，可以是正则匹配也可以是字符串匹配，
-// 可以带上域名，当第一个字符为'/'当作是一个路径，否则就将'/'之前的当作域名或IP。
-// methods参数应该只能为supportMethods中的字符串，若不指定，默认为所有，
-// 当h为空时，将返回错误信息。
-func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) *ServeMux {
+func (mux *ServeMux) add(g *Group, pattern string, h http.Handler, methods ...string) *ServeMux {
 	if h == nil {
 		panic("Add:参数h不能为空")
 	}
@@ -92,7 +86,7 @@ func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) *Ser
 
 	if len(methods) == 0 {
 		for _, v := range mux.items {
-			if err := v.add(pattern, h); err != nil {
+			if err := v.add(pattern, h, g); err != nil {
 				panic(err)
 			}
 		}
@@ -107,12 +101,22 @@ func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) *Ser
 			panic(fmt.Sprintf("Add:不支持的request.Method:[%v]", methods))
 		}
 
-		if err := es.add(pattern, h); err != nil {
+		if err := es.add(pattern, h, g); err != nil {
 			panic(err)
 		}
 	}
 
 	return mux
+}
+
+// 添加一条路由数据。
+//
+// pattern为路由匹配模式，可以是正则匹配也可以是字符串匹配，
+// 可以带上域名，当第一个字符为'/'当作是一个路径，否则就将'/'之前的当作域名或IP。
+// methods参数应该只能为supportMethods中的字符串，若不指定，默认为所有，
+// 当h为空时，将返回错误信息。
+func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) *ServeMux {
+	return mux.add(nil, pattern, h, methods...)
 }
 
 // Get相当于ServeMux.Add(pattern, h, "GET")的简易写法
@@ -138,6 +142,10 @@ func (mux *ServeMux) Put(pattern string, h http.Handler) *ServeMux {
 // Any相当于ServeMux.Add(pattern, h)的简易写法
 func (mux *ServeMux) Any(pattern string, h http.Handler) *ServeMux {
 	return mux.Add(pattern, h)
+}
+
+func (mux *ServeMux) addFunc(g *Group, pattern string, fun func(http.ResponseWriter, *http.Request), methods ...string) *ServeMux {
+	return mux.add(g, pattern, http.HandlerFunc(fun), methods...)
 }
 
 // 功能同ServeMux.Add()，但是将第二个参数从http.Handler换成了func(http.ResponseWriter, *http.Request)
@@ -219,7 +227,7 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 
 		s := entry.match(url)
-		if s < 0 || (size > 0 && s > size) { // 完全不匹配
+		if s == -1 || (size > 0 && s > size) { // 完全不匹配
 			continue
 		}
 
@@ -233,6 +241,10 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	} // end for methods.list
 	if size < 0 {
 		panic(fmt.Sprintf("没有找到与之前匹配的路径，Host:[%v],Path:[%v]", req.Host, req.URL.Path))
+	}
+
+	if e.group != nil && !e.group.isRunning {
+		panic(fmt.Sprintf("该分组[%v]的路由已经被暂停！", e.group.name))
 	}
 
 	ctx := context.Get(req)
