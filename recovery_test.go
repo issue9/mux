@@ -12,6 +12,9 @@ import (
 	"github.com/issue9/assert"
 )
 
+var _ RecoverFunc = defaultRecoverFunc
+var _ RecoverFunc = PrintDebug
+
 func TestDefaultRecoverFunc(t *testing.T) {
 	a := assert.New(t)
 	w := httptest.NewRecorder()
@@ -32,4 +35,10 @@ func TestNewRecovery(t *testing.T) {
 	// 指定fun参数为nil，能正确设置其值
 	r := NewRecovery(&ServeMux{}, nil)
 	a.NotNil(r.recoverFunc)
+}
+
+func TestPrintDebug(t *testing.T) {
+	w := httptest.NewRecorder()
+	PrintDebug(w, "PrintDebug")
+	t.Log(w.Body.String())
 }
