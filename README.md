@@ -6,7 +6,7 @@ mux是对http.Handler接口的一系列实现，提供了大部分实用的功�
 var h1, h2 http.Handler
 
 // 声明一个带method匹配的实例
-m := mux.NewServeMux2().
+m := mux.NewServeMux().
           Get("www.example.com/api/logout", h1).
           Post("api/login", h2)
 

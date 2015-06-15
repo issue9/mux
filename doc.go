@@ -8,7 +8,7 @@
 //  var h1, h2 http.Handler
 //
 //  // 声明一个带method匹配的实例
-//  m := mux.NewServerMux2().
+//  m := mux.NewServerMux().
 //            Get("api/logout", h1).
 //            Post("www.example/api/login", h2)
 //
