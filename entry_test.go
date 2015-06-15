@@ -47,7 +47,7 @@ func TestEntry_match(t *testing.T) {
 	})
 
 	// 静态路由
-	e := newEntry("/blog/post/1", hf)
+	e := newEntry("/blog/post/1", hf, nil)
 	a.Equal(e.match("/blog/post/1"), 0)
 
 	a.Equal(e.match("/blog/post/1/page/2"), 7)
@@ -56,7 +56,7 @@ func TestEntry_match(t *testing.T) {
 	a.Equal(e.match("/blog"), -1)
 
 	// 正则路由
-	e = newEntry("/blog/post/{id}", hf)
+	e = newEntry("/blog/post/{id}", hf, nil)
 	a.Equal(e.match("/blog/post/1"), 0)
 
 	a.Equal(e.match("/blog/post/2/page/1"), 7)
@@ -65,7 +65,7 @@ func TestEntry_match(t *testing.T) {
 	a.Equal(e.match("/plog/post/2"), -1)
 
 	// 多个命名正则表达式
-	e = newEntry("/blog/{action:\\w+}-{id:\\d+}/", hf)
+	e = newEntry("/blog/{action:\\w+}-{id:\\d+}/", hf, nil)
 	a.Equal(e.match("/blog/post-1/page-2"), 6)
 
 	// 正则，不匹配
@@ -79,20 +79,20 @@ func TestEntry_getParams(t *testing.T) {
 	hf := http.HandlerFunc(h)
 
 	// 静态路由
-	e := newEntry("/blog/post/1", hf)
+	e := newEntry("/blog/post/1", hf, nil)
 	a.Nil(e.getParams("/blog/post/1"))
 	a.Nil(e.getParams("/blog/post/1/page/2"))
 	a.Nil(e.getParams("/blog"))
 
 	// 正则路由
-	e = newEntry("/blog/post/{id}", hf)
+	e = newEntry("/blog/post/{id}", hf, nil)
 	a.Equal(0, len(e.getParams("/plog/post/2")))             // 不匹配
 	a.Equal(e.getParams("/blog/post/"), map[string]string{}) // 匹配，但未指定参数，默认为空
 	a.Equal(e.getParams("/blog/post/1"), map[string]string{"id": "1"})
 	a.Equal(e.getParams("/blog/post/2/page/1"), map[string]string{"id": "2"})
 
 	// 多个命名正则表达式
-	e = newEntry("/blog/{action:\\w+}-{id:\\d+}/", hf)
+	e = newEntry("/blog/{action:\\w+}-{id:\\d+}/", hf, nil)
 	a.Equal(e.getParams("/blog/post-1/page-2"), map[string]string{"action": "post", "id": "1"})
 	a.Equal(0, len(e.getParams("/blog/post-1d/"))) // 不匹配
 }
@@ -122,4 +122,17 @@ func TestEntries(t *testing.T) {
 	_, found := es.named["/blog/post/1"]
 	a.False(found)
 	a.Equal(1, es.list.Len()).Equal(1, len(es.named))
+
+	// 测试正则路由项的添加与删除
+	es = newEntries()
+	a.NotNil(es)
+	a.NotError(es.add("/blog/post-{id}/", hf, nil))
+	a.Equal(1, es.list.Len()).Equal(1, len(es.named))
+
+	// 删除不存在的项
+	es.remove("/blog/post-{id}")
+	a.Equal(1, es.list.Len()).Equal(1, len(es.named))
+
+	es.remove("/blog/post-{id}/")
+	a.Equal(0, es.list.Len()).Equal(0, len(es.named))
 }

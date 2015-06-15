@@ -22,8 +22,8 @@ type entry struct {
 	pattern   string         // 匹配字符串
 	expr      *regexp.Regexp // 若是正则匹配，则会被pattern字段转换成正则表达式，并保存在此变量中
 	hasParams bool           // 是否拥有命名路由参数，仅在expr不为nil的时候有用
+	group     *Group         // 所属分组
 	handler   http.Handler
-	group     *Group
 }
 
 func newEntries() *entries {
@@ -39,8 +39,7 @@ func (es *entries) add(pattern string, h http.Handler, g *Group) error {
 		return errors.New("该模式的路由项已经存在")
 	}
 
-	e := newEntry(pattern, h)
-	e.group = g
+	e := newEntry(pattern, h, g)
 	es.named[pattern] = e
 
 	if e.expr == nil { // 静态路由，在前端插入
@@ -115,23 +114,21 @@ func (e *entry) getParams(url string) map[string]string {
 // 声明一个entry实例
 // pattern 匹配内容。
 // h 对应的http.Handler，外层调用者确保该值不能为nil.
-func newEntry(pattern string, h http.Handler) *entry {
+func newEntry(pattern string, h http.Handler, g *Group) *entry {
+	e := &entry{
+		pattern: pattern,
+		handler: h,
+		group:   g,
+	}
+
 	strs := split(pattern)
-
-	if len(strs) == 1 { // 静态路由
-		return &entry{
-			pattern: pattern,
-			handler: h,
-		}
+	if len(strs) > 1 { // 正则路由
+		pattern, hasParams := toPattern(strs)
+		e.expr = regexp.MustCompile(pattern)
+		e.hasParams = hasParams
 	}
 
-	pattern, hasParams := toPattern(strs)
-	return &entry{
-		pattern:   pattern,
-		expr:      regexp.MustCompile(pattern),
-		hasParams: hasParams,
-		handler:   h,
-	}
+	return e
 }
 
 // 将strs按照顺序合并成一个正则表达式
