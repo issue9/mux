@@ -170,12 +170,12 @@ func (mux *ServeMux) AnyFunc(pattern string, fun func(http.ResponseWriter, *http
 	return mux.AddFunc(pattern, fun)
 }
 
-// 创建一个路由组，该组中所有的操作，都会加上前缀prefix
-//  g := srv.Group("/api")
-//  g.Get("/users")  // 相当于 srv.Get("/api/users")
-//  g.Get("/user/1") // 相当于 srv.Get("/api/user/1")
-func (mux *ServeMux) Group(prefix string) *Group {
-	return &Group{
+// 创建一个路由组，该组中添加的路由项，都会带上前缀prefix
+//  p := srv.Prefix("/api")
+//  p.Get("/users")  // 相当于 srv.Get("/api/users")
+//  p.Get("/user/1") // 相当于 srv.Get("/api/user/1")
+func (mux *ServeMux) Prefix(prefix string) *Prefix {
+	return &Prefix{
 		mux:    mux,
 		prefix: prefix,
 	}

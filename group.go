@@ -8,84 +8,90 @@ import (
 	"net/http"
 )
 
-type Group struct {
+// 封装ServeMux，使所有添加的路由项的匹配模式都带上指定的前缀。
+//  p := srv.Prefix("/api")
+//  p.Get("/users")  // 相当于 srv.Get("/api/users")
+//  p.Get("/user/1") // 相当于 srv.Get("/api/user/1")
+//
+// 可以直接使用ServeMux.Prefix()方法获取一个Prefix实例。
+type Prefix struct {
 	mux    *ServeMux
 	prefix string
 }
 
 // Add相当于ServeMux.Add(prefix+pattern, h, "POST"...)的简易写法
-func (g *Group) Add(pattern string, h http.Handler, methods ...string) *Group {
-	g.mux.Add(g.prefix+pattern, h, methods...)
-	return g
+func (p *Prefix) Add(pattern string, h http.Handler, methods ...string) *Prefix {
+	p.mux.Add(p.prefix+pattern, h, methods...)
+	return p
 }
 
 // Get相当于ServeMux.Get(prefix+pattern, h)的简易写法
-func (g *Group) Get(pattern string, h http.Handler) *Group {
-	g.mux.Get(g.prefix+pattern, h)
-	return g
+func (p *Prefix) Get(pattern string, h http.Handler) *Prefix {
+	p.mux.Get(p.prefix+pattern, h)
+	return p
 }
 
 // Post相当于ServeMux.Post(prefix+pattern, h)的简易写法
-func (g *Group) Post(pattern string, h http.Handler) *Group {
-	g.mux.Post(g.prefix+pattern, h)
-	return g
+func (p *Prefix) Post(pattern string, h http.Handler) *Prefix {
+	p.mux.Post(p.prefix+pattern, h)
+	return p
 }
 
 // Delete相当于ServeMux.Delete(prefix+pattern, h)的简易写法
-func (g *Group) Delete(pattern string, h http.Handler) *Group {
-	g.mux.Delete(g.prefix+pattern, h)
-	return g
+func (p *Prefix) Delete(pattern string, h http.Handler) *Prefix {
+	p.mux.Delete(p.prefix+pattern, h)
+	return p
 }
 
 // Put相当于ServeMux.Put(prefix+pattern, h)的简易写法
-func (g *Group) Put(pattern string, h http.Handler) *Group {
-	g.mux.Put(g.prefix+pattern, h)
-	return g
+func (p *Prefix) Put(pattern string, h http.Handler) *Prefix {
+	p.mux.Put(p.prefix+pattern, h)
+	return p
 }
 
 // Any相当于ServeMux.Any(prefix+pattern, h)的简易写法
-func (g *Group) Any(pattern string, h http.Handler) *Group {
-	g.mux.Any(g.prefix+pattern, h)
-	return g
+func (p *Prefix) Any(pattern string, h http.Handler) *Prefix {
+	p.mux.Any(p.prefix+pattern, h)
+	return p
 }
 
 // AddFunc功能同ServeMux.AddFunc(prefix+pattern, fun, ...)
-func (g *Group) AddFunc(pattern string, fun func(http.ResponseWriter, *http.Request), methods ...string) *Group {
-	g.mux.AddFunc(g.prefix+pattern, fun, methods...)
-	return g
+func (p *Prefix) AddFunc(pattern string, fun func(http.ResponseWriter, *http.Request), methods ...string) *Prefix {
+	p.mux.AddFunc(p.prefix+pattern, fun, methods...)
+	return p
 }
 
 // GetFunc相当于ServeMux.GetFunc(prefix+pattern, func)的简易写法
-func (g *Group) GetFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Group {
-	g.mux.GetFunc(g.prefix+pattern, fun)
-	return g
+func (p *Prefix) GetFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
+	p.mux.GetFunc(p.prefix+pattern, fun)
+	return p
 }
 
 // PutFunc相当于ServeMux.PutFunc(prefix+pattern, func)的简易写法
-func (g *Group) PutFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Group {
-	g.mux.PutFunc(g.prefix+pattern, fun)
-	return g
+func (p *Prefix) PutFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
+	p.mux.PutFunc(p.prefix+pattern, fun)
+	return p
 }
 
 // PostFunc相当于ServeMux.PostFunc(prefix+pattern, func)的简易写法
-func (g *Group) PostFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Group {
-	g.mux.PostFunc(g.prefix+pattern, fun)
-	return g
+func (p *Prefix) PostFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
+	p.mux.PostFunc(p.prefix+pattern, fun)
+	return p
 }
 
 // DeleteFunc相当于ServeMux.DeleteFunc(prefix+pattern, func)的简易写法
-func (g *Group) DeleteFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Group {
-	g.mux.DeleteFunc(g.prefix+pattern, fun)
-	return g
+func (p *Prefix) DeleteFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
+	p.mux.DeleteFunc(p.prefix+pattern, fun)
+	return p
 }
 
 // AnyFunc相当于ServeMux.AnyFunc(prefix+pattern, func)的简易写法
-func (g *Group) AnyFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Group {
-	g.mux.AnyFunc(g.prefix+pattern, fun)
-	return g
+func (p *Prefix) AnyFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
+	p.mux.AnyFunc(p.prefix+pattern, fun)
+	return p
 }
 
 // AnyFunc相当于ServeMux.Remove(prefix+pattern, methods...)的简易写法
-func (g *Group) Remove(pattern string, methods ...string) {
-	g.mux.Remove(g.prefix+pattern, methods...)
+func (p *Prefix) Remove(pattern string, methods ...string) {
+	p.mux.Remove(p.prefix+pattern, methods...)
 }
