@@ -5,10 +5,8 @@
 package mux
 
 import (
-	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"runtime"
 	"testing"
 
 	"github.com/issue9/assert"
@@ -17,18 +15,8 @@ import (
 // 断言mux下的method请求方法下有l条路由记录。
 // 即mux.items[method].list.Len()的值与l相等。
 func assertLen(mux *ServeMux, a *assert.Assertion, l int, method string) {
-	info := func(v1, v2 int) string {
-		_, file, line, ok := runtime.Caller(2)
-		if !ok {
-			return "<none>"
-		}
-		return fmt.Sprintf("v1:[%v] != v2:[%v]：@ %v:%v", v1, v2, file, line)
-	}
-
-	l1 := mux.items[method].list.Len()
-	a.Equal(l, l1, info(l, l1))
-	l1 = len(mux.items[method].named)
-	a.Equal(l, l1, info(l, l1))
+	a.Equal(l, mux.items[method].list.Len())
+	a.Equal(l, len(mux.items[method].named))
 }
 
 func TestServeMux_Add(t *testing.T) {
