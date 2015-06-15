@@ -189,6 +189,19 @@ func (mux *ServeMux) Prefix(prefix string) *Prefix {
 	}
 }
 
+// 声明一组路由，可以控制该组的路由是否启用。
+//  g := srv.Group("admin")
+//  g.Get("/admin", h)
+//  g.Get("/admin/login", h)
+//  g.Stop() // 所有通过g绑定的路由都将停止解析。
+func (mux *ServeMux) Group(name string) *Group {
+	return &Group{
+		name:      name,
+		mux:       mux,
+		isRunning: true,
+	}
+}
+
 // 移除指定的路由项，通过路由表达式和method来匹配。
 // 当未指定methods时，将删除所有method匹配的项。
 // 指定错误的method值，将自动忽略该值。

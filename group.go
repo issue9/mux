@@ -9,10 +9,22 @@ import (
 )
 
 // 一个分组信息，可用于控制一组路由项是否启用。
+//  g := srv.Group("admin")
+//  g.Get("/admin", h)
+//  g.Get("/admin/login", h)
+//  g.Stop() // 所有通过g绑定的路由都将停止解析。
 type Group struct {
 	name      string
 	isRunning bool
 	mux       *ServeMux
+}
+
+func (g *Group) Start() {
+	g.isRunning = true
+}
+
+func (g *Group) Stop() {
+	g.isRunning = false
 }
 
 // Add相当于ServeMux.Add(pattern, h, "POST"...)
