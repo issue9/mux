@@ -8,7 +8,7 @@ var h1, h2 http.Handler
 // 声明一个带method匹配的实例
 m := mux.NewServeMux().
           Get("www.example.com/api/logout", h1).
-          Post("api/login", h2)
+          Post("/api/login", h2)
 
 http.ListenAndServe("8080", m)
 ```

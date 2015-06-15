@@ -31,7 +31,7 @@ var supportMethods = []string{
 //  m := mux.NewServeMux()
 //  m.Get("www.example.com/abc", h1).              // 只匹配www.example.com域名下的路径
 //    Post("/abc/"", h2).                          // 不限定域名的路径匹配
-//    Add("api/{version:\\d+}",h3, "GET", "POST")  // 只匹配GET和POST
+//    Add("/api/{version:\\d+}",h3, "GET", "POST") // 只匹配GET和POST
 //  http.ListenAndServe(m)
 //
 //

@@ -9,8 +9,8 @@
 //
 //  // 声明一个带method匹配的实例
 //  m := mux.NewServerMux().
-//            Get("api/logout", h1).
-//            Post("www.example/api/login", h2)
+//            Get("/api/logout", h1). // 不限定域名，必须以/开头
+//            Post("www.example/api/login", h2) // 限定了域名
 //
 //  http.ListenAndServe("8080", m)
 package mux
