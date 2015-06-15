@@ -15,4 +15,4 @@
 //  http.ListenAndServe("8080", m)
 package mux
 
-const Version = "0.11.22.150615"
+const Version = "0.11.23.150615"
