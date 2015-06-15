@@ -24,19 +24,19 @@ func TestPrefix(t *testing.T) {
 	p.Get("/abc", hf)
 	p.Delete("/abc", hf)
 
-	a.Equal(1, mux.items["POST"].list.Len()).
-		Equal(1, mux.items["GET"].list.Len()).
-		Equal(1, mux.items["DELETE"].list.Len())
+	assertLen(mux, a, 1, "GET")
+	assertLen(mux, a, 1, "POST")
+	assertLen(mux, a, 1, "DELETE")
 	p.Remove("/abc", "GET") // 从Prefix.Remove()删除
-	a.Equal(1, mux.items["POST"].list.Len()).
-		Equal(0, mux.items["GET"].list.Len()).
-		Equal(1, mux.items["DELETE"].list.Len())
+	assertLen(mux, a, 0, "GET")
+	assertLen(mux, a, 1, "POST")
+	assertLen(mux, a, 1, "DELETE")
 	mux.Remove("/abc", "POST") // 从ServeMux.Remove()删除，未带上p1前缀，无法删除
-	a.Equal(1, mux.items["POST"].list.Len()).
-		Equal(0, mux.items["GET"].list.Len()).
-		Equal(1, mux.items["DELETE"].list.Len())
+	assertLen(mux, a, 0, "GET")
+	assertLen(mux, a, 1, "POST")
+	assertLen(mux, a, 1, "DELETE")
 	mux.Remove("p1/abc", "POST") // 从ServeMux.Remove()删除
-	a.Equal(0, mux.items["POST"].list.Len()).
-		Equal(0, mux.items["GET"].list.Len()).
-		Equal(1, mux.items["DELETE"].list.Len())
+	assertLen(mux, a, 0, "GET")
+	assertLen(mux, a, 0, "POST")
+	assertLen(mux, a, 1, "DELETE")
 }
