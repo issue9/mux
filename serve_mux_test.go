@@ -5,12 +5,31 @@
 package mux
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"runtime"
 	"testing"
 
 	"github.com/issue9/assert"
 )
+
+// 断言mux下的method请求方法下有l条路由记录。
+// 即mux.items[method].list.Len()的值与l相等。
+func assertLen(mux *ServeMux, a *assert.Assertion, l int, method string) {
+	info := func(v1, v2 int) string {
+		_, file, line, ok := runtime.Caller(2)
+		if !ok {
+			return "<none>"
+		}
+		return fmt.Sprintf("v1:[%v] != v2:[%v]：@ %v:%v", v1, v2, file, line)
+	}
+
+	l1 := mux.items[method].list.Len()
+	a.Equal(l, l1, info(l, l1))
+	l1 = len(mux.items[method].named)
+	a.Equal(l, l1, info(l, l1))
+}
 
 func TestServeMux_Add(t *testing.T) {
 	a := assert.New(t)
@@ -29,31 +48,31 @@ func TestServeMux_Add(t *testing.T) {
 
 	// 向Get和Post添加一个路由abc
 	a.NotPanic(func() { m.Add("abc", h, "GET", "POST") })
-	a.Equal(1, m.items["GET"].list.Len())
-	a.Equal(1, m.items["POST"].list.Len())
-	a.Equal(0, m.items["DELETE"].list.Len())
+	assertLen(m, a, 1, "GET")
+	assertLen(m, a, 1, "POST")
+	assertLen(m, a, 0, "DELETE")
 	// 再次向Get添加一条同名路由，会出错
 	a.Panic(func() { m.Get("abc", h) })
 
 	a.NotPanic(func() { m.Add("abcdefg", h) })
-	a.Equal(2, m.items["GET"].list.Len())
-	a.Equal(2, m.items["POST"].list.Len())
-	a.Equal(1, m.items["DELETE"].list.Len())
+	assertLen(m, a, 2, "GET")
+	assertLen(m, a, 2, "POST")
+	assertLen(m, a, 1, "DELETE")
 
 	a.NotPanic(func() { m.Get("def", h) })
-	a.Equal(3, m.items["GET"].list.Len())
-	a.Equal(2, m.items["POST"].list.Len())
-	a.Equal(1, m.items["DELETE"].list.Len())
+	assertLen(m, a, 3, "GET")
+	assertLen(m, a, 2, "POST")
+	assertLen(m, a, 1, "DELETE")
 
 	a.NotPanic(func() { m.Delete("abc", h) })
-	a.Equal(3, m.items["GET"].list.Len())
-	a.Equal(2, m.items["POST"].list.Len())
-	a.Equal(2, m.items["DELETE"].list.Len())
+	assertLen(m, a, 3, "GET")
+	assertLen(m, a, 2, "POST")
+	assertLen(m, a, 2, "DELETE")
 
 	a.NotPanic(func() { m.Any("abcd", h) })
-	a.Equal(4, m.items["GET"].list.Len())
-	a.Equal(3, m.items["POST"].list.Len())
-	a.Equal(3, m.items["DELETE"].list.Len())
+	assertLen(m, a, 4, "GET")
+	assertLen(m, a, 3, "POST")
+	assertLen(m, a, 3, "DELETE")
 }
 
 func TestServeMux_Remove(t *testing.T) {
@@ -67,27 +86,27 @@ func TestServeMux_Remove(t *testing.T) {
 	// 向Get和Post添加一个路由abc
 	m.Add("abc", h, "GET", "POST", "DELETE")
 	m.Add("abcd", h, "GET", "POST", "DELETE")
-	a.Equal(2, m.items["GET"].list.Len())
-	a.Equal(2, m.items["POST"].list.Len())
-	a.Equal(2, m.items["DELETE"].list.Len())
+	assertLen(m, a, 2, "GET")
+	assertLen(m, a, 2, "POST")
+	assertLen(m, a, 2, "DELETE")
 
 	// 删除Get,Post下的匹配项
 	m.Remove("abc", "GET", "POST")
-	a.Equal(1, m.items["GET"].list.Len())
-	a.Equal(1, m.items["POST"].list.Len())
-	a.Equal(2, m.items["DELETE"].list.Len())
+	assertLen(m, a, 1, "GET")
+	assertLen(m, a, 1, "POST")
+	assertLen(m, a, 2, "DELETE")
 
 	// 删除GET下的匹配项。
 	m.Remove("abcd", "GET")
-	a.Equal(0, m.items["GET"].list.Len())
-	a.Equal(1, m.items["POST"].list.Len())
-	a.Equal(2, m.items["DELETE"].list.Len())
+	assertLen(m, a, 0, "GET")
+	assertLen(m, a, 1, "POST")
+	assertLen(m, a, 2, "DELETE")
 
 	// 删除任意method下的匹配项。
 	m.Remove("abcd")
-	a.Equal(0, m.items["GET"].list.Len())
-	a.Equal(0, m.items["POST"].list.Len())
-	a.Equal(1, m.items["DELETE"].list.Len())
+	assertLen(m, a, 0, "GET")
+	assertLen(m, a, 0, "POST")
+	assertLen(m, a, 1, "DELETE")
 }
 
 func TestServeMux_ServeHTTP(t *testing.T) {

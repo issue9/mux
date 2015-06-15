@@ -23,8 +23,8 @@ func TestGroup(t *testing.T) {
 	a.Equal(g.name, "g1").Equal(g.mux, mux).True(g.isRunning) // 保证初始化之后，isRunning为true
 
 	g.Get("/abc", hf)
-	a.Equal(1, mux.items["GET"].list.Len())
+	assertLen(mux, a, 1, "GET")
 	// 通过ServeMux.Remove()可能删除从Group添加的内容。
 	mux.Remove("/abc")
-	a.Equal(0, mux.items["GET"].list.Len())
+	assertLen(mux, a, 0, "GET")
 }
