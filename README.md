@@ -3,12 +3,21 @@ mux [![Build Status](https://travis-ci.org/issue9/mux.svg?branch=master)](https:
 
 mux是对http.Handler接口的一系列实现，提供了大部分实用的功能：
 ```go
-var h1, h2 http.Handler
+m := mux.NewServerMux().
+        Get("/user/logout", h). // 不限定域名，必须以/开头
+        Post("www.example/api/login", h) // 限定了域名
+        Get("/blog/post/{id:\\d+}", h) // 正则路由
 
-// 声明一个带method匹配的实例
-m := mux.NewServeMux().
-          Get("www.example.com/api/logout", h1).
-          Post("/api/login", h2)
+// 统一前缀名称的路由
+p := m.Prefix("/api")
+p.Get("/logout", h) // 相当于mux.Get("/api/logout", h)
+p.Post("/login", h) // 相当于mux.Get("/api/login", h)
+
+// 分组路由，该分组可以在运行过程中控制是否暂停
+g := m.Group("admin")
+g.Get("/admin", h).
+    Get("/api/admin/logout").
+    Post("/api/admin/login")
 
 http.ListenAndServe("8080", m)
 ```

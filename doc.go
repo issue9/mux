@@ -4,15 +4,23 @@
 
 // mux提供了一系列实现了http.Handler接口的中间件。
 //
-// 一个多域名路由的示例：
-//  var h1, h2 http.Handler
-//
-//  // 声明一个带method匹配的实例
 //  m := mux.NewServerMux().
-//            Get("/api/logout", h1). // 不限定域名，必须以/开头
-//            Post("www.example/api/login", h2) // 限定了域名
+//          Get("/user/logout", h). // 不限定域名，必须以/开头
+//          Post("www.example/api/login", h) // 限定了域名
+//          Get("/blog/post/{id:\\d+}", h) // 正则路由
+//
+//  // 统一前缀名称的路由
+//  p := m.Prefix("/api")
+//  p.Get("/logout", h) // 相当于mux.Get("/api/logout", h)
+//  p.Post("/login", h) // 相当于mux.Get("/api/login", h)
+//
+//  // 分组路由，该分组可以在运行过程中控制是否暂停
+//  g := m.Group("admin")
+//  g.Get("/admin", h).
+//      Get("/api/admin/logout").
+//      Post("/api/admin/login")
 //
 //  http.ListenAndServe("8080", m)
 package mux
 
-const Version = "0.11.23.150615"
+const Version = "0.11.23.150616"
