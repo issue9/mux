@@ -19,6 +19,14 @@ type Group struct {
 	mux       *ServeMux
 }
 
+func (g *Group) Name() string {
+	return g.name
+}
+
+func (g *Group) IsRunning() bool {
+	return g.isRunning
+}
+
 func (g *Group) Start() {
 	g.isRunning = true
 }
