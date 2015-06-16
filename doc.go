@@ -11,8 +11,8 @@
 //
 //  // 统一前缀名称的路由
 //  p := m.Prefix("/api")
-//  p.Get("/logout", h) // 相当于mux.Get("/api/logout", h)
-//  p.Post("/login", h) // 相当于mux.Get("/api/login", h)
+//  p.Get("/logout", h) // 相当于m.Get("/api/logout", h)
+//  p.Post("/login", h) // 相当于m.Get("/api/login", h)
 //
 //  // 分组路由，该分组可以在运行过程中控制是否暂停
 //  g := m.Group("admin")
@@ -20,7 +20,8 @@
 //      Get("/api/admin/logout").
 //      Post("/api/admin/login")
 //
-//  http.ListenAndServe("8080", m)
+//  h := mux.NewReocvery(m, nil)
+//  http.ListenAndServe("8080", h)
 package mux
 
-const Version = "0.11.24.150616"
+const Version = "0.11.25.150616"
