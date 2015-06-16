@@ -57,53 +57,59 @@ var supportMethods = []string{
 //  /post/{id:\d+} // 同上，但id的值只能为\d+；
 //  /post/{:\d+}   // 同上，但是没有命名；
 type ServeMux struct {
-	mu    sync.Mutex
-	list  map[string]*list.List        // 路由列表，静态路由在前，正则路由在后。
-	named map[string]map[string]*entry // 路由的命名列表，方便查找。
+	sync.Mutex
+
+	// 路由列表，键名表示method。list中静态路由在前，正则路由在后。
+	list map[string]*list.List
+
+	// 路由的命名列表，方便查找。
+	named map[string]map[string]*entry
 }
 
 // 声明一个新的ServeMux
 func NewServeMux() *ServeMux {
 	l := make(map[string]*list.List, len(supportMethods))
-	named := make(map[string]map[string]*entry, len(supportMethods))
+	n := make(map[string]map[string]*entry, len(supportMethods))
 	for _, method := range supportMethods {
 		l[method] = list.New()
-		named[method] = map[string]*entry{}
+		n[method] = map[string]*entry{}
 	}
 
 	return &ServeMux{
 		list:  l,
-		named: named,
+		named: n,
 	}
 }
 
+// 添加一个路由项。
 func (mux *ServeMux) add(g *Group, pattern string, h http.Handler, methods ...string) *ServeMux {
 	if h == nil {
-		panic("Add:参数h不能为空")
+		panic("add:参数h不能为空")
 	}
 
 	if len(pattern) == 0 {
-		panic("Add:pattern匹配内容不能为空")
+		panic("add:pattern匹配内容不能为空")
 	}
 
 	if len(methods) == 0 {
 		methods = supportMethods
 	}
 
-	mux.mu.Lock()
-	defer mux.mu.Unlock()
-
 	e := newEntry(pattern, h, g)
+
+	mux.Lock()
+	defer mux.Unlock()
+
 	for _, method := range methods {
 		method = strings.ToUpper(method)
 
 		es, found := mux.named[method]
 		if !found {
-			panic(fmt.Sprintf("Add:不支持的request.Method:[%v]", method))
+			panic(fmt.Sprintf("add:不支持的request.Method:[%v]", method))
 		}
 
 		if _, found := es[pattern]; found {
-			panic("Add:该模式的路由项已经存在")
+			panic("add:该模式的路由项已经存在")
 		}
 
 		es[pattern] = e
@@ -220,8 +226,8 @@ func (mux *ServeMux) Remove(pattern string, methods ...string) {
 		methods = supportMethods
 	}
 
-	mux.mu.Lock()
-	defer mux.mu.Unlock()
+	mux.Lock()
+	defer mux.Unlock()
 
 	for _, method := range methods {
 		es, found := mux.named[method]
@@ -251,7 +257,7 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	var e *entry
 	var p string
 
-	mux.mu.Lock()
+	mux.Lock()
 	for item := mux.list[req.Method].Front(); item != nil; item = item.Next() {
 		entry := item.Value.(*entry)
 		url := req.URL.Path
@@ -272,7 +278,7 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			break
 		}
 	}
-	mux.mu.Unlock()
+	mux.Unlock() // 没必要等ServeHTTP执行完之后才解锁。
 
 	if size < 0 {
 		panic(fmt.Sprintf("没有找到与之前匹配的路径，Host:[%v],Path:[%v]", req.Host, req.URL.Path))
