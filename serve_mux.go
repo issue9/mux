@@ -5,6 +5,7 @@
 package mux
 
 import (
+	"container/list"
 	"fmt"
 	"net/http"
 	"strings"
@@ -57,18 +58,22 @@ var supportMethods = []string{
 //  /post/{:\d+}   // 同上，但是没有命名；
 type ServeMux struct {
 	mu    sync.Mutex
-	items map[string]*entries
+	list  map[string]*list.List        // 路由列表，静态路由在前，正则路由在后。
+	named map[string]map[string]*entry // 路由的命名列表，方便查找。
 }
 
 // 声明一个新的ServeMux
 func NewServeMux() *ServeMux {
-	items := make(map[string]*entries, len(supportMethods))
-	for _, v := range supportMethods {
-		items[v] = newEntries()
+	l := make(map[string]*list.List, len(supportMethods))
+	named := make(map[string]map[string]*entry, len(supportMethods))
+	for _, method := range supportMethods {
+		l[method] = list.New()
+		named[method] = map[string]*entry{}
 	}
 
 	return &ServeMux{
-		items: items,
+		list:  l,
+		named: named,
 	}
 }
 
@@ -81,28 +86,31 @@ func (mux *ServeMux) add(g *Group, pattern string, h http.Handler, methods ...st
 		panic("Add:pattern匹配内容不能为空")
 	}
 
+	if len(methods) == 0 {
+		methods = supportMethods
+	}
+
 	mux.mu.Lock()
 	defer mux.mu.Unlock()
 
-	if len(methods) == 0 {
-		for _, v := range mux.items {
-			if err := v.add(pattern, h, g); err != nil {
-				panic(err)
-			}
-		}
-		return mux
-	}
-
+	e := newEntry(pattern, h, g)
 	for _, method := range methods {
 		method = strings.ToUpper(method)
 
-		es, found := mux.items[method]
+		es, found := mux.named[method]
 		if !found {
-			panic(fmt.Sprintf("Add:不支持的request.Method:[%v]", methods))
+			panic(fmt.Sprintf("Add:不支持的request.Method:[%v]", method))
 		}
 
-		if err := es.add(pattern, h, g); err != nil {
-			panic(err)
+		if _, found := es[pattern]; found {
+			panic("Add:该模式的路由项已经存在")
+		}
+
+		es[pattern] = e
+		if e.expr == nil { // 静态路由，在前端插入
+			mux.list[method].PushFront(e)
+		} else { // 正则路由，在后端插入
+			mux.list[method].PushBack(e)
 		}
 	}
 
@@ -212,18 +220,28 @@ func (mux *ServeMux) Remove(pattern string, methods ...string) {
 	defer mux.mu.Unlock()
 
 	if len(methods) == 0 { // 删除所有method下匹配的项
-		for _, i := range mux.items {
-			i.remove(pattern)
-		}
-		return
+		methods = supportMethods
 	}
 
-	for _, m := range methods {
-		if _, found := mux.items[m]; !found {
+	for _, method := range methods {
+		es, found := mux.named[method]
+		if !found {
 			continue
 		}
 
-		mux.items[m].remove(pattern)
+		if _, found := es[pattern]; !found {
+			continue
+		}
+
+		delete(es, pattern)
+
+		for item := mux.list[method].Front(); item != nil; item = item.Next() {
+			e := item.Value.(*entry)
+			if e.pattern == pattern {
+				mux.list[method].Remove(item)
+				break
+			}
+		}
 	}
 }
 
@@ -237,7 +255,7 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	mux.mu.Lock()
 	defer mux.mu.Unlock()
 
-	for item := mux.items[req.Method].list.Front(); item != nil; item = item.Next() {
+	for item := mux.list[req.Method].Front(); item != nil; item = item.Next() {
 		entry := item.Value.(*entry)
 		url := req.URL.Path
 		if entry.pattern[0] != '/' {

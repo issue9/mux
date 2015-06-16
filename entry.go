@@ -5,18 +5,10 @@
 package mux
 
 import (
-	"container/list"
-	"errors"
 	"net/http"
 	"regexp"
 	"strings"
 )
-
-// entry列表。
-type entries struct {
-	list  *list.List        // 路由列表，静态路由在前，正则路由在后。
-	named map[string]*entry // 路由的命名列表，方便查找。
-}
 
 type entry struct {
 	pattern   string         // 匹配字符串
@@ -24,49 +16,6 @@ type entry struct {
 	hasParams bool           // 是否拥有命名路由参数，仅在expr不为nil的时候有用
 	group     *Group         // 所属分组
 	handler   http.Handler
-}
-
-func newEntries() *entries {
-	return &entries{
-		list:  list.New(),
-		named: map[string]*entry{},
-	}
-}
-
-// 向entry列表添加一个路由项。
-func (es *entries) add(pattern string, h http.Handler, g *Group) error {
-	if _, found := es.named[pattern]; found {
-		return errors.New("该模式的路由项已经存在")
-	}
-
-	e := newEntry(pattern, h, g)
-	es.named[pattern] = e
-
-	if e.expr == nil { // 静态路由，在前端插入
-		es.list.PushFront(e)
-	} else { // 正则路由，在后端插入
-		es.list.PushBack(e)
-	}
-
-	return nil
-}
-
-// 从entry列表中移除一个路由项。
-// 若没有与pattern匹配的路由项，将不发生任何操作。
-func (es *entries) remove(pattern string) {
-	if _, found := es.named[pattern]; !found {
-		return
-	}
-
-	delete(es.named, pattern)
-
-	for item := es.list.Front(); item != nil; item = item.Next() {
-		e := item.Value.(*entry)
-		if e.pattern == pattern {
-			es.list.Remove(item)
-			return
-		}
-	}
 }
 
 // 匹配程度

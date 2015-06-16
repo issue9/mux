@@ -15,8 +15,8 @@ import (
 // 断言mux下的method请求方法下有l条路由记录。
 // 即mux.items[method].list.Len()的值与l相等。
 func assertLen(mux *ServeMux, a *assert.Assertion, l int, method string) {
-	a.Equal(l, mux.items[method].list.Len())
-	a.Equal(l, len(mux.items[method].named))
+	a.Equal(l, mux.list[method].Len())
+	a.Equal(l, len(mux.named[method]))
 }
 
 func TestServeMux_Add(t *testing.T) {
