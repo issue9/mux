@@ -19,18 +19,22 @@ type Group struct {
 	mux       *ServeMux
 }
 
+// 获取当前分组的名称
 func (g *Group) Name() string {
 	return g.name
 }
 
+// 当前分组的路由是否处于运行状态
 func (g *Group) IsRunning() bool {
 	return g.isRunning
 }
 
+// 将当前分组改为运行状态
 func (g *Group) Start() {
 	g.isRunning = true
 }
 
+// 将当前分组改为暂停状态。
 func (g *Group) Stop() {
 	g.isRunning = false
 }
@@ -113,6 +117,7 @@ func (g *Group) Remove(pattern string, methods ...string) {
 }
 
 // 创建一个路由组，该组中添加的路由项，都会带上前缀prefix
+// prefix 前缀字符串，所有从Prefix中声明的路由都将包含此前缀。
 //  p := g.Prefix("/api")
 //  p.Get("/users")  // 相当于 g.Get("/api/users")
 //  p.Get("/user/1") // 相当于 g.Get("/api/user/1")

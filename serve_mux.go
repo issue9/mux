@@ -179,6 +179,7 @@ func (mux *ServeMux) AnyFunc(pattern string, fun func(http.ResponseWriter, *http
 }
 
 // 创建一个路由组，该组中添加的路由项，都会带上前缀prefix
+// prefix 前缀字符串，所有从Prefix中声明的路由都将包含此前缀。
 //  p := srv.Prefix("/api")
 //  p.Get("/users")  // 相当于 srv.Get("/api/users")
 //  p.Get("/user/1") // 相当于 srv.Get("/api/user/1")
@@ -190,6 +191,7 @@ func (mux *ServeMux) Prefix(prefix string) *Prefix {
 }
 
 // 声明一组路由，可以控制该组的路由是否启用。
+// name 为分组的名称，无特殊要求，但是为了与其它分组进行区分，最好不要重名。
 //  g := srv.Group("admin")
 //  g.Get("/admin", h)
 //  g.Get("/admin/login", h)
