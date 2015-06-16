@@ -12,8 +12,6 @@ import (
 //  p := srv.Prefix("/api")
 //  p.Get("/users")  // 相当于 srv.Get("/api/users")
 //  p.Get("/user/1") // 相当于 srv.Get("/api/user/1")
-//
-// 可以直接使用ServeMux.Prefix()方法获取一个Prefix实例。
 type Prefix struct {
 	mux    *ServeMux
 	group  *Group

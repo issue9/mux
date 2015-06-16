@@ -253,7 +253,8 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		if s == 0 { // 完全匹配，可以中止匹配过程
 			break
 		}
-	} // end for methods.list
+	}
+
 	if size < 0 {
 		panic(fmt.Sprintf("没有找到与之前匹配的路径，Host:[%v],Path:[%v]", req.Host, req.URL.Path))
 	}
