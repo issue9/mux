@@ -216,12 +216,12 @@ func (mux *ServeMux) Group(name string) *Group {
 // 当未指定methods时，将删除所有method匹配的项。
 // 指定错误的method值，将自动忽略该值。
 func (mux *ServeMux) Remove(pattern string, methods ...string) {
-	mux.mu.Lock()
-	defer mux.mu.Unlock()
-
 	if len(methods) == 0 { // 删除所有method下匹配的项
 		methods = supportMethods
 	}
+
+	mux.mu.Lock()
+	defer mux.mu.Unlock()
 
 	for _, method := range methods {
 		es, found := mux.named[method]
@@ -234,7 +234,6 @@ func (mux *ServeMux) Remove(pattern string, methods ...string) {
 		}
 
 		delete(es, pattern)
-
 		for item := mux.list[method].Front(); item != nil; item = item.Next() {
 			e := item.Value.(*entry)
 			if e.pattern == pattern {
@@ -253,8 +252,6 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	var p string
 
 	mux.mu.Lock()
-	defer mux.mu.Unlock()
-
 	for item := mux.list[req.Method].Front(); item != nil; item = item.Next() {
 		entry := item.Value.(*entry)
 		url := req.URL.Path
@@ -275,6 +272,7 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			break
 		}
 	}
+	mux.mu.Unlock()
 
 	if size < 0 {
 		panic(fmt.Sprintf("没有找到与之前匹配的路径，Host:[%v],Path:[%v]", req.Host, req.URL.Path))
