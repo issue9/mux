@@ -234,6 +234,9 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	var e *entry
 	var p string
 
+	mux.mu.Lock()
+	defer mux.mu.Unlock()
+
 	for item := mux.items[req.Method].list.Front(); item != nil; item = item.Next() {
 		entry := item.Value.(*entry)
 		url := req.URL.Path
