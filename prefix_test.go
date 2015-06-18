@@ -40,3 +40,20 @@ func TestPrefix(t *testing.T) {
 	assertLen(mux, a, 0, "POST")
 	assertLen(mux, a, 1, "DELETE")
 }
+
+func TestPrefix_Prefix(t *testing.T) {
+	a := assert.New(t)
+
+	hf := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+
+	mux := NewServeMux()
+	p1 := mux.Prefix("/p1")
+	a.Equal(p1.prefix, "/p1").Equal(p1.mux, mux)
+
+	p2 := p1.Prefix("/p2")
+	a.Equal(p2.prefix, "/p1/p2")
+
+	p1.Get("/abc", hf)
+	p2.Get("/abc", hf)
+	assertLen(mux, a, 2, "GET")
+}
