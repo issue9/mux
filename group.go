@@ -65,6 +65,11 @@ func (g *Group) Put(pattern string, h http.Handler) *Group {
 	return g.Add(pattern, h, "PUT")
 }
 
+// Patch相当于ServeMux.Patch(pattern, h)
+func (g *Group) Patch(pattern string, h http.Handler) *Group {
+	return g.Add(pattern, h, "PATCH")
+}
+
 // Any相当于ServeMux.Any(pattern, h)
 func (g *Group) Any(pattern string, h http.Handler) *Group {
 	return g.Add(pattern, h)
@@ -94,6 +99,11 @@ func (g *Group) PostFunc(pattern string, fun func(http.ResponseWriter, *http.Req
 // DeleteFunc相当于ServeMux.DeleteFunc(pattern, func)
 func (g *Group) DeleteFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Group {
 	return g.AddFunc(pattern, fun, "DELETE")
+}
+
+// PatchFunc相当于ServeMux.PatchFunc(pattern, func)
+func (g *Group) PatchFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Group {
+	return g.AddFunc(pattern, fun, "PATCH")
 }
 
 // AnyFunc相当于ServeMux.AnyFunc(pattern, func)

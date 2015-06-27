@@ -38,6 +38,9 @@ func TestServeMux_Add(t *testing.T) {
 	a.NotPanic(func() { m.Delete("h", h) })
 	assertLen(m, a, 1, "DELETE")
 
+	a.NotPanic(func() { m.Patch("h", h) })
+	assertLen(m, a, 1, "PATCH")
+
 	a.NotPanic(func() { m.Any("anyH", h) })
 	assertLen(m, a, 2, "PUT")
 	assertLen(m, a, 2, "DELETE")
@@ -53,6 +56,9 @@ func TestServeMux_Add(t *testing.T) {
 
 	a.NotPanic(func() { m.DeleteFunc("fn", fn) })
 	assertLen(m, a, 3, "DELETE")
+
+	a.NotPanic(func() { m.PatchFunc("fn", fn) })
+	assertLen(m, a, 3, "PATCH")
 
 	a.NotPanic(func() { m.AnyFunc("anyFN", fn) })
 	assertLen(m, a, 4, "DELETE")

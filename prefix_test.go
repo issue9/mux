@@ -93,6 +93,9 @@ func TestPrefix_Add(t *testing.T) {
 	a.NotPanic(func() { p.Delete("h", h) })
 	assertLen(m, a, 1, "DELETE")
 
+	a.NotPanic(func() { p.Patch("h", h) })
+	assertLen(m, a, 1, "PATCH")
+
 	a.NotPanic(func() { p.Any("anyH", h) })
 	assertLen(m, a, 2, "PUT")
 	assertLen(m, a, 2, "DELETE")
@@ -108,6 +111,9 @@ func TestPrefix_Add(t *testing.T) {
 
 	a.NotPanic(func() { p.DeleteFunc("fn", fn) })
 	assertLen(m, a, 3, "DELETE")
+
+	a.NotPanic(func() { p.PatchFunc("fn", fn) })
+	assertLen(m, a, 3, "PATCH")
 
 	a.NotPanic(func() { p.AnyFunc("anyFN", fn) })
 	assertLen(m, a, 4, "DELETE")

@@ -44,6 +44,11 @@ func (p *Prefix) Put(pattern string, h http.Handler) *Prefix {
 	return p.Add(pattern, h, "PUT")
 }
 
+// Patch相当于ServeMux.Patch(prefix+pattern, h)的简易写法
+func (p *Prefix) Patch(pattern string, h http.Handler) *Prefix {
+	return p.Add(pattern, h, "PATCH")
+}
+
 // Any相当于ServeMux.Any(prefix+pattern, h)的简易写法
 func (p *Prefix) Any(pattern string, h http.Handler) *Prefix {
 	return p.Add(pattern, h)
@@ -73,6 +78,11 @@ func (p *Prefix) PostFunc(pattern string, fun func(http.ResponseWriter, *http.Re
 // DeleteFunc相当于ServeMux.DeleteFunc(prefix+pattern, func)的简易写法
 func (p *Prefix) DeleteFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
 	return p.AddFunc(pattern, fun, "DELETE")
+}
+
+// PatchFunc相当于ServeMux.PatchFunc(prefix+pattern, func)的简易写法
+func (p *Prefix) PatchFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
+	return p.AddFunc(pattern, fun, "PATCH")
 }
 
 // AnyFunc相当于ServeMux.AnyFunc(prefix+pattern, func)的简易写法

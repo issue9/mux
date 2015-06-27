@@ -101,6 +101,9 @@ func TestGroup_Add(t *testing.T) {
 	a.NotPanic(func() { g.Delete("h", h) })
 	assertLen(m, a, 1, "DELETE")
 
+	a.NotPanic(func() { g.Patch("h", h) })
+	assertLen(m, a, 1, "PATCH")
+
 	a.NotPanic(func() { g.Any("anyH", h) })
 	assertLen(m, a, 2, "PUT")
 	assertLen(m, a, 2, "DELETE")
@@ -116,6 +119,9 @@ func TestGroup_Add(t *testing.T) {
 
 	a.NotPanic(func() { g.DeleteFunc("fn", fn) })
 	assertLen(m, a, 3, "DELETE")
+
+	a.NotPanic(func() { g.PatchFunc("fn", fn) })
+	assertLen(m, a, 3, "PATCH")
 
 	a.NotPanic(func() { g.AnyFunc("anyFN", fn) })
 	assertLen(m, a, 4, "DELETE")

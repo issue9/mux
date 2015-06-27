@@ -158,6 +158,11 @@ func (mux *ServeMux) Put(pattern string, h http.Handler) *ServeMux {
 	return mux.Add(pattern, h, "PUT")
 }
 
+// Patch相当于ServeMux.Add(pattern, h, "PATCH")的简易写法
+func (mux *ServeMux) Patch(pattern string, h http.Handler) *ServeMux {
+	return mux.Add(pattern, h, "PATCH")
+}
+
 // Any相当于ServeMux.Add(pattern, h)的简易写法
 func (mux *ServeMux) Any(pattern string, h http.Handler) *ServeMux {
 	return mux.Add(pattern, h)
@@ -190,6 +195,11 @@ func (mux *ServeMux) PostFunc(pattern string, fun func(http.ResponseWriter, *htt
 // DeleteFunc相当于ServeMux.AddFunc(pattern, func, "DELETE")的简易写法
 func (mux *ServeMux) DeleteFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *ServeMux {
 	return mux.AddFunc(pattern, fun, "DELETE")
+}
+
+// PatchFunc相当于ServeMux.AddFunc(pattern, func, "PATCH")的简易写法
+func (mux *ServeMux) PatchFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *ServeMux {
+	return mux.AddFunc(pattern, fun, "PATCH")
 }
 
 // AnyFunc相当于ServeMux.AddFunc(pattern, func)的简易写法
