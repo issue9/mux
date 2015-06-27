@@ -26,45 +26,48 @@ func TestServeMux_Add(t *testing.T) {
 	fn := func(w http.ResponseWriter, req *http.Request) {}
 	h := http.HandlerFunc(fn)
 
+	a.NotPanic(func() { m.Get("h", h) })
+	assertLen(m, a, 1, "GET")
+
+	a.NotPanic(func() { m.Post("h", h) })
+	assertLen(m, a, 1, "POST")
+
+	a.NotPanic(func() { m.Put("h", h) })
+	assertLen(m, a, 1, "PUT")
+
+	a.NotPanic(func() { m.Delete("h", h) })
+	assertLen(m, a, 1, "DELETE")
+
+	a.NotPanic(func() { m.Any("anyH", h) })
+	assertLen(m, a, 2, "PUT")
+	assertLen(m, a, 2, "DELETE")
+
+	a.NotPanic(func() { m.GetFunc("fn", fn) })
+	assertLen(m, a, 3, "GET")
+
+	a.NotPanic(func() { m.PostFunc("fn", fn) })
+	assertLen(m, a, 3, "POST")
+
+	a.NotPanic(func() { m.PutFunc("fn", fn) })
+	assertLen(m, a, 3, "PUT")
+
+	a.NotPanic(func() { m.DeleteFunc("fn", fn) })
+	assertLen(m, a, 3, "DELETE")
+
+	a.NotPanic(func() { m.AnyFunc("anyFN", fn) })
+	assertLen(m, a, 4, "DELETE")
+	assertLen(m, a, 4, "GET")
+
+	// 添加相同的pattern
+	a.Panic(func() { m.Any("h", h) })
+
 	// handler不能为空
 	a.Panic(func() { m.Add("abc", nil, "GET") })
 	// pattern不能为空
 	a.Panic(func() { m.Add("", h, "GET") })
 	// 不支持的methods
-	a.Panic(func() { m.Add("", h, "GET123") })
+	a.Panic(func() { m.Add("abc", h, "GET123") })
 
-	// 向Get和Post添加一个路由abc
-	a.NotPanic(func() { m.Add("abc", h, "GET", "POST") })
-	assertLen(m, a, 1, "GET")
-	assertLen(m, a, 1, "POST")
-	assertLen(m, a, 0, "DELETE")
-	// 再次向Get添加一条同名路由，会出错
-	a.Panic(func() { m.Get("abc", h) })
-
-	a.NotPanic(func() { m.Add("abcdefg", h) })
-	assertLen(m, a, 2, "GET")
-	assertLen(m, a, 2, "POST")
-	assertLen(m, a, 1, "DELETE")
-
-	a.NotPanic(func() { m.Get("def", h) })
-	assertLen(m, a, 3, "GET")
-	assertLen(m, a, 2, "POST")
-	assertLen(m, a, 1, "DELETE")
-
-	a.NotPanic(func() { m.Delete("abc", h) })
-	assertLen(m, a, 3, "GET")
-	assertLen(m, a, 2, "POST")
-	assertLen(m, a, 2, "DELETE")
-
-	a.NotPanic(func() { m.Any("abcd", h) })
-	assertLen(m, a, 4, "GET")
-	assertLen(m, a, 3, "POST")
-	assertLen(m, a, 3, "DELETE")
-
-	a.NotPanic(func() { m.GetFunc("abcde", fn) })
-	assertLen(m, a, 5, "GET")
-	assertLen(m, a, 3, "POST")
-	assertLen(m, a, 3, "DELETE")
 }
 
 func TestServeMux_Remove(t *testing.T) {
