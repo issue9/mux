@@ -116,15 +116,38 @@ func (g *Group) Remove(pattern string, methods ...string) {
 	g.mux.Remove(pattern, methods...)
 }
 
-// 创建一个路由组，该组中添加的路由项，都会带上前缀prefix
-// prefix 前缀字符串，所有从Prefix中声明的路由都将包含此前缀。
-//  p := g.Prefix("/api")
-//  p.Get("/users")  // 相当于 g.Get("/api/users")
-//  p.Get("/user/1") // 相当于 g.Get("/api/user/1")
-func (g *Group) Prefix(prefix string) *Prefix {
-	return &Prefix{
-		group:  g,
-		prefix: prefix,
-		mux:    g.mux,
+// 指定名称的分组是否存在。
+func (mux *ServeMux) HasGroup(name string) bool {
+	mux.groupsMu.Lock()
+	_, found := mux.groups[name]
+	mux.groupsMu.Unlock()
+
+	return found
+}
+
+// 声明或是获取一组路由，可以控制该组的路由是否启用。name为分组的名称。
+//  g := srv.Group("admin")
+//  g.Get("/admin", h)
+//  g.Get("/admin/login", h)
+//  g.Stop() // 所有通过g绑定的路由都将停止解析。
+func (mux *ServeMux) Group(name string) *Group {
+	mux.groupsMu.Lock()
+	defer mux.groupsMu.Unlock()
+
+	if g, found := mux.groups[name]; found {
+		return g
 	}
+
+	g := &Group{
+		name:      name,
+		mux:       mux,
+		isRunning: true,
+	}
+	mux.groups[name] = g
+	return g
+}
+
+// 获取所有的分组列表。
+func (mux *ServeMux) Groups() map[string]*Group {
+	return mux.groups
 }
