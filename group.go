@@ -47,32 +47,27 @@ func (g *Group) Add(pattern string, h http.Handler, methods ...string) *Group {
 
 // Get相当于ServeMux.Get(pattern, h)
 func (g *Group) Get(pattern string, h http.Handler) *Group {
-	g.mux.add(g, pattern, h, "GET")
-	return g
+	return g.Add(pattern, h, "GET")
 }
 
 // Post相当于ServeMux.Post(pattern, h)
 func (g *Group) Post(pattern string, h http.Handler) *Group {
-	g.mux.add(g, pattern, h, "POST")
-	return g
+	return g.Add(pattern, h, "POST")
 }
 
 // Delete相当于ServeMux.Delete(pattern, h)
 func (g *Group) Delete(pattern string, h http.Handler) *Group {
-	g.mux.add(g, pattern, h, "DELETE")
-	return g
+	return g.Add(pattern, h, "DELETE")
 }
 
 // Put相当于ServeMux.Put(pattern, h)
 func (g *Group) Put(pattern string, h http.Handler) *Group {
-	g.mux.add(g, pattern, h, "PUT")
-	return g
+	return g.Add(pattern, h, "PUT")
 }
 
 // Any相当于ServeMux.Any(pattern, h)
 func (g *Group) Any(pattern string, h http.Handler) *Group {
-	g.mux.add(g, pattern, h)
-	return g
+	return g.Add(pattern, h)
 }
 
 // AddFunc功能同ServeMux.AddFunc(pattern, fun, ...)
@@ -83,32 +78,27 @@ func (g *Group) AddFunc(pattern string, fun func(http.ResponseWriter, *http.Requ
 
 // GetFunc相当于ServeMux.GetFunc(pattern, func)
 func (g *Group) GetFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Group {
-	g.mux.addFunc(g, pattern, fun, "GET")
-	return g
+	return g.AddFunc(pattern, fun, "GET")
 }
 
 // PutFunc相当于ServeMux.PutFunc(pattern, func)
 func (g *Group) PutFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Group {
-	g.mux.addFunc(g, pattern, fun, "PUT")
-	return g
+	return g.AddFunc(pattern, fun, "PUT")
 }
 
 // PostFunc相当于ServeMux.PostFunc(pattern, func)
 func (g *Group) PostFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Group {
-	g.mux.addFunc(g, pattern, fun, "POST")
-	return g
+	return g.AddFunc(pattern, fun, "POST")
 }
 
 // DeleteFunc相当于ServeMux.DeleteFunc(pattern, func)
 func (g *Group) DeleteFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Group {
-	g.mux.addFunc(g, pattern, fun, "DELETE")
-	return g
+	return g.AddFunc(pattern, fun, "DELETE")
 }
 
 // AnyFunc相当于ServeMux.AnyFunc(pattern, func)
 func (g *Group) AnyFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Group {
-	g.mux.addFunc(g, pattern, fun)
-	return g
+	return g.AddFunc(pattern, fun)
 }
 
 // AnyFunc相当于ServeMux.Remove(pattern, methods...)
