@@ -12,8 +12,7 @@ import (
 	"github.com/issue9/assert"
 )
 
-// 断言mux下的method请求方法下有l条路由记录。
-// 即mux.items[method].list.Len()的值与l相等。
+// 断言mux.list[method].Len() == len(mux.named[method]) == l
 func assertLen(mux *ServeMux, a *assert.Assertion, l int, method string) {
 	a.Equal(l, mux.list[method].Len())
 	a.Equal(l, len(mux.named[method]))
@@ -59,6 +58,11 @@ func TestServeMux_Add(t *testing.T) {
 
 	a.NotPanic(func() { m.Any("abcd", h) })
 	assertLen(m, a, 4, "GET")
+	assertLen(m, a, 3, "POST")
+	assertLen(m, a, 3, "DELETE")
+
+	a.NotPanic(func() { m.GetFunc("abcde", fn) })
+	assertLen(m, a, 5, "GET")
 	assertLen(m, a, 3, "POST")
 	assertLen(m, a, 3, "DELETE")
 }
