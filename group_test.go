@@ -22,6 +22,13 @@ func TestGroup(t *testing.T) {
 	g := mux.Group("g1")
 	a.Equal(g.name, "g1").Equal(g.mux, mux).True(g.isRunning) // 保证初始化之后，isRunning为true
 
+	// 应该获取的是同一个group
+	g2 := mux.Group("g1")
+	a.Equal(g, g2)
+
+	// 确定groups的值
+	a.Equal(mux.Groups(), map[string]*Group{"g1": g})
+
 	g.Get("/abc", hf)
 	assertLen(mux, a, 1, "GET")
 	// 通过ServeMux.Remove()可能删除从Group添加的内容。

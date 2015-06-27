@@ -64,6 +64,10 @@ type ServeMux struct {
 
 	// 路由的命名列表，方便查找。
 	named map[string]map[string]*entry
+
+	// 所有的分组路由列表。
+	groups   map[string]*Group
+	groupsMu sync.Mutex
 }
 
 // 声明一个新的ServeMux
@@ -76,8 +80,9 @@ func NewServeMux() *ServeMux {
 	}
 
 	return &ServeMux{
-		list:  l,
-		named: n,
+		list:   l,
+		named:  n,
+		groups: map[string]*Group{},
 	}
 }
 
@@ -128,7 +133,7 @@ func (mux *ServeMux) add(g *Group, pattern string, h http.Handler, methods ...st
 // pattern为路由匹配模式，可以是正则匹配也可以是字符串匹配，
 // 可以带上域名，当第一个字符为'/'当作是一个路径，否则就将'/'之前的当作域名或IP。
 // methods参数应该只能为supportMethods中的字符串，若不指定，默认为所有，
-// 当h为空时，将返回错误信息。
+// 当h或是pattern为空时，将触发panic。
 func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) *ServeMux {
 	return mux.add(nil, pattern, h, methods...)
 }
@@ -204,18 +209,40 @@ func (mux *ServeMux) Prefix(prefix string) *Prefix {
 	}
 }
 
-// 声明一组路由，可以控制该组的路由是否启用。
-// name 为分组的名称，无特殊要求，但是为了与其它分组进行区分，最好不要重名。
+// 指定名称的分组是否存在。
+func (mux *ServeMux) HasGroup(name string) bool {
+	mux.groupsMu.Lock()
+	_, found := mux.groups[name]
+	mux.groupsMu.Unlock()
+
+	return found
+}
+
+// 声明或是获取一组路由，可以控制该组的路由是否启用。name为分组的名称。
 //  g := srv.Group("admin")
 //  g.Get("/admin", h)
 //  g.Get("/admin/login", h)
 //  g.Stop() // 所有通过g绑定的路由都将停止解析。
 func (mux *ServeMux) Group(name string) *Group {
-	return &Group{
+	mux.groupsMu.Lock()
+	defer mux.groupsMu.Unlock()
+
+	if g, found := mux.groups[name]; found {
+		return g
+	}
+
+	g := &Group{
 		name:      name,
 		mux:       mux,
 		isRunning: true,
 	}
+	mux.groups[name] = g
+	return g
+}
+
+// 获取所有的分组列表。
+func (mux *ServeMux) Groups() map[string]*Group {
+	return mux.groups
 }
 
 // 移除指定的路由项，通过路由表达式和method来匹配。
