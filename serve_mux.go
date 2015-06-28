@@ -64,10 +64,6 @@ type ServeMux struct {
 
 	// 路由的命名列表，方便查找。
 	named map[string]map[string]*entry
-
-	// 所有的分组路由列表。
-	groups   map[string]*Group
-	groupsMu sync.Mutex
 }
 
 // 声明一个新的ServeMux
@@ -80,9 +76,8 @@ func NewServeMux() *ServeMux {
 	}
 
 	return &ServeMux{
-		list:   l,
-		named:  n,
-		groups: map[string]*Group{},
+		list:  l,
+		named: n,
 	}
 }
 
@@ -274,7 +269,7 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if e.group != nil && !e.group.isRunning {
-		panic(fmt.Sprintf("该分组[%v]的路由已经被暂停！", e.group.name))
+		panic("该路由已经被暂停！")
 	}
 
 	ctx := context.Get(req)

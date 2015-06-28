@@ -18,12 +18,9 @@ func TestGroups(t *testing.T) {
 	a.NotNil(mux)
 
 	// 应该获取的是同一个group
-	g1 := mux.Group("g1")
-	g2 := mux.Group("g1")
+	g1 := mux.Group()
+	g2 := mux.Group()
 	a.Equal(g1, g2)
-
-	// 确定groups的值
-	a.Equal(mux.Groups(), map[string]*Group{"g1": g1})
 
 	// 测试Group.Remove()
 	g1.Get("/abc", hf)
@@ -38,36 +35,14 @@ func TestGroups(t *testing.T) {
 	assertLen(mux, a, 0, "GET")
 }
 
-func TestServe_HasGroup(t *testing.T) {
-	a := assert.New(t)
-	hf := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-	mux := NewServeMux()
-	a.NotNil(mux)
-
-	// 应该获取的是同一个group
-	g1 := mux.Group("g1")
-	g1.Get("/abc", hf)
-	assertLen(mux, a, 1, "GET")
-
-	a.True(mux.HasGroup("g1"))
-	a.False(mux.HasGroup("G1"))
-	a.False(mux.HasGroup("g"))
-
-	g1.Remove("/abc")
-	a.True(mux.HasGroup("g1"))
-	a.False(mux.HasGroup("G1"))
-}
-
 // Group的各类状态，比如name,isrunning等
 func TestGroup_Status(t *testing.T) {
 	a := assert.New(t)
 	mux := NewServeMux()
 	a.NotNil(mux)
 
-	g := mux.Group("g")
-	a.Equal(g.name, "g").
-		Equal(g.Name(), g.name).
-		Equal(g.isRunning, true).
+	g := mux.Group()
+	a.Equal(g.isRunning, true).
 		Equal(g.IsRunning(), g.isRunning).
 		Equal(g.mux, mux)
 
@@ -83,7 +58,7 @@ func TestGroup_Add(t *testing.T) {
 	m := NewServeMux()
 	a.NotNil(m)
 
-	g := m.Group("g")
+	g := m.Group()
 	a.NotNil(g)
 
 	fn := func(w http.ResponseWriter, req *http.Request) {}

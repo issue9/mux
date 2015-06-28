@@ -9,19 +9,13 @@ import (
 )
 
 // 一个分组信息，可用于控制一组路由项是否启用。
-//  g := srv.Group("admin")
+//  g := srv.Group()
 //  g.Get("/admin", h)
 //  g.Get("/admin/login", h)
 //  g.Stop() // 所有通过g绑定的路由都将停止解析。
 type Group struct {
-	name      string
 	isRunning bool
 	mux       *ServeMux
-}
-
-// 获取当前分组的名称
-func (g *Group) Name() string {
-	return g.name
 }
 
 // 当前分组的路由是否处于运行状态
@@ -116,38 +110,14 @@ func (g *Group) Remove(pattern string, methods ...string) {
 	g.mux.Remove(pattern, methods...)
 }
 
-// 指定名称的分组是否存在。
-func (mux *ServeMux) HasGroup(name string) bool {
-	mux.groupsMu.Lock()
-	_, found := mux.groups[name]
-	mux.groupsMu.Unlock()
-
-	return found
-}
-
-// 声明或是获取一组路由，可以控制该组的路由是否启用。name为分组的名称。
-//  g := srv.Group("admin")
+// 声明或是获取一组路由，可以控制该组的路由是否启用。
+//  g := srv.Group()
 //  g.Get("/admin", h)
 //  g.Get("/admin/login", h)
 //  g.Stop() // 所有通过g绑定的路由都将停止解析。
-func (mux *ServeMux) Group(name string) *Group {
-	mux.groupsMu.Lock()
-	defer mux.groupsMu.Unlock()
-
-	if g, found := mux.groups[name]; found {
-		return g
-	}
-
-	g := &Group{
-		name:      name,
+func (mux *ServeMux) Group() *Group {
+	return &Group{
 		mux:       mux,
 		isRunning: true,
 	}
-	mux.groups[name] = g
-	return g
-}
-
-// 获取所有的分组列表。
-func (mux *ServeMux) Groups() map[string]*Group {
-	return mux.groups
 }

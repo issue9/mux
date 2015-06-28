@@ -46,7 +46,7 @@ func TestGroup_Prefix(t *testing.T) {
 	mux := NewServeMux()
 	a.NotNil(mux)
 
-	g := mux.Group("g")
+	g := mux.Group()
 	a.NotNil(g)
 
 	p := g.Prefix("/p")
