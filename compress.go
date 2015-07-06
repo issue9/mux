@@ -15,13 +15,13 @@ import (
 )
 
 type compressWriter struct {
-	w  io.Writer
-	rw http.ResponseWriter
-	hj http.Hijacker
+	gzw io.Writer
+	rw  http.ResponseWriter
+	hj  http.Hijacker
 }
 
 func (cw *compressWriter) Write(bs []byte) (int, error) {
-	return cw.w.Write(bs)
+	return cw.gzw.Write(bs)
 }
 
 func (cw *compressWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
@@ -40,20 +40,26 @@ type compress struct {
 	h http.Handler
 }
 
+// 支持gzip或是deflate功能的handler，根据客户端请求内容自动匹配相应的压缩算法。
 func NewCompress(h http.Handler) http.Handler {
 	return &compress{h: h}
 }
 
 func (c *compress) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	var encoding string
-	var gzw io.Writer
-
 	hj, ok := w.(http.Hijacker)
 	if !ok {
 		c.h.ServeHTTP(w, r)
 		return
 	}
 
+	var gzw io.WriteCloser
+	defer func() {
+		if gzw != nil {
+			gzw.Close()
+		}
+	}()
+
+	var encoding string
 	encodings := strings.Split(r.Header.Get("Accept-Encoding"), ",")
 	for _, encoding = range encodings {
 		encoding = strings.ToLower(encoding)
@@ -76,10 +82,11 @@ func (c *compress) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	w.Header().Add("Vary", "Accept-Encoding")
 	cw := &compressWriter{
-		w:  gzw,
-		rw: w,
-		hj: hj,
+		gzw: gzw,
+		rw:  w,
+		hj:  hj,
 	}
 
 	c.h.ServeHTTP(cw, r)
