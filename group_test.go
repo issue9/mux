@@ -108,7 +108,7 @@ func TestGroup_Add(t *testing.T) {
 	// handler不能为空
 	a.Panic(func() { g.Add("abc", nil, "GET") })
 	// pattern不能为空
-	a.Panic(func() { g.Add("", h, "GET") })
+	//a.Panic(func() { g.Add("", h, "GET") })
 	// 不支持的methods
 	a.Panic(func() { g.Add("abc", h, "GET123") })
 

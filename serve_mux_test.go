@@ -70,7 +70,7 @@ func TestServeMux_Add(t *testing.T) {
 	// handler不能为空
 	a.Panic(func() { m.Add("abc", nil, "GET") })
 	// pattern不能为空
-	a.Panic(func() { m.Add("", h, "GET") })
+	//a.Panic(func() { m.Add("", h, "GET") })
 	// 不支持的methods
 	a.Panic(func() { m.Add("abc", h, "GET123") })
 

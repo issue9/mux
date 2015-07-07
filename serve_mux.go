@@ -87,9 +87,9 @@ func (mux *ServeMux) add(g *Group, pattern string, h http.Handler, methods ...st
 		panic("add:参数h不能为空")
 	}
 
-	if len(pattern) == 0 {
+	/*if len(pattern) == 0 {
 		panic("add:pattern匹配内容不能为空")
-	}
+	}*/
 
 	if len(methods) == 0 {
 		methods = supportMethods
@@ -109,7 +109,7 @@ func (mux *ServeMux) add(g *Group, pattern string, h http.Handler, methods ...st
 		}
 
 		if _, found := es[pattern]; found {
-			panic("add:该模式的路由项已经存在")
+			panic("add:该模式的路由项已经存在:" + pattern)
 		}
 
 		es[pattern] = e
@@ -245,7 +245,7 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	for item := mux.list[req.Method].Front(); item != nil; item = item.Next() {
 		entry := item.Value.(*entry)
 		url := req.URL.Path
-		if entry.pattern[0] != '/' {
+		if len(entry.pattern) == 0 || entry.pattern[0] != '/' {
 			url = hostURL
 		}
 
