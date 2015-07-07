@@ -14,6 +14,7 @@ import (
 	"strings"
 )
 
+// 同时实现了http.ResponseWriter和http.Hijacker接口。
 type compressWriter struct {
 	gzw io.Writer
 	rw  http.ResponseWriter
@@ -40,7 +41,8 @@ type compress struct {
 	h http.Handler
 }
 
-// 支持gzip或是deflate功能的handler，根据客户端请求内容自动匹配相应的压缩算法。
+// 支持gzip或是deflate功能的handler。
+// 根据客户端请求内容自动匹配相应的压缩算法，优先匹配gzip。
 func NewCompress(h http.Handler) http.Handler {
 	return &compress{h: h}
 }
@@ -53,12 +55,6 @@ func (c *compress) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var gzw io.WriteCloser
-	defer func() {
-		if gzw != nil {
-			gzw.Close()
-		}
-	}()
-
 	var encoding string
 	encodings := strings.Split(r.Header.Get("Accept-Encoding"), ",")
 	for _, encoding = range encodings {
@@ -66,7 +62,6 @@ func (c *compress) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		if encoding == "gzip" {
 			gzw = gzip.NewWriter(w)
-			w.Header().Set("Content-Encoding", "gzip")
 			break
 		}
 
@@ -77,11 +72,11 @@ func (c *compress) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				c.h.ServeHTTP(w, r)
 				return
 			}
-			w.Header().Set("Content-Encoding", "deflate")
 			break
 		}
 	}
 
+	w.Header().Set("Content-Encoding", encoding)
 	w.Header().Add("Vary", "Accept-Encoding")
 	cw := &compressWriter{
 		gzw: gzw,
@@ -89,5 +84,9 @@ func (c *compress) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		hj:  hj,
 	}
 
+	// 只要gzw!=nil的，必须会执行到此处。
+	defer gzw.Close()
+
+	// 此处可能panic，所以得保证在panic之前，gzw变量已经Close
 	c.h.ServeHTTP(cw, r)
 }
