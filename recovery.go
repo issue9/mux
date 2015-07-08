@@ -24,6 +24,7 @@ func defaultRecoverFunc(w http.ResponseWriter, msg interface{}) {
 
 // RecoverFunc类型的实现。方便NewRecovery在调度期间将函数的调用信息输出到w。
 func PrintDebug(w http.ResponseWriter, msg interface{}) {
+	w.WriteHeader(http.StatusInternalServerError)
 	fmt.Fprintln(w, msg)
 	for i := 1; true; i++ {
 		_, file, line, ok := runtime.Caller(i)
