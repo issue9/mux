@@ -84,7 +84,7 @@ func NewServeMux() *ServeMux {
 // 添加一个路由项。
 func (mux *ServeMux) add(g *Group, pattern string, h http.Handler, methods ...string) *ServeMux {
 	if h == nil {
-		panic("add:参数h不能为空")
+		panic("参数h不能为空")
 	}
 
 	/*if len(pattern) == 0 {
@@ -105,11 +105,11 @@ func (mux *ServeMux) add(g *Group, pattern string, h http.Handler, methods ...st
 
 		es, found := mux.named[method]
 		if !found {
-			panic(fmt.Sprintf("add:不支持的request.Method:[%v]", method))
+			panic(fmt.Sprintf("不支持的request.Method:[%v]", method))
 		}
 
 		if _, found := es[pattern]; found {
-			panic("add:该模式的路由项已经存在:" + pattern)
+			panic(fmt.Sprintf("该模式[%v]的路由项已经存在:", pattern))
 		}
 
 		es[pattern] = e
@@ -265,7 +265,8 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	mux.Unlock() // 没必要等ServeHTTP执行完之后才解锁。
 
 	if size < 0 {
-		panic(fmt.Sprintf("没有找到与之前匹配的路径，Host:[%v],Path:[%v]", req.Host, req.URL.Path))
+		format := "没有找到与之匹配的路径，Host:[%v];Path:[%v];Method:[%v]"
+		panic(fmt.Sprintf(format, req.Host, req.URL.Path, req.Method))
 	}
 
 	if e.group != nil && !e.group.isRunning {
