@@ -23,5 +23,3 @@
 //  h := mux.NewReocvery(m, nil)
 //  http.ListenAndServe("8080", h)
 package mux
-
-const Version = "0.13.29.150708"

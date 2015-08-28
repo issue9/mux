@@ -87,10 +87,6 @@ func (mux *ServeMux) add(g *Group, pattern string, h http.Handler, methods ...st
 		panic("参数h不能为空")
 	}
 
-	/*if len(pattern) == 0 {
-		panic("add:pattern匹配内容不能为空")
-	}*/
-
 	if len(methods) == 0 {
 		methods = supportMethods
 	}
