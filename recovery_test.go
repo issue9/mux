@@ -21,7 +21,7 @@ func TestDefaultRecoverFunc(t *testing.T) {
 	a.NotNil(w)
 
 	defaultRecoverFunc(w, "not found")
-	a.Equal(http.StatusText(500)+"\n", w.Body.String())
+	a.Equal(http.StatusText(404)+"\n", w.Body.String())
 }
 
 func TestNewRecovery(t *testing.T) {
