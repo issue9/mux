@@ -57,7 +57,7 @@ var supportMethods = []string{
 //  /post/{id:\d+} // 同上，但id的值只能为\d+；
 //  /post/{:\d+}   // 同上，但是没有命名；
 type ServeMux struct {
-	sync.Mutex
+	lock sync.Mutex
 
 	// 路由列表，键名表示method。list中静态路由在前，正则路由在后。
 	list map[string]*list.List
@@ -93,8 +93,8 @@ func (mux *ServeMux) add(g *Group, pattern string, h http.Handler, methods ...st
 
 	e := newEntry(pattern, h, g)
 
-	mux.Lock()
-	defer mux.Unlock()
+	mux.lock.Lock()
+	defer mux.lock.Unlock()
 
 	for _, method := range methods {
 		method = strings.ToUpper(method)
@@ -206,8 +206,8 @@ func (mux *ServeMux) Remove(pattern string, methods ...string) {
 		methods = supportMethods
 	}
 
-	mux.Lock()
-	defer mux.Unlock()
+	mux.lock.Lock()
+	defer mux.lock.Unlock()
 
 	for _, method := range methods {
 		es, found := mux.named[method]
@@ -237,7 +237,8 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	var e *entry
 	var p string
 
-	mux.Lock()
+	mux.lock.Lock()
+	defer mux.lock.Unlock()
 	for item := mux.list[req.Method].Front(); item != nil; item = item.Next() {
 		entry := item.Value.(*entry)
 		url := req.URL.Path
@@ -258,7 +259,7 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			break
 		}
 	}
-	mux.Unlock() // 没必要等ServeHTTP执行完之后才解锁。
+	//mux.lock.Unlock() // 没必要等ServeHTTP执行完之后才解锁。
 
 	if size < 0 {
 		format := "没有找到与之匹配的路径，Host:[%v];Path:[%v];Method:[%v]"
