@@ -78,6 +78,10 @@ func NewServeMux() *ServeMux {
 	}
 }
 
+func (mux *ServeMux) Compile() error {
+	return nil
+}
+
 // 添加一个路由项。
 func (mux *ServeMux) add(g *Group, pattern string, h http.Handler, methods ...string) *ServeMux {
 	if h == nil {
