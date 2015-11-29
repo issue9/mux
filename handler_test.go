@@ -12,6 +12,7 @@ import (
 
 	"github.com/issue9/assert"
 	"github.com/issue9/context"
+	"github.com/issue9/handlers"
 )
 
 // http.Handler测试工具，测试h返回值是否与response相同。
@@ -59,7 +60,7 @@ func runHandlerTester(a *assert.Assertion, tests []*handlerTester) {
 		}
 
 		// 包含一个默认的错误处理函数，用于在出错时，输出error字符串.
-		srv := httptest.NewServer(NewRecovery(test.h, errHandler))
+		srv := httptest.NewServer(handlers.NewRecovery(test.h, errHandler))
 		a.NotNil(srv)
 
 		resp, err := http.Get(srv.URL + test.query)
