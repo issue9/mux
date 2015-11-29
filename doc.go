@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
-// mux提供了一系列实现了http.Handler接口的中间件。
+// mux提供了相对http.ServeMux更加复杂的路径功能。
 //
 //  m := mux.NewServerMux().
 //          Get("/user/logout", h). // 不限定域名，必须以/开头
