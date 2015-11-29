@@ -1,7 +1,7 @@
 mux [![Build Status](https://travis-ci.org/issue9/mux.svg?branch=master)](https://travis-ci.org/issue9/mux)
 ======
 
-mux是对http.Handler接口的一系列实现，提供了大部分实用的功能：
+mux是对http.ServeMux的扩展，添加正则路由等功能。
 ```go
 m := mux.NewServerMux().
         Get("/user/logout", h). // 不限定域名，必须以/开头
@@ -19,8 +19,7 @@ g.Get("/admin", h).
     Get("/api/admin/logout").
     Post("/api/admin/login")
 
-h := mux.NewReocvery(m, nil)
-http.ListenAndServe("8080", h)
+http.ListenAndServe("8080", m)
 ```
 
 ### 安装
