@@ -90,11 +90,6 @@ func (p *Prefix) AnyFunc(pattern string, fun func(http.ResponseWriter, *http.Req
 	return p.AddFunc(pattern, fun)
 }
 
-// AnyFunc相当于ServeMux.Remove(prefix+pattern, methods...)的简易写法
-func (p *Prefix) Remove(pattern string, methods ...string) {
-	p.mux.Remove(p.prefix+pattern, methods...)
-}
-
 // 创建一个路由组，该组中添加的路由项，都会带上前缀prefix
 // prefix 前缀字符串，所有从Prefix中声明的路由都将包含此前缀。
 //  p := g.Prefix("/api")

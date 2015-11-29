@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"sync"
 
 	"github.com/issue9/context"
 )
@@ -57,8 +56,6 @@ var supportMethods = []string{
 //  /post/{id:\d+} // 同上，但id的值只能为\d+；
 //  /post/{:\d+}   // 同上，但是没有命名；
 type ServeMux struct {
-	lock sync.Mutex
-
 	// 路由列表，键名表示method。list中静态路由在前，正则路由在后。
 	list map[string]*list.List
 
@@ -93,9 +90,6 @@ func (mux *ServeMux) add(g *Group, pattern string, h http.Handler, methods ...st
 
 	e := newEntry(pattern, h, g)
 
-	mux.lock.Lock()
-	defer mux.lock.Unlock()
-
 	for _, method := range methods {
 		method = strings.ToUpper(method)
 
@@ -129,32 +123,32 @@ func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) *Ser
 	return mux.add(nil, pattern, h, methods...)
 }
 
-// Get相当于ServeMux.Add(pattern, h, "GET")的简易写法
+// Get 相当于ServeMux.Add(pattern, h, "GET")的简易写法
 func (mux *ServeMux) Get(pattern string, h http.Handler) *ServeMux {
 	return mux.Add(pattern, h, "GET")
 }
 
-// Post相当于ServeMux.Add(pattern, h, "POST")的简易写法
+// Post 相当于ServeMux.Add(pattern, h, "POST")的简易写法
 func (mux *ServeMux) Post(pattern string, h http.Handler) *ServeMux {
 	return mux.Add(pattern, h, "POST")
 }
 
-// Delete相当于ServeMux.Add(pattern, h, "DELETE")的简易写法
+// Delete 相当于ServeMux.Add(pattern, h, "DELETE")的简易写法
 func (mux *ServeMux) Delete(pattern string, h http.Handler) *ServeMux {
 	return mux.Add(pattern, h, "DELETE")
 }
 
-// Put相当于ServeMux.Add(pattern, h, "PUT")的简易写法
+// Put 相当于ServeMux.Add(pattern, h, "PUT")的简易写法
 func (mux *ServeMux) Put(pattern string, h http.Handler) *ServeMux {
 	return mux.Add(pattern, h, "PUT")
 }
 
-// Patch相当于ServeMux.Add(pattern, h, "PATCH")的简易写法
+// Patch 相当于ServeMux.Add(pattern, h, "PATCH")的简易写法
 func (mux *ServeMux) Patch(pattern string, h http.Handler) *ServeMux {
 	return mux.Add(pattern, h, "PATCH")
 }
 
-// Any相当于ServeMux.Add(pattern, h)的简易写法
+// Any 相当于ServeMux.Add(pattern, h)的简易写法
 func (mux *ServeMux) Any(pattern string, h http.Handler) *ServeMux {
 	return mux.Add(pattern, h)
 }
@@ -163,71 +157,39 @@ func (mux *ServeMux) addFunc(g *Group, pattern string, fun func(http.ResponseWri
 	return mux.add(g, pattern, http.HandlerFunc(fun), methods...)
 }
 
-// 功能同ServeMux.Add()，但是将第二个参数从http.Handler换成了func(http.ResponseWriter, *http.Request)
+// AddFunc 功能同ServeMux.Add()，但是将第二个参数从http.Handler换成了func(http.ResponseWriter, *http.Request)
 func (mux *ServeMux) AddFunc(pattern string, fun func(http.ResponseWriter, *http.Request), methods ...string) *ServeMux {
 	return mux.Add(pattern, http.HandlerFunc(fun), methods...)
 }
 
-// GetFunc相当于ServeMux.AddFunc(pattern, func, "GET")的简易写法
+// GetFunc 相当于ServeMux.AddFunc(pattern, func, "GET")的简易写法
 func (mux *ServeMux) GetFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *ServeMux {
 	return mux.AddFunc(pattern, fun, "GET")
 }
 
-// PutFunc相当于ServeMux.AddFunc(pattern, func, "PUT")的简易写法
+// PutFunc 相当于ServeMux.AddFunc(pattern, func, "PUT")的简易写法
 func (mux *ServeMux) PutFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *ServeMux {
 	return mux.AddFunc(pattern, fun, "PUT")
 }
 
-// PostFunc相当于ServeMux.AddFunc(pattern, func, "POST")的简易写法
+// PostFunc 相当于ServeMux.AddFunc(pattern, func, "POST")的简易写法
 func (mux *ServeMux) PostFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *ServeMux {
 	return mux.AddFunc(pattern, fun, "POST")
 }
 
-// DeleteFunc相当于ServeMux.AddFunc(pattern, func, "DELETE")的简易写法
+// DeleteFunc 相当于ServeMux.AddFunc(pattern, func, "DELETE")的简易写法
 func (mux *ServeMux) DeleteFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *ServeMux {
 	return mux.AddFunc(pattern, fun, "DELETE")
 }
 
-// PatchFunc相当于ServeMux.AddFunc(pattern, func, "PATCH")的简易写法
+// PatchFunc 相当于ServeMux.AddFunc(pattern, func, "PATCH")的简易写法
 func (mux *ServeMux) PatchFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *ServeMux {
 	return mux.AddFunc(pattern, fun, "PATCH")
 }
 
-// AnyFunc相当于ServeMux.AddFunc(pattern, func)的简易写法
+// AnyFunc 相当于ServeMux.AddFunc(pattern, func)的简易写法
 func (mux *ServeMux) AnyFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *ServeMux {
 	return mux.AddFunc(pattern, fun)
-}
-
-// 移除指定的路由项，通过路由表达式和method来匹配。
-// 当未指定methods时，将删除所有method匹配的项。
-// 指定错误的method值，将自动忽略该值。
-func (mux *ServeMux) Remove(pattern string, methods ...string) {
-	if len(methods) == 0 { // 删除所有method下匹配的项
-		methods = supportMethods
-	}
-
-	mux.lock.Lock()
-	defer mux.lock.Unlock()
-
-	for _, method := range methods {
-		es, found := mux.named[method]
-		if !found {
-			continue
-		}
-
-		if _, found := es[pattern]; !found {
-			continue
-		}
-
-		delete(es, pattern)
-		for item := mux.list[method].Front(); item != nil; item = item.Next() {
-			e := item.Value.(*entry)
-			if e.pattern == pattern {
-				mux.list[method].Remove(item)
-				break
-			}
-		}
-	}
 }
 
 // implement http.Handler.ServerHTTP()
@@ -237,8 +199,6 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	var e *entry
 	var p string
 
-	mux.lock.Lock()
-	defer mux.lock.Unlock()
 	for item := mux.list[req.Method].Front(); item != nil; item = item.Next() {
 		entry := item.Value.(*entry)
 		url := req.URL.Path
@@ -259,7 +219,6 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			break
 		}
 	}
-	//mux.lock.Unlock() // 没必要等ServeHTTP执行完之后才解锁。
 
 	if size < 0 {
 		format := "没有找到与之匹配的路径，Host:[%v];Path:[%v];Method:[%v]"

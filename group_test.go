@@ -22,17 +22,8 @@ func TestGroups(t *testing.T) {
 	g2 := mux.Group()
 	a.Equal(g1, g2)
 
-	// 测试Group.Remove()
 	g1.Get("/abc", hf)
 	assertLen(mux, a, 1, "GET")
-	g1.Remove("/abc")
-	assertLen(mux, a, 0, "GET")
-
-	// 测试ServeMux.Remove()。
-	g1.Get("/abc", hf)
-	assertLen(mux, a, 1, "GET")
-	mux.Remove("/abc")
-	assertLen(mux, a, 0, "GET")
 }
 
 // Group的各类状态，比如name,isrunning等

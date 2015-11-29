@@ -27,18 +27,6 @@ func TestPrefix(t *testing.T) {
 	assertLen(mux, a, 1, "GET")
 	assertLen(mux, a, 1, "POST")
 	assertLen(mux, a, 1, "DELETE")
-	p.Remove("/abc", "GET") // 从Prefix.Remove()删除
-	assertLen(mux, a, 0, "GET")
-	assertLen(mux, a, 1, "POST")
-	assertLen(mux, a, 1, "DELETE")
-	mux.Remove("/abc", "POST") // 从ServeMux.Remove()删除，未带上p1前缀，无法删除
-	assertLen(mux, a, 0, "GET")
-	assertLen(mux, a, 1, "POST")
-	assertLen(mux, a, 1, "DELETE")
-	mux.Remove("p1/abc", "POST") // 从ServeMux.Remove()删除
-	assertLen(mux, a, 0, "GET")
-	assertLen(mux, a, 0, "POST")
-	assertLen(mux, a, 1, "DELETE")
 }
 
 func TestGroup_Prefix(t *testing.T) {
