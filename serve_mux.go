@@ -78,10 +78,6 @@ func NewServeMux() *ServeMux {
 	}
 }
 
-func (mux *ServeMux) Compile() error {
-	return nil
-}
-
 // 添加一个路由项。
 func (mux *ServeMux) add(g *Group, pattern string, h http.Handler, methods ...string) *ServeMux {
 	if h == nil {
@@ -197,9 +193,10 @@ func (mux *ServeMux) AnyFunc(pattern string, fun func(http.ResponseWriter, *http
 }
 
 // implement http.Handler.ServerHTTP()
+// 若没有找到匹配路由，返回404
 func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	hostURL := req.Host + req.URL.Path
-	size := -1
+	size := -1 // 匹配度，0表示完全匹配，负数表示完全不匹配，其它值越小匹配度越高
 	var e *entry
 	var p string
 
@@ -211,7 +208,7 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 
 		s := entry.match(url)
-		if s == -1 || (size > 0 && s > size) { // 完全不匹配
+		if s == -1 || (size > 0 && s > size) { // 完全不匹配，或是匹配度没有当前的高
 			continue
 		}
 
@@ -222,15 +219,16 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		if s == 0 { // 完全匹配，可以中止匹配过程
 			break
 		}
-	}
+	} // end for
 
 	if size < 0 {
-		format := "没有找到与之匹配的路径，Host:[%v];Path:[%v];Method:[%v]"
-		panic(fmt.Sprintf(format, req.Host, req.URL.Path, req.Method))
+		w.WriteHeader(http.StatusNotFound)
+		return
 	}
 
 	if e.group != nil && !e.group.isRunning {
-		panic("该路由已经被暂停！")
+		w.WriteHeader(http.StatusNotFound)
+		return
 	}
 
 	ctx := context.Get(req)
