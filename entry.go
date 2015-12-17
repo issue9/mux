@@ -40,9 +40,13 @@ func (e *entry) match(url string) int {
 		return -1
 	}
 
-	// 正则匹配
-	if loc := e.expr.FindStringIndex(url); loc != nil {
-		return len(url) - loc[1]
+	// 正则匹配，没有部分匹配功能，匹配返回0,否则返回-1
+	loc := e.expr.FindStringIndex(url)
+	if loc == nil {
+		return -1
+	}
+	if loc[0] == 0 && loc[1] == len(url) {
+		return 0
 	}
 	return -1
 }

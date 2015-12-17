@@ -59,14 +59,14 @@ func TestEntry_match(t *testing.T) {
 	e = newEntry("/blog/post/{id}", hf, nil)
 	a.Equal(e.match("/blog/post/1"), 0)
 
-	a.Equal(e.match("/blog/post/2/page/1"), 7)
+	a.Equal(e.match("/blog/post/2/page/1"), -1) // 正则没有部分匹配
 
 	// 不匹配
 	a.Equal(e.match("/plog/post/2"), -1)
 
 	// 多个命名正则表达式
 	e = newEntry("/blog/{action:\\w+}-{id:\\d+}/", hf, nil)
-	a.Equal(e.match("/blog/post-1/page-2"), 6)
+	a.Equal(e.match("/blog/post-1/page-2"), -1) // 正则没有部分匹配功能
 
 	// 正则，不匹配
 	a.Equal(e.match("/blog/post-1d/"), -1)
