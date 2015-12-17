@@ -194,16 +194,17 @@ func (mux *ServeMux) AnyFunc(pattern string, fun func(http.ResponseWriter, *http
 
 // implement http.Handler.ServerHTTP()
 // 若没有找到匹配路由，返回404
-func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	hostURL := req.Host + req.URL.Path
+func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	hostURL := r.Host + r.URL.Path
 	size := -1 // 匹配度，0表示完全匹配，负数表示完全不匹配，其它值越小匹配度越高
 	var e *entry
 	var p string
 
-	for item := mux.list[req.Method].Front(); item != nil; item = item.Next() {
+	for item := mux.list[r.Method].Front(); item != nil; item = item.Next() {
 		entry := item.Value.(*entry)
-		url := req.URL.Path
-		if len(entry.pattern) == 0 || entry.pattern[0] != '/' {
+
+		url := r.URL.Path
+		if entry.hosts {
 			url = hostURL
 		}
 
@@ -226,7 +227,10 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	ctx := context.Get(req)
-	ctx.Set("params", e.getParams(p))
-	e.handler.ServeHTTP(w, req)
+	params := e.getParams(p)
+	if params != nil {
+		ctx := context.Get(r)
+		ctx.Set("params", params)
+	}
+	e.handler.ServeHTTP(w, r)
 }

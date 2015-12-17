@@ -14,7 +14,8 @@ type entry struct {
 	pattern   string         // 匹配字符串
 	expr      *regexp.Regexp // 若pattern是正则匹配，则会被转换成正则表达式保存在此变量中
 	hasParams bool           // 是否拥有命名路由参数，仅在expr不为nil的时候有用
-	group     *Group         // 所属分组
+	hosts     bool
+	group     *Group // 所属分组
 	handler   http.Handler
 }
 
@@ -71,6 +72,7 @@ func newEntry(pattern string, h http.Handler, g *Group) *entry {
 	e := &entry{
 		pattern: pattern,
 		handler: h,
+		hosts:   len(pattern) == 0 || pattern[0] != '/',
 		group:   g,
 	}
 
