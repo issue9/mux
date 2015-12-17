@@ -226,11 +226,6 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if e.group != nil && !e.group.isRunning {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-
 	ctx := context.Get(req)
 	ctx.Set("params", e.getParams(p))
 	e.handler.ServeHTTP(w, req)

@@ -23,6 +23,10 @@ type entry struct {
 //  0  表示完全匹配；
 //  >0 表示部分匹配，值越小表示匹配程度越高。
 func (e *entry) match(url string) int {
+	if e.group != nil && !e.group.isRunning {
+		return -1
+	}
+
 	if e.expr == nil { // 静态匹配
 		if len(url) < len(e.pattern) {
 			return -1
