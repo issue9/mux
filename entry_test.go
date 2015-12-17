@@ -46,30 +46,28 @@ func TestEntry_match(t *testing.T) {
 	hf := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	})
 
-	// 静态路由
+	// 静态路由-1
 	e := newEntry("/blog/post/1", hf, nil)
 	a.Equal(e.match("/blog/post/1"), 0)
+	a.Equal(e.match("/blog/post/1/page/2"), -1) // 非/结尾的，只能全路径匹配。
+	a.Equal(e.match("/blog"), -1)               // 不匹配，长度太短
 
-	a.Equal(e.match("/blog/post/1/page/2"), 7)
-
-	// 不匹配，长度太短
-	a.Equal(e.match("/blog"), -1)
+	// 静态路由-2
+	e = newEntry("/blog/post/", hf, nil)
+	a.Equal(e.match("/blog/post/1"), 1)
+	a.Equal(e.match("/blog/post/1/page/2"), 8)
+	a.Equal(e.match("/blog"), -1) // 不匹配，长度太短
 
 	// 正则路由
 	e = newEntry("/blog/post/{id}", hf, nil)
 	a.Equal(e.match("/blog/post/1"), 0)
-
 	a.Equal(e.match("/blog/post/2/page/1"), -1) // 正则没有部分匹配
-
-	// 不匹配
-	a.Equal(e.match("/plog/post/2"), -1)
+	a.Equal(e.match("/plog/post/2"), -1)        // 不匹配
 
 	// 多个命名正则表达式
 	e = newEntry("/blog/{action:\\w+}-{id:\\d+}/", hf, nil)
 	a.Equal(e.match("/blog/post-1/page-2"), -1) // 正则没有部分匹配功能
-
-	// 正则，不匹配
-	a.Equal(e.match("/blog/post-1d/"), -1)
+	a.Equal(e.match("/blog/post-1d/"), -1)      // 正则，不匹配
 }
 
 func TestEntry_getParams(t *testing.T) {

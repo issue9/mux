@@ -24,20 +24,26 @@ type entry struct {
 //  0  表示完全匹配；
 //  >0 表示部分匹配，值越小表示匹配程度越高。
 func (e *entry) match(url string) int {
-	if e.group != nil && !e.group.isRunning {
+	if e.group != nil && !e.group.isRunning { // 被暂停
 		return -1
 	}
 
 	if e.expr == nil { // 静态匹配
-		if len(url) < len(e.pattern) {
+		l := len(url) - len(e.pattern)
+		switch {
+		case l < 0:
+			return -1
+		case l == 0:
+			if e.pattern == url {
+				return 0
+			}
+			return -1
+		case l > 0:
+			if (e.pattern == url[:len(e.pattern)]) && (e.pattern[len(e.pattern)-1] == '/') {
+				return l
+			}
 			return -1
 		}
-
-		if e.pattern == url[:len(e.pattern)] {
-			return len(url) - len(e.pattern)
-		}
-
-		return -1
 	}
 
 	// 正则匹配，没有部分匹配功能，匹配返回0,否则返回-1
