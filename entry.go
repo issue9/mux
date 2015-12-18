@@ -14,6 +14,7 @@ type entry struct {
 	pattern   string         // 匹配字符串
 	expr      *regexp.Regexp // 若pattern是正则匹配，则会被转换成正则表达式保存在此变量中
 	hasParams bool           // 是否拥有命名路由参数，仅在expr不为nil的时候有用
+	hosts     bool           // 是否需要匹配主机名
 	group     *Group         // 所属分组
 	handler   http.Handler
 }
@@ -23,25 +24,35 @@ type entry struct {
 //  0  表示完全匹配；
 //  >0 表示部分匹配，值越小表示匹配程度越高。
 func (e *entry) match(url string) int {
-	if e.group != nil && !e.group.isRunning {
+	if e.group != nil && !e.group.isRunning { // 被暂停
 		return -1
 	}
 
 	if e.expr == nil { // 静态匹配
-		if len(url) < len(e.pattern) {
+		l := len(url) - len(e.pattern)
+		switch {
+		case l < 0:
+			return -1
+		case l == 0:
+			if e.pattern == url {
+				return 0
+			}
+			return -1
+		case l > 0:
+			if (e.pattern == url[:len(e.pattern)]) && (e.pattern[len(e.pattern)-1] == '/') {
+				return l
+			}
 			return -1
 		}
-
-		if e.pattern == url[:len(e.pattern)] {
-			return len(url) - len(e.pattern)
-		}
-
-		return -1
 	}
 
-	// 正则匹配
-	if loc := e.expr.FindStringIndex(url); loc != nil {
-		return len(url) - loc[1]
+	// 正则匹配，没有部分匹配功能，匹配返回0,否则返回-1
+	loc := e.expr.FindStringIndex(url)
+	if loc == nil {
+		return -1
+	}
+	if loc[0] == 0 && loc[1] == len(url) {
+		return 0
 	}
 	return -1
 }
@@ -71,6 +82,7 @@ func newEntry(pattern string, h http.Handler, g *Group) *entry {
 	e := &entry{
 		pattern: pattern,
 		handler: h,
+		hosts:   len(pattern) == 0 || pattern[0] != '/',
 		group:   g,
 	}
 

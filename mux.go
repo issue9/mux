@@ -48,8 +48,10 @@ var supportMethods = []string{
 //
 // 可能会出现多条记录与同一请求都匹配的情况，这种情况下，
 // 系统会找到一条认为最匹配的路由来处理，判断规则如下：
-//  1.当只有部分匹配时，以匹配字符最多的项为准。
-//  2.当有多条完全匹配时，以静态路由优先。
+//  1. 静态路由优先于正则路由判断；
+//  2. 完全匹配的路由项优先于部分匹配的路由项；
+//  3. 正则只能是完全匹配；
+//  4. 只有以/结尾的静态路由才有部分匹配功能。
 //
 // 正则匹配语法：
 //  /post/{id}     // 匹配/post/开头的任意字符串，其后的字符串保存到id中；
@@ -194,16 +196,17 @@ func (mux *ServeMux) AnyFunc(pattern string, fun func(http.ResponseWriter, *http
 
 // implement http.Handler.ServerHTTP()
 // 若没有找到匹配路由，返回404
-func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	hostURL := req.Host + req.URL.Path
+func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	hostURL := r.Host + r.URL.Path
 	size := -1 // 匹配度，0表示完全匹配，负数表示完全不匹配，其它值越小匹配度越高
 	var e *entry
 	var p string
 
-	for item := mux.list[req.Method].Front(); item != nil; item = item.Next() {
+	for item := mux.list[r.Method].Front(); item != nil; item = item.Next() {
 		entry := item.Value.(*entry)
-		url := req.URL.Path
-		if len(entry.pattern) == 0 || entry.pattern[0] != '/' {
+
+		url := r.URL.Path
+		if entry.hosts {
 			url = hostURL
 		}
 
@@ -226,7 +229,10 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	ctx := context.Get(req)
-	ctx.Set("params", e.getParams(p))
-	e.handler.ServeHTTP(w, req)
+	params := e.getParams(p)
+	if params != nil {
+		ctx := context.Get(r)
+		ctx.Set("params", params)
+	}
+	e.handler.ServeHTTP(w, r)
 }

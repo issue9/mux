@@ -94,12 +94,18 @@ func TestServeMux_ServeHTTP(t *testing.T) {
 		},
 		&handlerTester{
 			name:       "普通部分匹配",
-			h:          newServeMux("/abc"),
-			query:      "/abcd",
+			h:          newServeMux("/abc/"),
+			query:      "/abc/d",
 			statusCode: 200,
 		},
 		&handlerTester{
-			name:       "普通不匹配",
+			name:       "普通不匹配-1",
+			h:          newServeMux("/abc"),
+			query:      "/abcd",
+			statusCode: 404,
+		},
+		&handlerTester{
+			name:       "普通不匹配-2",
 			h:          newServeMux("/abc"),
 			query:      "/cba",
 			statusCode: 404,
