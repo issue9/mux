@@ -68,6 +68,17 @@ func TestEntry_match(t *testing.T) {
 	e = newEntry("/blog/{action:\\w+}-{id:\\d+}/", hf, nil)
 	a.Equal(e.match("/blog/post-1/page-2"), -1) // 正则没有部分匹配功能
 	a.Equal(e.match("/blog/post-1d/"), -1)      // 正则，不匹配
+
+	// 通过group控制
+	g := &Group{isRunning: false}
+	e = newEntry("/blog/post/1", hf, g)
+	a.Equal(e.match("/blog/post/1"), -1)        // 暂停状态下，均返回-1
+	a.Equal(e.match("/blog/post/1/page/2"), -1) // 暂停状态下，均返回-1
+	a.Equal(e.match("/blog"), -1)               // 暂停状态下，均返回-1
+	g.isRunning = true
+	a.Equal(e.match("/blog/post/1"), 0)
+	a.Equal(e.match("/blog/post/1/page/2"), -1)
+
 }
 
 func TestEntry_getParams(t *testing.T) {
