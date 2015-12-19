@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/issue9/context"
 )
@@ -58,6 +59,8 @@ var supportMethods = []string{
 //  /post/{id:\d+} // 同上，但id的值只能为\d+；
 //  /post/{:\d+}   // 同上，但是没有命名；
 type ServeMux struct {
+	mu sync.RWMutex
+
 	// 路由列表，键名表示method。list中静态路由在前，正则路由在后。
 	list map[string]*list.List
 }
@@ -101,6 +104,9 @@ func (mux *ServeMux) add(g *Group, pattern string, h http.Handler, methods ...st
 	}
 
 	e := newEntry(pattern, h, g)
+
+	mux.mu.Lock()
+	defer mux.mu.Unlock()
 
 	for _, method := range methods {
 		method = strings.ToUpper(method)
@@ -205,6 +211,9 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	size := -1 // 匹配度，0表示完全匹配，负数表示完全不匹配，其它值越小匹配度越高
 	var e *entry
 	var p string
+
+	mux.mu.RLock()
+	defer mux.mu.RUnlock()
 
 	for item := mux.list[r.Method].Front(); item != nil; item = item.Next() {
 		entry := item.Value.(*entry)
