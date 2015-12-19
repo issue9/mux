@@ -12,10 +12,9 @@ import (
 	"github.com/issue9/assert"
 )
 
-// 断言mux.list[method].Len() == len(mux.named[method]) == l
+// 断言mux.list[method].Len() == l
 func assertLen(mux *ServeMux, a *assert.Assertion, l int, method string) {
 	a.Equal(l, mux.list[method].Len())
-	a.Equal(l, len(mux.named[method]))
 }
 
 func TestServeMux_Add(t *testing.T) {
@@ -73,7 +72,23 @@ func TestServeMux_Add(t *testing.T) {
 	//a.Panic(func() { m.Add("", h, "GET") })
 	// 不支持的methods
 	a.Panic(func() { m.Add("abc", h, "GET123") })
+}
 
+func TestServeMux_checkExists(t *testing.T) {
+	a := assert.New(t)
+
+	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("handler"))
+	})
+	s := NewServeMux()
+	a.NotNil(s)
+
+	a.Error(s.checkExists("abc", "not exists"))
+
+	s.add(nil, "/abc", h, "GET")
+	a.Error(s.checkExists("/abc", "GET"))
+	a.NotError(s.checkExists("/abc", "POST"))
+	a.NotError(s.checkExists("/abcd", "GET"))
 }
 
 // 测试各种匹配模式是否正常工作

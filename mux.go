@@ -60,24 +60,33 @@ var supportMethods = []string{
 type ServeMux struct {
 	// 路由列表，键名表示method。list中静态路由在前，正则路由在后。
 	list map[string]*list.List
-
-	// 路由的命名列表，方便查找。
-	named map[string]map[string]*entry
 }
 
 // 声明一个新的ServeMux
 func NewServeMux() *ServeMux {
 	l := make(map[string]*list.List, len(supportMethods))
-	n := make(map[string]map[string]*entry, len(supportMethods))
 	for _, method := range supportMethods {
 		l[method] = list.New()
-		n[method] = map[string]*entry{}
 	}
 
 	return &ServeMux{
-		list:  l,
-		named: n,
+		list: l,
 	}
+}
+
+func (mux *ServeMux) checkExists(pattern, method string) error {
+	l, found := mux.list[method]
+	if !found {
+		return fmt.Errorf("不支持的request.Method:[%v]", method)
+	}
+
+	for item := l.Front(); item != nil; item = item.Next() {
+		if e := item.Value.(*entry); e.pattern == pattern {
+			return fmt.Errorf("该模式[%v]的路由项已经存在:", pattern)
+		}
+	}
+
+	return nil
 }
 
 // 添加一个路由项。
@@ -95,16 +104,10 @@ func (mux *ServeMux) add(g *Group, pattern string, h http.Handler, methods ...st
 	for _, method := range methods {
 		method = strings.ToUpper(method)
 
-		es, found := mux.named[method]
-		if !found {
-			panic(fmt.Sprintf("不支持的request.Method:[%v]", method))
+		if err := mux.checkExists(pattern, method); err != nil {
+			panic(err)
 		}
 
-		if _, found := es[pattern]; found {
-			panic(fmt.Sprintf("该模式[%v]的路由项已经存在:", pattern))
-		}
-
-		es[pattern] = e
 		if e.expr == nil { // 静态路由，在前端插入
 			mux.list[method].PushFront(e)
 		} else { // 正则路由，在后端插入
