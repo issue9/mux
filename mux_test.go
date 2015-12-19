@@ -76,6 +76,7 @@ func TestServeMux_Add(t *testing.T) {
 
 }
 
+// 测试各种匹配模式是否正常工作
 func TestServeMux_ServeHTTP(t *testing.T) {
 	a := assert.New(t)
 
