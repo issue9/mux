@@ -74,6 +74,7 @@ func NewServeMux() *ServeMux {
 	}
 }
 
+// 检测匹配模式是否存在，则不存在则返回error
 func (mux *ServeMux) checkExists(pattern, method string) error {
 	l, found := mux.list[method]
 	if !found {
@@ -96,7 +97,7 @@ func (mux *ServeMux) add(g *Group, pattern string, h http.Handler, methods ...st
 	}
 
 	if len(methods) == 0 {
-		methods = supportMethods
+		panic("至少指定一个mehtods参数")
 	}
 
 	e := newEntry(pattern, h, g)
