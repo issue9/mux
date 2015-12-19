@@ -158,7 +158,7 @@ func TestServeMux_ServeHTTP(t *testing.T) {
 }
 
 // 全静态匹配
-// BenchmarkServeMux_ServeHTTPStatic-4	 3000000	       571 ns/op
+// BenchmarkServeMux_ServeHTTPStatic-4	10000000	       203 ns/op
 func BenchmarkServeMux_ServeHTTPStatic(b *testing.B) {
 	a := assert.New(b)
 
@@ -192,7 +192,7 @@ func BenchmarkServeMux_ServeHTTPStatic(b *testing.B) {
 }
 
 // 全正则匹配
-// BenchmarkServeMux_ServeHTTPRegexp-4	 1000000	      1772 ns/op
+// BenchmarkServeMux_ServeHTTPRegexp-4	 1000000	      1477 ns/op
 func BenchmarkServeMux_ServeHTTPRegexp(b *testing.B) {
 	a := assert.New(b)
 
@@ -226,7 +226,7 @@ func BenchmarkServeMux_ServeHTTPRegexp(b *testing.B) {
 }
 
 // 静态正则汇合匹配
-// BenchmarkServeMux_ServeHTTPAll-4   	 1000000	      1200 ns/op
+// BenchmarkServeMux_ServeHTTPAll-4   	 2000000	       849 ns/op
 func BenchmarkServeMux_ServeHTTPAll(b *testing.B) {
 	a := assert.New(b)
 
