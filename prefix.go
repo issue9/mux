@@ -51,7 +51,7 @@ func (p *Prefix) Patch(pattern string, h http.Handler) *Prefix {
 
 // Any相当于ServeMux.Any(prefix+pattern, h)的简易写法
 func (p *Prefix) Any(pattern string, h http.Handler) *Prefix {
-	return p.Add(pattern, h)
+	return p.Add(pattern, h, supportMethods...)
 }
 
 // AddFunc功能同ServeMux.AddFunc(prefix+pattern, fun, ...)
@@ -87,7 +87,7 @@ func (p *Prefix) PatchFunc(pattern string, fun func(http.ResponseWriter, *http.R
 
 // AnyFunc相当于ServeMux.AnyFunc(prefix+pattern, func)的简易写法
 func (p *Prefix) AnyFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
-	return p.AddFunc(pattern, fun)
+	return p.AddFunc(pattern, fun, supportMethods...)
 }
 
 // 创建一个路由组，该组中添加的路由项，都会带上前缀prefix

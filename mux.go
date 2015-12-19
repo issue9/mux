@@ -156,7 +156,7 @@ func (mux *ServeMux) Patch(pattern string, h http.Handler) *ServeMux {
 
 // Any 相当于ServeMux.Add(pattern, h)的简易写法
 func (mux *ServeMux) Any(pattern string, h http.Handler) *ServeMux {
-	return mux.Add(pattern, h)
+	return mux.Add(pattern, h, supportMethods...)
 }
 
 func (mux *ServeMux) addFunc(g *Group, pattern string, fun func(http.ResponseWriter, *http.Request), methods ...string) *ServeMux {
@@ -195,7 +195,7 @@ func (mux *ServeMux) PatchFunc(pattern string, fun func(http.ResponseWriter, *ht
 
 // AnyFunc 相当于ServeMux.AddFunc(pattern, func)的简易写法
 func (mux *ServeMux) AnyFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *ServeMux {
-	return mux.AddFunc(pattern, fun)
+	return mux.AddFunc(pattern, fun, supportMethods...)
 }
 
 // implement http.Handler.ServerHTTP()
