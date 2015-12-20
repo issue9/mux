@@ -49,6 +49,7 @@ func TestEntry_match(t *testing.T) {
 	// 静态路由-1
 	e := newEntry("/blog/post/1", hf, nil)
 	a.Equal(e.match("/blog/post/1"), 0)
+	a.Equal(e.match("/blog/post/1/"), -1)
 	a.Equal(e.match("/blog/post/1/page/2"), -1) // 非/结尾的，只能全路径匹配。
 	a.Equal(e.match("/blog"), -1)               // 不匹配，长度太短
 

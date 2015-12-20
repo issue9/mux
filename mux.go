@@ -95,6 +95,10 @@ func (mux *ServeMux) checkExists(pattern, method string) error {
 
 // 添加一个路由项。
 func (mux *ServeMux) add(g *Group, pattern string, h http.Handler, methods ...string) *ServeMux {
+	if len(pattern) == 0 {
+		panic("参数pattern不能为空")
+	}
+
 	if h == nil {
 		panic("参数h不能为空")
 	}

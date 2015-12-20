@@ -39,7 +39,8 @@ func (e *entry) match(url string) int {
 			}
 			return -1
 		case l > 0:
-			if (e.pattern == url[:len(e.pattern)]) && (e.pattern[len(e.pattern)-1] == '/') {
+			if (e.pattern == url[:len(e.pattern)]) &&
+				(e.pattern[len(e.pattern)-1] == '/') {
 				return l
 			}
 			return -1
@@ -82,7 +83,7 @@ func newEntry(pattern string, h http.Handler, g *Group) *entry {
 	e := &entry{
 		pattern: pattern,
 		handler: h,
-		hosts:   len(pattern) == 0 || pattern[0] != '/',
+		hosts:   pattern[0] != '/',
 		group:   g,
 	}
 
