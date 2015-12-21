@@ -14,7 +14,7 @@ import (
 
 // 断言mux.paths[method].Len() == l
 func assertLen(mux *ServeMux, a *assert.Assertion, l int, method string) {
-	a.Equal(l, mux.paths[method].Len()+mux.domains[method].Len())
+	a.Equal(l, mux.paths[method].Len()+mux.hosts[method].Len())
 }
 
 func TestServeMux_Add(t *testing.T) {
