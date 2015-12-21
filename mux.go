@@ -231,6 +231,7 @@ func (mux *ServeMux) AnyFunc(pattern string, fun func(http.ResponseWriter, *http
 	return mux.AddFunc(pattern, fun, supportMethods...)
 }
 
+// 查找最匹配的路由项
 func (mux *ServeMux) match(r *http.Request) (p string, e entryer) {
 	hostURL := r.Host + r.URL.Path
 	size := -1 // 匹配度，0表示完全匹配，负数表示完全不匹配，其它值越小匹配度越高

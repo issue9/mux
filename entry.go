@@ -12,6 +12,7 @@ import (
 
 // 路由项需要实现的接口
 type entryer interface {
+	// 匹配匹配字符串
 	getPattern() string
 
 	// 匹配程度
@@ -19,8 +20,14 @@ type entryer interface {
 	//  0  表示完全匹配；
 	//  >0 表示部分匹配，值越小表示匹配程度越高。
 	match(url string) int
+
+	// 获取参数，只有正则表达式才有数据。
 	getParams(url string) map[string]string
+
+	// 执行该路由项的函数
 	serveHTTP(w http.ResponseWriter, r *http.Request)
+
+	// 是否为正则表达式
 	isRegexp() bool
 }
 
