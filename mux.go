@@ -50,9 +50,10 @@ var supportMethods = []string{
 // 可能会出现多条记录与同一请求都匹配的情况，这种情况下，
 // 系统会找到一条认为最匹配的路由来处理，判断规则如下：
 //  1. 静态路由优先于正则路由判断；
-//  2. 完全匹配的路由项优先于部分匹配的路由项；
-//  3. 正则只能是完全匹配；
-//  4. 只有以/结尾的静态路由才有部分匹配功能。
+//  2. 带域名的路由项优先于不带域名的路由项；
+//  3. 完全匹配的路由项优先于部分匹配的路由项；
+//  4. 正则只能是完全匹配；
+//  5. 只有以/结尾的静态路由才有部分匹配功能。
 //
 // 正则匹配语法：
 //  /post/{id}     // 匹配/post/开头的任意字符串，其后的字符串保存到id中；
@@ -61,25 +62,42 @@ var supportMethods = []string{
 type ServeMux struct {
 	mu sync.RWMutex
 
-	// 路由列表，键名表示method。list中静态路由在前，正则路由在后。
-	list map[string]*list.List
+	// 包含域名的路由列表，键名表示method。domains中静态路由在前，正则路由在后。
+	domains map[string]*list.List
+
+	// 路由列表，键名表示method。paths中静态路由在前，正则路由在后。
+	paths map[string]*list.List
 }
 
 // 声明一个新的ServeMux
 func NewServeMux() *ServeMux {
+	d := make(map[string]*list.List, len(supportMethods))
 	l := make(map[string]*list.List, len(supportMethods))
 	for _, method := range supportMethods {
+		d[method] = list.New()
 		l[method] = list.New()
 	}
 
 	return &ServeMux{
-		list: l,
+		domains: d,
+		paths:   l,
 	}
 }
 
-// 检测匹配模式是否存在，则不存在则返回error
+// 检测匹配模式是否存在，若不存在则返回error
 func (mux *ServeMux) checkExists(pattern, method string) error {
-	l, found := mux.list[method]
+	l, found := mux.domains[method]
+	if !found {
+		return fmt.Errorf("不支持的request.Method:[%v]", method)
+	}
+
+	for item := l.Front(); item != nil; item = item.Next() {
+		if e := item.Value.(*entry); e.pattern == pattern {
+			return fmt.Errorf("该模式[%v]的路由项已经存在:", pattern)
+		}
+	}
+
+	l, found = mux.paths[method]
 	if !found {
 		return fmt.Errorf("不支持的request.Method:[%v]", method)
 	}
@@ -119,10 +137,15 @@ func (mux *ServeMux) add(g *Group, pattern string, h http.Handler, methods ...st
 			panic(err)
 		}
 
-		if e.expr == nil { // 静态路由，在前端插入
-			mux.list[method].PushFront(e)
-		} else { // 正则路由，在后端插入
-			mux.list[method].PushBack(e)
+		switch {
+		case pattern[0] == '/' && e.expr == nil: // 静态路由，在前端插入
+			mux.paths[method].PushFront(e)
+		case pattern[0] == '/' && e.expr != nil: // 正则路由，在后端插入
+			mux.paths[method].PushBack(e)
+		case pattern[0] != '/' && e.expr == nil:
+			mux.domains[method].PushFront(e)
+		case pattern[0] != '/' && e.expr != nil:
+			mux.domains[method].PushFront(e)
 		}
 	}
 
@@ -219,7 +242,7 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	mux.mu.RLock()
 	defer mux.mu.RUnlock()
 
-	for item := mux.list[r.Method].Front(); item != nil; item = item.Next() {
+	for item := mux.domains[r.Method].Front(); item != nil; item = item.Next() {
 		entry := item.Value.(*entry)
 
 		url := r.URL.Path
@@ -228,7 +251,29 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		s := entry.match(url)
-		if s == -1 || (size > 0 && s > size) { // 完全不匹配，或是匹配度没有当前的高
+		if s == -1 || (size > 0 && s >= size) { // 完全不匹配，或是匹配度没有当前的高
+			continue
+		}
+
+		size = s
+		e = entry
+		p = url
+
+		if s == 0 { // 完全匹配，可以中止匹配过程
+			goto RENDER
+		}
+	} // end for
+
+	for item := mux.paths[r.Method].Front(); item != nil; item = item.Next() {
+		entry := item.Value.(*entry)
+
+		url := r.URL.Path
+		if entry.hosts {
+			url = hostURL
+		}
+
+		s := entry.match(url)
+		if s == -1 || (size > 0 && s >= size) { // 完全不匹配，或是匹配度没有当前的高
 			continue
 		}
 
@@ -246,6 +291,7 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+RENDER:
 	params := e.getParams(p)
 	if params != nil {
 		ctx := context.Get(r)
