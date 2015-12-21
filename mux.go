@@ -92,7 +92,7 @@ func (mux *ServeMux) checkExists(pattern, method string) error {
 	}
 
 	for item := l.Front(); item != nil; item = item.Next() {
-		if e := item.Value.(*entry); e.pattern == pattern {
+		if e := item.Value.(entryer); e.getPattern() == pattern {
 			return fmt.Errorf("该模式[%v]的路由项已经存在:", pattern)
 		}
 	}
@@ -103,7 +103,7 @@ func (mux *ServeMux) checkExists(pattern, method string) error {
 	}
 
 	for item := l.Front(); item != nil; item = item.Next() {
-		if e := item.Value.(*entry); e.pattern == pattern {
+		if e := item.Value.(entryer); e.getPattern() == pattern {
 			return fmt.Errorf("该模式[%v]的路由项已经存在:", pattern)
 		}
 	}
@@ -138,13 +138,13 @@ func (mux *ServeMux) add(g *Group, pattern string, h http.Handler, methods ...st
 		}
 
 		switch {
-		case pattern[0] == '/' && e.expr == nil: // 静态路由，在前端插入
+		case pattern[0] == '/' && !e.isRegexp(): // 静态路由，在前端插入
 			mux.paths[method].PushFront(e)
-		case pattern[0] == '/' && e.expr != nil: // 正则路由，在后端插入
+		case pattern[0] == '/' && e.isRegexp(): // 正则路由，在后端插入
 			mux.paths[method].PushBack(e)
-		case pattern[0] != '/' && e.expr == nil:
+		case pattern[0] != '/' && !e.isRegexp():
 			mux.hosts[method].PushFront(e)
-		case pattern[0] != '/' && e.expr != nil:
+		case pattern[0] != '/' && e.isRegexp():
 			mux.hosts[method].PushFront(e)
 		}
 	}
@@ -231,7 +231,7 @@ func (mux *ServeMux) AnyFunc(pattern string, fun func(http.ResponseWriter, *http
 	return mux.AddFunc(pattern, fun, supportMethods...)
 }
 
-func (mux *ServeMux) match(r *http.Request) (p string, e *entry) {
+func (mux *ServeMux) match(r *http.Request) (p string, e entryer) {
 	hostURL := r.Host + r.URL.Path
 	size := -1 // 匹配度，0表示完全匹配，负数表示完全不匹配，其它值越小匹配度越高
 
@@ -239,7 +239,7 @@ func (mux *ServeMux) match(r *http.Request) (p string, e *entry) {
 	defer mux.mu.RUnlock()
 
 	for item := mux.hosts[r.Method].Front(); item != nil; item = item.Next() {
-		entry := item.Value.(*entry)
+		entry := item.Value.(entryer)
 
 		s := entry.match(hostURL)
 		if s == -1 || (size > 0 && s >= size) { // 完全不匹配，或是匹配度没有当前的高
@@ -256,7 +256,7 @@ func (mux *ServeMux) match(r *http.Request) (p string, e *entry) {
 	} // end for
 
 	for item := mux.paths[r.Method].Front(); item != nil; item = item.Next() {
-		entry := item.Value.(*entry)
+		entry := item.Value.(entryer)
 
 		s := entry.match(r.URL.Path)
 		if s == -1 || (size > 0 && s >= size) { // 完全不匹配，或是匹配度没有当前的高
@@ -293,5 +293,5 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		ctx := context.Get(r)
 		ctx.Set("params", params)
 	}
-	e.handler.ServeHTTP(w, r)
+	e.serveHTTP(w, r)
 }
