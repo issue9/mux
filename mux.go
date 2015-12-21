@@ -138,13 +138,13 @@ func (mux *ServeMux) add(g *Group, pattern string, h http.Handler, methods ...st
 		}
 
 		switch {
-		case pattern[0] == '/' && !e.isRegexp(): // 静态路由，在前端插入
+		case pattern[0] == '/' && !e.isRegexp(): // 包含域名匹配的静态路由，在前端插入
 			mux.paths[method].PushFront(e)
-		case pattern[0] == '/' && e.isRegexp(): // 正则路由，在后端插入
+		case pattern[0] == '/' && e.isRegexp(): // 包含域名匹配的正则路由，在后端插入
 			mux.paths[method].PushBack(e)
-		case pattern[0] != '/' && !e.isRegexp():
+		case pattern[0] != '/' && !e.isRegexp(): // 不包含域名匹配的静态路由，在前端插入
 			mux.hosts[method].PushFront(e)
-		case pattern[0] != '/' && e.isRegexp():
+		case pattern[0] != '/' && e.isRegexp(): // 不包含域名匹配的正则路由，在后端插入
 			mux.hosts[method].PushFront(e)
 		}
 	}
