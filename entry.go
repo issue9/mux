@@ -10,45 +10,138 @@ import (
 	"strings"
 )
 
-type entry struct {
-	pattern   string         // 匹配字符串
-	expr      *regexp.Regexp // 若pattern是正则匹配，则会被转换成正则表达式保存在此变量中
-	hasParams bool           // 是否拥有命名路由参数，仅在expr不为nil的时候有用
-	hosts     bool           // 是否需要匹配主机名
-	group     *Group         // 所属分组
-	handler   http.Handler
+// 路由项需要实现的接口
+type entryer interface {
+	// 匹配匹配字符串
+	getPattern() string
+
+	// 匹配程度
+	//  -1 表示完全不匹配；
+	//  0  表示完全匹配；
+	//  >0 表示部分匹配，值越小表示匹配程度越高。
+	match(url string) int
+
+	// 获取参数，只有正则表达式才有数据。
+	getParams(url string) map[string]string
+
+	// 执行该路由项的函数
+	serveHTTP(w http.ResponseWriter, r *http.Request)
+
+	// 是否为正则表达式
+	isRegexp() bool
 }
 
-// 匹配程度
-//  -1 表示完全不匹配；
-//  0  表示完全匹配；
-//  >0 表示部分匹配，值越小表示匹配程度越高。
-func (e *entry) match(url string) int {
-	if e.group != nil && !e.group.isRunning { // 被暂停
+//////////////// basic
+
+// 最基本的字符串匹配路由项。
+type basic struct {
+	pattern string
+	group   *Group
+	handler http.Handler
+}
+
+func (b *basic) getPattern() string {
+	return b.pattern
+}
+
+func (b *basic) isRegexp() bool {
+	return false
+}
+
+func (b *basic) serveHTTP(w http.ResponseWriter, r *http.Request) {
+	b.handler.ServeHTTP(w, r)
+}
+
+func (b *basic) getParams(url string) map[string]string {
+	return nil
+}
+
+func (b *basic) match(url string) int {
+	if b.group != nil && !b.group.isRunning { // 被暂停
 		return -1
 	}
 
-	if e.expr == nil { // 静态匹配
-		l := len(url) - len(e.pattern)
-		switch {
-		case l < 0:
-			return -1
-		case l == 0:
-			if e.pattern == url {
-				return 0
-			}
-			return -1
-		case l > 0:
-			if (e.pattern == url[:len(e.pattern)]) &&
-				(e.pattern[len(e.pattern)-1] == '/') {
-				return l
-			}
-			return -1
+	if url == b.pattern {
+		return 0
+	}
+	return -1
+}
+
+//////////////// static
+
+// 静态文件匹配路由项，只要路径中的开头字符串与pattern相同，即表示匹配成功。
+// 根据match()的返回值来确定哪个最匹配。
+type static struct {
+	pattern string
+	group   *Group
+	handler http.Handler
+}
+
+func (s *static) getPattern() string {
+	return s.pattern
+}
+
+func (s *static) isRegexp() bool {
+	return false
+}
+
+func (s *static) serveHTTP(w http.ResponseWriter, r *http.Request) {
+	s.handler.ServeHTTP(w, r)
+}
+
+func (s *static) getParams(url string) map[string]string {
+	return nil
+}
+
+func (s *static) match(url string) int {
+	if s.group != nil && !s.group.isRunning { // 被暂停
+		return -1
+	}
+
+	l := len(url) - len(s.pattern)
+	switch {
+	case l < 0:
+		return -1
+	case l >= 0:
+		if (s.pattern == url[:len(s.pattern)]) &&
+			(s.pattern[len(s.pattern)-1] == '/') {
+			return l
 		}
+		return -1
+	} // end switch
+	return -1
+}
+
+//////////////////// regexpr
+
+// 正则表达式匹配。
+type regexpr struct {
+	pattern   string
+	expr      *regexp.Regexp
+	hasParams bool
+	group     *Group
+	handler   http.Handler
+}
+
+func (re *regexpr) getPattern() string {
+	return re.pattern
+}
+
+func (re *regexpr) serveHTTP(w http.ResponseWriter, r *http.Request) {
+	re.handler.ServeHTTP(w, r)
+}
+
+func (r *regexpr) isRegexp() bool {
+	return true
+}
+
+func (re *regexpr) match(url string) int {
+	if re.group != nil && !re.group.isRunning { // 被暂停
+		return -1
 	}
 
 	// 正则匹配，没有部分匹配功能，匹配返回0,否则返回-1
-	loc := e.expr.FindStringIndex(url)
+	loc := re.expr.FindStringIndex(url)
 	if loc == nil {
 		return -1
 	}
@@ -59,15 +152,15 @@ func (e *entry) match(url string) int {
 }
 
 // 将url与当前的表达式进行匹配，返回其命名路由参数的值。若不匹配，则返回nil
-func (e *entry) getParams(url string) map[string]string {
-	if !e.hasParams {
+func (re *regexpr) getParams(url string) map[string]string {
+	if !re.hasParams {
 		return nil
 	}
 
 	// 正确匹配正则表达式，则获相关的正则表达式命名变量。
 	mapped := make(map[string]string)
-	subexps := e.expr.SubexpNames()
-	args := e.expr.FindStringSubmatch(url)
+	subexps := re.expr.SubexpNames()
+	args := re.expr.FindStringSubmatch(url)
 	for index, name := range subexps {
 		if len(name) > 0 && index < len(args) {
 			mapped[name] = args[index]
@@ -76,25 +169,36 @@ func (e *entry) getParams(url string) map[string]string {
 	return mapped
 }
 
-// 声明一个entry实例
+// 声明一个regexpr实例
 // pattern 匹配内容。
 // h 对应的http.Handler，外层调用者确保该值不能为nil.
-func newEntry(pattern string, h http.Handler, g *Group) *entry {
-	e := &entry{
+func newEntry(pattern string, h http.Handler, g *Group) entryer {
+	strs := split(pattern)
+
+	if len(strs) > 1 { // 正则路由
+		p, hasParams := toPattern(strs)
+		return &regexpr{
+			pattern:   pattern,
+			handler:   h,
+			group:     g,
+			hasParams: hasParams,
+			expr:      regexp.MustCompile(p),
+		}
+	}
+
+	if pattern[len(pattern)-1] == '/' {
+		return &static{
+			group:   g,
+			pattern: pattern,
+			handler: h,
+		}
+	}
+
+	return &basic{
+		group:   g,
 		pattern: pattern,
 		handler: h,
-		hosts:   pattern[0] != '/',
-		group:   g,
 	}
-
-	strs := split(pattern)
-	if len(strs) > 1 { // 正则路由
-		pattern, hasParams := toPattern(strs)
-		e.expr = regexp.MustCompile(pattern)
-		e.hasParams = hasParams
-	}
-
-	return e
 }
 
 // 将strs按照顺序合并成一个正则表达式

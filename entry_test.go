@@ -107,20 +107,20 @@ func TestEntry_getParams(t *testing.T) {
 	a.Equal(0, len(e.getParams("/blog/post-1d/"))) // 不匹配
 }
 
-// BenchmarkEntry_Match_Static_1-4    	200000000	         6.94 ns/op
-func BenchmarkEntry_Match_Static_1(b *testing.B) {
+// BenchmarkEntry_Match_Basic-4    	200000000	         6.94 ns/op
+func BenchmarkEntry_Match_Basic(b *testing.B) {
 	hf := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	})
 	e := newEntry("/blog/post/1", hf, nil)
 	for i := 0; i < b.N; i++ {
 		if 0 != e.match("/blog/post/1") {
-			b.Error("BenchmarkEntry_Match_Static:error")
+			b.Error("BenchmarkEntry_Match_Basic:error")
 		}
 	}
 }
 
-// BenchmarkEntry_Match_Static_2-4    	100000000	        10.3 ns/op
-func BenchmarkEntry_Match_Static_2(b *testing.B) {
+// BenchmarkEntry_Match_Static-4    	100000000	        10.3 ns/op
+func BenchmarkEntry_Match_Static(b *testing.B) {
 	hf := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	})
 	e := newEntry("/blog/post/", hf, nil)
@@ -138,7 +138,7 @@ func BenchmarkEntry_Match_Regexp(b *testing.B) {
 	e := newEntry("/blog/post/{id:\\d+}", hf, nil)
 	for i := 0; i < b.N; i++ {
 		if 0 != e.match("/blog/post/1") {
-			b.Error("BenchmarkEntry_Match_Static:error")
+			b.Error("BenchmarkEntry_Match_Regexp:error")
 		}
 	}
 }

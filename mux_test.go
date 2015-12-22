@@ -12,9 +12,9 @@ import (
 	"github.com/issue9/assert"
 )
 
-// 断言mux.list[method].Len() == l
+// 断言mux.paths[method].Len() == l
 func assertLen(mux *ServeMux, a *assert.Assertion, l int, method string) {
-	a.Equal(l, mux.list[method].Len())
+	a.Equal(l, mux.paths[method].Len()+mux.hosts[method].Len())
 }
 
 func TestServeMux_Add(t *testing.T) {
@@ -69,7 +69,7 @@ func TestServeMux_Add(t *testing.T) {
 	// handler不能为空
 	a.Panic(func() { m.Add("abc", nil, "GET") })
 	// pattern不能为空
-	//a.Panic(func() { m.Add("", h, "GET") })
+	a.Panic(func() { m.Add("", h, "GET") })
 	// 不支持的methods
 	a.Panic(func() { m.Add("abc", h, "GET123") })
 }
@@ -171,6 +171,59 @@ func TestServeMux_ServeHTTP(t *testing.T) {
 	}
 
 	runHandlerTester(a, tests)
+}
+
+// 测试匹配顺序是否正确
+func TestServeMux_ServeHTTP_Order(t *testing.T) {
+	a := assert.New(t)
+
+	// 一些预定义的处理函数
+	f1 := func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(1)
+	}
+	f2 := func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(2)
+	}
+	f3 := func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(3)
+	}
+	f4 := func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(4)
+	}
+	f5 := func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(5)
+	}
+	f6 := func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(6)
+	}
+
+	test := func(m *ServeMux, method, host, path string, code int) {
+		r, err := http.NewRequest(method, path, nil)
+		if len(host) > 0 {
+			r.Host = host
+		}
+		a.NotError(err).NotNil(r)
+		w := httptest.NewRecorder()
+		a.NotNil(w)
+		m.ServeHTTP(w, r)
+		a.Equal(w.Code, code)
+	}
+
+	serveMux := NewServeMux()
+	a.NotNil(serveMux)
+	serveMux.AddFunc("/post/", f1, "GET")                   // f1
+	serveMux.AddFunc("/post/{id:\\d+}", f2, "GET")          // f2
+	serveMux.AddFunc("/post/1", f3, "GET")                  // f3
+	serveMux.AddFunc("127.0.0.1/post/", f4, "GET")          // f4
+	serveMux.AddFunc("127.0.0.1/post/{id:\\d+}", f5, "GET") // f5
+	serveMux.AddFunc("127.0.0.1/post/1", f6, "GET")         // f6
+
+	test(serveMux, "GET", "", "/post/1", 3)            // f3 静态路由项完全匹配
+	test(serveMux, "GET", "", "/post/2", 2)            // f2 正则完全匹配
+	test(serveMux, "GET", "", "/post/abc", 1)          // f1 匹配度最高
+	test(serveMux, "GET", "127.0.0.1", "/post/1", 6)   // f6 静态路由项完全匹配
+	test(serveMux, "GET", "127.0.0.1", "/post/2", 5)   // f5 正则完全匹配
+	test(serveMux, "GET", "127.0.0.1", "/post/abc", 4) // f4 匹配度最高
 }
 
 // 全静态匹配
