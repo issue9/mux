@@ -18,76 +18,82 @@ type Prefix struct {
 	prefix string
 }
 
-// Add相当于ServeMux.Add(prefix+pattern, h, "POST"...)的简易写法
+// Add 相当于ServeMux.Add(prefix+pattern, h, "POST"...)的简易写法
 func (p *Prefix) Add(pattern string, h http.Handler, methods ...string) *Prefix {
 	p.mux.add(p.group, p.prefix+pattern, h, methods...)
 	return p
 }
 
-// Get相当于ServeMux.Get(prefix+pattern, h)的简易写法
+// Get 相当于ServeMux.Get(prefix+pattern, h)的简易写法
 func (p *Prefix) Get(pattern string, h http.Handler) *Prefix {
 	return p.Add(pattern, h, "GET")
 }
 
-// Post相当于ServeMux.Post(prefix+pattern, h)的简易写法
+// Post 相当于ServeMux.Post(prefix+pattern, h)的简易写法
 func (p *Prefix) Post(pattern string, h http.Handler) *Prefix {
 	return p.Add(pattern, h, "POST")
 }
 
-// Delete相当于ServeMux.Delete(prefix+pattern, h)的简易写法
+// Delete 相当于ServeMux.Delete(prefix+pattern, h)的简易写法
 func (p *Prefix) Delete(pattern string, h http.Handler) *Prefix {
 	return p.Add(pattern, h, "DELETE")
 }
 
-// Put相当于ServeMux.Put(prefix+pattern, h)的简易写法
+// Put 相当于ServeMux.Put(prefix+pattern, h)的简易写法
 func (p *Prefix) Put(pattern string, h http.Handler) *Prefix {
 	return p.Add(pattern, h, "PUT")
 }
 
-// Patch相当于ServeMux.Patch(prefix+pattern, h)的简易写法
+// Patch 相当于ServeMux.Patch(prefix+pattern, h)的简易写法
 func (p *Prefix) Patch(pattern string, h http.Handler) *Prefix {
 	return p.Add(pattern, h, "PATCH")
 }
 
-// Any相当于ServeMux.Any(prefix+pattern, h)的简易写法
+// Any 相当于ServeMux.Any(prefix+pattern, h)的简易写法
 func (p *Prefix) Any(pattern string, h http.Handler) *Prefix {
 	return p.Add(pattern, h, supportMethods...)
 }
 
-// AddFunc功能同ServeMux.AddFunc(prefix+pattern, fun, ...)
+// AddFunc 功能同ServeMux.AddFunc(prefix+pattern, fun, ...)
 func (p *Prefix) AddFunc(pattern string, fun func(http.ResponseWriter, *http.Request), methods ...string) *Prefix {
 	p.mux.addFunc(p.group, p.prefix+pattern, fun, methods...)
 	return p
 }
 
-// GetFunc相当于ServeMux.GetFunc(prefix+pattern, func)的简易写法
+// GetFunc 相当于ServeMux.GetFunc(prefix+pattern, func)的简易写法
 func (p *Prefix) GetFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
 	return p.AddFunc(pattern, fun, "GET")
 }
 
-// PutFunc相当于ServeMux.PutFunc(prefix+pattern, func)的简易写法
+// PutFunc 相当于ServeMux.PutFunc(prefix+pattern, func)的简易写法
 func (p *Prefix) PutFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
 	return p.AddFunc(pattern, fun, "PUT")
 }
 
-// PostFunc相当于ServeMux.PostFunc(prefix+pattern, func)的简易写法
+// PostFunc 相当于ServeMux.PostFunc(prefix+pattern, func)的简易写法
 func (p *Prefix) PostFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
 	return p.AddFunc(pattern, fun, "POST")
 }
 
-// DeleteFunc相当于ServeMux.DeleteFunc(prefix+pattern, func)的简易写法
+// DeleteFunc 相当于ServeMux.DeleteFunc(prefix+pattern, func)的简易写法
 func (p *Prefix) DeleteFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
 	return p.AddFunc(pattern, fun, "DELETE")
 }
 
-// PatchFunc相当于ServeMux.PatchFunc(prefix+pattern, func)的简易写法
+// PatchFunc 相当于ServeMux.PatchFunc(prefix+pattern, func)的简易写法
 func (p *Prefix) PatchFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
 	return p.AddFunc(pattern, fun, "PATCH")
 }
 
-// AnyFunc相当于ServeMux.AnyFunc(prefix+pattern, func)的简易写法
+// AnyFunc 相当于ServeMux.AnyFunc(prefix+pattern, func)的简易写法
 func (p *Prefix) AnyFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
 	return p.AddFunc(pattern, fun, supportMethods...)
+}
+
+// Remove 删除指定匹配模式的路由项
+func (p *Prefix) Remove(pattern string, methods ...string) *Prefix {
+	p.mux.Remove(p.prefix+pattern, methods...)
+	return p
 }
 
 // 创建一个路由组，该组中添加的路由项，都会带上前缀prefix

@@ -122,7 +122,7 @@ func (mux *ServeMux) add(g *Group, pattern string, h http.Handler, methods ...st
 	}
 
 	if len(methods) == 0 {
-		panic("至少指定一个mehtods参数")
+		methods = supportMethods
 	}
 
 	e := newEntry(pattern, h, g)
@@ -150,6 +150,57 @@ func (mux *ServeMux) add(g *Group, pattern string, h http.Handler, methods ...st
 	}
 
 	return mux
+}
+
+// 移除指定的路由项，通过路由表达式和method来匹配。
+// 当未指定methods时，将删除所有method匹配的项。
+// 指定错误的method值，将自动忽略该值。
+func (mux *ServeMux) Remove(pattern string, methods ...string) {
+	if len(methods) == 0 { // 删除所有method下匹配的项
+		methods = supportMethods
+	}
+
+	if pattern[0] == '/' {
+		mux.removePaths(pattern, methods)
+		return
+	}
+	mux.removeHosts(pattern, methods)
+}
+
+func (mux *ServeMux) removeHosts(pattern string, methods []string) {
+	mux.mu.Lock()
+	defer mux.mu.Unlock()
+
+	for _, method := range methods {
+		l, found := mux.hosts[method]
+		if !found {
+			continue
+		}
+
+		for item := l.Front(); item != nil; item = item.Next() {
+			if e := item.Value.(entryer); e.getPattern() == pattern {
+				l.Remove(item)
+			}
+		}
+	} // end for methods
+}
+
+func (mux *ServeMux) removePaths(pattern string, methods []string) {
+	mux.mu.Lock()
+	defer mux.mu.Unlock()
+
+	for _, method := range methods {
+		l, found := mux.paths[method]
+		if !found {
+			continue
+		}
+
+		for item := l.Front(); item != nil; item = item.Next() {
+			if e := item.Value.(entryer); e.getPattern() == pattern {
+				l.Remove(item)
+			}
+		}
+	} // end for methods
 }
 
 // 添加一条路由数据。
