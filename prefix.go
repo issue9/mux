@@ -6,6 +6,7 @@ package mux
 
 import (
 	"net/http"
+	"strings"
 )
 
 // 封装ServeMux，使所有添加的路由项的匹配模式都带上指定的前缀。
@@ -93,6 +94,48 @@ func (p *Prefix) AnyFunc(pattern string, fun func(http.ResponseWriter, *http.Req
 // Remove 删除指定匹配模式的路由项
 func (p *Prefix) Remove(pattern string, methods ...string) *Prefix {
 	p.mux.Remove(p.prefix+pattern, methods...)
+	return p
+}
+
+// Clean 清除所有以Prefix.prefix开头的路由项
+func (p *Prefix) Clean() *Prefix {
+	p.mux.mu.Lock()
+	defer p.mux.mu.Unlock()
+
+	for _, method := range supportMethods {
+		l, found := p.mux.hosts[method]
+		if !found {
+			continue
+		}
+
+		for item := l.Front(); item != nil; {
+			curr := item
+			item = item.Next()
+
+			entry := curr.Value.(entryer)
+			if strings.HasPrefix(entry.getPattern(), p.prefix) {
+				l.Remove(curr)
+			}
+		}
+	} // end for
+
+	for _, method := range supportMethods {
+		l, found := p.mux.paths[method]
+		if !found {
+			continue
+		}
+
+		for item := l.Front(); item != nil; {
+			curr := item
+			item = item.Next()
+
+			entry := curr.Value.(entryer)
+			if strings.HasPrefix(entry.getPattern(), p.prefix) {
+				l.Remove(curr)
+			}
+		}
+	} // end for
+
 	return p
 }
 

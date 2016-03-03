@@ -74,6 +74,30 @@ func TestServeMux_Add(t *testing.T) {
 	a.Panic(func() { m.Add("abc", h, "GET123") })
 }
 
+func TestServeMux_Clean(t *testing.T) {
+	a := assert.New(t)
+	m := NewServeMux()
+	a.NotNil(m)
+
+	fn := func(w http.ResponseWriter, req *http.Request) {}
+	h := http.HandlerFunc(fn)
+
+	m.Add("/", h)
+	assertLen(m, a, 1, "GET")
+	assertLen(m, a, 1, "DELETE")
+	m.Clean()
+	assertLen(m, a, 0, "GET")
+	assertLen(m, a, 0, "DELETE")
+
+	m.Add("/", h)
+	m.Add("/index.html", h)
+	m.Add("www.caixw.io/index.html", h)
+	assertLen(m, a, 3, "GET")
+	m.Clean()
+	assertLen(m, a, 0, "GET")
+	assertLen(m, a, 0, "DELETE")
+}
+
 func TestServeMux_Remove(t *testing.T) {
 	a := assert.New(t)
 	m := NewServeMux()

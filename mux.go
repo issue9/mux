@@ -152,6 +152,30 @@ func (mux *ServeMux) add(g *Group, pattern string, h http.Handler, methods ...st
 	return mux
 }
 
+// Clean 清除所有的路由项
+func (mux *ServeMux) Clean() *ServeMux {
+	mux.mu.Lock()
+	defer mux.mu.Unlock()
+
+	for _, method := range supportMethods {
+		l, found := mux.hosts[method]
+		if !found {
+			continue
+		}
+		l.Init()
+	}
+
+	for _, method := range supportMethods {
+		l, found := mux.paths[method]
+		if !found {
+			continue
+		}
+		l.Init()
+	}
+
+	return mux
+}
+
 // 移除指定的路由项，通过路由表达式和method来匹配。
 // 当未指定methods时，将删除所有method匹配的项。
 // 指定错误的method值，将自动忽略该值。
@@ -180,6 +204,7 @@ func (mux *ServeMux) removeHosts(pattern string, methods []string) {
 		for item := l.Front(); item != nil; item = item.Next() {
 			if e := item.Value.(entryer); e.getPattern() == pattern {
 				l.Remove(item)
+				break // 最多只有一个匹配
 			}
 		}
 	} // end for methods
@@ -198,12 +223,13 @@ func (mux *ServeMux) removePaths(pattern string, methods []string) {
 		for item := l.Front(); item != nil; item = item.Next() {
 			if e := item.Value.(entryer); e.getPattern() == pattern {
 				l.Remove(item)
+				break // 最多只有一个匹配
 			}
 		}
 	} // end for methods
 }
 
-// 添加一条路由数据。
+// Add 添加一条路由数据。
 //
 // pattern为路由匹配模式，可以是正则匹配也可以是字符串匹配，
 // 可以带上域名，当第一个字符为'/'当作是一个路径，否则就将'/'之前的当作域名或IP。

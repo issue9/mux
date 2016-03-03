@@ -44,6 +44,24 @@ func TestGroup_Status(t *testing.T) {
 	a.True(g.IsRunning())
 }
 
+func TestGroup_Clean(t *testing.T) {
+	a := assert.New(t)
+	m := NewServeMux()
+	a.NotNil(m)
+	g := m.Group()
+	a.NotNil(g)
+	fn := func(w http.ResponseWriter, req *http.Request) {}
+	h := http.HandlerFunc(fn)
+
+	m.Add("/a", h, "GET")
+	g.Add("/a/b", h)
+	g.Add("/a/c", h)
+	assertLen(m, a, 3, "GET")
+	g.Clean()
+	assertLen(m, a, 1, "GET")
+	assertLen(m, a, 0, "DELETE")
+}
+
 func TestGroup_Add(t *testing.T) {
 	a := assert.New(t)
 	m := NewServeMux()
@@ -102,5 +120,4 @@ func TestGroup_Add(t *testing.T) {
 	//a.Panic(func() { g.Add("", h, "GET") })
 	// 不支持的methods
 	a.Panic(func() { g.Add("abc", h, "GET123") })
-
 }

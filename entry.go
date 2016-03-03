@@ -29,6 +29,9 @@ type entryer interface {
 
 	// 是否为正则表达式
 	isRegexp() bool
+
+	// 获取所属的分组
+	getGroup() *Group
 }
 
 //////////////// basic
@@ -54,6 +57,10 @@ func (b *basic) serveHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (b *basic) getParams(url string) map[string]string {
 	return nil
+}
+
+func (b *basic) getGroup() *Group {
+	return b.group
 }
 
 func (b *basic) match(url string) int {
@@ -83,6 +90,10 @@ func (s *static) getPattern() string {
 
 func (s *static) isRegexp() bool {
 	return false
+}
+
+func (s *static) getGroup() *Group {
+	return s.group
 }
 
 func (s *static) serveHTTP(w http.ResponseWriter, r *http.Request) {
@@ -133,6 +144,10 @@ func (re *regexpr) serveHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (r *regexpr) isRegexp() bool {
 	return true
+}
+
+func (r *regexpr) getGroup() *Group {
+	return r.group
 }
 
 func (re *regexpr) match(url string) int {

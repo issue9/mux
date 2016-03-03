@@ -105,6 +105,48 @@ func (g *Group) AnyFunc(pattern string, fun func(http.ResponseWriter, *http.Requ
 	return g.AddFunc(pattern, fun, supportMethods...)
 }
 
+// Clean 清除所有与Group相关联的路由项
+func (g *Group) Clean() *Group {
+	g.mux.mu.Lock()
+	defer g.mux.mu.Unlock()
+
+	for _, method := range supportMethods {
+		l, found := g.mux.hosts[method]
+		if !found {
+			continue
+		}
+
+		for item := l.Front(); item != nil; {
+			curr := item
+			item = item.Next()
+
+			entry := curr.Value.(entryer)
+			if entry.getGroup() == g {
+				l.Remove(curr)
+			}
+		}
+	} // end for
+
+	for _, method := range supportMethods {
+		l, found := g.mux.paths[method]
+		if !found {
+			continue
+		}
+
+		for item := l.Front(); item != nil; {
+			curr := item
+			item = item.Next()
+
+			entry := curr.Value.(entryer)
+			if entry.getGroup() == g {
+				l.Remove(curr)
+			}
+		}
+	} // end for
+
+	return g
+}
+
 // 声明或是获取一组路由，可以控制该组的路由是否启用。
 //  g := srv.Group()
 //  g.Get("/admin", h)
