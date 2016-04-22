@@ -53,9 +53,14 @@ func TestPrefix_Prefix(t *testing.T) {
 	p2 := p1.Prefix("/p2")
 	a.Equal(p2.prefix, "/p1/p2")
 
+	// 空的prefix值
+	p3 := mux.Prefix("")
+	a.Equal(p3.prefix, "").Equal(p3.mux, mux)
+
 	p1.Get("/abc", hf)
 	p2.Get("/abc", hf)
-	assertLen(mux, a, 2, "GET")
+	p3.Get("/abc", hf)
+	assertLen(mux, a, 3, "GET")
 }
 
 func TestPrfix_Clean(t *testing.T) {
