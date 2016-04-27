@@ -66,7 +66,7 @@ func (g *Group) Patch(pattern string, h http.Handler) *Group {
 
 // Any 相当于ServeMux.Any(pattern, h)
 func (g *Group) Any(pattern string, h http.Handler) *Group {
-	return g.Add(pattern, h, supportMethods...)
+	return g.Add(pattern, h, supportedMethods...)
 }
 
 // AddFunc 功能同ServeMux.AddFunc(pattern, fun, ...)
@@ -102,7 +102,7 @@ func (g *Group) PatchFunc(pattern string, fun func(http.ResponseWriter, *http.Re
 
 // AnyFunc 相当于ServeMux.AnyFunc(pattern, func)
 func (g *Group) AnyFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Group {
-	return g.AddFunc(pattern, fun, supportMethods...)
+	return g.AddFunc(pattern, fun, supportedMethods...)
 }
 
 // Clean 清除所有与Group相关联的路由项
@@ -110,7 +110,7 @@ func (g *Group) Clean() *Group {
 	g.mux.mu.Lock()
 	defer g.mux.mu.Unlock()
 
-	for _, method := range supportMethods {
+	for _, method := range supportedMethods {
 		l, found := g.mux.hosts[method]
 		if !found {
 			continue
@@ -127,7 +127,7 @@ func (g *Group) Clean() *Group {
 		}
 	} // end for
 
-	for _, method := range supportMethods {
+	for _, method := range supportedMethods {
 		l, found := g.mux.paths[method]
 		if !found {
 			continue

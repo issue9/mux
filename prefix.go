@@ -52,7 +52,7 @@ func (p *Prefix) Patch(pattern string, h http.Handler) *Prefix {
 
 // Any 相当于ServeMux.Any(prefix+pattern, h)的简易写法
 func (p *Prefix) Any(pattern string, h http.Handler) *Prefix {
-	return p.Add(pattern, h, supportMethods...)
+	return p.Add(pattern, h, supportedMethods...)
 }
 
 // AddFunc 功能同ServeMux.AddFunc(prefix+pattern, fun, ...)
@@ -88,7 +88,7 @@ func (p *Prefix) PatchFunc(pattern string, fun func(http.ResponseWriter, *http.R
 
 // AnyFunc 相当于ServeMux.AnyFunc(prefix+pattern, func)的简易写法
 func (p *Prefix) AnyFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
-	return p.AddFunc(pattern, fun, supportMethods...)
+	return p.AddFunc(pattern, fun, supportedMethods...)
 }
 
 // Remove 删除指定匹配模式的路由项
@@ -102,7 +102,7 @@ func (p *Prefix) Clean() *Prefix {
 	p.mux.mu.Lock()
 	defer p.mux.mu.Unlock()
 
-	for _, method := range supportMethods {
+	for _, method := range supportedMethods {
 		l, found := p.mux.hosts[method]
 		if !found {
 			continue
@@ -119,7 +119,7 @@ func (p *Prefix) Clean() *Prefix {
 		}
 	} // end for
 
-	for _, method := range supportMethods {
+	for _, method := range supportedMethods {
 		l, found := p.mux.paths[method]
 		if !found {
 			continue

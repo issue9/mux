@@ -6,7 +6,7 @@ package mux
 
 import (
 	"container/list"
-	"fmt"
+	"errors"
 	"net/http"
 	"strings"
 	"sync"
@@ -14,16 +14,21 @@ import (
 	"github.com/issue9/context"
 )
 
+var (
+	ErrUnsupportedMethod = errors.New("不支持该请求方法")
+	ErrPatternExists     = errors.New("该匹配模式已经存在")
+)
+
 // 支持的所有请求方法
-var supportMethods = []string{
+var supportedMethods = []string{
 	"GET",
 	"POST",
-	"HEAD",
 	"DELETE",
 	"PUT",
-	"OPTIONS",
-	"TRACE",
 	"PATCH",
+	"OPTIONS",
+	"HEAD",
+	"TRACE",
 }
 
 // http.ServeMux的升级版，可处理对URL的正则匹配和根据METHOD进行过滤。
@@ -60,6 +65,7 @@ var supportMethods = []string{
 //  /post/{id:\d+} // 同上，但id的值只能为\d+；
 //  /post/{:\d+}   // 同上，但是没有命名；
 type ServeMux struct {
+	// 同时处理hosts,paths,options三个的竟争问题
 	mu sync.RWMutex
 
 	// 包含域名的路由列表，键名表示method。hosts中静态路由在前，正则路由在后。
@@ -71,9 +77,9 @@ type ServeMux struct {
 
 // 声明一个新的ServeMux
 func NewServeMux() *ServeMux {
-	d := make(map[string]*list.List, len(supportMethods))
-	l := make(map[string]*list.List, len(supportMethods))
-	for _, method := range supportMethods {
+	d := make(map[string]*list.List, len(supportedMethods))
+	l := make(map[string]*list.List, len(supportedMethods))
+	for _, method := range supportedMethods {
 		d[method] = list.New()
 		l[method] = list.New()
 	}
@@ -88,23 +94,23 @@ func NewServeMux() *ServeMux {
 func (mux *ServeMux) checkExists(pattern, method string) error {
 	l, found := mux.hosts[method]
 	if !found {
-		return fmt.Errorf("不支持的request.Method:[%v]", method)
+		return ErrUnsupportedMethod
 	}
 
 	for item := l.Front(); item != nil; item = item.Next() {
 		if e := item.Value.(entryer); e.getPattern() == pattern {
-			return fmt.Errorf("该模式[%v]的路由项已经存在:", pattern)
+			return ErrPatternExists
 		}
 	}
 
 	l, found = mux.paths[method]
 	if !found {
-		return fmt.Errorf("不支持的request.Method:[%v]", method)
+		return ErrUnsupportedMethod
 	}
 
 	for item := l.Front(); item != nil; item = item.Next() {
 		if e := item.Value.(entryer); e.getPattern() == pattern {
-			return fmt.Errorf("该模式[%v]的路由项已经存在:", pattern)
+			return ErrPatternExists
 		}
 	}
 
@@ -122,7 +128,7 @@ func (mux *ServeMux) add(g *Group, pattern string, h http.Handler, methods ...st
 	}
 
 	if len(methods) == 0 {
-		methods = supportMethods
+		methods = supportedMethods
 	}
 
 	e := newEntry(pattern, h, g)
@@ -157,7 +163,7 @@ func (mux *ServeMux) Clean() *ServeMux {
 	mux.mu.Lock()
 	defer mux.mu.Unlock()
 
-	for _, method := range supportMethods {
+	for _, method := range supportedMethods {
 		l, found := mux.hosts[method]
 		if !found {
 			continue
@@ -165,7 +171,7 @@ func (mux *ServeMux) Clean() *ServeMux {
 		l.Init()
 	}
 
-	for _, method := range supportMethods {
+	for _, method := range supportedMethods {
 		l, found := mux.paths[method]
 		if !found {
 			continue
@@ -181,7 +187,7 @@ func (mux *ServeMux) Clean() *ServeMux {
 // 指定错误的method值，将自动忽略该值。
 func (mux *ServeMux) Remove(pattern string, methods ...string) {
 	if len(methods) == 0 { // 删除所有method下匹配的项
-		methods = supportMethods
+		methods = supportedMethods
 	}
 
 	if pattern[0] == '/' {
@@ -233,7 +239,7 @@ func (mux *ServeMux) removePaths(pattern string, methods []string) {
 //
 // pattern为路由匹配模式，可以是正则匹配也可以是字符串匹配，
 // 可以带上域名，当第一个字符为'/'当作是一个路径，否则就将'/'之前的当作域名或IP。
-// methods参数应该只能为supportMethods中的字符串，若不指定，默认为所有，
+// methods参数应该只能为supportedMethods中的字符串，若不指定，默认为所有，
 // 当h或是pattern为空时，将触发panic。
 func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) *ServeMux {
 	return mux.add(nil, pattern, h, methods...)
@@ -266,7 +272,7 @@ func (mux *ServeMux) Patch(pattern string, h http.Handler) *ServeMux {
 
 // Any 相当于ServeMux.Add(pattern, h)的简易写法
 func (mux *ServeMux) Any(pattern string, h http.Handler) *ServeMux {
-	return mux.Add(pattern, h, supportMethods...)
+	return mux.Add(pattern, h, supportedMethods...)
 }
 
 func (mux *ServeMux) addFunc(g *Group, pattern string, fun func(http.ResponseWriter, *http.Request), methods ...string) *ServeMux {
@@ -305,7 +311,7 @@ func (mux *ServeMux) PatchFunc(pattern string, fun func(http.ResponseWriter, *ht
 
 // AnyFunc 相当于ServeMux.AddFunc(pattern, func)的简易写法
 func (mux *ServeMux) AnyFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *ServeMux {
-	return mux.AddFunc(pattern, fun, supportMethods...)
+	return mux.AddFunc(pattern, fun, supportedMethods...)
 }
 
 // 查找最匹配的路由项
