@@ -107,7 +107,7 @@ func TestEntry_getParams(t *testing.T) {
 	a.Equal(0, len(e.getParams("/blog/post-1d/"))) // 不匹配
 }
 
-// BenchmarkEntry_Match_Basic-4    	200000000	         6.94 ns/op
+// BenchmarkEntry_Match_Basic-4       	200000000	         6.57 ns/op    go1.6
 func BenchmarkEntry_Match_Basic(b *testing.B) {
 	hf := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	})
@@ -119,7 +119,7 @@ func BenchmarkEntry_Match_Basic(b *testing.B) {
 	}
 }
 
-// BenchmarkEntry_Match_Static-4    	100000000	        10.3 ns/op
+// BenchmarkEntry_Match_Static-4      	100000000	        10.4 ns/op    go1.6
 func BenchmarkEntry_Match_Static(b *testing.B) {
 	hf := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	})
@@ -131,7 +131,7 @@ func BenchmarkEntry_Match_Static(b *testing.B) {
 	}
 }
 
-// BenchmarkEntry_Match_Regexp-4      	 3000000	       434 ns/op
+// BenchmarkEntry_Match_Regexp-4      	 3000000	       436 ns/op    go1.6
 func BenchmarkEntry_Match_Regexp(b *testing.B) {
 	hf := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	})
