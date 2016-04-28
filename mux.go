@@ -94,6 +94,31 @@ func NewServeMux() *ServeMux {
 	}
 }
 
+// 添加一个路由项。
+func (mux *ServeMux) add(g *Group, pattern string, h http.Handler, methods ...string) *ServeMux {
+	if len(pattern) == 0 {
+		panic("参数pattern不能为空")
+	}
+
+	if h == nil {
+		panic("参数h不能为空")
+	}
+
+	if len(methods) == 0 {
+		methods = supportedMethods
+	}
+
+	e := newEntry(pattern, h, g)
+
+	for _, method := range methods {
+		mux.addOne(e, pattern, strings.ToUpper(method))
+	}
+
+	mux.addOptions(g, pattern, methods)
+
+	return mux
+}
+
 // 检测匹配模式是否存在，若不存在则返回error
 func (mux *ServeMux) checkExists(pattern, method string) error {
 	l, found := mux.hosts[method]
@@ -121,31 +146,7 @@ func (mux *ServeMux) checkExists(pattern, method string) error {
 	return nil
 }
 
-// 添加一个路由项。
-func (mux *ServeMux) add(g *Group, pattern string, h http.Handler, methods ...string) *ServeMux {
-	if len(pattern) == 0 {
-		panic("参数pattern不能为空")
-	}
-
-	if h == nil {
-		panic("参数h不能为空")
-	}
-
-	if len(methods) == 0 {
-		methods = supportedMethods
-	}
-
-	e := newEntry(pattern, h, g)
-
-	for _, method := range methods {
-		mux.addOne(e, pattern, strings.ToUpper(method))
-	}
-
-	mux.addOptions(g, pattern, methods)
-
-	return mux
-}
-
+// 添加一条记录。
 func (mux *ServeMux) addOne(e entryer, pattern string, method string) {
 	mux.mu.Lock()
 	defer mux.mu.Unlock()
@@ -168,6 +169,7 @@ func (mux *ServeMux) addOne(e entryer, pattern string, method string) {
 	}
 }
 
+// 添加一条 OPTIONS 记录。
 func (mux *ServeMux) addOptions(g *Group, pattern string, methods []string) {
 	list, found := mux.options[pattern]
 	if !found {
@@ -195,20 +197,21 @@ func (mux *ServeMux) Clean() *ServeMux {
 	mux.mu.Lock()
 	defer mux.mu.Unlock()
 
+	// 清空options记录
+	mux.options = map[string][]string{}
+
 	for _, method := range supportedMethods {
 		l, found := mux.hosts[method]
-		if !found {
-			continue
+		if found {
+			l.Init()
 		}
-		l.Init()
 	}
 
 	for _, method := range supportedMethods {
 		l, found := mux.paths[method]
-		if !found {
-			continue
+		if found {
+			l.Init()
 		}
-		l.Init()
 	}
 
 	return mux
@@ -221,6 +224,8 @@ func (mux *ServeMux) Remove(pattern string, methods ...string) {
 	if len(methods) == 0 { // 删除所有method下匹配的项
 		methods = supportedMethods
 	}
+
+	// TODO 删除options
 
 	if pattern[0] == '/' {
 		mux.removePaths(pattern, methods)
