@@ -17,6 +17,23 @@ func assertLen(mux *ServeMux, a *assert.Assertion, l int, method string) {
 	a.Equal(l, mux.paths[method].Len()+mux.hosts[method].Len())
 }
 
+func TestServeMux_Options(t *testing.T) {
+	a := assert.New(t)
+	m := NewServeMux()
+	a.NotNil(m)
+
+	fn := func(w http.ResponseWriter, req *http.Request) {}
+	h := http.HandlerFunc(fn)
+
+	a.NotPanic(func() { m.Get("/a", h) })
+	a.Equal(1, len(m.options["/a"]))
+	a.NotPanic(func() { m.Post("/a", h) })
+	a.Equal(2, len(m.options["/a"]))
+
+	a.NotPanic(func() { m.Options("/a", "GET", "POST", "PUT") })
+	a.Equal(3, len(m.options["/a"]))
+}
+
 func TestServeMux_Add(t *testing.T) {
 	a := assert.New(t)
 	m := NewServeMux()

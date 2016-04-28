@@ -39,6 +39,14 @@ func (g *Group) Add(pattern string, h http.Handler, methods ...string) *Group {
 	return g
 }
 
+// 手动指定OPTIONS请求方法的值。
+//
+// 若无特殊需求，不用调用些方法，系统会自动计算符合当前路由的请求方法列表。
+func (g *Group) Options(pattern string, allowMethods ...string) *Group {
+	g.mux.addOptions(g, pattern, allowMethods)
+	return g
+}
+
 // Get 相当于ServeMux.Get(pattern, h)
 func (g *Group) Get(pattern string, h http.Handler) *Group {
 	return g.Add(pattern, h, "GET")

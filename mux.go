@@ -73,6 +73,9 @@ type ServeMux struct {
 
 	// 路由列表，键名表示method。paths中静态路由在前，正则路由在后。
 	paths map[string]*list.List
+
+	// 各个地址已开通的方法
+	options map[string][]string
 }
 
 // 声明一个新的ServeMux
@@ -85,8 +88,9 @@ func NewServeMux() *ServeMux {
 	}
 
 	return &ServeMux{
-		hosts: d,
-		paths: l,
+		hosts:   d,
+		paths:   l,
+		options: map[string][]string{},
 	}
 }
 
@@ -133,29 +137,57 @@ func (mux *ServeMux) add(g *Group, pattern string, h http.Handler, methods ...st
 
 	e := newEntry(pattern, h, g)
 
+	for _, method := range methods {
+		mux.addOne(e, pattern, strings.ToUpper(method))
+	}
+
+	mux.addOptions(g, pattern, methods)
+
+	return mux
+}
+
+func (mux *ServeMux) addOne(e entryer, pattern string, method string) {
 	mux.mu.Lock()
 	defer mux.mu.Unlock()
 
-	for _, method := range methods {
-		method = strings.ToUpper(method)
-
+	if method != "OPTIONS" { // OPTIONS 则不检测是否已经存在，存在则执行覆盖操作
 		if err := mux.checkExists(pattern, method); err != nil {
 			panic(err)
 		}
-
-		switch {
-		case pattern[0] == '/' && !e.isRegexp(): // 包含域名匹配的静态路由，在前端插入
-			mux.paths[method].PushFront(e)
-		case pattern[0] == '/' && e.isRegexp(): // 包含域名匹配的正则路由，在后端插入
-			mux.paths[method].PushBack(e)
-		case pattern[0] != '/' && !e.isRegexp(): // 不包含域名匹配的静态路由，在前端插入
-			mux.hosts[method].PushFront(e)
-		case pattern[0] != '/' && e.isRegexp(): // 不包含域名匹配的正则路由，在后端插入
-			mux.hosts[method].PushFront(e)
-		}
 	}
 
-	return mux
+	switch {
+	case pattern[0] == '/' && !e.isRegexp(): // 包含域名匹配的静态路由，在前端插入
+		mux.paths[method].PushFront(e)
+	case pattern[0] == '/' && e.isRegexp(): // 包含域名匹配的正则路由，在后端插入
+		mux.paths[method].PushBack(e)
+	case pattern[0] != '/' && !e.isRegexp(): // 不包含域名匹配的静态路由，在前端插入
+		mux.hosts[method].PushFront(e)
+	case pattern[0] != '/' && e.isRegexp(): // 不包含域名匹配的正则路由，在后端插入
+		mux.hosts[method].PushFront(e)
+	}
+}
+
+func (mux *ServeMux) addOptions(g *Group, pattern string, methods []string) {
+	list, found := mux.options[pattern]
+	if !found {
+		mux.options[pattern] = methods
+	} else {
+		for _, method := range methods {
+			if !inStringSlice(list, method) {
+				list = append(list, method)
+			}
+		}
+		mux.options[pattern] = list
+	}
+
+	if !found {
+		h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			r.Header.Set("Allow", strings.Join(mux.options[pattern], " "))
+		})
+		e := newEntry(pattern, h, g)
+		mux.addOne(e, pattern, "OPTIONS")
+	}
 }
 
 // Clean 清除所有的路由项
@@ -243,6 +275,13 @@ func (mux *ServeMux) removePaths(pattern string, methods []string) {
 // 当h或是pattern为空时，将触发panic。
 func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) *ServeMux {
 	return mux.add(nil, pattern, h, methods...)
+}
+
+// 手动指定OPTIONS请求方法的值。
+//
+// 若无特殊需求，不用调用些方法，系统会自动计算符合当前路由的请求方法列表。
+func (mux *ServeMux) Options(pattern string, allowMethods ...string) {
+	mux.addOptions(nil, pattern, allowMethods)
 }
 
 // Get 相当于ServeMux.Add(pattern, h, "GET")的简易写法

@@ -19,6 +19,14 @@ type Prefix struct {
 	prefix string
 }
 
+// 手动指定OPTIONS请求方法的值。
+//
+// 若无特殊需求，不用调用些方法，系统会自动计算符合当前路由的请求方法列表。
+func (p *Prefix) Options(pattern string, allowMethods ...string) *Prefix {
+	p.mux.addOptions(p.group, p.prefix+pattern, allowMethods)
+	return p
+}
+
 // Add 相当于ServeMux.Add(prefix+pattern, h, "POST"...)的简易写法
 func (p *Prefix) Add(pattern string, h http.Handler, methods ...string) *Prefix {
 	p.mux.add(p.group, p.prefix+pattern, h, methods...)
