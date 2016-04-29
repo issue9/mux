@@ -111,35 +111,18 @@ func (p *Prefix) Clean() *Prefix {
 	defer p.mux.mu.Unlock()
 
 	for _, method := range supportedMethods {
-		l, found := p.mux.hosts[method]
+		entries, found := p.mux.entries[method]
 		if !found {
 			continue
 		}
 
-		for item := l.Front(); item != nil; {
+		for item := entries.Front(); item != nil; {
 			curr := item
 			item = item.Next()
 
 			entry := curr.Value.(entryer)
 			if strings.HasPrefix(entry.getPattern(), p.prefix) {
-				l.Remove(curr)
-			}
-		}
-	} // end for
-
-	for _, method := range supportedMethods {
-		l, found := p.mux.paths[method]
-		if !found {
-			continue
-		}
-
-		for item := l.Front(); item != nil; {
-			curr := item
-			item = item.Next()
-
-			entry := curr.Value.(entryer)
-			if strings.HasPrefix(entry.getPattern(), p.prefix) {
-				l.Remove(curr)
+				entries.Remove(curr)
 			}
 		}
 	} // end for

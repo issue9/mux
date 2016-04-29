@@ -119,35 +119,18 @@ func (g *Group) Clean() *Group {
 	defer g.mux.mu.Unlock()
 
 	for _, method := range supportedMethods {
-		l, found := g.mux.hosts[method]
+		entries, found := g.mux.entries[method]
 		if !found {
 			continue
 		}
 
-		for item := l.Front(); item != nil; {
+		for item := entries.Front(); item != nil; {
 			curr := item
 			item = item.Next()
 
 			entry := curr.Value.(entryer)
 			if entry.getGroup() == g {
-				l.Remove(curr)
-			}
-		}
-	} // end for
-
-	for _, method := range supportedMethods {
-		l, found := g.mux.paths[method]
-		if !found {
-			continue
-		}
-
-		for item := l.Front(); item != nil; {
-			curr := item
-			item = item.Next()
-
-			entry := curr.Value.(entryer)
-			if entry.getGroup() == g {
-				l.Remove(curr)
+				entries.Remove(curr)
 			}
 		}
 	} // end for

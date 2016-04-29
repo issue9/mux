@@ -68,28 +68,26 @@ type ServeMux struct {
 	// 同时处理hosts,paths,options三个的竟争问题
 	mu sync.RWMutex
 
-	// 包含域名的路由列表，键名表示method。hosts中静态路由在前，正则路由在后。
-	hosts map[string]*list.List
+	// 路由项，键名为请求方法名称，键值为路由项的列表。
+	entries map[string]*list.List
 
-	// 路由列表，键名表示method。paths中静态路由在前，正则路由在后。
-	paths map[string]*list.List
+	// base记录了对应的entries下的路由项的基点，方便数据在各个方向插入。
+	base map[string]*list.Element
 
-	// 各个地址已开通的方法
+	// 各个路由项已开通的方法
 	options map[string][]string
 }
 
 // 声明一个新的ServeMux
 func NewServeMux() *ServeMux {
-	d := make(map[string]*list.List, len(supportedMethods))
-	l := make(map[string]*list.List, len(supportedMethods))
+	entries := make(map[string]*list.List, len(supportedMethods))
 	for _, method := range supportedMethods {
-		d[method] = list.New()
-		l[method] = list.New()
+		entries[method] = list.New()
 	}
 
 	return &ServeMux{
-		hosts:   d,
-		paths:   l,
+		entries: entries,
+		base:    make(map[string]*list.Element, len(supportedMethods)),
 		options: map[string][]string{},
 	}
 }
@@ -121,23 +119,12 @@ func (mux *ServeMux) add(g *Group, pattern string, h http.Handler, methods ...st
 
 // 检测匹配模式是否存在，若不存在则返回error
 func (mux *ServeMux) checkExists(pattern, method string) error {
-	l, found := mux.hosts[method]
+	entries, found := mux.entries[method]
 	if !found {
 		return ErrUnsupportedMethod
 	}
 
-	for item := l.Front(); item != nil; item = item.Next() {
-		if e := item.Value.(entryer); e.getPattern() == pattern {
-			return ErrPatternExists
-		}
-	}
-
-	l, found = mux.paths[method]
-	if !found {
-		return ErrUnsupportedMethod
-	}
-
-	for item := l.Front(); item != nil; item = item.Next() {
+	for item := entries.Front(); item != nil; item = item.Next() {
 		if e := item.Value.(entryer); e.getPattern() == pattern {
 			return ErrPatternExists
 		}
@@ -158,14 +145,16 @@ func (mux *ServeMux) addOne(e entryer, pattern string, method string) {
 	}
 
 	switch {
-	case pattern[0] == '/' && !e.isRegexp(): // 包含域名匹配的静态路由，在前端插入
-		mux.paths[method].PushFront(e)
-	case pattern[0] == '/' && e.isRegexp(): // 包含域名匹配的正则路由，在后端插入
-		mux.paths[method].PushBack(e)
-	case pattern[0] != '/' && !e.isRegexp(): // 不包含域名匹配的静态路由，在前端插入
-		mux.hosts[method].PushFront(e)
-	case pattern[0] != '/' && e.isRegexp(): // 不包含域名匹配的正则路由，在后端插入
-		mux.hosts[method].PushFront(e)
+	case mux.entries[method].Len() == 0:
+		mux.base[method] = mux.entries[method].PushFront(e)
+	case pattern[0] != '/' && !e.isRegexp(): // 带域名的静态路由，在前端插入
+		mux.entries[method].PushFront(e)
+	case pattern[0] != '/' && e.isRegexp(): // 带域名的正则路由，在后端插入
+		mux.entries[method].InsertBefore(e, mux.base[method])
+	case pattern[0] == '/' && !e.isRegexp(): // 不带域名的静态路由，在前端插入
+		mux.entries[method].InsertAfter(e, mux.base[method])
+	case pattern[0] == '/' && e.isRegexp(): // 不带域名的正则路由，在后端插入
+		mux.entries[method].PushBack(e)
 	}
 }
 
@@ -201,14 +190,7 @@ func (mux *ServeMux) Clean() *ServeMux {
 	mux.options = map[string][]string{}
 
 	for _, method := range supportedMethods {
-		l, found := mux.hosts[method]
-		if found {
-			l.Init()
-		}
-	}
-
-	for _, method := range supportedMethods {
-		l, found := mux.paths[method]
+		l, found := mux.entries[method]
 		if found {
 			l.Init()
 		}
@@ -227,45 +209,18 @@ func (mux *ServeMux) Remove(pattern string, methods ...string) {
 
 	// TODO 删除options
 
-	if pattern[0] == '/' {
-		mux.removePaths(pattern, methods)
-		return
-	}
-	mux.removeHosts(pattern, methods)
-}
-
-func (mux *ServeMux) removeHosts(pattern string, methods []string) {
 	mux.mu.Lock()
 	defer mux.mu.Unlock()
 
 	for _, method := range methods {
-		l, found := mux.hosts[method]
+		entries, found := mux.entries[method]
 		if !found {
 			continue
 		}
 
-		for item := l.Front(); item != nil; item = item.Next() {
+		for item := entries.Front(); item != nil; item = item.Next() {
 			if e := item.Value.(entryer); e.getPattern() == pattern {
-				l.Remove(item)
-				break // 最多只有一个匹配
-			}
-		}
-	} // end for methods
-}
-
-func (mux *ServeMux) removePaths(pattern string, methods []string) {
-	mux.mu.Lock()
-	defer mux.mu.Unlock()
-
-	for _, method := range methods {
-		l, found := mux.paths[method]
-		if !found {
-			continue
-		}
-
-		for item := l.Front(); item != nil; item = item.Next() {
-			if e := item.Value.(entryer); e.getPattern() == pattern {
-				l.Remove(item)
+				entries.Remove(item)
 				break // 最多只有一个匹配
 			}
 		}
@@ -366,10 +321,15 @@ func (mux *ServeMux) match(r *http.Request) (p string, e entryer) {
 	mux.mu.RLock()
 	defer mux.mu.RUnlock()
 
-	for item := mux.hosts[r.Method].Front(); item != nil; item = item.Next() {
+	for item := mux.entries[r.Method].Front(); item != nil; item = item.Next() {
 		entry := item.Value.(entryer)
 
-		s := entry.match(hostURL)
+		var s int
+		if entry.getPattern()[0] != '/' {
+			s = entry.match(hostURL)
+		} else {
+			s = entry.match(r.URL.Path)
+		}
 		if s == -1 || (size > 0 && s >= size) { // 完全不匹配，或是匹配度没有当前的高
 			continue
 		}
@@ -377,23 +337,6 @@ func (mux *ServeMux) match(r *http.Request) (p string, e entryer) {
 		size = s
 		e = entry
 		p = hostURL
-
-		if s == 0 { // 完全匹配，可以中止匹配过程
-			return p, e
-		}
-	} // end for
-
-	for item := mux.paths[r.Method].Front(); item != nil; item = item.Next() {
-		entry := item.Value.(entryer)
-
-		s := entry.match(r.URL.Path)
-		if s == -1 || (size > 0 && s >= size) { // 完全不匹配，或是匹配度没有当前的高
-			continue
-		}
-
-		size = s
-		e = entry
-		p = r.URL.Path
 
 		if s == 0 { // 完全匹配，可以中止匹配过程
 			return p, e
