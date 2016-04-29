@@ -324,19 +324,19 @@ func (mux *ServeMux) match(r *http.Request) (p string, e entryer) {
 	for item := mux.entries[r.Method].Front(); item != nil; item = item.Next() {
 		entry := item.Value.(entryer)
 
-		var s int
 		if entry.getPattern()[0] != '/' {
-			s = entry.match(hostURL)
+			p = hostURL
 		} else {
-			s = entry.match(r.URL.Path)
+			p = r.URL.Path
 		}
+
+		s := entry.match(p)
 		if s == -1 || (size > 0 && s >= size) { // 完全不匹配，或是匹配度没有当前的高
 			continue
 		}
 
 		size = s
 		e = entry
-		p = hostURL
 
 		if s == 0 { // 完全匹配，可以中止匹配过程
 			return p, e
