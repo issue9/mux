@@ -151,23 +151,6 @@ func TestServeMux_Remove(t *testing.T) {
 	assertLen(m, a, 0, "DELETE")
 }
 
-func TestServeMux_checkExists(t *testing.T) {
-	a := assert.New(t)
-
-	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("handler"))
-	})
-	s := NewServeMux()
-	a.NotNil(s)
-
-	a.Error(s.checkExists("abc", "not exists"))
-
-	s.add(nil, "/abc", h, "GET")
-	a.Error(s.checkExists("/abc", "GET"))
-	a.NotError(s.checkExists("/abc", "POST"))
-	a.NotError(s.checkExists("/abcd", "GET"))
-}
-
 // 测试各种匹配模式是否正常工作
 func TestServeMux_ServeHTTP(t *testing.T) {
 	a := assert.New(t)

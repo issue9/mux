@@ -6,17 +6,11 @@ package mux
 
 import (
 	"container/list"
-	"errors"
 	"net/http"
 	"strings"
 	"sync"
 
 	"github.com/issue9/context"
-)
-
-var (
-	ErrUnsupportedMethod = errors.New("不支持该请求方法")
-	ErrPatternExists     = errors.New("该匹配模式已经存在")
 )
 
 // 支持的所有请求方法
@@ -58,7 +52,8 @@ var supportedMethods = []string{
 //  2. 带域名的路由项优先于不带域名的路由项；
 //  3. 完全匹配的路由项优先于部分匹配的路由项；
 //  4. 正则只能是完全匹配；
-//  5. 只有以/结尾的静态路由才有部分匹配功能。
+//  5. 只有以/结尾的静态路由才有部分匹配功能；
+//  6. 匹配顺序和插入顺序无关。
 //
 // 正则匹配语法：
 //  /post/{id}     // 匹配/post/开头的任意字符串，其后的字符串保存到id中；
@@ -117,44 +112,37 @@ func (mux *ServeMux) add(g *Group, pattern string, h http.Handler, methods ...st
 	return mux
 }
 
-// 检测匹配模式是否存在，若不存在则返回error
-func (mux *ServeMux) checkExists(pattern, method string) error {
-	entries, found := mux.entries[method]
-	if !found {
-		return ErrUnsupportedMethod
-	}
-
-	for item := entries.Front(); item != nil; item = item.Next() {
-		if e := item.Value.(entryer); e.getPattern() == pattern {
-			return ErrPatternExists
-		}
-	}
-
-	return nil
-}
-
 // 添加一条记录。
-func (mux *ServeMux) addOne(e entryer, pattern string, method string) {
+//
+// 若路由项已经存在或是请求方法不存在，则直接panic。
+func (mux *ServeMux) addOne(entry entryer, pattern string, method string) {
 	mux.mu.Lock()
 	defer mux.mu.Unlock()
 
 	if method != "OPTIONS" { // OPTIONS 则不检测是否已经存在，存在则执行覆盖操作
-		if err := mux.checkExists(pattern, method); err != nil {
-			panic(err)
+		entries, found := mux.entries[method]
+		if !found {
+			panic("不支持的请求方法：" + method)
+		}
+
+		for item := entries.Front(); item != nil; item = item.Next() {
+			if e := item.Value.(entryer); e.getPattern() == pattern {
+				panic("该路由项已经存在：[" + method + "]" + pattern)
+			}
 		}
 	}
 
 	switch {
 	case mux.entries[method].Len() == 0:
-		mux.base[method] = mux.entries[method].PushFront(e)
-	case pattern[0] != '/' && !e.isRegexp(): // 带域名的静态路由，在前端插入
-		mux.entries[method].PushFront(e)
-	case pattern[0] != '/' && e.isRegexp(): // 带域名的正则路由，在后端插入
-		mux.entries[method].InsertBefore(e, mux.base[method])
-	case pattern[0] == '/' && !e.isRegexp(): // 不带域名的静态路由，在前端插入
-		mux.entries[method].InsertAfter(e, mux.base[method])
-	case pattern[0] == '/' && e.isRegexp(): // 不带域名的正则路由，在后端插入
-		mux.entries[method].PushBack(e)
+		mux.base[method] = mux.entries[method].PushFront(entry)
+	case pattern[0] != '/' && !entry.isRegexp(): // 带域名的静态路由，在前端插入
+		mux.entries[method].PushFront(entry)
+	case pattern[0] != '/' && entry.isRegexp(): // 带域名的正则路由，在后端插入
+		mux.entries[method].InsertBefore(entry, mux.base[method])
+	case pattern[0] == '/' && !entry.isRegexp(): // 不带域名的静态路由，在前端插入
+		mux.entries[method].InsertAfter(entry, mux.base[method])
+	case pattern[0] == '/' && entry.isRegexp(): // 不带域名的正则路由，在后端插入
+		mux.entries[method].PushBack(entry)
 	}
 }
 
