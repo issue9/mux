@@ -129,12 +129,12 @@ func (g *Group) Clean() *Group {
 			item = item.Next() // item可以被删除，所以要先保存下个节点的内容
 
 			entry := curr.Value.(entryer)
-			//p := entry.getPattern()
+			p := entry.getPattern()
 			if entry.getGroup() == g { // 仅删除与当前group相匹配的内容
-				//g.mux.options[p] = deleteStringsSlice(g.mux.options[p], method)
+				g.mux.options[p] = g.mux.options[p] & (^methodsToInt(method))
 
 				// 清除mux.base相关的内容
-				/*if curr == g.mux.base[method] {
+				if curr == g.mux.base[method] {
 					switch {
 					case curr.Next() != nil:
 						g.mux.base[method] = curr.Next()
@@ -143,7 +143,7 @@ func (g *Group) Clean() *Group {
 					default:
 						g.mux.base[method] = nil
 					}
-				}*/
+				}
 
 				entries.Remove(curr)
 			}

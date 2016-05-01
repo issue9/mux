@@ -155,7 +155,6 @@ func (mux *ServeMux) addOptions(g *Group, pattern string, methods []string) {
 	mux.options[pattern] = (list | options)
 
 	// 在未初始化该路由项的情况下，为其添加一个请求方法为OPTIONS的路由
-	// 有可能第一个路由项就是添加一个OPTIONS，此时不应该使用!found进行判断，而是应该遍历所有的路由项
 	if !found && !inStringSlice(methods, "OPTIONS") {
 		h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			r.Header.Set("Allow", getAllowString(mux.options[pattern]))
@@ -197,7 +196,7 @@ func (mux *ServeMux) Remove(pattern string, methods ...string) {
 	defer mux.mu.Unlock()
 
 	// 清除路由项
-	//mux.options[pattern] = deleteStringsSlice(mux.options[pattern], methods...)
+	mux.options[pattern] = mux.options[pattern] & (^methodsToInt(methods...))
 
 	for _, method := range methods {
 		entries, found := mux.entries[method]
@@ -245,11 +244,7 @@ func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) *Ser
 //
 // 若无特殊需求，不用调用些方法，系统会自动计算符合当前路由的请求方法列表。
 func (mux *ServeMux) Options(pattern string, allowMethods ...string) {
-	var m int16
-	for _, v := range allowMethods {
-		m |= toint[v]
-	}
-	mux.options[pattern] = m
+	mux.options[pattern] = methodsToInt(allowMethods...)
 }
 
 // Get 相当于ServeMux.Add(pattern, h, "GET")的简易写法

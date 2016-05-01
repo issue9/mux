@@ -41,32 +41,20 @@ func getAllowString(val int16) string {
 	return ""
 }
 
-// 判断一个字符串是否在另一个字符串数组中。
+func methodsToInt(methods ...string) int16 {
+	var ret int16
+	for _, method := range methods {
+		ret |= toint[method]
+	}
+	return ret
+}
+
 func inStringSlice(slice []string, val string) bool {
 	for _, v := range slice {
 		if v == val {
 			return true
 		}
 	}
+
 	return false
-}
-
-// 判断一个字符串是否在另一个字符串数组中。
-func indexStringSlice(slice []string, val string) int {
-	for k, v := range slice {
-		if v == val {
-			return k
-		}
-	}
-	return -1
-}
-
-func deleteStringsSlice(slice []string, val ...string) []string {
-	for _, v := range val {
-		index := indexStringSlice(slice, v)
-		if index >= 0 {
-			slice = append(slice[:index], slice[index+1:]...)
-		}
-	}
-	return slice
 }
