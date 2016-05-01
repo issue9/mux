@@ -60,7 +60,7 @@ var supportedMethods = []string{
 //  /post/{id:\d+} // 同上，但id的值只能为\d+；
 //  /post/{:\d+}   // 同上，但是没有命名；
 type ServeMux struct {
-	// 同时处理hosts,paths,options三个的竟争问题
+	// 同时处理entries,base,options三个的竟争问题
 	mu sync.RWMutex
 
 	// 路由项，键名为请求方法名称，键值为路由项的列表。
@@ -70,7 +70,7 @@ type ServeMux struct {
 	base map[string]*list.Element
 
 	// 各个路由项已开通的方法
-	options map[string][]string
+	options map[string]int16
 }
 
 // 声明一个新的ServeMux
@@ -83,7 +83,7 @@ func NewServeMux() *ServeMux {
 	return &ServeMux{
 		entries: entries,
 		base:    make(map[string]*list.Element, len(supportedMethods)),
-		options: map[string][]string{},
+		options: map[string]int16{},
 	}
 }
 
@@ -102,7 +102,6 @@ func (mux *ServeMux) add(g *Group, pattern string, h http.Handler, methods ...st
 	}
 
 	e := newEntry(pattern, h, g)
-
 	for _, method := range methods {
 		mux.addOne(e, pattern, strings.ToUpper(method))
 	}
@@ -149,21 +148,19 @@ func (mux *ServeMux) addOne(entry entryer, pattern string, method string) {
 // 添加一条 OPTIONS 记录。
 func (mux *ServeMux) addOptions(g *Group, pattern string, methods []string) {
 	list, found := mux.options[pattern]
-	if !found {
-		mux.options[pattern] = methods
-	} else {
-		for _, method := range methods {
-			if !inStringSlice(list, method) {
-				list = append(list, method)
-			}
-		}
-		mux.options[pattern] = list
+	for _, method := range methods {
+		list |= toint[method]
 	}
+	// 加上options，若已经存在，也不会有影响
+	mux.options[pattern] = (list | options)
 
-	if !found {
+	// 在未初始化该路由项的情况下，为其添加一个请求方法为OPTIONS的路由
+	// 有可能第一个路由项就是添加一个OPTIONS，此时不应该使用!found进行判断，而是应该遍历所有的路由项
+	if !found && !inStringSlice(methods, "OPTIONS") {
 		h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			r.Header.Set("Allow", strings.Join(mux.options[pattern], " "))
+			r.Header.Set("Allow", getAllowString(mux.options[pattern]))
 		})
+
 		e := newEntry(pattern, h, g)
 		mux.addOne(e, pattern, "OPTIONS")
 	}
@@ -174,8 +171,9 @@ func (mux *ServeMux) Clean() *ServeMux {
 	mux.mu.Lock()
 	defer mux.mu.Unlock()
 
-	// 清空options记录
-	mux.options = map[string][]string{}
+	mux.options = map[string]int16{}
+
+	mux.base = map[string]*list.Element{}
 
 	for _, method := range supportedMethods {
 		l, found := mux.entries[method]
@@ -195,10 +193,11 @@ func (mux *ServeMux) Remove(pattern string, methods ...string) {
 		methods = supportedMethods
 	}
 
-	// TODO 删除options
-
 	mux.mu.Lock()
 	defer mux.mu.Unlock()
+
+	// 清除路由项
+	//mux.options[pattern] = deleteStringsSlice(mux.options[pattern], methods...)
 
 	for _, method := range methods {
 		entries, found := mux.entries[method]
@@ -207,10 +206,27 @@ func (mux *ServeMux) Remove(pattern string, methods ...string) {
 		}
 
 		for item := entries.Front(); item != nil; item = item.Next() {
-			if e := item.Value.(entryer); e.getPattern() == pattern {
-				entries.Remove(item)
-				break // 最多只有一个匹配
+			e := item.Value.(entryer)
+			if e.getPattern() != pattern {
+				continue
 			}
+
+			// 清除mux.base相关的内容
+			if item == mux.base[method] {
+				switch {
+				case item.Next() == nil:
+					mux.base[method] = item.Next()
+				case item.Prev() == nil:
+					mux.base[method] = item.Prev()
+				default:
+					mux.base[method] = nil
+				}
+			}
+
+			// 清除路由项
+			entries.Remove(item)
+
+			break // 最多只有一个匹配
 		}
 	} // end for methods
 }
@@ -229,7 +245,11 @@ func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) *Ser
 //
 // 若无特殊需求，不用调用些方法，系统会自动计算符合当前路由的请求方法列表。
 func (mux *ServeMux) Options(pattern string, allowMethods ...string) {
-	mux.addOptions(nil, pattern, allowMethods)
+	var m int16
+	for _, v := range allowMethods {
+		m |= toint[v]
+	}
+	mux.options[pattern] = m
 }
 
 // Get 相当于ServeMux.Add(pattern, h, "GET")的简易写法

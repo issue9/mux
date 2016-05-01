@@ -26,12 +26,14 @@ func TestServeMux_Options(t *testing.T) {
 	h := http.HandlerFunc(fn)
 
 	a.NotPanic(func() { m.Get("/a", h) })
-	a.Equal(1, len(m.options["/a"]))
-	a.NotPanic(func() { m.Post("/a", h) })
-	a.Equal(2, len(m.options["/a"]))
+	a.Equal(get|options, m.options["/a"]) // 包含一个自动增加的OPTIONS
 
+	a.NotPanic(func() { m.Post("/a", h) })
+	a.Equal(get|options|post, m.options["/a"])
+
+	// 手动调整，去掉了自动增加的OPTIONS
 	a.NotPanic(func() { m.Options("/a", "GET", "POST", "PUT") })
-	a.Equal(3, len(m.options["/a"]))
+	a.Equal(get|post|put, m.options["/a"])
 }
 
 func TestServeMux_Add(t *testing.T) {
@@ -127,6 +129,7 @@ func TestServeMux_Remove(t *testing.T) {
 
 	// method 不同
 	m.Remove("/", "DELETE")
+	a.True(m.base["GET"] != nil)
 	assertLen(m, a, 1, "GET")
 	assertLen(m, a, 0, "DELETE")
 
@@ -146,6 +149,7 @@ func TestServeMux_Remove(t *testing.T) {
 
 	m.Add("www.caixw.io/index.html", h)
 	m.Remove("www.caixw.io/index.html")
+	a.Nil(m.base["GET"])
 	assertLen(m, a, 0, "GET")
 	assertLen(m, a, 0, "POST")
 	assertLen(m, a, 0, "DELETE")

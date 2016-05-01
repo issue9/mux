@@ -18,3 +18,12 @@ func TestInStringSlice(t *testing.T) {
 	a.True(inStringSlice(slice, "b"))
 	a.False(inStringSlice(slice, "C"))
 }
+
+func TestDeleteStringsSlice(t *testing.T) {
+	a := assert.New(t)
+
+	s1 := []string{"1", "2", "3333", "4", "567"}
+	s2 := []string{"1", "2", "567", "789"}
+	slice := deleteStringsSlice(s1, s2...)
+	a.Equal(slice, []string{"3333", "4"})
+}
