@@ -13,18 +13,6 @@ import (
 	"github.com/issue9/context"
 )
 
-// 支持的所有请求方法
-var supportedMethods = []string{
-	"GET",
-	"POST",
-	"DELETE",
-	"PUT",
-	"PATCH",
-	"OPTIONS",
-	"HEAD",
-	"TRACE",
-}
-
 // http.ServeMux的升级版，可处理对URL的正则匹配和根据METHOD进行过滤。
 //
 // 用法如下：
