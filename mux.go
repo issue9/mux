@@ -185,6 +185,10 @@ func (mux *ServeMux) Remove(pattern string, methods ...string) {
 
 	// 清除路由项
 	mux.options[pattern] = mux.options[pattern] & (^methodsToInt(methods...))
+	if mux.options[pattern] == options { // 只剩下options了，则清空
+		mux.options[pattern] = 0
+		methods = append(methods, "OPTIONS")
+	}
 
 	for _, method := range methods {
 		entries, found := mux.entries[method]

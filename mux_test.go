@@ -104,7 +104,9 @@ func TestServeMux_Clean(t *testing.T) {
 	m.Add("/", h)
 	assertLen(m, a, 1, "GET")
 	assertLen(m, a, 1, "DELETE")
+	a.Equal(m.options["/"], get|post|put|patch|delete|options|trace|head)
 	m.Clean()
+	a.Equal(m.options["/"], 0)
 	assertLen(m, a, 0, "GET")
 	assertLen(m, a, 0, "DELETE")
 
@@ -113,6 +115,7 @@ func TestServeMux_Clean(t *testing.T) {
 	m.Add("www.caixw.io/index.html", h)
 	assertLen(m, a, 3, "GET")
 	m.Clean()
+	a.Equal(m.options["/"], 0)
 	assertLen(m, a, 0, "GET")
 	assertLen(m, a, 0, "DELETE")
 }
@@ -125,15 +128,18 @@ func TestServeMux_Remove(t *testing.T) {
 	fn := func(w http.ResponseWriter, req *http.Request) {}
 	h := http.HandlerFunc(fn)
 	m.Add("/", h, "GET")
+	a.Equal(m.options["/"], get|options)
 	assertLen(m, a, 1, "GET")
 
 	// method 不同
 	m.Remove("/", "DELETE")
+	a.Equal(m.options["/"], get|options)
 	a.True(m.base["GET"] != nil)
 	assertLen(m, a, 1, "GET")
 	assertLen(m, a, 0, "DELETE")
 
 	m.Remove("/", "GET")
+	a.Equal(m.options["/"], 0) // 若只有options，则直接清空
 	assertLen(m, a, 0, "GET")
 
 	m.Add("/", h)

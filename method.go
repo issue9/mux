@@ -4,7 +4,10 @@
 
 package mux
 
-import "strings"
+import (
+	"sort"
+	"strings"
+)
 
 const (
 	get int16 = 1 << iota
@@ -62,6 +65,7 @@ func getAllowString(val int16) string {
 		}
 	}
 
+	sort.Strings(ret)
 	return strings.Join(ret, " ")
 }
 

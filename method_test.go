@@ -35,5 +35,5 @@ func TestGetAllowString(t *testing.T) {
 	a.Equal("GET", getAllowString(get))
 	a.Equal("GET POST", getAllowString(get|post))
 	a.Equal("GET POST", getAllowString(get|post|post))
-	a.Equal("GET POST OPTIONS", getAllowString(get|post|options))
+	a.Equal("GET OPTIONS POST", getAllowString(get|post|options))
 }
