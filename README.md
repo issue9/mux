@@ -4,9 +4,10 @@ mux [![Build Status](https://travis-ci.org/issue9/mux.svg?branch=master)](https:
 mux是对http.ServeMux的扩展，添加正则路由等功能。
 ```go
 m := mux.NewServerMux().
-        Get("/user/logout", h). // 不限定域名，必须以/开头
-        Post("www.example/api/login", h) // 限定了域名
-        Get("/blog/post/{id:\\d+}", h) // 正则路由
+        Get("/user/1", h). // 不限定域名，必须以/开头
+        Post("www.example/api/login", h). // 限定了域名
+        Get("/blog/post/{id:\\d+}", h). // 正则路由
+        Options("/user/1", "GET") // 手动指定该路由项的OPTIONS请求方法返回内容
 
 // 统一前缀名称的路由
 p := m.Prefix("/api")
