@@ -5,6 +5,7 @@
 package mux
 
 import (
+	"net/http"
 	"sort"
 	"strings"
 )
@@ -23,36 +24,36 @@ const (
 var (
 	// 支持的所有请求方法
 	supportedMethods = []string{
-		"GET",
-		"POST",
-		"DELETE",
-		"PUT",
-		"PATCH",
-		"OPTIONS",
-		"HEAD",
-		"TRACE",
+		http.MethodGet,
+		http.MethodPost,
+		http.MethodDelete,
+		http.MethodPut,
+		http.MethodPatch,
+		http.MethodOptions,
+		http.MethodHead,
+		http.MethodTrace,
 	}
 
 	tostr = map[int16]string{
-		get:     "GET",
-		post:    "POST",
-		delete:  "DELETE",
-		put:     "PUT",
-		patch:   "PATCH",
-		options: "OPTIONS",
-		head:    "HEAD",
-		trace:   "TRACE",
+		get:     http.MethodGet,
+		post:    http.MethodPost,
+		delete:  http.MethodDelete,
+		put:     http.MethodPut,
+		patch:   http.MethodPatch,
+		options: http.MethodOptions,
+		head:    http.MethodHead,
+		trace:   http.MethodTrace,
 	}
 
 	toint = map[string]int16{
-		"GET":     get,
-		"POST":    post,
-		"DELETE":  delete,
-		"PUT":     put,
-		"PATCH":   patch,
-		"OPTIONS": options,
-		"HEAD":    head,
-		"TRACE":   trace,
+		http.MethodGet:     get,
+		http.MethodPost:    post,
+		http.MethodDelete:  delete,
+		http.MethodPut:     put,
+		http.MethodPatch:   patch,
+		http.MethodOptions: options,
+		http.MethodHead:    head,
+		http.MethodTrace:   trace,
 	}
 )
 

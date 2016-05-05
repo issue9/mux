@@ -35,27 +35,27 @@ func (p *Prefix) Add(pattern string, h http.Handler, methods ...string) *Prefix 
 
 // Get 相当于ServeMux.Get(prefix+pattern, h)的简易写法
 func (p *Prefix) Get(pattern string, h http.Handler) *Prefix {
-	return p.Add(pattern, h, "GET")
+	return p.Add(pattern, h, http.MethodGet)
 }
 
 // Post 相当于ServeMux.Post(prefix+pattern, h)的简易写法
 func (p *Prefix) Post(pattern string, h http.Handler) *Prefix {
-	return p.Add(pattern, h, "POST")
+	return p.Add(pattern, h, http.MethodPost)
 }
 
 // Delete 相当于ServeMux.Delete(prefix+pattern, h)的简易写法
 func (p *Prefix) Delete(pattern string, h http.Handler) *Prefix {
-	return p.Add(pattern, h, "DELETE")
+	return p.Add(pattern, h, http.MethodDelete)
 }
 
 // Put 相当于ServeMux.Put(prefix+pattern, h)的简易写法
 func (p *Prefix) Put(pattern string, h http.Handler) *Prefix {
-	return p.Add(pattern, h, "PUT")
+	return p.Add(pattern, h, http.MethodPut)
 }
 
 // Patch 相当于ServeMux.Patch(prefix+pattern, h)的简易写法
 func (p *Prefix) Patch(pattern string, h http.Handler) *Prefix {
-	return p.Add(pattern, h, "PATCH")
+	return p.Add(pattern, h, http.MethodPatch)
 }
 
 // Any 相当于ServeMux.Any(prefix+pattern, h)的简易写法
@@ -71,27 +71,27 @@ func (p *Prefix) AddFunc(pattern string, fun func(http.ResponseWriter, *http.Req
 
 // GetFunc 相当于ServeMux.GetFunc(prefix+pattern, func)的简易写法
 func (p *Prefix) GetFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
-	return p.AddFunc(pattern, fun, "GET")
+	return p.AddFunc(pattern, fun, http.MethodGet)
 }
 
 // PutFunc 相当于ServeMux.PutFunc(prefix+pattern, func)的简易写法
 func (p *Prefix) PutFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
-	return p.AddFunc(pattern, fun, "PUT")
+	return p.AddFunc(pattern, fun, http.MethodPut)
 }
 
 // PostFunc 相当于ServeMux.PostFunc(prefix+pattern, func)的简易写法
 func (p *Prefix) PostFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
-	return p.AddFunc(pattern, fun, "POST")
+	return p.AddFunc(pattern, fun, http.MethodPost)
 }
 
 // DeleteFunc 相当于ServeMux.DeleteFunc(prefix+pattern, func)的简易写法
 func (p *Prefix) DeleteFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
-	return p.AddFunc(pattern, fun, "DELETE")
+	return p.AddFunc(pattern, fun, http.MethodDelete)
 }
 
 // PatchFunc 相当于ServeMux.PatchFunc(prefix+pattern, func)的简易写法
 func (p *Prefix) PatchFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
-	return p.AddFunc(pattern, fun, "PATCH")
+	return p.AddFunc(pattern, fun, http.MethodPatch)
 }
 
 // AnyFunc 相当于ServeMux.AnyFunc(prefix+pattern, func)的简易写法
