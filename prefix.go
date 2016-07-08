@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-// 封装ServeMux，使所有添加的路由项的匹配模式都带上指定的前缀。
+// 封装 ServeMux，使所有添加的路由项的匹配模式都带上指定的前缀。
 //  p := srv.Prefix("/api")
 //  p.Get("/users")  // 相当于 srv.Get("/api/users")
 //  p.Get("/user/1") // 相当于 srv.Get("/api/user/1")
@@ -27,18 +27,18 @@ func (p *Prefix) Options(pattern string, allowMethods ...string) *Prefix {
 	return p
 }
 
-// Add 相当于ServeMux.Add(prefix+pattern, h, "POST"...)的简易写法
+// Add 相当于 ServeMux.Add(prefix+pattern, h, "POST"...) 的简易写法
 func (p *Prefix) Add(pattern string, h http.Handler, methods ...string) *Prefix {
 	p.mux.add(p.group, p.prefix+pattern, h, methods...)
 	return p
 }
 
-// Get 相当于ServeMux.Get(prefix+pattern, h)的简易写法
+// Get 相当于 ServeMux.Get(prefix+pattern, h) 的简易写法
 func (p *Prefix) Get(pattern string, h http.Handler) *Prefix {
 	return p.Add(pattern, h, http.MethodGet)
 }
 
-// Post 相当于ServeMux.Post(prefix+pattern, h)的简易写法
+// Post 相当于 ServeMux.Post(prefix+pattern, h) 的简易写法
 func (p *Prefix) Post(pattern string, h http.Handler) *Prefix {
 	return p.Add(pattern, h, http.MethodPost)
 }

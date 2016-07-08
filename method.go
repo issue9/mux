@@ -57,7 +57,19 @@ var (
 	}
 )
 
-// 根据数值取得其对应的Allow报头值。
+// 是否支持某请求方法
+func MethodIsSupported(method string) bool {
+	method = strings.ToUpper(method)
+	for _, m := range supportedMethods {
+		if m == method {
+			return true
+		}
+	}
+
+	return false
+}
+
+// 根据数值取得其对应的 Allow 报头值。
 func getAllowString(val int16) string {
 	var ret []string
 	for k, v := range tostr {
@@ -70,7 +82,7 @@ func getAllowString(val int16) string {
 	return strings.Join(ret, " ")
 }
 
-// 将一组method方法名称，转换成一个数值，若方法名称不存在，则不计算在内
+// 将一组 method 方法名称，转换成一个数值，若方法名称不存在，则不计算在内
 func methodsToInt(methods ...string) int16 {
 	var ret int16
 	for _, method := range methods {

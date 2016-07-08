@@ -10,6 +10,14 @@ import (
 	"github.com/issue9/assert"
 )
 
+func TestMethodIsSupported(t *testing.T) {
+	a := assert.New(t)
+
+	a.True(MethodIsSupported("get"))
+	a.True(MethodIsSupported("POST"))
+	a.False(MethodIsSupported("not exists"))
+}
+
 func TestInStringSlice(t *testing.T) {
 	a := assert.New(t)
 

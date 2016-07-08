@@ -13,13 +13,13 @@ import (
 	"github.com/issue9/context"
 )
 
-// http.ServeMux的升级版，可处理对URL的正则匹配和根据METHOD进行过滤。
+// http.ServeMux 的升级版，可处理对 URL 的正则匹配和根据 METHOD 进行过滤。
 //
 // 用法如下：
 //  m := mux.NewServeMux()
-//  m.Get("www.example.com/abc", h1).              // 只匹配www.example.com域名下的路径
+//  m.Get("www.example.com/abc", h1).              // 只匹配 www.example.com 域名下的路径
 //    Post("/abc/"", h2).                          // 不限定域名的路径匹配
-//    Add("/api/{version:\\d+}",h3, http.MethodGet, "POST") // 只匹配GET和POST
+//    Add("/api/{version:\\d+}",h3, http.MethodGet, "POST") // 只匹配 GET 和 POST
 //  http.ListenAndServe(m)
 //
 //
@@ -28,7 +28,7 @@ import (
 // 路由参数可通过context包获取：
 //  ctx := context.Get(req)
 //  params := ctx.Get("params") // 若不存在路由参数，则返回一个空值
-// NOTE:记得在退出整个请求之前清除context中的内容：
+// NOTE：记得在退出整个请求之前清除 context 中的内容：
 //  context.Free(req)
 //
 //
@@ -44,24 +44,24 @@ import (
 //  6. 匹配顺序和插入顺序无关。
 //
 // 正则匹配语法：
-//  /post/{id}     // 匹配/post/开头的任意字符串，其后的字符串保存到id中；
-//  /post/{id:\d+} // 同上，但id的值只能为\d+；
+//  /post/{id}     // 匹配 /post/ 开头的任意字符串，其后的字符串保存到 id 中；
+//  /post/{id:\d+} // 同上，但 id 的值只能为 \d+；
 //  /post/{:\d+}   // 同上，但是没有命名；
 type ServeMux struct {
-	// 同时处理entries,base,options三个的竟争问题
+	// 同时处理 entries,base,options 三个的竟争问题
 	mu sync.RWMutex
 
 	// 路由项，键名为请求方法名称，键值为路由项的列表。
 	entries map[string]*list.List
 
-	// base记录了对应的entries下的路由项的基点，方便数据在各个方向插入。
+	// base 记录了对应的 entries 下的各个请求方法对应的路由项的基点，方便数据在各个方向插入。
 	base map[string]*list.Element
 
-	// 各个路由项已开通的方法
+	// 各个路由项已开通的方法，即 OPTIONS 请求方法对应的值。
 	options map[string]int16
 }
 
-// 声明一个新的ServeMux
+// 声明一个新的 ServeMux
 func NewServeMux() *ServeMux {
 	entries := make(map[string]*list.List, len(supportedMethods))
 	for _, method := range supportedMethods {
@@ -101,7 +101,8 @@ func (mux *ServeMux) add(g *Group, pattern string, h http.Handler, methods ...st
 
 // 添加一条记录。
 //
-// 若路由项已经存在或是请求方法不存在，则直接panic。
+// 若路由项已经存在或是请求方法不支持，则直接 panic。
+// 若 method 的值为 OPTIONS，则相同的路由项会被覆盖，而不是 panic。
 func (mux *ServeMux) addOne(entry entryer, pattern string, method string) {
 	mux.mu.Lock()
 	defer mux.mu.Unlock()
@@ -139,10 +140,10 @@ func (mux *ServeMux) addOptions(g *Group, pattern string, methods []string) {
 	for _, method := range methods {
 		list |= toint[method]
 	}
-	// 加上options，若已经存在，也不会有影响
+	// 加上 options，若已经存在，也不会有影响
 	mux.options[pattern] = (list | options)
 
-	// 在未初始化该路由项的情况下，为其添加一个请求方法为OPTIONS的路由
+	// 在未初始化该路由项的情况下，为其添加一个请求方法为 OPTIONS 的路由
 	if !found && !inStringSlice(methods, "OPTIONS") {
 		h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			r.Header.Set("Allow", getAllowString(mux.options[pattern]))
@@ -172,11 +173,11 @@ func (mux *ServeMux) Clean() *ServeMux {
 	return mux
 }
 
-// 移除指定的路由项，通过路由表达式和method来匹配。
-// 当未指定methods时，将删除所有method匹配的项。
-// 指定错误的method值，将自动忽略该值。
+// 移除指定的路由项，通过路由表达式和 method 来匹配。
+// 当未指定 methods 时，将删除所有 method 匹配的项。
+// 指定错误的 methods 值，将自动忽略该值。
 func (mux *ServeMux) Remove(pattern string, methods ...string) {
-	if len(methods) == 0 { // 删除所有method下匹配的项
+	if len(methods) == 0 { // 删除所有method 下匹配的项
 		methods = supportedMethods
 	}
 
@@ -224,47 +225,48 @@ func (mux *ServeMux) Remove(pattern string, methods ...string) {
 
 // Add 添加一条路由数据。
 //
-// pattern为路由匹配模式，可以是正则匹配也可以是字符串匹配，
+// pattern 为路由匹配模式，可以是正则匹配也可以是字符串匹配，
 // 可以带上域名，当第一个字符为'/'当作是一个路径，否则就将'/'之前的当作域名或IP。
-// methods参数应该只能为supportedMethods中的字符串，若不指定，默认为所有，
-// 当h或是pattern为空时，将触发panic。
+// methods 参数应该只能为 supportedMethods 中的字符串，若不指定，默认为所有，
+// 当 h 或是 pattern 为空时，将触发 panic。
 func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) *ServeMux {
 	return mux.add(nil, pattern, h, methods...)
 }
 
-// 手动指定OPTIONS请求方法的值。
+// 手动指定 OPTIONS 请求方法的值。
 //
 // 若无特殊需求，不用调用些方法，系统会自动计算符合当前路由的请求方法列表。
-func (mux *ServeMux) Options(pattern string, allowMethods ...string) {
+func (mux *ServeMux) Options(pattern string, allowMethods ...string) *ServeMux {
 	mux.options[pattern] = methodsToInt(allowMethods...)
+	return mux
 }
 
-// Get 相当于ServeMux.Add(pattern, h, "GET")的简易写法
+// Get 相当于 ServeMux.Add(pattern, h, "GET") 的简易写法
 func (mux *ServeMux) Get(pattern string, h http.Handler) *ServeMux {
 	return mux.Add(pattern, h, http.MethodGet)
 }
 
-// Post 相当于ServeMux.Add(pattern, h, "POST")的简易写法
+// Post 相当于 ServeMux.Add(pattern, h, "POST") 的简易写法
 func (mux *ServeMux) Post(pattern string, h http.Handler) *ServeMux {
 	return mux.Add(pattern, h, http.MethodPost)
 }
 
-// Delete 相当于ServeMux.Add(pattern, h, "DELETE")的简易写法
+// Delete 相当于 ServeMux.Add(pattern, h, "DELETE") 的简易写法
 func (mux *ServeMux) Delete(pattern string, h http.Handler) *ServeMux {
 	return mux.Add(pattern, h, http.MethodDelete)
 }
 
-// Put 相当于ServeMux.Add(pattern, h, "PUT")的简易写法
+// Put 相当于 ServeMux.Add(pattern, h, "PUT") 的简易写法
 func (mux *ServeMux) Put(pattern string, h http.Handler) *ServeMux {
 	return mux.Add(pattern, h, http.MethodPut)
 }
 
-// Patch 相当于ServeMux.Add(pattern, h, "PATCH")的简易写法
+// Patch 相当于 ServeMux.Add(pattern, h, "PATCH") 的简易写法
 func (mux *ServeMux) Patch(pattern string, h http.Handler) *ServeMux {
 	return mux.Add(pattern, h, http.MethodPatch)
 }
 
-// Any 相当于ServeMux.Add(pattern, h)的简易写法
+// Any 相当于 ServeMux.Add(pattern, h) 的简易写法
 func (mux *ServeMux) Any(pattern string, h http.Handler) *ServeMux {
 	return mux.Add(pattern, h, supportedMethods...)
 }
@@ -273,37 +275,37 @@ func (mux *ServeMux) addFunc(g *Group, pattern string, fun func(http.ResponseWri
 	return mux.add(g, pattern, http.HandlerFunc(fun), methods...)
 }
 
-// AddFunc 功能同ServeMux.Add()，但是将第二个参数从http.Handler换成了func(http.ResponseWriter, *http.Request)
+// AddFunc 功能同 ServeMux.Add()，但是将第二个参数从 http.Handler 换成了 func(http.ResponseWriter, *http.Request)
 func (mux *ServeMux) AddFunc(pattern string, fun func(http.ResponseWriter, *http.Request), methods ...string) *ServeMux {
 	return mux.Add(pattern, http.HandlerFunc(fun), methods...)
 }
 
-// GetFunc 相当于ServeMux.AddFunc(pattern, func, "GET")的简易写法
+// GetFunc 相当于 ServeMux.AddFunc(pattern, func, "GET") 的简易写法
 func (mux *ServeMux) GetFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *ServeMux {
 	return mux.AddFunc(pattern, fun, http.MethodGet)
 }
 
-// PutFunc 相当于ServeMux.AddFunc(pattern, func, "PUT")的简易写法
+// PutFunc 相当于 ServeMux.AddFunc(pattern, func, "PUT") 的简易写法
 func (mux *ServeMux) PutFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *ServeMux {
 	return mux.AddFunc(pattern, fun, http.MethodPut)
 }
 
-// PostFunc 相当于ServeMux.AddFunc(pattern, func, "POST")的简易写法
+// PostFunc 相当于 ServeMux.AddFunc(pattern, func, "POST") 的简易写法
 func (mux *ServeMux) PostFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *ServeMux {
 	return mux.AddFunc(pattern, fun, http.MethodPost)
 }
 
-// DeleteFunc 相当于ServeMux.AddFunc(pattern, func, "DELETE")的简易写法
+// DeleteFunc 相当于 ServeMux.AddFunc(pattern, func, "DELETE") 的简易写法
 func (mux *ServeMux) DeleteFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *ServeMux {
 	return mux.AddFunc(pattern, fun, http.MethodDelete)
 }
 
-// PatchFunc 相当于ServeMux.AddFunc(pattern, func, "PATCH")的简易写法
+// PatchFunc 相当于 ServeMux.AddFunc(pattern, func, "PATCH") 的简易写法
 func (mux *ServeMux) PatchFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *ServeMux {
 	return mux.AddFunc(pattern, fun, http.MethodPatch)
 }
 
-// AnyFunc 相当于ServeMux.AddFunc(pattern, func)的简易写法
+// AnyFunc 相当于 ServeMux.AddFunc(pattern, func) 的简易写法
 func (mux *ServeMux) AnyFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *ServeMux {
 	return mux.AddFunc(pattern, fun, supportedMethods...)
 }
@@ -311,7 +313,7 @@ func (mux *ServeMux) AnyFunc(pattern string, fun func(http.ResponseWriter, *http
 // 查找最匹配的路由项
 func (mux *ServeMux) match(r *http.Request) (p string, e entryer) {
 	hostURL := r.Host + r.URL.Path
-	size := -1 // 匹配度，0表示完全匹配，负数表示完全不匹配，其它值越小匹配度越高
+	size := -1 // 匹配度，0 表示完全匹配，负数表示完全不匹配，其它值越小匹配度越高
 
 	mux.mu.RLock()
 	defer mux.mu.RUnlock()
@@ -344,8 +346,7 @@ func (mux *ServeMux) match(r *http.Request) (p string, e entryer) {
 	return p, e
 }
 
-// implement http.Handler.ServerHTTP()
-// 若没有找到匹配路由，返回404
+// 若没有找到匹配路由，返回 404
 func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	p, e := mux.match(r)
 
