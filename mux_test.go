@@ -134,7 +134,7 @@ func TestServeMux_Remove(t *testing.T) {
 	// method 不同
 	m.Remove("/", "DELETE")
 	a.Equal(m.options["/"], get|options)
-	a.True(m.base["GET"] != nil)
+	a.NotNil(m.base["GET"])
 	assertLen(m, a, 1, "GET")
 	assertLen(m, a, 0, "DELETE")
 
