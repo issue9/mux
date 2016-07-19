@@ -235,7 +235,7 @@ func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) *Ser
 
 // 手动指定 OPTIONS 请求方法的值。
 //
-// 若无特殊需求，不用调用些方法，系统会自动计算符合当前路由的请求方法列表。
+// 若无特殊需求，不用调用此方法，系统会自动计算符合当前路由的请求方法列表。
 func (mux *ServeMux) Options(pattern string, allowMethods ...string) *ServeMux {
 	mux.options[pattern] = methodsToInt(allowMethods...)
 	return mux
@@ -268,7 +268,7 @@ func (mux *ServeMux) Patch(pattern string, h http.Handler) *ServeMux {
 
 // Any 相当于 ServeMux.Add(pattern, h) 的简易写法
 func (mux *ServeMux) Any(pattern string, h http.Handler) *ServeMux {
-	return mux.Add(pattern, h, supportedMethods...)
+	return mux.Add(pattern, h, defaultMethods...)
 }
 
 func (mux *ServeMux) addFunc(g *Group, pattern string, fun func(http.ResponseWriter, *http.Request), methods ...string) *ServeMux {
@@ -307,7 +307,7 @@ func (mux *ServeMux) PatchFunc(pattern string, fun func(http.ResponseWriter, *ht
 
 // AnyFunc 相当于 ServeMux.AddFunc(pattern, func) 的简易写法
 func (mux *ServeMux) AnyFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *ServeMux {
-	return mux.AddFunc(pattern, fun, supportedMethods...)
+	return mux.AddFunc(pattern, fun, defaultMethods...)
 }
 
 // 查找最匹配的路由项

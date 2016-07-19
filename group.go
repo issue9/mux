@@ -74,7 +74,7 @@ func (g *Group) Patch(pattern string, h http.Handler) *Group {
 
 // Any 相当于ServeMux.Any(pattern, h)
 func (g *Group) Any(pattern string, h http.Handler) *Group {
-	return g.Add(pattern, h, supportedMethods...)
+	return g.Add(pattern, h, defaultMethods...)
 }
 
 // AddFunc 功能同ServeMux.AddFunc(pattern, fun, ...)
@@ -110,7 +110,7 @@ func (g *Group) PatchFunc(pattern string, fun func(http.ResponseWriter, *http.Re
 
 // AnyFunc 相当于ServeMux.AnyFunc(pattern, func)
 func (g *Group) AnyFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Group {
-	return g.AddFunc(pattern, fun, supportedMethods...)
+	return g.AddFunc(pattern, fun, defaultMethods...)
 }
 
 // Clean 清除所有与Group相关联的路由项

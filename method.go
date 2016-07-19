@@ -34,6 +34,18 @@ var (
 		http.MethodTrace,
 	}
 
+	// 调用 Any 添加的列表
+	defaultMethods = []string{
+		http.MethodGet,
+		http.MethodPost,
+		http.MethodDelete,
+		http.MethodPut,
+		http.MethodPatch,
+		// http.MethodOptions,
+		http.MethodHead,
+		http.MethodTrace,
+	}
+
 	tostr = map[int16]string{
 		get:     http.MethodGet,
 		post:    http.MethodPost,
