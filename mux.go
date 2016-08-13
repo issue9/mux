@@ -139,6 +139,7 @@ func (mux *ServeMux) Clean() *ServeMux {
 
 	mux.base = map[string]*list.Element{}
 
+	// 这里使用 supportedMethods，将 OPTIONS 的相关路由也清除掉
 	for _, method := range supportedMethods {
 		l, found := mux.entries[method]
 		if found {
@@ -153,7 +154,7 @@ func (mux *ServeMux) Clean() *ServeMux {
 // 当未指定 methods 时，将删除所有 method 匹配的项。
 // 指定错误的 methods 值，将自动忽略该值。
 func (mux *ServeMux) Remove(pattern string, methods ...string) {
-	if len(methods) == 0 { // 删除所有method 下匹配的项
+	if len(methods) == 0 { // 删除所有 method 下匹配的项
 		methods = supportedMethods
 	}
 
@@ -162,7 +163,7 @@ func (mux *ServeMux) Remove(pattern string, methods ...string) {
 
 	// 清除路由项
 	mux.options[pattern] = mux.options[pattern] & (^methodsToInt(methods...))
-	if mux.options[pattern] == options { // 只剩下options了，则清空
+	if mux.options[pattern] == options { // 只剩下 options 了，则清空
 		mux.options[pattern] = 0
 		methods = append(methods, http.MethodOptions)
 	}
