@@ -13,7 +13,7 @@ import (
 	"github.com/issue9/context"
 )
 
-// http.ServeMux 的升级版，可处理对 URL 的正则匹配和根据 METHOD 进行过滤。
+// ServeMux 是 http.ServeMux 的升级版，可处理对 URL 的正则匹配和根据 METHOD 进行过滤。
 //
 // 用法如下：
 //  m := mux.NewServeMux()
@@ -61,7 +61,7 @@ type ServeMux struct {
 	options map[string]int16
 }
 
-// 声明一个新的 ServeMux
+// NewServeMux 声明一个新的 ServeMux
 func NewServeMux() *ServeMux {
 	entries := make(map[string]*list.List, len(supportedMethods))
 	for _, method := range supportedMethods {
