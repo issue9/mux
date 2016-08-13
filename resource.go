@@ -61,7 +61,7 @@ func (r *Resource) Any(h http.Handler) *Resource {
 
 // AddFunc 功能同ServeMux.AddFunc(pattern, fun, ...)
 func (r *Resource) AddFunc(fun func(http.ResponseWriter, *http.Request), methods ...string) *Resource {
-	r.mux.addFunc(r.pattern, fun, methods...)
+	r.mux.AddFunc(r.pattern, fun, methods...)
 	return r
 }
 

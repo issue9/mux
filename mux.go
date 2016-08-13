@@ -267,10 +267,6 @@ func (mux *ServeMux) Any(pattern string, h http.Handler) *ServeMux {
 	return mux.Add(pattern, h, defaultMethods...)
 }
 
-func (mux *ServeMux) addFunc(pattern string, fun func(http.ResponseWriter, *http.Request), methods ...string) *ServeMux {
-	return mux.Add(pattern, http.HandlerFunc(fun), methods...)
-}
-
 // AddFunc 功能同 ServeMux.Add()，但是将第二个参数从 http.Handler 换成了 func(http.ResponseWriter, *http.Request)
 func (mux *ServeMux) AddFunc(pattern string, fun func(http.ResponseWriter, *http.Request), methods ...string) *ServeMux {
 	return mux.Add(pattern, http.HandlerFunc(fun), methods...)

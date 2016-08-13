@@ -64,7 +64,7 @@ func (p *Prefix) Any(pattern string, h http.Handler) *Prefix {
 
 // AddFunc 功能同ServeMux.AddFunc(prefix+pattern, fun, ...)
 func (p *Prefix) AddFunc(pattern string, fun func(http.ResponseWriter, *http.Request), methods ...string) *Prefix {
-	p.mux.addFunc(p.prefix+pattern, fun, methods...)
+	p.mux.AddFunc(p.prefix+pattern, fun, methods...)
 	return p
 }
 
