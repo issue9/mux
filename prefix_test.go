@@ -51,7 +51,7 @@ func TestPrefix_Prefix(t *testing.T) {
 	assertLen(mux, a, 3, "GET")
 }
 
-func TestPrfix_Clean(t *testing.T) {
+func TestPrefix_Clean(t *testing.T) {
 	a := assert.New(t)
 	m := NewServeMux()
 	a.NotNil(m)
