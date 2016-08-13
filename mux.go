@@ -107,7 +107,7 @@ func (mux *ServeMux) addOne(entry entryer, pattern string, method string) {
 	mux.mu.Lock()
 	defer mux.mu.Unlock()
 
-	if method != "OPTIONS" { // OPTIONS 则不检测是否已经存在，存在则执行覆盖操作
+	if method != http.MethodOptions { // OPTIONS 则不检测是否已经存在，存在则执行覆盖操作
 		entries, found := mux.entries[method]
 		if !found {
 			panic("不支持的请求方法：" + method)
@@ -144,13 +144,13 @@ func (mux *ServeMux) addOptions(pattern string, methods []string) {
 	mux.options[pattern] = (list | options)
 
 	// 在未初始化该路由项的情况下，为其添加一个请求方法为 OPTIONS 的路由
-	if !found && !inStringSlice(methods, "OPTIONS") {
+	if !found && !inStringSlice(methods, http.MethodOptions) {
 		h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			r.Header.Set("Allow", getAllowString(mux.options[pattern]))
 		})
 
 		e := newEntry(pattern, h)
-		mux.addOne(e, pattern, "OPTIONS")
+		mux.addOne(e, pattern, http.MethodOptions)
 	}
 }
 
@@ -188,7 +188,7 @@ func (mux *ServeMux) Remove(pattern string, methods ...string) {
 	mux.options[pattern] = mux.options[pattern] & (^methodsToInt(methods...))
 	if mux.options[pattern] == options { // 只剩下options了，则清空
 		mux.options[pattern] = 0
-		methods = append(methods, "OPTIONS")
+		methods = append(methods, http.MethodOptions)
 	}
 
 	for _, method := range methods {
