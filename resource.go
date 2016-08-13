@@ -25,7 +25,7 @@ func (r *Resource) Options(allowMethods ...string) *Resource {
 
 // Add 相当于 ServeMux.Add(pattern, h, "POST"...) 的简易写法
 func (r *Resource) Add(h http.Handler, methods ...string) *Resource {
-	r.mux.add(r.pattern, h, methods...)
+	r.mux.Add(r.pattern, h, methods...)
 	return r
 }
 

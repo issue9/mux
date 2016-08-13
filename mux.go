@@ -75,30 +75,6 @@ func NewServeMux() *ServeMux {
 	}
 }
 
-// 添加一个路由项。
-func (mux *ServeMux) add(pattern string, h http.Handler, methods ...string) *ServeMux {
-	if len(pattern) == 0 {
-		panic("参数pattern不能为空")
-	}
-
-	if h == nil {
-		panic("参数h不能为空")
-	}
-
-	if len(methods) == 0 {
-		methods = defaultMethods
-	}
-
-	e := newEntry(pattern, h)
-	for _, method := range methods {
-		mux.addOne(e, pattern, strings.ToUpper(method))
-	}
-
-	mux.addOptions(pattern, methods)
-
-	return mux
-}
-
 // 添加一条记录。
 //
 // 若路由项已经存在或是请求方法不支持，则直接 panic。
@@ -230,7 +206,26 @@ func (mux *ServeMux) Remove(pattern string, methods ...string) {
 // methods 参数应该只能为 supportedMethods 中的字符串，若不指定，默认为所有，
 // 当 h 或是 pattern 为空时，将触发 panic。
 func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) *ServeMux {
-	return mux.add(pattern, h, methods...)
+	if len(pattern) == 0 {
+		panic("参数pattern不能为空")
+	}
+
+	if h == nil {
+		panic("参数h不能为空")
+	}
+
+	if len(methods) == 0 {
+		methods = defaultMethods
+	}
+
+	e := newEntry(pattern, h)
+	for _, method := range methods {
+		mux.addOne(e, pattern, strings.ToUpper(method))
+	}
+
+	mux.addOptions(pattern, methods)
+
+	return mux
 }
 
 // 手动指定 OPTIONS 请求方法的值。
@@ -272,7 +267,7 @@ func (mux *ServeMux) Any(pattern string, h http.Handler) *ServeMux {
 }
 
 func (mux *ServeMux) addFunc(pattern string, fun func(http.ResponseWriter, *http.Request), methods ...string) *ServeMux {
-	return mux.add(pattern, http.HandlerFunc(fun), methods...)
+	return mux.Add(pattern, http.HandlerFunc(fun), methods...)
 }
 
 // AddFunc 功能同 ServeMux.Add()，但是将第二个参数从 http.Handler 换成了 func(http.ResponseWriter, *http.Request)

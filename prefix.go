@@ -28,7 +28,7 @@ func (p *Prefix) Options(pattern string, allowMethods ...string) *Prefix {
 
 // Add 相当于 ServeMux.Add(prefix+pattern, h, "POST"...) 的简易写法
 func (p *Prefix) Add(pattern string, h http.Handler, methods ...string) *Prefix {
-	p.mux.add(p.prefix+pattern, h, methods...)
+	p.mux.Add(p.prefix+pattern, h, methods...)
 	return p
 }
 
