@@ -123,11 +123,11 @@ func (mux *ServeMux) addOne(entry entryer, pattern string, method string) {
 	switch {
 	case mux.entries[method].Len() == 0:
 		mux.base[method] = mux.entries[method].PushFront(entry)
-	case pattern[0] != '/' && !entry.isRegexp(): // 带域名的静态路由，在前端插入
+	case pattern[0] != '/' && !entry.isRegexp(): // 带域名的非正则路由，在前端插入
 		mux.entries[method].PushFront(entry)
 	case pattern[0] != '/' && entry.isRegexp(): // 带域名的正则路由，在后端插入
 		mux.entries[method].InsertBefore(entry, mux.base[method])
-	case pattern[0] == '/' && !entry.isRegexp(): // 不带域名的静态路由，在前端插入
+	case pattern[0] == '/' && !entry.isRegexp(): // 不带域名的非正则路由，在前端插入
 		mux.entries[method].InsertAfter(entry, mux.base[method])
 	case pattern[0] == '/' && entry.isRegexp(): // 不带域名的正则路由，在后端插入
 		mux.entries[method].PushBack(entry)

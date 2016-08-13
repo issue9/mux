@@ -90,7 +90,7 @@ func (r *Resource) PatchFunc(fun func(http.ResponseWriter, *http.Request)) *Reso
 	return r.AddFunc(fun, http.MethodPatch)
 }
 
-// AnyFunc 相当于ServeMux.AnyFunc(pattern, func)的简易写法
+// AnyFunc 相当于 ServeMux.AnyFunc(pattern, func) 的简易写法
 func (r *Resource) AnyFunc(fun func(http.ResponseWriter, *http.Request)) *Resource {
 	return r.AddFunc(fun, defaultMethods...)
 }
@@ -101,7 +101,7 @@ func (r *Resource) Remove(methods ...string) *Resource {
 	return r
 }
 
-// Clean 清除所有以 Resource 路由项
+// Clean 清除当前资源的所有路由项
 func (r *Resource) Clean() *Resource {
 	r.mux.mu.Lock()
 	defer r.mux.mu.Unlock()
@@ -142,8 +142,8 @@ func (r *Resource) Clean() *Resource {
 	return r
 }
 
-// 创建一个路由组，该组中添加的路由项，都会带上前缀prefix
-// prefix 前缀字符串，所有从Resource中声明的路由都将包含此前缀。
+// Resource 创建一个路由组，该组中添加的路由项，其地址均为 pattern。
+// pattern 前缀字符串，所有从 Resource 中声明的路由都将包含此前缀。
 //  p := srv.Resource("/api")
 //  p.Get("/users")  // 相当于 srv.Get("/api/users")
 //  p.Get("/user/1") // 相当于 srv.Get("/api/user/1")
