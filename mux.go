@@ -86,7 +86,7 @@ func (mux *ServeMux) add(pattern string, h http.Handler, methods ...string) *Ser
 	}
 
 	if len(methods) == 0 {
-		methods = supportedMethods
+		methods = defaultMethods
 	}
 
 	e := newEntry(pattern, h)

@@ -34,7 +34,7 @@ var (
 		http.MethodTrace,
 	}
 
-	// 调用 Any 添加的列表
+	// 调用 Any 添加的列表，默认不添加 OPTIONS 请求
 	defaultMethods = []string{
 		http.MethodGet,
 		http.MethodPost,
