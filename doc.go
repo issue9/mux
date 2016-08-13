@@ -15,12 +15,6 @@
 //  p.Get("/logout", h) // 相当于m.Get("/api/logout", h)
 //  p.Post("/login", h) // 相当于m.Get("/api/login", h)
 //
-//  // 分组路由，该分组可以在运行过程中控制是否暂停
-//  g := m.Group("admin")
-//  g.Get("/admin", h).
-//      Get("/api/admin/logout").
-//      Post("/api/admin/login")
-//
 //  h := mux.NewReocvery(m, nil)
 //  http.ListenAndServe("8080", h)
 //

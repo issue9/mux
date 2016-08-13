@@ -29,9 +29,6 @@ type entryer interface {
 
 	// 是否为正则表达式
 	isRegexp() bool
-
-	// 获取所属的分组
-	getGroup() *Group
 }
 
 //////////////// basic
@@ -39,7 +36,6 @@ type entryer interface {
 // 最基本的字符串匹配路由项。
 type basic struct {
 	pattern string
-	group   *Group
 	handler http.Handler
 }
 
@@ -59,15 +55,7 @@ func (b *basic) getParams(url string) map[string]string {
 	return nil
 }
 
-func (b *basic) getGroup() *Group {
-	return b.group
-}
-
 func (b *basic) match(url string) int {
-	if b.group != nil && !b.group.isRunning { // 被暂停
-		return -1
-	}
-
 	if url == b.pattern {
 		return 0
 	}
@@ -80,7 +68,6 @@ func (b *basic) match(url string) int {
 // 根据match()的返回值来确定哪个最匹配。
 type static struct {
 	pattern string
-	group   *Group
 	handler http.Handler
 }
 
@@ -92,10 +79,6 @@ func (s *static) isRegexp() bool {
 	return false
 }
 
-func (s *static) getGroup() *Group {
-	return s.group
-}
-
 func (s *static) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	s.handler.ServeHTTP(w, r)
 }
@@ -105,10 +88,6 @@ func (s *static) getParams(url string) map[string]string {
 }
 
 func (s *static) match(url string) int {
-	if s.group != nil && !s.group.isRunning { // 被暂停
-		return -1
-	}
-
 	l := len(url) - len(s.pattern)
 	switch {
 	case l < 0:
@@ -130,7 +109,6 @@ type regexpr struct {
 	pattern   string
 	expr      *regexp.Regexp
 	hasParams bool
-	group     *Group
 	handler   http.Handler
 }
 
@@ -146,15 +124,7 @@ func (r *regexpr) isRegexp() bool {
 	return true
 }
 
-func (r *regexpr) getGroup() *Group {
-	return r.group
-}
-
 func (re *regexpr) match(url string) int {
-	if re.group != nil && !re.group.isRunning { // 被暂停
-		return -1
-	}
-
 	// 正则匹配，没有部分匹配功能，匹配返回0,否则返回-1
 	loc := re.expr.FindStringIndex(url)
 	if loc == nil {
@@ -187,7 +157,7 @@ func (re *regexpr) getParams(url string) map[string]string {
 // 声明一个regexpr实例
 // pattern 匹配内容。
 // h 对应的http.Handler，外层调用者确保该值不能为nil.
-func newEntry(pattern string, h http.Handler, g *Group) entryer {
+func newEntry(pattern string, h http.Handler) entryer {
 	strs := split(pattern)
 
 	if len(strs) > 1 { // 正则路由
@@ -195,7 +165,6 @@ func newEntry(pattern string, h http.Handler, g *Group) entryer {
 		return &regexpr{
 			pattern:   pattern,
 			handler:   h,
-			group:     g,
 			hasParams: hasParams,
 			expr:      regexp.MustCompile(p),
 		}
@@ -203,14 +172,12 @@ func newEntry(pattern string, h http.Handler, g *Group) entryer {
 
 	if pattern[len(pattern)-1] == '/' {
 		return &static{
-			group:   g,
 			pattern: pattern,
 			handler: h,
 		}
 	}
 
 	return &basic{
-		group:   g,
 		pattern: pattern,
 		handler: h,
 	}

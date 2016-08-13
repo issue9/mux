@@ -15,7 +15,6 @@ import (
 //  p.Get("/user/1") // 相当于 srv.Get("/api/user/1")
 type Prefix struct {
 	mux    *ServeMux
-	group  *Group
 	prefix string
 }
 
@@ -23,13 +22,13 @@ type Prefix struct {
 //
 // 若无特殊需求，不用调用些方法，系统会自动计算符合当前路由的请求方法列表。
 func (p *Prefix) Options(pattern string, allowMethods ...string) *Prefix {
-	p.mux.addOptions(p.group, p.prefix+pattern, allowMethods)
+	p.mux.addOptions(p.prefix+pattern, allowMethods)
 	return p
 }
 
 // Add 相当于 ServeMux.Add(prefix+pattern, h, "POST"...) 的简易写法
 func (p *Prefix) Add(pattern string, h http.Handler, methods ...string) *Prefix {
-	p.mux.add(p.group, p.prefix+pattern, h, methods...)
+	p.mux.add(p.prefix+pattern, h, methods...)
 	return p
 }
 
@@ -65,7 +64,7 @@ func (p *Prefix) Any(pattern string, h http.Handler) *Prefix {
 
 // AddFunc 功能同ServeMux.AddFunc(prefix+pattern, fun, ...)
 func (p *Prefix) AddFunc(pattern string, fun func(http.ResponseWriter, *http.Request), methods ...string) *Prefix {
-	p.mux.addFunc(p.group, p.prefix+pattern, fun, methods...)
+	p.mux.addFunc(p.prefix+pattern, fun, methods...)
 	return p
 }
 
@@ -153,22 +152,8 @@ func (p *Prefix) Clean() *Prefix {
 //  p.Get("/user/1") // 相当于 g.Get("/api/user/1")
 func (p *Prefix) Prefix(prefix string) *Prefix {
 	return &Prefix{
-		group:  p.group,
 		mux:    p.mux,
 		prefix: p.prefix + prefix,
-	}
-}
-
-// 创建一个路由组，该组中添加的路由项，都会带上前缀prefix
-// prefix 前缀字符串，所有从Prefix中声明的路由都将包含此前缀。
-//  p := g.Prefix("/api")
-//  p.Get("/users")  // 相当于 g.Get("/api/users")
-//  p.Get("/user/1") // 相当于 g.Get("/api/user/1")
-func (g *Group) Prefix(prefix string) *Prefix {
-	return &Prefix{
-		group:  g,
-		prefix: prefix,
-		mux:    g.mux,
 	}
 }
 

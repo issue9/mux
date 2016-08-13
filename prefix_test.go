@@ -29,18 +29,6 @@ func TestPrefix(t *testing.T) {
 	assertLen(mux, a, 1, "DELETE")
 }
 
-func TestGroup_Prefix(t *testing.T) {
-	a := assert.New(t)
-	mux := NewServeMux()
-	a.NotNil(mux)
-
-	g := mux.Group()
-	a.NotNil(g)
-
-	p := g.Prefix("/p")
-	a.Equal(p.group, g)
-}
-
 func TestPrefix_Prefix(t *testing.T) {
 	a := assert.New(t)
 
