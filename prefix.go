@@ -145,8 +145,8 @@ func (p *Prefix) Clean() *Prefix {
 	return p
 }
 
-// 创建一个路由组，该组中添加的路由项，都会带上前缀prefix
-// prefix 前缀字符串，所有从Prefix中声明的路由都将包含此前缀。
+// Prefix 创建一个路由组，该组中添加的路由项，都会带上前缀 prefix
+// prefix 前缀字符串，所有从 Prefix 中声明的路由都将包含此前缀。
 //  p := g.Prefix("/api")
 //  p.Get("/users")  // 相当于 g.Get("/api/users")
 //  p.Get("/user/1") // 相当于 g.Get("/api/user/1")
@@ -157,8 +157,8 @@ func (p *Prefix) Prefix(prefix string) *Prefix {
 	}
 }
 
-// 创建一个路由组，该组中添加的路由项，都会带上前缀prefix
-// prefix 前缀字符串，所有从Prefix中声明的路由都将包含此前缀。
+// Prefix 创建一个路由组，该组中添加的路由项，都会带上前缀 prefix
+// prefix 前缀字符串，所有从 Prefix 中声明的路由都将包含此前缀。
 //  p := srv.Prefix("/api")
 //  p.Get("/users")  // 相当于 srv.Get("/api/users")
 //  p.Get("/user/1") // 相当于 srv.Get("/api/user/1")
