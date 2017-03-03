@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-// 封装 ServeMux，使所有添加的路由项的匹配模式都带上指定的前缀。
+// Prefix 封装 ServeMux，使所有添加的路由项的匹配模式都带上指定的前缀。
 //  p := srv.Prefix("/api")
 //  p.Get("/users")  // 相当于 srv.Get("/api/users")
 //  p.Get("/user/1") // 相当于 srv.Get("/api/user/1")
@@ -18,7 +18,7 @@ type Prefix struct {
 	prefix string
 }
 
-// 手动指定 OPTIONS 请求方法的值。
+// Options 手动指定 OPTIONS 请求方法的值。
 //
 // 若无特殊需求，不用调用些方法，系统会自动计算符合当前路由的请求方法列表。
 func (p *Prefix) Options(pattern string, allowMethods ...string) *Prefix {

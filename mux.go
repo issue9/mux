@@ -150,7 +150,7 @@ func (mux *ServeMux) Clean() *ServeMux {
 	return mux
 }
 
-// 移除指定的路由项，通过路由表达式和 method 来匹配。
+// Remove 移除指定的路由项，通过路由表达式和 method 来匹配。
 // 当未指定 methods 时，将删除所有 method 匹配的项。
 // 指定错误的 methods 值，将自动忽略该值。
 func (mux *ServeMux) Remove(pattern string, methods ...string) {
@@ -229,7 +229,7 @@ func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) *Ser
 	return mux
 }
 
-// 手动指定 OPTIONS 请求方法的值。
+// Options 手动指定 OPTIONS 请求方法的值。
 //
 // 若无特殊需求，不用调用此方法，系统会自动计算符合当前路由的请求方法列表。
 func (mux *ServeMux) Options(pattern string, allowMethods ...string) *ServeMux {

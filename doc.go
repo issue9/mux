@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
-// mux 提供了相对 http.ServeMux 更加复杂的路径功能。
+// Package mux 提供了相对 http.ServeMux 更加复杂的路径功能。
 //
 //  m := mux.NewServerMux().
 //          Get("/user/1", h). // 不限定域名，必须以/开头
