@@ -11,7 +11,7 @@ import (
 )
 
 // 路由项需要实现的接口
-type entryer interface {
+type entry interface {
 	// 匹配匹配字符串
 	getPattern() string
 
@@ -157,7 +157,7 @@ func (re *regexpr) getParams(url string) map[string]string {
 // 声明一个regexpr实例
 // pattern 匹配内容。
 // h 对应的http.Handler，外层调用者确保该值不能为nil.
-func newEntry(pattern string, h http.Handler) entryer {
+func newEntry(pattern string, h http.Handler) entry {
 	strs := split(pattern)
 
 	if len(strs) > 1 { // 正则路由

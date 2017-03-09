@@ -116,8 +116,7 @@ func (r *Resource) Clean() *Resource {
 			curr := item
 			item = item.Next()
 
-			entry := curr.Value.(entryer)
-			pattern := entry.getPattern()
+			pattern := curr.Value.(entry).getPattern()
 			if r.pattern == pattern {
 				// 清除options的内容
 				r.mux.options[pattern] = r.mux.options[pattern] & (^methodsToInt(method))

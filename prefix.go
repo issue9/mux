@@ -119,8 +119,7 @@ func (p *Prefix) Clean() *Prefix {
 			curr := item
 			item = item.Next()
 
-			entry := curr.Value.(entryer)
-			pattern := entry.getPattern()
+			pattern := curr.Value.(entry).getPattern()
 			if strings.HasPrefix(pattern, p.prefix) {
 				// 清除options的内容
 				p.mux.options[pattern] = p.mux.options[pattern] & (^methodsToInt(method))
