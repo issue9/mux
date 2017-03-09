@@ -32,11 +32,8 @@ type Params map[string]string
 //
 // 路由参数：
 //
-// 路由参数可通过context包获取：
-//  ctx := context.Get(req)
-//  params := ctx.Get("params") // 若不存在路由参数，则返回一个空值
-// NOTE：记得在退出整个请求之前清除 context 中的内容：
-//  context.Free(req)
+// 路由参数可通过 r.Context 获取：
+//  params := r.Context().Value(mux.ContextKeyParams).(mux.Params)
 //
 //
 // 匹配规则：
