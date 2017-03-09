@@ -11,6 +11,8 @@ import (
 	"path"
 	"strings"
 	"sync"
+
+	"github.com/issue9/mux/internal/entry"
 )
 
 type contextKey int
@@ -79,7 +81,7 @@ func NewServeMux() *ServeMux {
 //
 // 若路由项已经存在或是请求方法不支持，则直接 panic。
 // 若 method 的值为 OPTIONS，则相同的路由项会被覆盖，而不是 panic。
-func (mux *ServeMux) addOne(ety entry, pattern string, method string) {
+func (mux *ServeMux) addOne(ety entry.Entry, pattern string, method string) {
 	mux.mu.Lock()
 	defer mux.mu.Unlock()
 
@@ -90,13 +92,13 @@ func (mux *ServeMux) addOne(ety entry, pattern string, method string) {
 		}
 
 		for item := entries.Front(); item != nil; item = item.Next() {
-			if e := item.Value.(entry); e.getPattern() == pattern {
+			if e := item.Value.(entry.Entry); e.Pattern() == pattern {
 				panic("该路由项已经存在：[" + method + "]" + pattern)
 			}
 		}
 	}
 
-	if ety.isRegexp() { // 正则路由，在后端插入
+	if ety.IsRegexp() { // 正则路由，在后端插入
 		mux.entries[method].PushBack(ety)
 	}
 	mux.entries[method].PushFront(ety)
@@ -117,7 +119,7 @@ func (mux *ServeMux) addOptions(pattern string, methods []string) {
 			r.Header.Set("Allow", getAllowString(mux.options[pattern]))
 		})
 
-		e := newEntry(pattern, h)
+		e := entry.New(pattern, h)
 		mux.addOne(e, pattern, http.MethodOptions)
 	}
 }
@@ -165,8 +167,8 @@ func (mux *ServeMux) Remove(pattern string, methods ...string) {
 		}
 
 		for item := entries.Front(); item != nil; item = item.Next() {
-			e := item.Value.(entry)
-			if e.getPattern() != pattern {
+			e := item.Value.(entry.Entry)
+			if e.Pattern() != pattern {
 				continue
 			}
 
@@ -196,7 +198,7 @@ func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) *Ser
 		methods = defaultMethods
 	}
 
-	e := newEntry(pattern, h)
+	e := entry.New(pattern, h)
 	for _, method := range methods {
 		mux.addOne(e, pattern, strings.ToUpper(method))
 	}
@@ -280,7 +282,7 @@ func (mux *ServeMux) AnyFunc(pattern string, fun func(http.ResponseWriter, *http
 }
 
 // 查找最匹配的路由项
-func (mux *ServeMux) match(r *http.Request) (p string, e entry) {
+func (mux *ServeMux) match(r *http.Request) (p string, e entry.Entry) {
 	size := -1 // 匹配度，0 表示完全匹配，负数表示完全不匹配，其它值越小匹配度越高
 
 	mux.mu.RLock()
@@ -288,9 +290,9 @@ func (mux *ServeMux) match(r *http.Request) (p string, e entry) {
 
 	p = cleanPath(r.URL.Path)
 	for item := mux.entries[r.Method].Front(); item != nil; item = item.Next() {
-		ety := item.Value.(entry)
+		ety := item.Value.(entry.Entry)
 
-		s := ety.match(p)
+		s := ety.Match(p)
 
 		if s == 0 { // 完全匹配，可以中止匹配过程
 			return p, ety
@@ -320,12 +322,12 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	params := e.getParams(p)
+	params := e.Params(p)
 	if params != nil {
-		ctx := context.WithValue(r.Context(), ContextKeyParams, params)
+		ctx := context.WithValue(r.Context(), ContextKeyParams, Params(params))
 		r = r.WithContext(ctx)
 	}
-	e.serveHTTP(w, r)
+	e.ServeHTTP(w, r)
 }
 
 // 清除路径中的怪异符号

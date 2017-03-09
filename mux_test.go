@@ -28,7 +28,7 @@ func TestClearPath(t *testing.T) {
 	a.Equal(cleanPath("/api../"), "/api../")
 }
 
-// 断言mux.paths[method].Len() == l
+// 断言 mux.entries[method].Len() == l
 func assertLen(mux *ServeMux, a *assert.Assertion, l int, method string) {
 	a.Equal(l, mux.entries[method].Len())
 }
@@ -47,7 +47,7 @@ func TestServeMux_Options(t *testing.T) {
 	a.NotPanic(func() { m.Post("/a", h) })
 	a.Equal(get|options|post, m.options["/a"])
 
-	// 手动调整，去掉了自动增加的OPTIONS
+	// 手动调整，去掉了自动增加的 OPTIONS
 	a.NotPanic(func() { m.Options("/a", "GET", "POST", "PUT") })
 	a.Equal(get|post|put, m.options["/a"])
 }
@@ -154,7 +154,7 @@ func TestServeMux_Remove(t *testing.T) {
 	assertLen(m, a, 0, "DELETE")
 
 	m.Remove("/", "GET")
-	a.Equal(m.options["/"], 0) // 若只有options，则直接清空
+	a.Equal(m.options["/"], 0) // 若只有 options，则直接清空
 	assertLen(m, a, 0, "GET")
 
 	m.Add("/", h)

@@ -4,7 +4,11 @@
 
 package mux
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/issue9/mux/internal/entry"
+)
 
 // Resource 以资源地址为对象的路由配置。
 //  r := srv.Resource("/api/users/{id}")
@@ -116,7 +120,7 @@ func (r *Resource) Clean() *Resource {
 			curr := item
 			item = item.Next()
 
-			pattern := curr.Value.(entry).getPattern()
+			pattern := curr.Value.(entry.Entry).Pattern()
 			if r.pattern == pattern {
 				// 清除options的内容
 				r.mux.options[pattern] = r.mux.options[pattern] & (^methodsToInt(method))

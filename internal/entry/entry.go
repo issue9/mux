@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
-package mux
+package entry
 
 import (
 	"net/http"
@@ -10,25 +10,25 @@ import (
 	"strings"
 )
 
-// 路由项需要实现的接口
-type entry interface {
+// Entry 路由项需要实现的接口
+type Entry interface {
 	// 匹配匹配字符串
-	getPattern() string
+	Pattern() string
 
 	// 匹配程度
 	//  -1 表示完全不匹配；
 	//  0  表示完全匹配；
 	//  >0 表示部分匹配，值越小表示匹配程度越高。
-	match(url string) int
+	Match(url string) int
 
 	// 获取参数，只有正则表达式才有数据。
-	getParams(url string) Params
+	Params(url string) map[string]string
 
 	// 执行该路由项的函数
-	serveHTTP(w http.ResponseWriter, r *http.Request)
+	ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	// 是否为正则表达式
-	isRegexp() bool
+	IsRegexp() bool
 }
 
 //////////////// basic
@@ -39,23 +39,23 @@ type basic struct {
 	handler http.Handler
 }
 
-func (b *basic) getPattern() string {
+func (b *basic) Pattern() string {
 	return b.pattern
 }
 
-func (b *basic) isRegexp() bool {
+func (b *basic) IsRegexp() bool {
 	return false
 }
 
-func (b *basic) serveHTTP(w http.ResponseWriter, r *http.Request) {
+func (b *basic) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	b.handler.ServeHTTP(w, r)
 }
 
-func (b *basic) getParams(url string) Params {
+func (b *basic) Params(url string) map[string]string {
 	return nil
 }
 
-func (b *basic) match(url string) int {
+func (b *basic) Match(url string) int {
 	if url == b.pattern {
 		return 0
 	}
@@ -71,23 +71,23 @@ type static struct {
 	handler http.Handler
 }
 
-func (s *static) getPattern() string {
+func (s *static) Pattern() string {
 	return s.pattern
 }
 
-func (s *static) isRegexp() bool {
+func (s *static) IsRegexp() bool {
 	return false
 }
 
-func (s *static) serveHTTP(w http.ResponseWriter, r *http.Request) {
+func (s *static) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.handler.ServeHTTP(w, r)
 }
 
-func (s *static) getParams(url string) Params {
+func (s *static) Params(url string) map[string]string {
 	return nil
 }
 
-func (s *static) match(url string) int {
+func (s *static) Match(url string) int {
 	l := len(url) - len(s.pattern)
 	switch {
 	case l < 0:
@@ -113,19 +113,19 @@ type regexpr struct {
 	handler   http.Handler
 }
 
-func (re *regexpr) getPattern() string {
+func (re *regexpr) Pattern() string {
 	return re.pattern
 }
 
-func (re *regexpr) serveHTTP(w http.ResponseWriter, r *http.Request) {
+func (re *regexpr) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	re.handler.ServeHTTP(w, r)
 }
 
-func (re *regexpr) isRegexp() bool {
+func (re *regexpr) IsRegexp() bool {
 	return true
 }
 
-func (re *regexpr) match(url string) int {
+func (re *regexpr) Match(url string) int {
 	// 正则匹配，没有部分匹配功能，匹配返回0,否则返回-1
 	loc := re.expr.FindStringIndex(url)
 	if loc == nil {
@@ -138,13 +138,13 @@ func (re *regexpr) match(url string) int {
 }
 
 // 将 url 与当前的表达式进行匹配，返回其命名路由参数的值。若不匹配，则返回 nil
-func (re *regexpr) getParams(url string) Params {
+func (re *regexpr) Params(url string) map[string]string {
 	if !re.hasParams {
 		return nil
 	}
 
 	// 正确匹配正则表达式，则获相关的正则表达式命名变量。
-	mapped := make(Params, 3)
+	mapped := make(map[string]string, 3)
 	subexps := re.expr.SubexpNames()
 	args := re.expr.FindStringSubmatch(url)
 	for index, name := range subexps {
@@ -155,11 +155,11 @@ func (re *regexpr) getParams(url string) Params {
 	return mapped
 }
 
-// 根据内容，生成相应的 entry 接口实例。
+// New 根据内容，生成相应的 Entry 接口实例。
 //
 // pattern 匹配内容。
 // h 对应的 http.Handler，外层调用者确保该值不能为nil.
-func newEntry(pattern string, h http.Handler) entry {
+func New(pattern string, h http.Handler) Entry {
 	strs := split(pattern)
 
 	if len(strs) > 1 { // 正则路由

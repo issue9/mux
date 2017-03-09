@@ -7,6 +7,8 @@ package mux
 import (
 	"net/http"
 	"strings"
+
+	"github.com/issue9/mux/internal/entry"
 )
 
 // Prefix 封装 ServeMux，使所有添加的路由项的匹配模式都带上指定的前缀。
@@ -119,7 +121,7 @@ func (p *Prefix) Clean() *Prefix {
 			curr := item
 			item = item.Next()
 
-			pattern := curr.Value.(entry).getPattern()
+			pattern := curr.Value.(entry.Entry).Pattern()
 			if strings.HasPrefix(pattern, p.prefix) {
 				// 清除options的内容
 				p.mux.options[pattern] = p.mux.options[pattern] & (^methodsToInt(method))
