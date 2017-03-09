@@ -165,78 +165,69 @@ func TestServeMux_Remove(t *testing.T) {
 func TestServeMux_ServeHTTP(t *testing.T) {
 	a := assert.New(t)
 
-	newServeMux := func(pattern string) http.Handler {
-		h := NewServeMux()
-		a.NotError(h.AddFunc(pattern, defaultHandler, "GET"))
-		return h
-	}
-
 	tests := []*handlerTester{
 		&handlerTester{
 			name:       "普通匹配",
-			h:          newServeMux("/abc"),
+			pattern:    "/abc",
 			query:      "/abc",
 			statusCode: 200,
 		},
 		&handlerTester{
 			name:       "普通部分匹配",
-			h:          newServeMux("/abc/"),
+			pattern:    "/abc/",
 			query:      "/abc/d",
 			statusCode: 200,
 		},
 		&handlerTester{
 			name:       "普通不匹配-1",
-			h:          newServeMux("/abc"),
+			pattern:    "/abc",
 			query:      "/abcd",
 			statusCode: 404,
 		},
 		&handlerTester{
 			name:       "普通不匹配-2",
-			h:          newServeMux("/abc"),
+			pattern:    "/abc",
 			query:      "/cba",
 			statusCode: 404,
 		},
 		&handlerTester{
 			name:       "正则匹配数字",
-			h:          newServeMux("/api/{version:\\d+}"),
+			pattern:    "/api/{version:\\d+}",
 			query:      "/api/2",
 			statusCode: 200,
-			ctxName:    "params",
-			ctxMap:     map[string]string{"version": "2"},
+			params:     map[string]string{"version": "2"},
 		},
 		&handlerTester{
 			name:       "正则匹配多个名称",
-			h:          newServeMux("/api/{version:\\d+}/{name:\\w+}"),
+			pattern:    "/api/{version:\\d+}/{name:\\w+}",
 			query:      "/api/2/login",
 			statusCode: 200,
-			ctxName:    "params",
-			ctxMap:     map[string]string{"version": "2", "name": "login"},
+			params:     map[string]string{"version": "2", "name": "login"},
 		},
 		&handlerTester{
 			name:       "正则不匹配多个名称",
-			h:          newServeMux("/api/{version:\\d+}/{name:\\w+}"),
+			pattern:    "/api/{version:\\d+}/{name:\\w+}",
 			query:      "/api/2.0/login",
 			statusCode: 404,
 		},
 		&handlerTester{
 			name:       "带域名的字符串不匹配", //无法匹配端口信息
-			h:          newServeMux("127.0.0.1/abc"),
+			pattern:    "127.0.0.1/abc",
 			query:      "/cba",
 			statusCode: 404,
 		},
 		&handlerTester{
 			name:       "带域名的正则匹配", //无法匹配端口信息
-			h:          newServeMux("127.0.0.1:{:\\d+}/abc"),
+			pattern:    "127.0.0.1:{:\\d+}/abc",
 			query:      "/abc",
 			statusCode: 200,
 		},
 		&handlerTester{
 			name:       "带域名的命名正则匹配", //无法匹配端口信息
-			h:          newServeMux("127.0.0.1:{:\\d+}/api/v{version:\\d+}/login"),
+			pattern:    "127.0.0.1:{:\\d+}/api/v{version:\\d+}/login",
 			query:      "/api/v2/login",
 			statusCode: 200,
-			ctxName:    "params",
-			ctxMap:     map[string]string{"version": "2"},
+			params:     map[string]string{"version": "2"},
 		},
 	}
 

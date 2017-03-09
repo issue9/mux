@@ -353,7 +353,8 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	params := e.getParams(p)
 	if params != nil {
-		context.WithValue(r.Context(), ContextKeyParams, params)
+		ctx := context.WithValue(r.Context(), ContextKeyParams, params)
+		r = r.WithContext(ctx)
 	}
 	e.serveHTTP(w, r)
 }

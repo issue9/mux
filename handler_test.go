@@ -16,45 +16,26 @@ import (
 
 // http.Handler 测试工具，测试h返回值是否与 response 相同。
 type handlerTester struct {
-	name  string       // 该测试组的名称，方便定位
-	h     http.Handler // 用于测试的 http.Handler 实例
-	query string       // 访问测试所用的查询字符串
+	name    string       // 该测试组的名称，方便定位
+	h       http.Handler // 用于测试的 http.Handler 实例
+	query   string       // 访问测试所用的查询字符串
+	pattern string       // 地址匹配模式
 
 	statusCode int // 通过返回的状态码，判断是否是需要的值。
 
-	ctxName string            // h 在 context 中设置的变量名称，若没有，则为空值。
-	ctxMap  map[string]string // 以及该变量对应的值
+	params map[string]string // 路径中的参数列表
 }
 
-type ctxHandler struct {
-	a    *assert.Assertion
-	test *handlerTester
-	h    http.Handler
-}
-
-func (ch *ctxHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	ch.h.ServeHTTP(w, req)
-
-	/* 在正主执行 ServeHTTP 之后，才会有 context 存在 */
-
-	params := req.Context().Value(ContextKeyParams).(Params)
-	mapped, found := params[ch.test.ctxName]
-	ch.a.True(found)
-
-	errStr := "在执行[%v]时，context参数[%v]与预期值[%v]不相等"
-	ch.a.Equal(mapped, ch.test.ctxMap, errStr, ch.test.name, mapped, ch.test.ctxMap)
-}
-
-// 运行一组handlerTester测试内容
+// 运行一组 handlerTester 测试内容
 func runHandlerTester(a *assert.Assertion, tests []*handlerTester) {
+	newServeMux := func(t *handlerTester) http.Handler {
+		h := NewServeMux()
+		a.NotError(h.Add(t.pattern, buildDefaultHandler(a, t), "GET"))
+		return h
+	}
+
 	for _, test := range tests {
-		if len(test.ctxName) > 0 {
-			test.h = &ctxHandler{
-				a:    a,
-				test: test,
-				h:    test.h,
-			}
-		}
+		test.h = newServeMux(test)
 
 		// 包含一个默认的错误处理函数，用于在出错时，输出 error 字符串.
 		srv := httptest.NewServer(handlers.Recovery(test.h, errHandler))
@@ -77,7 +58,18 @@ func errHandler(w http.ResponseWriter, msg interface{}) {
 	fmt.Fprint(w, msg)
 }
 
-// 默认的handler，向response输出ok。
-func defaultHandler(w http.ResponseWriter, req *http.Request) {
-	w.WriteHeader(200)
+func buildDefaultHandler(a *assert.Assertion, t *handlerTester) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if t.params != nil {
+			ps := r.Context().Value(ContextKeyParams)
+			a.NotNil(ps, "在执行[%v]时，无法读取 ContextKeyParms 的值", t.name)
+
+			mapped, ok := ps.(Params)
+			a.True(ok, "在执行[%v]时，无法将值转换成 Params 类型", t.name).NotNil(mapped)
+
+			errStr := "在执行[%v]时，context参数[%v]与预期值[%v]不相等"
+			a.Equal(mapped, t.params, errStr, t.name, mapped, t.params)
+		}
+		w.WriteHeader(http.StatusOK)
+	})
 }

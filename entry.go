@@ -22,7 +22,7 @@ type entry interface {
 	match(url string) int
 
 	// 获取参数，只有正则表达式才有数据。
-	getParams(url string) map[string]string
+	getParams(url string) Params
 
 	// 执行该路由项的函数
 	serveHTTP(w http.ResponseWriter, r *http.Request)
@@ -51,7 +51,7 @@ func (b *basic) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	b.handler.ServeHTTP(w, r)
 }
 
-func (b *basic) getParams(url string) map[string]string {
+func (b *basic) getParams(url string) Params {
 	return nil
 }
 
@@ -83,7 +83,7 @@ func (s *static) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	s.handler.ServeHTTP(w, r)
 }
 
-func (s *static) getParams(url string) map[string]string {
+func (s *static) getParams(url string) Params {
 	return nil
 }
 
@@ -120,7 +120,7 @@ func (re *regexpr) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	re.handler.ServeHTTP(w, r)
 }
 
-func (r *regexpr) isRegexp() bool {
+func (re *regexpr) isRegexp() bool {
 	return true
 }
 
@@ -137,13 +137,13 @@ func (re *regexpr) match(url string) int {
 }
 
 // 将url与当前的表达式进行匹配，返回其命名路由参数的值。若不匹配，则返回nil
-func (re *regexpr) getParams(url string) map[string]string {
+func (re *regexpr) getParams(url string) Params {
 	if !re.hasParams {
 		return nil
 	}
 
 	// 正确匹配正则表达式，则获相关的正则表达式命名变量。
-	mapped := make(map[string]string)
+	mapped := make(Params, 3)
 	subexps := re.expr.SubexpNames()
 	args := re.expr.FindStringSubmatch(url)
 	for index, name := range subexps {
@@ -154,7 +154,8 @@ func (re *regexpr) getParams(url string) map[string]string {
 	return mapped
 }
 
-// 声明一个regexpr实例
+// 根据内容，生成相应的 entry 接口实例。
+//
 // pattern 匹配内容。
 // h 对应的http.Handler，外层调用者确保该值不能为nil.
 func newEntry(pattern string, h http.Handler) entry {
