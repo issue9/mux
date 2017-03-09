@@ -124,18 +124,6 @@ func (p *Prefix) Clean() *Prefix {
 				// 清除options的内容
 				p.mux.options[pattern] = p.mux.options[pattern] & (^methodsToInt(method))
 
-				// 清除mux.base相关的内容
-				if curr == p.mux.base[method] {
-					switch {
-					case curr.Next() != nil:
-						p.mux.base[method] = curr.Next()
-					case curr.Prev() != nil:
-						p.mux.base[method] = curr.Prev()
-					default:
-						p.mux.base[method] = nil
-					}
-				}
-
 				entries.Remove(curr)
 			}
 		}

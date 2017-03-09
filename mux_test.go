@@ -134,7 +134,6 @@ func TestServeMux_Remove(t *testing.T) {
 	// method 不同
 	m.Remove("/", "DELETE")
 	a.Equal(m.options["/"], get|options)
-	a.NotNil(m.base["GET"])
 	assertLen(m, a, 1, "GET")
 	assertLen(m, a, 0, "DELETE")
 
@@ -153,9 +152,8 @@ func TestServeMux_Remove(t *testing.T) {
 	assertLen(m, a, 0, "POST")
 	assertLen(m, a, 0, "DELETE")
 
-	m.Add("www.caixw.io/index.html", h)
-	m.Remove("www.caixw.io/index.html")
-	a.Nil(m.base["GET"])
+	m.Add("/index.html", h)
+	m.Remove("/index.html")
 	assertLen(m, a, 0, "GET")
 	assertLen(m, a, 0, "POST")
 	assertLen(m, a, 0, "DELETE")
@@ -198,6 +196,20 @@ func TestServeMux_ServeHTTP(t *testing.T) {
 			params:     map[string]string{"version": "2"},
 		},
 		&handlerTester{
+			name:       "不规则的路径-1",
+			pattern:    "/api/{version:\\d+}",
+			query:      "/api//2",
+			statusCode: 200,
+			params:     map[string]string{"version": "2"},
+		},
+		&handlerTester{
+			name:       "不规则的路径-2",
+			pattern:    "/api/{version:\\d+}",
+			query:      "/api/../2",
+			statusCode: 200,
+			params:     map[string]string{"version": "2"},
+		},
+		&handlerTester{
 			name:       "正则匹配多个名称",
 			pattern:    "/api/{version:\\d+}/{name:\\w+}",
 			query:      "/api/2/login",
@@ -210,7 +222,7 @@ func TestServeMux_ServeHTTP(t *testing.T) {
 			query:      "/api/2.0/login",
 			statusCode: 404,
 		},
-		&handlerTester{
+		/*&handlerTester{
 			name:       "带域名的字符串不匹配", //无法匹配端口信息
 			pattern:    "127.0.0.1/abc",
 			query:      "/cba",
@@ -228,7 +240,7 @@ func TestServeMux_ServeHTTP(t *testing.T) {
 			query:      "/api/v2/login",
 			statusCode: 200,
 			params:     map[string]string{"version": "2"},
-		},
+		},*/
 	}
 
 	runHandlerTester(a, tests)
@@ -248,7 +260,7 @@ func TestServeMux_ServeHTTP_Order(t *testing.T) {
 	f3 := func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(3)
 	}
-	f4 := func(w http.ResponseWriter, r *http.Request) {
+	/*f4 := func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(4)
 	}
 	f5 := func(w http.ResponseWriter, r *http.Request) {
@@ -256,7 +268,7 @@ func TestServeMux_ServeHTTP_Order(t *testing.T) {
 	}
 	f6 := func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(6)
-	}
+	}*/
 
 	test := func(m *ServeMux, method, host, path string, code int) {
 		r, err := http.NewRequest(method, path, nil)
@@ -272,19 +284,19 @@ func TestServeMux_ServeHTTP_Order(t *testing.T) {
 
 	serveMux := NewServeMux()
 	a.NotNil(serveMux)
-	serveMux.AddFunc("/post/", f1, "GET")                   // f1
-	serveMux.AddFunc("/post/{id:\\d+}", f2, "GET")          // f2
-	serveMux.AddFunc("/post/1", f3, "GET")                  // f3
-	serveMux.AddFunc("127.0.0.1/post/", f4, "GET")          // f4
-	serveMux.AddFunc("127.0.0.1/post/{id:\\d+}", f5, "GET") // f5
-	serveMux.AddFunc("127.0.0.1/post/1", f6, "GET")         // f6
+	serveMux.AddFunc("/post/", f1, "GET")          // f1
+	serveMux.AddFunc("/post/{id:\\d+}", f2, "GET") // f2
+	serveMux.AddFunc("/post/1", f3, "GET")         // f3
+	//serveMux.AddFunc("127.0.0.1/post/", f4, "GET")          // f4
+	//serveMux.AddFunc("127.0.0.1/post/{id:\\d+}", f5, "GET") // f5
+	//serveMux.AddFunc("127.0.0.1/post/1", f6, "GET")         // f6
 
-	test(serveMux, "GET", "", "/post/1", 3)            // f3 静态路由项完全匹配
-	test(serveMux, "GET", "", "/post/2", 2)            // f2 正则完全匹配
-	test(serveMux, "GET", "", "/post/abc", 1)          // f1 匹配度最高
-	test(serveMux, "GET", "127.0.0.1", "/post/1", 6)   // f6 静态路由项完全匹配
-	test(serveMux, "GET", "127.0.0.1", "/post/2", 5)   // f5 正则完全匹配
-	test(serveMux, "GET", "127.0.0.1", "/post/abc", 4) // f4 匹配度最高
+	test(serveMux, "GET", "", "/post/1", 3)   // f3 静态路由项完全匹配
+	test(serveMux, "GET", "", "/post/2", 2)   // f2 正则完全匹配
+	test(serveMux, "GET", "", "/post/abc", 1) // f1 匹配度最高
+	//test(serveMux, "GET", "127.0.0.1", "/post/1", 6)   // f6 静态路由项完全匹配
+	//test(serveMux, "GET", "127.0.0.1", "/post/2", 5)   // f5 正则完全匹配
+	//test(serveMux, "GET", "127.0.0.1", "/post/abc", 4) // f4 匹配度最高
 }
 
 // 全静态匹配

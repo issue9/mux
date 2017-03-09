@@ -24,8 +24,8 @@ type Params map[string]string
 //
 // 用法如下：
 //  m := mux.NewServeMux()
-//  m.Get("www.example.com/abc", h1).              // 只匹配 www.example.com 域名下的路径
-//    Post("/abc/"", h2).                          // 不限定域名的路径匹配
+//  m.Get("/abc/h1", h1).
+//    Post("/abc/h2", h2).
 //    Add("/api/{version:\\d+}",h3, http.MethodGet, "POST") // 只匹配 GET 和 POST
 //  http.ListenAndServe(m)
 //
@@ -41,11 +41,10 @@ type Params map[string]string
 // 可能会出现多条记录与同一请求都匹配的情况，这种情况下，
 // 系统会找到一条认为最匹配的路由来处理，判断规则如下：
 //  1. 静态路由优先于正则路由判断；
-//  2. 带域名的路由项优先于不带域名的路由项；
-//  3. 完全匹配的路由项优先于部分匹配的路由项；
-//  4. 正则只能是完全匹配；
-//  5. 只有以/结尾的静态路由才有部分匹配功能；
-//  6. 匹配顺序和插入顺序无关。
+//  2. 完全匹配的路由项优先于部分匹配的路由项；
+//  3. 正则只能是完全匹配；
+//  4. 只有以 / 结尾的静态路由才有部分匹配功能；
+//  5. 同类的后插入先匹配。
 //
 // 正则匹配语法：
 //  /post/{id}     // 匹配 /post/ 开头的任意字符串，其后的字符串保存到 id 中；
@@ -55,11 +54,8 @@ type ServeMux struct {
 	// 同时处理 entries,base,options 三个的竟争问题
 	mu sync.RWMutex
 
-	// 路由项，键名为请求方法名称，键值为路由项的列表。
+	// 路由项，按请求方法进行分类，键名为请求方法名称，键值为路由项的列表。
 	entries map[string]*list.List
-
-	// base 记录了对应的 entries 下的各个请求方法对应的路由项的基点，方便数据在各个方向插入。
-	base map[string]*list.Element
 
 	// 各个路由项已开通的方法，即 OPTIONS 请求方法对应的值。
 	options map[string]int16
@@ -67,16 +63,15 @@ type ServeMux struct {
 
 // NewServeMux 声明一个新的 ServeMux
 func NewServeMux() *ServeMux {
-	entries := make(map[string]*list.List, len(supportedMethods))
-	for _, method := range supportedMethods {
-		entries[method] = list.New()
-	}
-
-	return &ServeMux{
-		entries: entries,
-		base:    make(map[string]*list.Element, len(supportedMethods)),
+	ret := &ServeMux{
+		entries: make(map[string]*list.List, len(supportedMethods)),
 		options: map[string]int16{},
 	}
+	for _, method := range supportedMethods {
+		ret.entries[method] = list.New()
+	}
+
+	return ret
 }
 
 // 添加一条记录。
@@ -101,15 +96,11 @@ func (mux *ServeMux) addOne(ety entry, pattern string, method string) {
 	}
 
 	switch {
-	case mux.entries[method].Len() == 0:
-		mux.base[method] = mux.entries[method].PushFront(ety)
-	case pattern[0] != '/' && !ety.isRegexp(): // 带域名的非正则路由，在前端插入
+	case mux.entries[method].Len() == 0: // 第一个元素
 		mux.entries[method].PushFront(ety)
-	case pattern[0] != '/' && ety.isRegexp(): // 带域名的正则路由，在后端插入
-		mux.entries[method].InsertBefore(ety, mux.base[method])
-	case pattern[0] == '/' && !ety.isRegexp(): // 不带域名的非正则路由，在前端插入
-		mux.entries[method].InsertAfter(ety, mux.base[method])
-	case pattern[0] == '/' && ety.isRegexp(): // 不带域名的正则路由，在后端插入
+	case !ety.isRegexp(): // 非正则路由，在前端插入
+		mux.entries[method].PushFront(ety)
+	case ety.isRegexp(): // 正则路由，在后端插入
 		mux.entries[method].PushBack(ety)
 	}
 }
@@ -140,8 +131,6 @@ func (mux *ServeMux) Clean() *ServeMux {
 	defer mux.mu.Unlock()
 
 	mux.options = map[string]int16{}
-
-	mux.base = map[string]*list.Element{}
 
 	// 这里使用 supportedMethods，将 OPTIONS 的相关路由也清除掉
 	for _, method := range supportedMethods {
@@ -184,18 +173,6 @@ func (mux *ServeMux) Remove(pattern string, methods ...string) {
 				continue
 			}
 
-			// 清除mux.base相关的内容
-			if item == mux.base[method] {
-				switch {
-				case item.Next() == nil:
-					mux.base[method] = item.Next()
-				case item.Prev() == nil:
-					mux.base[method] = item.Prev()
-				default:
-					mux.base[method] = nil
-				}
-			}
-
 			// 清除路由项
 			entries.Remove(item)
 
@@ -207,7 +184,6 @@ func (mux *ServeMux) Remove(pattern string, methods ...string) {
 // Add 添加一条路由数据。
 //
 // pattern 为路由匹配模式，可以是正则匹配也可以是字符串匹配，
-// 可以带上域名，当第一个字符为'/'当作是一个路径，否则就将'/'之前的当作域名或IP。
 // methods 参数应该只能为 supportedMethods 中的字符串，若不指定，默认为所有，
 // 当 h 或是 pattern 为空时，将触发 panic。
 func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) *ServeMux {

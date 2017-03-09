@@ -121,18 +121,6 @@ func (r *Resource) Clean() *Resource {
 				// 清除options的内容
 				r.mux.options[pattern] = r.mux.options[pattern] & (^methodsToInt(method))
 
-				// 清除mux.base相关的内容
-				if curr == r.mux.base[method] {
-					switch {
-					case curr.Next() != nil:
-						r.mux.base[method] = curr.Next()
-					case curr.Prev() != nil:
-						r.mux.base[method] = curr.Prev()
-					default:
-						r.mux.base[method] = nil
-					}
-				}
-
 				entries.Remove(curr)
 			}
 		}

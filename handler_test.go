@@ -14,7 +14,7 @@ import (
 	"github.com/issue9/handlers"
 )
 
-// http.Handler 测试工具，测试h返回值是否与 response 相同。
+// http.Handler 测试工具，测试 h 返回值是否与 response 相同。
 type handlerTester struct {
 	name    string       // 该测试组的名称，方便定位
 	h       http.Handler // 用于测试的 http.Handler 实例
