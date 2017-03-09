@@ -205,7 +205,14 @@ func TestServeMux_ServeHTTP(t *testing.T) {
 		&handlerTester{
 			name:       "不规则的路径-2",
 			pattern:    "/api/{version:\\d+}",
-			query:      "/api/../2",
+			query:      "/api/nest/../2", // 上一层路径
+			statusCode: 200,
+			params:     map[string]string{"version": "2"},
+		},
+		&handlerTester{
+			name:       "不规则的路径-3",
+			pattern:    "/{version:\\d+}",
+			query:      "/api/../../../2", // 上 N 层路径，超过根路径
 			statusCode: 200,
 			params:     map[string]string{"version": "2"},
 		},

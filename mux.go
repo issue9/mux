@@ -8,6 +8,7 @@ import (
 	"container/list"
 	"context"
 	"net/http"
+	"path"
 	"strings"
 	"sync"
 )
@@ -51,7 +52,7 @@ type Params map[string]string
 //  /post/{id:\d+} // 同上，但 id 的值只能为 \d+；
 //  /post/{:\d+}   // 同上，但是没有命名；
 type ServeMux struct {
-	// 同时处理 entries,base,options 三个的竟争问题
+	// 同时处理 entries,options 三个的竟争问题
 	mu sync.RWMutex
 
 	// 路由项，按请求方法进行分类，键名为请求方法名称，键值为路由项的列表。
@@ -95,14 +96,10 @@ func (mux *ServeMux) addOne(ety entry, pattern string, method string) {
 		}
 	}
 
-	switch {
-	case mux.entries[method].Len() == 0: // 第一个元素
-		mux.entries[method].PushFront(ety)
-	case !ety.isRegexp(): // 非正则路由，在前端插入
-		mux.entries[method].PushFront(ety)
-	case ety.isRegexp(): // 正则路由，在后端插入
+	if ety.isRegexp() { // 正则路由，在后端插入
 		mux.entries[method].PushBack(ety)
 	}
+	mux.entries[method].PushFront(ety)
 }
 
 // 添加一条 OPTIONS 记录。
@@ -284,20 +281,14 @@ func (mux *ServeMux) AnyFunc(pattern string, fun func(http.ResponseWriter, *http
 
 // 查找最匹配的路由项
 func (mux *ServeMux) match(r *http.Request) (p string, e entry) {
-	hostURL := r.Host + r.URL.Path
 	size := -1 // 匹配度，0 表示完全匹配，负数表示完全不匹配，其它值越小匹配度越高
 
 	mux.mu.RLock()
 	defer mux.mu.RUnlock()
 
+	p = cleanPath(r.URL.Path)
 	for item := mux.entries[r.Method].Front(); item != nil; item = item.Next() {
 		ety := item.Value.(entry)
-
-		if ety.getPattern()[0] != '/' {
-			p = hostURL
-		} else {
-			p = r.URL.Path
-		}
 
 		s := ety.match(p)
 		if s == -1 || (size > 0 && s >= size) { // 完全不匹配，或是匹配度没有当前的高
@@ -333,4 +324,25 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		r = r.WithContext(ctx)
 	}
 	e.serveHTTP(w, r)
+}
+
+func cleanPath(p string) string {
+	if p == "" {
+		return "/"
+	}
+
+	if p[0] != '/' {
+		p = "/" + p
+	}
+
+	pp := path.Clean(p)
+	if pp == "/" {
+		return pp
+	}
+
+	// path.Clean 会去掉阳后的 / 符号
+	if p[len(p)-1] == '/' {
+		pp += "/"
+	}
+	return pp
 }
