@@ -64,7 +64,7 @@ func (b *basic) match(url string) int {
 
 //////////////// static
 
-// 静态文件匹配路由项，只要路径中的开头字符串与pattern相同，即表示匹配成功。
+// 静态文件匹配路由项，只要路径中的开头字符串与 pattern 相同，即表示匹配成功。
 // 根据match()的返回值来确定哪个最匹配。
 type static struct {
 	pattern string
@@ -93,12 +93,13 @@ func (s *static) match(url string) int {
 	case l < 0:
 		return -1
 	case l >= 0:
-		if (s.pattern == url[:len(s.pattern)]) &&
-			(s.pattern[len(s.pattern)-1] == '/') {
+		if (s.pattern[len(s.pattern)-1] == '/') &&
+			(s.pattern == url[:len(s.pattern)]) {
 			return l
 		}
 		return -1
 	} // end switch
+
 	return -1
 }
 
@@ -136,7 +137,7 @@ func (re *regexpr) match(url string) int {
 	return -1
 }
 
-// 将url与当前的表达式进行匹配，返回其命名路由参数的值。若不匹配，则返回nil
+// 将 url 与当前的表达式进行匹配，返回其命名路由参数的值。若不匹配，则返回 nil
 func (re *regexpr) getParams(url string) Params {
 	if !re.hasParams {
 		return nil
@@ -157,7 +158,7 @@ func (re *regexpr) getParams(url string) Params {
 // 根据内容，生成相应的 entry 接口实例。
 //
 // pattern 匹配内容。
-// h 对应的http.Handler，外层调用者确保该值不能为nil.
+// h 对应的 http.Handler，外层调用者确保该值不能为nil.
 func newEntry(pattern string, h http.Handler) entry {
 	strs := split(pattern)
 
@@ -184,8 +185,8 @@ func newEntry(pattern string, h http.Handler) entry {
 	}
 }
 
-// 将strs按照顺序合并成一个正则表达式
-// 返回参数正则表达式的字符串和一个bool值用以表式正则中是否包含了命名匹配。
+// 将 strs 按照顺序合并成一个正则表达式
+// 返回参数正则表达式的字符串和一个 bool 值用以表式正则中是否包含了命名匹配。
 func toPattern(strs []string) (string, bool) {
 	pattern := ""
 	hasParams := false
@@ -218,8 +219,9 @@ func toPattern(strs []string) (string, bool) {
 	return pattern, hasParams
 }
 
-// 将str以{和}为分隔符进行分隔。
-// 符号{和}必须成对出现，且不能嵌套，否则结果是未知的。
+// 将 str 以 { 和 } 为分隔符进行分隔。
+// 符号 { 和 } 必须成对出现，且不能嵌套，否则结果是未知的。
+//  /api/{id:\\d+}/users/ ==> {"/api/", "{id:\\d+}", "/users/"}
 func split(str string) []string {
 	ret := []string{}
 	var seq byte = '{'
@@ -235,7 +237,7 @@ func split(str string) []string {
 			break
 		}
 
-		if seq == '}' { // 将}字符留在当前字符串中
+		if seq == '}' { // 将 } 字符留在当前字符串中
 			index++
 		}
 

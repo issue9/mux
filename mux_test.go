@@ -12,6 +12,22 @@ import (
 	"github.com/issue9/assert"
 )
 
+func TestClearPath(t *testing.T) {
+	a := assert.New(t)
+
+	a.Equal(cleanPath(""), "/")
+	a.Equal(cleanPath("/api//"), "/api/")
+
+	a.Equal(cleanPath("/api/"), "/api/")
+	a.Equal(cleanPath("/api/./"), "/api/")
+
+	a.Equal(cleanPath("/api/.."), "/")
+	a.Equal(cleanPath("/api/../"), "/")
+
+	a.Equal(cleanPath("/api/../../"), "/")
+	a.Equal(cleanPath("/api../"), "/api../")
+}
+
 // 断言mux.paths[method].Len() == l
 func assertLen(mux *ServeMux, a *assert.Assertion, l int, method string) {
 	a.Equal(l, mux.entries[method].Len())

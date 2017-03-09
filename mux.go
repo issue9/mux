@@ -291,16 +291,18 @@ func (mux *ServeMux) match(r *http.Request) (p string, e entry) {
 		ety := item.Value.(entry)
 
 		s := ety.match(p)
+
+		if s == 0 { // 完全匹配，可以中止匹配过程
+			return p, ety
+		}
+
 		if s == -1 || (size > 0 && s >= size) { // 完全不匹配，或是匹配度没有当前的高
 			continue
 		}
 
+		// 匹配度比当前的高
 		size = s
 		e = ety
-
-		if s == 0 { // 完全匹配，可以中止匹配过程
-			return p, e
-		}
 	} // end for
 
 	if size < 0 {
@@ -326,6 +328,7 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	e.serveHTTP(w, r)
 }
 
+// 清除路径中的怪异符号
 func cleanPath(p string) string {
 	if p == "" {
 		return "/"
@@ -340,7 +343,7 @@ func cleanPath(p string) string {
 		return pp
 	}
 
-	// path.Clean 会去掉阳后的 / 符号
+	// path.Clean 会去掉最后的 / 符号，所以原来有 / 的，需要加回去
 	if p[len(p)-1] == '/' {
 		pp += "/"
 	}
