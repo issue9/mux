@@ -217,6 +217,13 @@ func TestServeMux_ServeHTTP(t *testing.T) {
 			params:     map[string]string{"version": "2"},
 		},
 		&handlerTester{
+			name:       "不规则的路径-4",
+			pattern:    "/api/a../{version:\\d+}",
+			query:      "/api/a../2",
+			statusCode: 200,
+			params:     map[string]string{"version": "2"},
+		},
+		&handlerTester{
 			name:       "正则匹配多个名称",
 			pattern:    "/api/{version:\\d+}/{name:\\w+}",
 			query:      "/api/2/login",
