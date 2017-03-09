@@ -11,19 +11,18 @@ import (
 	"net/http/httptest"
 
 	"github.com/issue9/assert"
-	"github.com/issue9/context"
 	"github.com/issue9/handlers"
 )
 
-// http.Handler测试工具，测试h返回值是否与response相同。
+// http.Handler 测试工具，测试h返回值是否与 response 相同。
 type handlerTester struct {
 	name  string       // 该测试组的名称，方便定位
-	h     http.Handler // 用于测试的http.Handler实例
+	h     http.Handler // 用于测试的 http.Handler 实例
 	query string       // 访问测试所用的查询字符串
 
 	statusCode int // 通过返回的状态码，判断是否是需要的值。
 
-	ctxName string            // h在context中设置的变量名称，若没有，则为空值。
+	ctxName string            // h 在 context 中设置的变量名称，若没有，则为空值。
 	ctxMap  map[string]string // 以及该变量对应的值
 }
 
@@ -36,16 +35,14 @@ type ctxHandler struct {
 func (ch *ctxHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	ch.h.ServeHTTP(w, req)
 
-	/* 在正主执行ServeHTTP之后，才会有context存在 */
+	/* 在正主执行 ServeHTTP 之后，才会有 context 存在 */
 
-	ctx := context.Get(req)
-	mapped, found := ctx.Get(ch.test.ctxName)
+	params := req.Context().Value(ContextKeyParams).(Params)
+	mapped, found := params[ch.test.ctxName]
 	ch.a.True(found)
 
-	data, ok := mapped.(map[string]string)
-	ch.a.True(ok, "在执行[%v]时，无法获取其Context相关参数", ch.test.name)
-	errStr := "在执行[%v]时，context参数[%v]与预期值不相等"
-	ch.a.Equal(data, ch.test.ctxMap, errStr, ch.test.name, data, ch.test.ctxMap)
+	errStr := "在执行[%v]时，context参数[%v]与预期值[%v]不相等"
+	ch.a.Equal(mapped, ch.test.ctxMap, errStr, ch.test.name, mapped, ch.test.ctxMap)
 }
 
 // 运行一组handlerTester测试内容
@@ -59,7 +56,7 @@ func runHandlerTester(a *assert.Assertion, tests []*handlerTester) {
 			}
 		}
 
-		// 包含一个默认的错误处理函数，用于在出错时，输出error字符串.
+		// 包含一个默认的错误处理函数，用于在出错时，输出 error 字符串.
 		srv := httptest.NewServer(handlers.Recovery(test.h, errHandler))
 		a.NotNil(srv)
 

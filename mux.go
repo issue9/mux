@@ -6,12 +6,19 @@ package mux
 
 import (
 	"container/list"
+	"context"
 	"net/http"
 	"strings"
 	"sync"
-
-	"github.com/issue9/context"
 )
+
+type contextKey int
+
+// ContextKeyParams 表示从 context 中获取的参数列表的关键字。
+const ContextKeyParams contextKey = 0
+
+// Params 用以保存请求地址中的参数内容
+type Params map[string]string
 
 // ServeMux 是 http.ServeMux 的升级版，可处理对 URL 的正则匹配和根据 METHOD 进行过滤。
 //
@@ -349,8 +356,7 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	params := e.getParams(p)
 	if params != nil {
-		ctx := context.Get(r)
-		ctx.Set("params", params)
+		context.WithValue(r.Context(), ContextKeyParams, params)
 	}
 	e.serveHTTP(w, r)
 }
