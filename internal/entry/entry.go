@@ -65,7 +65,7 @@ func (b *basic) Match(url string) int {
 //////////////// static
 
 // 静态文件匹配路由项，只要路径中的开头字符串与 pattern 相同，即表示匹配成功。
-// 根据match()的返回值来确定哪个最匹配。
+// 根据 match() 的返回值来确定哪个最匹配。
 type static struct {
 	pattern string
 	handler http.Handler
@@ -126,7 +126,7 @@ func (re *regexpr) IsRegexp() bool {
 }
 
 func (re *regexpr) Match(url string) int {
-	// 正则匹配，没有部分匹配功能，匹配返回0,否则返回-1
+	// 正则匹配，没有部分匹配功能，匹配返回 0，否则返回 -1
 	loc := re.expr.FindStringIndex(url)
 	if loc == nil {
 		return -1
@@ -158,7 +158,7 @@ func (re *regexpr) Params(url string) map[string]string {
 // New 根据内容，生成相应的 Entry 接口实例。
 //
 // pattern 匹配内容。
-// h 对应的 http.Handler，外层调用者确保该值不能为nil.
+// h 对应的 http.Handler，外层调用者确保该值不能为 nil.
 func New(pattern string, h http.Handler) Entry {
 	strs := split(pattern)
 
@@ -186,7 +186,7 @@ func New(pattern string, h http.Handler) Entry {
 }
 
 // 将 strs 按照顺序合并成一个正则表达式
-// 返回参数正则表达式的字符串和一个 bool 值用以表式正则中是否包含了命名匹配。
+// 返回参数正则表达式的字符串，和一个 bool 值用以表式正则中是否包含了命名匹配。
 func toPattern(strs []string) (string, bool) {
 	pattern := ""
 	hasParams := false
