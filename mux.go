@@ -146,15 +146,18 @@ func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) erro
 		return errors.New("参数h不能为空")
 	}
 
+	if len(methods) == 0 {
+		methods = defaultMethods
+	}
+
+	mux.mu.Lock()
+	defer mux.mu.Unlock()
+
 	for item := mux.entries.Front(); item != nil; item = item.Next() {
 		e := item.Value.(entry.Entry)
 		if e.Pattern() != pattern {
 			return errors.New("该资源已经存在")
 		}
-	}
-
-	if len(methods) == 0 {
-		methods = defaultMethods
 	}
 
 	ety := entry.New(pattern, h)
@@ -166,9 +169,6 @@ func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) erro
 			return err
 		}
 	}
-
-	mux.mu.Lock()
-	defer mux.mu.Unlock()
 
 	if ety.IsRegexp() { // 正则路由，在后端插入
 		mux.entries.PushBack(ety)
