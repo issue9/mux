@@ -145,6 +145,13 @@ func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) *Ser
 		panic("参数h不能为空")
 	}
 
+	for item := mux.entries.Front(); item != nil; item = item.Next() {
+		e := item.Value.(entry.Entry)
+		if e.Pattern() != pattern {
+			panic("该资源已经存在")
+		}
+	}
+
 	if len(methods) == 0 {
 		methods = defaultMethods
 	}
