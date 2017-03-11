@@ -5,47 +5,59 @@
 package entry
 
 import (
-	"errors"
 	"net/http"
 	"strings"
 )
 
-var ErrMethodExists = errors.New("该请求方法的路由已经存在")
-
 type items struct {
-	handlers    map[string]http.Handler
-	allows      string // 缓存的 allow 报头内容
-	fixedAllows bool   // 固定 allows 不再修改
+	handlers            map[string]http.Handler // 请求方法及其对应的 Handler
+	optionsAllow        string                  // 缓存的 OPTIONS 请求头的 allow 报头内容，每次更新 handlers 时自动更新。
+	fixedOptionsAllow   bool                    // 固定 optionsAllow 不再修改，一般为外部作了强制修改所致。
+	fixedOptionsHandler bool                    // 固定 handlers[http.MethodOptions] 不再修改，一般为外部作了强制修改。
 }
 
 func newItems() *items {
-	return &items{
+	ret := &items{
 		handlers: make(map[string]http.Handler, 10),
 	}
+
+	// 添加默认的 OPTIONS 请求内容
+	ret.handlers[http.MethodOptions] = http.HandlerFunc(ret.optionsServeHTTP)
+	ret.optionsAllow = ret.getOptionsAllow()
+
+	return ret
 }
 
-// NOTE: 如果 mehtod == options 则，其它两个设置都不起作用
+// 实现 Entry.Add() 接口方法。
 func (i *items) Add(method string, h http.Handler) error {
+	if method == http.MethodOptions { // 强制修改 OPTIONS 方法的处理方式
+		if i.fixedOptionsHandler { // 被强制修改过，不能再受理。
+			return ErrMethodExists
+		}
+
+		i.handlers[method] = h
+		i.fixedOptionsHandler = true
+		return nil
+	}
+
+	// 非 OPTIONS 请求
 	if _, found := i.handlers[method]; found {
 		return ErrMethodExists
 	}
-
 	i.handlers[method] = h
 
-	// 添加 OPTIONS 的处理函数
-	if _, found := i.handlers[http.MethodOptions]; !found {
-		i.handlers[http.MethodOptions] = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			r.Header.Set("Allow", i.allows)
-		})
-	}
-
-	if !i.fixedAllows {
-		i.allows = i.getAllows()
+	// 重新生成 optionsAllow 字符串
+	if !i.fixedOptionsAllow {
+		i.optionsAllow = i.getOptionsAllow()
 	}
 	return nil
 }
 
-func (i *items) getAllows() string {
+func (i *items) optionsServeHTTP(w http.ResponseWriter, r *http.Request) {
+	r.Header.Set("Allow", i.optionsAllow)
+}
+
+func (i *items) getOptionsAllow() string {
 	methods := make([]string, 0, len(i.handlers))
 	for method := range i.handlers {
 		methods = append(methods, method)
@@ -60,26 +72,31 @@ func (i *items) Remove(methods ...string) bool {
 		delete(i.handlers, method)
 	}
 
-	if len(i.handlers) == 0 || // 没了
-		(len(i.handlers) == 1 && i.handlers[http.MethodOptions] != nil) { // 只有一个 OPTIONS 了
-		delete(i.handlers, http.MethodOptions)
-
-		if !i.fixedAllows {
-			i.allows = ""
-		}
-
+	// 删完了
+	if len(i.handlers) == 0 {
+		i.optionsAllow = ""
 		return true
 	}
 
-	if !i.fixedAllows {
-		i.allows = i.getAllows()
+	// 只有一个 OPTIONS 了
+	if len(i.handlers) == 1 && i.handlers[http.MethodOptions] != nil {
+		if !i.fixedOptionsAllow && !i.fixedOptionsHandler {
+			delete(i.handlers, http.MethodOptions)
+			i.optionsAllow = ""
+			return true
+		}
+
+	}
+
+	if !i.fixedOptionsAllow {
+		i.optionsAllow = i.getOptionsAllow()
 	}
 	return false
 }
 
-func (i *items) SetAllow(allows string) {
-	i.allows = allows
-	i.fixedAllows = true
+func (i *items) SetAllow(optionsAllow string) {
+	i.optionsAllow = optionsAllow
+	i.fixedOptionsAllow = true
 }
 
 func (i *items) Handler(method string) http.Handler {

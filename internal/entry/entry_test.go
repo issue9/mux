@@ -11,6 +11,10 @@ import (
 	"github.com/issue9/assert"
 )
 
+var _ Entry = &basic{}
+var _ Entry = &static{}
+var _ Entry = &regexpr{}
+
 func TestSplit(t *testing.T) {
 	a := assert.New(t)
 

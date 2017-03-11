@@ -11,13 +11,8 @@ import (
 	"strings"
 )
 
-var (
-	// ErrMethodExists 表示 Entry 中已经存在相同请求方法的 http.Handler
-	ErrMethodExists = errors.New("该请求方法已经存在")
-
-	// ErrMethodNotAllow 无效的请求方法
-	ErrMethodNotAllow = errors.New("不允许的请求方法")
-)
+// ErrMethodExists 表示 Entry 中已经存在相同请求方法的 http.Handler
+var ErrMethodExists = errors.New("该请求方法已经存在")
 
 // Entry 表示一类资源的进入点，拥有统一的路由匹配模式。
 type Entry interface {
@@ -40,8 +35,9 @@ type Entry interface {
 	Handler(method string) http.Handler
 
 	// 添加请求方法及其对应的处理函数。
+	//
 	// 若已经存在，则返回 ErrMethodExists 错误。
-	// 若 method == http.MethodOptions，则不作任何处理。
+	// 若 method == http.MethodOptions，则可以去覆盖默认的处理方式。
 	Add(method string, handler http.Handler) error
 
 	// 移除指定方法的处理池数。若 Entry 中已经没有任何 http.Handler，则返回 true
