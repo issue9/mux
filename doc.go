@@ -5,8 +5,8 @@
 // Package mux 提供了相对 http.ServeMux 更加复杂的路径功能。
 //
 //  m := mux.NewServerMux().
-//          Get("/user/1", h). // 不限定域名，必须以/开头
-//          Post("www.example/api/login", h). // 限定了域名
+//          Get("/user/1", h).
+//          Post("/api/login", h).
 //          Get("/blog/post/{id:\\d+}", h). // 正则路由
 //          Options("/user/1", "GET") // 手动指定 OPTIONS 请求的返回内容。
 //

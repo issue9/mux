@@ -46,6 +46,9 @@ func TestItems_Add_Remove(t *testing.T) {
 	a.Error(i.Add(http.MethodOptions, get))
 	i.Remove(http.MethodOptions)
 	a.NotError(i.Add(http.MethodOptions, get))
+
+	// 删除不存在的内容
+	i.Remove("not exists")
 }
 
 func TestItems_OptionsAllow(t *testing.T) {

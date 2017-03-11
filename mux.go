@@ -7,6 +7,7 @@ package mux
 import (
 	"container/list"
 	"context"
+	"fmt"
 	"net/http"
 	"path"
 	"strings"
@@ -22,6 +23,32 @@ const ContextKeyParams contextKey = 0
 
 // Params 用以保存请求地址中的参数内容
 type Params map[string]string
+
+var (
+	// 支持的所有请求方法
+	supportedMethods = []string{
+		http.MethodGet,
+		http.MethodPost,
+		http.MethodDelete,
+		http.MethodPut,
+		http.MethodPatch,
+		http.MethodOptions,
+		http.MethodHead,
+		http.MethodTrace,
+	}
+
+	// 调用 Any 添加的列表，默认不添加 OPTIONS 请求
+	defaultMethods = []string{
+		http.MethodGet,
+		http.MethodPost,
+		http.MethodDelete,
+		http.MethodPut,
+		http.MethodPatch,
+		// http.MethodOptions,
+		http.MethodHead,
+		http.MethodTrace,
+	}
+)
 
 // ServeMux 是 http.ServeMux 的升级版，可处理对 URL 的正则匹配和根据 METHOD 进行过滤。
 //
@@ -124,6 +151,9 @@ func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) *Ser
 
 	ety := entry.New(pattern, h)
 	for _, method := range methods {
+		if !MethodIsSupported(method) {
+			panic(fmt.Errorf("无效的 methods: %v", method))
+		}
 		ety.Add(method, h)
 	}
 
@@ -222,11 +252,11 @@ func (mux *ServeMux) AnyFunc(pattern string, fun func(http.ResponseWriter, *http
 // 查找最匹配的路由项
 func (mux *ServeMux) match(r *http.Request) (p string, e entry.Entry) {
 	size := -1 // 匹配度，0 表示完全匹配，负数表示完全不匹配，其它值越小匹配度越高
+	p = cleanPath(r.URL.Path)
 
 	mux.mu.RLock()
 	defer mux.mu.RUnlock()
 
-	p = cleanPath(r.URL.Path)
 	for item := mux.entries.Front(); item != nil; item = item.Next() {
 		ety := item.Value.(entry.Entry)
 
@@ -294,4 +324,16 @@ func cleanPath(p string) string {
 		pp += "/"
 	}
 	return pp
+}
+
+// MethodIsSupported 是否支持某请求方法
+func MethodIsSupported(method string) bool {
+	method = strings.ToUpper(method)
+	for _, m := range supportedMethods {
+		if m == method {
+			return true
+		}
+	}
+
+	return false
 }

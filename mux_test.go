@@ -283,3 +283,11 @@ func BenchmarkServeMux_ServeHTTPAll(b *testing.B) {
 		srvfun(i % len(reqs))
 	}
 }
+
+func TestMethodIsSupported(t *testing.T) {
+	a := assert.New(t)
+
+	a.True(MethodIsSupported("get"))
+	a.True(MethodIsSupported("POST"))
+	a.False(MethodIsSupported("not exists"))
+}
