@@ -6,6 +6,7 @@ package entry
 
 import (
 	"net/http"
+	"sort"
 	"strings"
 )
 
@@ -64,7 +65,7 @@ func (i *items) Add(method string, h http.Handler) error {
 }
 
 func (i *items) optionsServeHTTP(w http.ResponseWriter, r *http.Request) {
-	r.Header.Set("Allow", i.optionsAllow)
+	w.Header().Set("Allow", i.optionsAllow)
 }
 
 func (i *items) getOptionsAllow() string {
@@ -73,13 +74,20 @@ func (i *items) getOptionsAllow() string {
 		methods = append(methods, method)
 	}
 
+	sort.Strings(methods) // 防止每次从 map 中读取的顺序都不一样
 	return strings.Join(methods, ", ")
 }
 
 // 返回值表示，是否还有路由项
+//
+// 若指定删除了 http.MethodOptions 方法，则不是恢复旧的默认处理方式，
+// 而是直接无法查找到该方法，这样可以禁用 Options 方法。
 func (i *items) Remove(methods ...string) bool {
 	for _, method := range methods {
 		delete(i.handlers, method)
+		if method == http.MethodOptions { // 不恢复方法，只恢复了 fixOptionsHandler
+			i.fixedOptionsHandler = false
+		}
 	}
 
 	// 删完了
@@ -104,6 +112,7 @@ func (i *items) Remove(methods ...string) bool {
 	return false
 }
 
+// SetAllow 设置 Allow 报头的内容。
 func (i *items) SetAllow(optionsAllow string) {
 	i.optionsAllow = optionsAllow
 	i.fixedOptionsAllow = true
