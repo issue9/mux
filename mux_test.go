@@ -36,35 +36,30 @@ func TestServeMux_ServeHTTP(t *testing.T) {
 		&tester{
 			name:    "普通匹配",
 			pattern: "/abc",
-			method:  http.MethodGet,
 			url:     "/abc",
 			status:  http.StatusOK,
 		},
 		&tester{
 			name:    "普通部分匹配",
 			pattern: "/abc/",
-			method:  http.MethodGet,
 			url:     "/abc/d",
 			status:  http.StatusOK,
 		},
 		&tester{
 			name:    "普通不匹配-1",
 			pattern: "/abc",
-			method:  http.MethodGet,
 			url:     "/abcd",
 			status:  http.StatusNotFound,
 		},
 		&tester{
 			name:    "普通不匹配-2",
 			pattern: "/abc",
-			method:  http.MethodGet,
 			url:     "/cba",
 			status:  http.StatusNotFound,
 		},
 		&tester{
 			name:    "正则匹配数字",
 			pattern: "/api/{version:\\d+}",
-			method:  http.MethodPost,
 			url:     "/api/2",
 			status:  http.StatusOK,
 			params:  map[string]string{"version": "2"},
@@ -72,7 +67,6 @@ func TestServeMux_ServeHTTP(t *testing.T) {
 		&tester{
 			name:    "不规则的路径-1",
 			pattern: "/api/{version:\\d+}",
-			method:  http.MethodDelete,
 			url:     "/api//2",
 			status:  http.StatusOK,
 			params:  map[string]string{"version": "2"},
@@ -80,7 +74,6 @@ func TestServeMux_ServeHTTP(t *testing.T) {
 		&tester{
 			name:    "不规则的路径-2",
 			pattern: "/api/{version:\\d+}",
-			method:  http.MethodGet,
 			url:     "/api/nest/../2", // 上一层路径
 			status:  http.StatusOK,
 			params:  map[string]string{"version": "2"},
@@ -88,7 +81,6 @@ func TestServeMux_ServeHTTP(t *testing.T) {
 		&tester{
 			name:    "不规则的路径-3",
 			pattern: "/{version:\\d+}",
-			method:  http.MethodGet,
 			url:     "/api/../../../2", // 上 N 层路径，超过根路径
 			status:  http.StatusOK,
 			params:  map[string]string{"version": "2"},
@@ -96,7 +88,6 @@ func TestServeMux_ServeHTTP(t *testing.T) {
 		&tester{
 			name:    "不规则的路径-4",
 			pattern: "/api/a../{version:\\d+}",
-			method:  http.MethodGet,
 			url:     "/api/a../2",
 			status:  http.StatusOK,
 			params:  map[string]string{"version": "2"},
@@ -104,7 +95,6 @@ func TestServeMux_ServeHTTP(t *testing.T) {
 		&tester{
 			name:    "正则匹配多个名称",
 			pattern: "/api/{version:\\d+}/{name:\\w+}",
-			method:  http.MethodGet,
 			url:     "/api/2/login",
 			status:  http.StatusOK,
 			params:  map[string]string{"version": "2", "name": "login"},
@@ -112,28 +102,24 @@ func TestServeMux_ServeHTTP(t *testing.T) {
 		&tester{
 			name:    "正则不匹配多个名称",
 			pattern: "/api/{version:\\d+}/{name:\\w+}",
-			method:  http.MethodGet,
 			url:     "/api/2.0/login",
 			status:  http.StatusNotFound,
 		},
 		/*&tester{
 			name:       "带域名的字符串不匹配", //无法匹配端口信息
 			pattern:    "127.0.0.1/abc",
-			method:http.MethodGet,
 			url:      "/cba",
 			status: 404,
 		},
 		&tester{
 			name:       "带域名的正则匹配", //无法匹配端口信息
 			pattern:    "127.0.0.1:{:\\d+}/abc",
-			method:http.MethodGet,
 			url:      "/abc",
 			status: 200,
 		},
 		&tester{
 			name:       "带域名的命名正则匹配", //无法匹配端口信息
 			pattern:    "127.0.0.1:{:\\d+}/api/v{version:\\d+}/login",
-			method:http.MethodGet,
 			url:      "/api/v2/login",
 			status: 200,
 			params:     map[string]string{"version": "2"},
@@ -190,9 +176,9 @@ func TestServeMux_ServeHTTP_Order(t *testing.T) {
 
 	serveMux := NewServeMux(false)
 	a.NotNil(serveMux)
-	serveMux.AddFunc("/post/", f1, "GET")          // f1
-	serveMux.AddFunc("/post/{id:\\d+}", f2, "GET") // f2
-	serveMux.AddFunc("/post/1", f3, "GET")         // f3
+	a.NotError(serveMux.AddFunc("/post/", f1, "GET"))          // f1
+	a.NotError(serveMux.AddFunc("/post/{id:\\d+}", f2, "GET")) // f2
+	a.NotError(serveMux.AddFunc("/post/1", f3, "GET"))         // f3
 	//serveMux.AddFunc("127.0.0.1/post/", f4, "GET")          // f4
 	//serveMux.AddFunc("127.0.0.1/post/{id:\\d+}", f5, "GET") // f5
 	//serveMux.AddFunc("127.0.0.1/post/1", f6, "GET")         // f6

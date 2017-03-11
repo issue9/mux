@@ -20,7 +20,6 @@ type tester struct {
 	// 以下为构建内容
 	name    string // 该测试组的名称，方便定位
 	pattern string // 地址匹配模式
-	method  string // 请求方法
 
 	// 以下为请求及返回的内容
 	url     string            // 访问测试所用的地址
@@ -31,20 +30,19 @@ type tester struct {
 
 // 运行一组 tester 测试内容
 func runTester(a *assert.Assertion, tests []*tester) {
-	srvmux := NewServeMux(false)
-	a.NotNil(srvmux)
-
-	for _, test := range tests {
-		a.NotError(srvmux.AddFunc(test.pattern, defaultHandler, test.method))
-	}
 
 	// 包含一个默认的错误处理函数，用于在出错时，输出 error 字符串.
-	srv := httptest.NewServer(handlers.Recovery(srvmux, errHandler))
-	a.NotNil(srv)
-	defer srv.Close()
 
 	// 依次检测各个测试用例
 	for _, test := range tests {
+		srvmux := NewServeMux(false)
+		a.NotNil(srvmux)
+		a.NotError(srvmux.GetFunc(test.pattern, defaultHandler))
+
+		srv := httptest.NewServer(handlers.Recovery(srvmux, errHandler))
+		a.NotNil(srv)
+		defer srv.Close()
+
 		resp, err := http.Get(srv.URL + test.url)
 		a.NotError(err).NotNil(resp)
 

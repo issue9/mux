@@ -158,8 +158,8 @@ func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) erro
 
 	for item := mux.entries.Front(); item != nil; item = item.Next() {
 		e := item.Value.(entry.Entry)
-		if e.Pattern() != pattern {
-			return errors.New("该资源已经存在")
+		if e.Pattern() == pattern {
+			return fmt.Errorf("该资源[%v]已经存在", pattern)
 		}
 	}
 
