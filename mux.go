@@ -154,7 +154,9 @@ func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) *Ser
 		if !MethodIsSupported(method) {
 			panic(fmt.Errorf("无效的 methods: %v", method))
 		}
-		ety.Add(method, h)
+		if err := ety.Add(method, h); err != nil {
+			panic(err)
+		}
 	}
 
 	mux.mu.Lock()
