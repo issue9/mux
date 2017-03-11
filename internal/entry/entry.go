@@ -24,19 +24,26 @@ type Entry interface {
 	// 获取参数，只有正则表达式才有数据。
 	Params(url string) map[string]string
 
-	// 执行该路由项的函数
-	ServeHTTP(w http.ResponseWriter, r *http.Request)
-
 	// 是否为正则表达式
 	IsRegexp() bool
+
+	// 执行该路由项的函数
+	//ServeHTTP(method string, w http.ResponseWriter, r *http.Request)
+	Handler(method string) http.Handler
+
+	Add(method string, handler http.Handler) error
+
+	Remove(method ...string) bool
+
+	SetAllow(string)
 }
 
 //////////////// basic
 
 // 最基本的字符串匹配路由项。
 type basic struct {
+	*items
 	pattern string
-	handler http.Handler
 }
 
 func (b *basic) Pattern() string {
@@ -45,10 +52,6 @@ func (b *basic) Pattern() string {
 
 func (b *basic) IsRegexp() bool {
 	return false
-}
-
-func (b *basic) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	b.handler.ServeHTTP(w, r)
 }
 
 func (b *basic) Params(url string) map[string]string {
@@ -67,8 +70,8 @@ func (b *basic) Match(url string) int {
 // 静态文件匹配路由项，只要路径中的开头字符串与 pattern 相同，即表示匹配成功。
 // 根据 match() 的返回值来确定哪个最匹配。
 type static struct {
+	*items
 	pattern string
-	handler http.Handler
 }
 
 func (s *static) Pattern() string {
@@ -77,10 +80,6 @@ func (s *static) Pattern() string {
 
 func (s *static) IsRegexp() bool {
 	return false
-}
-
-func (s *static) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	s.handler.ServeHTTP(w, r)
 }
 
 func (s *static) Params(url string) map[string]string {
@@ -107,18 +106,14 @@ func (s *static) Match(url string) int {
 
 // 正则表达式匹配。
 type regexpr struct {
+	*items
 	pattern   string
 	expr      *regexp.Regexp
 	hasParams bool
-	handler   http.Handler
 }
 
 func (re *regexpr) Pattern() string {
 	return re.pattern
-}
-
-func (re *regexpr) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	re.handler.ServeHTTP(w, r)
 }
 
 func (re *regexpr) IsRegexp() bool {
@@ -165,8 +160,8 @@ func New(pattern string, h http.Handler) Entry {
 	if len(strs) > 1 { // 正则路由
 		p, hasParams := toPattern(strs)
 		return &regexpr{
+			items:     newItems(),
 			pattern:   pattern,
-			handler:   h,
 			hasParams: hasParams,
 			expr:      regexp.MustCompile(p),
 		}
@@ -174,14 +169,14 @@ func New(pattern string, h http.Handler) Entry {
 
 	if pattern[len(pattern)-1] == '/' {
 		return &static{
+			items:   newItems(),
 			pattern: pattern,
-			handler: h,
 		}
 	}
 
 	return &basic{
 		pattern: pattern,
-		handler: h,
+		items:   newItems(),
 	}
 }
 

@@ -54,74 +54,20 @@ type Params map[string]string
 //  /post/{id:\d+} // 同上，但 id 的值只能为 \d+；
 //  /post/{:\d+}   // 同上，但是没有命名；
 type ServeMux struct {
-	// 同时处理 entries,options 三个的竟争问题
+	// 同时处理 entries 三个的竟争问题
 	mu sync.RWMutex
 
 	// 路由项，按请求方法进行分类，键名为请求方法名称，键值为路由项的列表。
-	entries map[string]*list.List
-
-	// 各个路由项已开通的方法，即 OPTIONS 请求方法对应的值。
-	options map[string]int16
+	entries *list.List
 }
 
 // NewServeMux 声明一个新的 ServeMux
 func NewServeMux() *ServeMux {
 	ret := &ServeMux{
-		entries: make(map[string]*list.List, len(supportedMethods)),
-		options: map[string]int16{},
-	}
-	for _, method := range supportedMethods {
-		ret.entries[method] = list.New()
+		entries: list.New(),
 	}
 
 	return ret
-}
-
-// 添加一条记录。
-//
-// 若路由项已经存在或是请求方法不支持，则直接 panic。
-// 若 method 的值为 OPTIONS，则相同的路由项会被覆盖，而不是 panic。
-func (mux *ServeMux) addOne(ety entry.Entry, pattern string, method string) {
-	mux.mu.Lock()
-	defer mux.mu.Unlock()
-
-	if method != http.MethodOptions { // OPTIONS 则不检测是否已经存在，存在则执行覆盖操作
-		entries, found := mux.entries[method]
-		if !found {
-			panic("不支持的请求方法：" + method)
-		}
-
-		for item := entries.Front(); item != nil; item = item.Next() {
-			if e := item.Value.(entry.Entry); e.Pattern() == pattern {
-				panic("该路由项已经存在：[" + method + "]" + pattern)
-			}
-		}
-	}
-
-	if ety.IsRegexp() { // 正则路由，在后端插入
-		mux.entries[method].PushBack(ety)
-	}
-	mux.entries[method].PushFront(ety)
-}
-
-// 添加一条 OPTIONS 记录。
-func (mux *ServeMux) addOptions(pattern string, methods []string) {
-	list, found := mux.options[pattern]
-	for _, method := range methods {
-		list |= toint[method]
-	}
-	// 加上 options，若已经存在，也不会有影响
-	mux.options[pattern] = (list | options)
-
-	// 在未初始化该路由项的情况下，为其添加一个请求方法为 OPTIONS 的路由
-	if !found && !inStringSlice(methods, http.MethodOptions) {
-		h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			r.Header.Set("Allow", getAllowString(mux.options[pattern]))
-		})
-
-		e := entry.New(pattern, h)
-		mux.addOne(e, pattern, http.MethodOptions)
-	}
 }
 
 // Clean 清除所有的路由项
@@ -129,15 +75,7 @@ func (mux *ServeMux) Clean() *ServeMux {
 	mux.mu.Lock()
 	defer mux.mu.Unlock()
 
-	mux.options = map[string]int16{}
-
-	// 这里使用 supportedMethods，将 OPTIONS 的相关路由也清除掉
-	for _, method := range supportedMethods {
-		l, found := mux.entries[method]
-		if found {
-			l.Init()
-		}
-	}
+	mux.entries.Init()
 
 	return mux
 }
@@ -153,31 +91,17 @@ func (mux *ServeMux) Remove(pattern string, methods ...string) {
 	mux.mu.Lock()
 	defer mux.mu.Unlock()
 
-	// 清除路由项
-	mux.options[pattern] = mux.options[pattern] & (^methodsToInt(methods...))
-	if mux.options[pattern] == options { // 只剩下 options 了，则清空
-		mux.options[pattern] = 0
-		methods = append(methods, http.MethodOptions)
-	}
-
-	for _, method := range methods {
-		entries, found := mux.entries[method]
-		if !found {
+	for item := mux.entries.Front(); item != nil; item = item.Next() {
+		e := item.Value.(entry.Entry)
+		if e.Pattern() != pattern {
 			continue
 		}
 
-		for item := entries.Front(); item != nil; item = item.Next() {
-			e := item.Value.(entry.Entry)
-			if e.Pattern() != pattern {
-				continue
-			}
-
-			// 清除路由项
-			entries.Remove(item)
-
-			break // 最多只有一个匹配
+		if empty := e.Remove(methods...); empty { // 该 Entry 下已经没有路由项了
+			mux.entries.Remove(item)
 		}
-	} // end for methods
+		break
+	}
 }
 
 // Add 添加一条路由数据。
@@ -198,12 +122,18 @@ func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) *Ser
 		methods = defaultMethods
 	}
 
-	e := entry.New(pattern, h)
+	ety := entry.New(pattern, h)
 	for _, method := range methods {
-		mux.addOne(e, pattern, strings.ToUpper(method))
+		ety.Add(method, h)
 	}
 
-	mux.addOptions(pattern, methods)
+	mux.mu.Lock()
+	defer mux.mu.Unlock()
+
+	if ety.IsRegexp() { // 正则路由，在后端插入
+		mux.entries.PushBack(ety)
+	}
+	mux.entries.PushFront(ety)
 
 	return mux
 }
@@ -212,7 +142,15 @@ func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) *Ser
 //
 // 若无特殊需求，不用调用此方法，系统会自动计算符合当前路由的请求方法列表。
 func (mux *ServeMux) Options(pattern string, allowMethods ...string) *ServeMux {
-	mux.options[pattern] = methodsToInt(allowMethods...)
+	for item := mux.entries.Front(); item != nil; item = item.Next() {
+		e := item.Value.(entry.Entry)
+		if e.Pattern() != pattern {
+			continue
+		}
+
+		e.SetAllow(strings.Join(allowMethods, ", "))
+		break
+	}
 	return mux
 }
 
@@ -289,7 +227,7 @@ func (mux *ServeMux) match(r *http.Request) (p string, e entry.Entry) {
 	defer mux.mu.RUnlock()
 
 	p = cleanPath(r.URL.Path)
-	for item := mux.entries[r.Method].Front(); item != nil; item = item.Next() {
+	for item := mux.entries.Front(); item != nil; item = item.Next() {
 		ety := item.Value.(entry.Entry)
 
 		s := ety.Match(p)
@@ -322,12 +260,18 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h := e.Handler(r.Method)
+	if h == nil {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
 	params := e.Params(p)
 	if params != nil {
 		ctx := context.WithValue(r.Context(), ContextKeyParams, Params(params))
 		r = r.WithContext(ctx)
 	}
-	e.ServeHTTP(w, r)
+	h.ServeHTTP(w, r)
 }
 
 // 清除路径中的怪异符号

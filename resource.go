@@ -4,11 +4,7 @@
 
 package mux
 
-import (
-	"net/http"
-
-	"github.com/issue9/mux/internal/entry"
-)
+import "net/http"
 
 // Resource 以资源地址为对象的路由配置。
 //  r := srv.Resource("/api/users/{id}")
@@ -23,7 +19,7 @@ type Resource struct {
 //
 // 若无特殊需求，不用调用些方法，系统会自动计算符合当前路由的请求方法列表。
 func (r *Resource) Options(allowMethods ...string) *Resource {
-	r.mux.addOptions(r.pattern, allowMethods)
+	r.mux.Options(r.pattern, allowMethods...)
 	return r
 }
 
@@ -107,29 +103,7 @@ func (r *Resource) Remove(methods ...string) *Resource {
 
 // Clean 清除当前资源的所有路由项
 func (r *Resource) Clean() *Resource {
-	r.mux.mu.Lock()
-	defer r.mux.mu.Unlock()
-
-	for _, method := range supportedMethods {
-		entries, found := r.mux.entries[method]
-		if !found {
-			continue
-		}
-
-		for item := entries.Front(); item != nil; {
-			curr := item
-			item = item.Next()
-
-			pattern := curr.Value.(entry.Entry).Pattern()
-			if r.pattern == pattern {
-				// 清除options的内容
-				r.mux.options[pattern] = r.mux.options[pattern] & (^methodsToInt(method))
-
-				entries.Remove(curr)
-			}
-		}
-	} // end for
-
+	r.mux.Remove(r.pattern, supportedMethods...)
 	return r
 }
 

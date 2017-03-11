@@ -24,7 +24,7 @@ type Prefix struct {
 //
 // 若无特殊需求，不用调用些方法，系统会自动计算符合当前路由的请求方法列表。
 func (p *Prefix) Options(pattern string, allowMethods ...string) *Prefix {
-	p.mux.addOptions(p.prefix+pattern, allowMethods)
+	p.mux.Options(p.prefix+pattern, allowMethods...)
 	return p
 }
 
@@ -106,27 +106,20 @@ func (p *Prefix) Remove(pattern string, methods ...string) *Prefix {
 	return p
 }
 
-// Clean 清除所有以Prefix.prefix开头的路由项
+// Clean 清除所有以 Prefix.prefix 开头的路由项
 func (p *Prefix) Clean() *Prefix {
 	p.mux.mu.Lock()
 	defer p.mux.mu.Unlock()
 
-	for _, method := range supportedMethods {
-		entries, found := p.mux.entries[method]
-		if !found {
-			continue
-		}
+	for item := p.mux.entries.Front(); item != nil; {
+		curr := item
+		item = item.Next()
 
-		for item := entries.Front(); item != nil; {
-			curr := item
-			item = item.Next()
-
-			pattern := curr.Value.(entry.Entry).Pattern()
-			if strings.HasPrefix(pattern, p.prefix) {
-				// 清除options的内容
-				p.mux.options[pattern] = p.mux.options[pattern] & (^methodsToInt(method))
-
-				entries.Remove(curr)
+		ety := curr.Value.(entry.Entry)
+		pattern := ety.Pattern()
+		if strings.HasPrefix(pattern, p.prefix) {
+			if empty := ety.Remove(supportedMethods...); empty {
+				p.mux.entries.Remove(curr)
 			}
 		}
 	} // end for
