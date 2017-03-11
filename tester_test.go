@@ -17,12 +17,13 @@ import (
 
 // http.Handler 测试工具，测试 h 返回值是否与 response 相同。
 type tester struct {
+	// 以下为构建内容
 	name    string // 该测试组的名称，方便定位
 	pattern string // 地址匹配模式
 	method  string // 请求方法
 
-	url string // 访问测试所用的查询字符串
-
+	// 以下为请求及返回的内容
+	url     string            // 访问测试所用的地址
 	status  int               // 期望的返回结果
 	params  map[string]string // 期望返回的地址参数
 	headers map[string]string // 期望返回的报头
@@ -30,13 +31,11 @@ type tester struct {
 
 // 运行一组 tester 测试内容
 func runTester(a *assert.Assertion, tests []*tester) {
-	srvmux := NewServeMux()
+	srvmux := NewServeMux(false)
 	a.NotNil(srvmux)
 
 	for _, test := range tests {
-		a.NotPanic(func() {
-			srvmux.AddFunc(test.pattern, defaultHandler, test.method)
-		})
+		a.NotError(srvmux.AddFunc(test.pattern, defaultHandler, test.method))
 	}
 
 	// 包含一个默认的错误处理函数，用于在出错时，输出 error 字符串.
@@ -77,7 +76,7 @@ func runTester(a *assert.Assertion, tests []*tester) {
 }
 
 func errHandler(w http.ResponseWriter, msg interface{}) {
-	w.WriteHeader(404)
+	w.WriteHeader(http.StatusNotFound)
 	fmt.Fprint(w, msg)
 }
 

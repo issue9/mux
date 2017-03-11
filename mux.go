@@ -88,6 +88,8 @@ type ServeMux struct {
 	// 路由项，按请求方法进行分类，键名为请求方法名称，键值为路由项的列表。
 	entries *list.List
 
+	// 是否禁用自动产生 OPTIONS 请求方法，该值不能中途修改，
+	// 否则会出现部分有 OPTIONS， 部分没有的情况。
 	disableOptions bool
 }
 
