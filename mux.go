@@ -87,15 +87,16 @@ type ServeMux struct {
 
 	// 路由项，按请求方法进行分类，键名为请求方法名称，键值为路由项的列表。
 	entries *list.List
+
+	disableOptions bool
 }
 
 // NewServeMux 声明一个新的 ServeMux
-func NewServeMux() *ServeMux {
-	ret := &ServeMux{
-		entries: list.New(),
+func NewServeMux(disableOptions bool) *ServeMux {
+	return &ServeMux{
+		entries:        list.New(),
+		disableOptions: disableOptions,
 	}
-
-	return ret
 }
 
 // Clean 清除所有的路由项
@@ -161,6 +162,10 @@ func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) erro
 	}
 
 	ety := entry.New(pattern, h)
+	if mux.disableOptions { // 禁用 OPTIONS
+		ety.Remove(http.MethodOptions)
+	}
+
 	for _, method := range methods {
 		if !MethodIsSupported(method) {
 			return fmt.Errorf("无效的 methods: %v", method)
