@@ -5,45 +5,73 @@
 package entry
 
 import (
+	"errors"
 	"net/http"
 	"regexp"
 	"strings"
 )
 
-// Entry 路由项需要实现的接口
+var (
+	// ErrMethodExists 表示 Entry 中已经存在相同请求方法的 http.Handler
+	ErrMethodExists = errors.New("该请求方法已经存在")
+
+	// ErrMethodNotAllow 无效的请求方法
+	ErrMethodNotAllow = errors.New("不允许的请求方法")
+)
+
+// Entry 表示一类资源的进入点，拥有统一的路由匹配模式。
 type Entry interface {
-	// 匹配匹配字符串
+	// 返回路由的匹配字符串
 	Pattern() string
 
-	// 匹配程度
+	// url 与当前的匹配程度：
 	//  -1 表示完全不匹配；
 	//  0  表示完全匹配；
 	//  >0 表示部分匹配，值越小表示匹配程度越高。
 	Match(url string) int
 
-	// 获取参数，只有正则表达式才有数据。
+	// 获取路由中的参数，非正则匹配返回 nil。
 	Params(url string) map[string]string
 
 	// 是否为正则表达式
 	IsRegexp() bool
 
-	// 执行该路由项的函数
-	//ServeHTTP(method string, w http.ResponseWriter, r *http.Request)
+	// 获取指定请求方法对应的 http.Handler 实例，若不存在，则返回 nil。
 	Handler(method string) http.Handler
 
+	// 添加请求方法及其对应的处理函数。
+	// 若已经存在，则返回 ErrMethodExists 错误。
+	// 若 method == http.MethodOptions，则不作任何处理。
 	Add(method string, handler http.Handler) error
 
-	Remove(method ...string) bool
+	// 移除指定方法的处理池数。若 Entry 中已经没有任何 http.Handler，则返回 true
+	Remove(method ...string) (empty bool)
 
+	// 手动设置 OPTIONS 的 Allow 报头。不调用此函数，会自动根据
+	// 当前的 Add 和 Remove 调整 Allow 报头，调用 SetAll() 之后，
+	// 这些自动设置不再启作用。
 	SetAllow(string)
 }
 
-//////////////// basic
-
-// 最基本的字符串匹配路由项。
+// 最基本的字符串匹配，只能全字符串匹配。
 type basic struct {
 	*items
 	pattern string
+}
+
+// 静态文件匹配路由项，只要路径中的开头字符串与 pattern 相同，
+// 且 pattern 以 / 结尾，即表示匹配成功。根据 match() 的返回值来确定哪个最匹配。
+type static struct {
+	*items
+	pattern string
+}
+
+// 正则表达式匹配。
+type regexpr struct {
+	*items
+	pattern   string
+	expr      *regexp.Regexp
+	hasParams bool
 }
 
 func (b *basic) Pattern() string {
@@ -63,15 +91,6 @@ func (b *basic) Match(url string) int {
 		return 0
 	}
 	return -1
-}
-
-//////////////// static
-
-// 静态文件匹配路由项，只要路径中的开头字符串与 pattern 相同，即表示匹配成功。
-// 根据 match() 的返回值来确定哪个最匹配。
-type static struct {
-	*items
-	pattern string
 }
 
 func (s *static) Pattern() string {
@@ -100,16 +119,6 @@ func (s *static) Match(url string) int {
 	} // end switch
 
 	return -1
-}
-
-//////////////////// regexpr
-
-// 正则表达式匹配。
-type regexpr struct {
-	*items
-	pattern   string
-	expr      *regexp.Regexp
-	hasParams bool
 }
 
 func (re *regexpr) Pattern() string {
