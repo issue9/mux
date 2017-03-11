@@ -32,101 +32,115 @@ func TestClearPath(t *testing.T) {
 func TestServeMux_ServeHTTP(t *testing.T) {
 	a := assert.New(t)
 
-	tests := []*handlerTester{
-		&handlerTester{
-			name:       "普通匹配",
-			pattern:    "/abc",
-			query:      "/abc",
-			statusCode: 200,
+	tests := []*tester{
+		&tester{
+			name:    "普通匹配",
+			pattern: "/abc",
+			method:  http.MethodGet,
+			url:     "/abc",
+			status:  200,
 		},
-		&handlerTester{
-			name:       "普通部分匹配",
-			pattern:    "/abc/",
-			query:      "/abc/d",
-			statusCode: 200,
+		&tester{
+			name:    "普通部分匹配",
+			pattern: "/abc/",
+			method:  http.MethodGet,
+			url:     "/abc/d",
+			status:  200,
 		},
-		&handlerTester{
-			name:       "普通不匹配-1",
-			pattern:    "/abc",
-			query:      "/abcd",
-			statusCode: 404,
+		&tester{
+			name:    "普通不匹配-1",
+			pattern: "/abc",
+			method:  http.MethodGet,
+			url:     "/abcd",
+			status:  404,
 		},
-		&handlerTester{
-			name:       "普通不匹配-2",
-			pattern:    "/abc",
-			query:      "/cba",
-			statusCode: 404,
+		&tester{
+			name:    "普通不匹配-2",
+			pattern: "/abc",
+			method:  http.MethodGet,
+			url:     "/cba",
+			status:  404,
 		},
-		&handlerTester{
-			name:       "正则匹配数字",
-			pattern:    "/api/{version:\\d+}",
-			query:      "/api/2",
-			statusCode: 200,
-			params:     map[string]string{"version": "2"},
+		&tester{
+			name:    "正则匹配数字",
+			pattern: "/api/{version:\\d+}",
+			method:  http.MethodPost,
+			url:     "/api/2",
+			status:  200,
+			params:  map[string]string{"version": "2"},
 		},
-		&handlerTester{
-			name:       "不规则的路径-1",
-			pattern:    "/api/{version:\\d+}",
-			query:      "/api//2",
-			statusCode: 200,
-			params:     map[string]string{"version": "2"},
+		&tester{
+			name:    "不规则的路径-1",
+			pattern: "/api/{version:\\d+}",
+			method:  http.MethodDelete,
+			url:     "/api//2",
+			status:  200,
+			params:  map[string]string{"version": "2"},
 		},
-		&handlerTester{
-			name:       "不规则的路径-2",
-			pattern:    "/api/{version:\\d+}",
-			query:      "/api/nest/../2", // 上一层路径
-			statusCode: 200,
-			params:     map[string]string{"version": "2"},
+		&tester{
+			name:    "不规则的路径-2",
+			pattern: "/api/{version:\\d+}",
+			method:  http.MethodGet,
+			url:     "/api/nest/../2", // 上一层路径
+			status:  200,
+			params:  map[string]string{"version": "2"},
 		},
-		&handlerTester{
-			name:       "不规则的路径-3",
-			pattern:    "/{version:\\d+}",
-			query:      "/api/../../../2", // 上 N 层路径，超过根路径
-			statusCode: 200,
-			params:     map[string]string{"version": "2"},
+		&tester{
+			name:    "不规则的路径-3",
+			pattern: "/{version:\\d+}",
+			method:  http.MethodGet,
+			url:     "/api/../../../2", // 上 N 层路径，超过根路径
+			status:  200,
+			params:  map[string]string{"version": "2"},
 		},
-		&handlerTester{
-			name:       "不规则的路径-4",
-			pattern:    "/api/a../{version:\\d+}",
-			query:      "/api/a../2",
-			statusCode: 200,
-			params:     map[string]string{"version": "2"},
+		&tester{
+			name:    "不规则的路径-4",
+			pattern: "/api/a../{version:\\d+}",
+			method:  http.MethodGet,
+			url:     "/api/a../2",
+			status:  200,
+			params:  map[string]string{"version": "2"},
 		},
-		&handlerTester{
-			name:       "正则匹配多个名称",
-			pattern:    "/api/{version:\\d+}/{name:\\w+}",
-			query:      "/api/2/login",
-			statusCode: 200,
-			params:     map[string]string{"version": "2", "name": "login"},
+		&tester{
+			name:    "正则匹配多个名称",
+			pattern: "/api/{version:\\d+}/{name:\\w+}",
+			method:  http.MethodGet,
+			url:     "/api/2/login",
+			status:  200,
+			params:  map[string]string{"version": "2", "name": "login"},
 		},
-		&handlerTester{
-			name:       "正则不匹配多个名称",
-			pattern:    "/api/{version:\\d+}/{name:\\w+}",
-			query:      "/api/2.0/login",
-			statusCode: 404,
+		&tester{
+			name:    "正则不匹配多个名称",
+			pattern: "/api/{version:\\d+}/{name:\\w+}",
+			method:  http.MethodGet,
+			url:     "/api/2.0/login",
+			status:  404,
 		},
-		/*&handlerTester{
+		/*&tester{
 			name:       "带域名的字符串不匹配", //无法匹配端口信息
 			pattern:    "127.0.0.1/abc",
-			query:      "/cba",
-			statusCode: 404,
+			method:http.MethodGet,
+			url:      "/cba",
+			status: 404,
 		},
-		&handlerTester{
+		&tester{
 			name:       "带域名的正则匹配", //无法匹配端口信息
 			pattern:    "127.0.0.1:{:\\d+}/abc",
-			query:      "/abc",
-			statusCode: 200,
+			method:http.MethodGet,
+			url:      "/abc",
+			status: 200,
 		},
-		&handlerTester{
+		&tester{
 			name:       "带域名的命名正则匹配", //无法匹配端口信息
 			pattern:    "127.0.0.1:{:\\d+}/api/v{version:\\d+}/login",
-			query:      "/api/v2/login",
-			statusCode: 200,
+			method:http.MethodGet,
+			url:      "/api/v2/login",
+			status: 200,
 			params:     map[string]string{"version": "2"},
 		},*/
 	}
 
-	runHandlerTester(a, tests)
+	runTester(a, tests)
 }
 
 // 测试匹配顺序是否正确
