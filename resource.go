@@ -24,75 +24,88 @@ func (r *Resource) Options(methods string) *Resource {
 }
 
 // Add 相当于 ServeMux.Add(pattern, h, "POST"...) 的简易写法
-func (r *Resource) Add(h http.Handler, methods ...string) *Resource {
-	r.mux.Add(r.pattern, h, methods...)
+func (r *Resource) Add(h http.Handler, methods ...string) error {
+	return r.mux.Add(r.pattern, h, methods...)
+}
+
+func (r *Resource) add(h http.Handler, methods ...string) *Resource {
+	if err := r.mux.Add(r.pattern, h, methods...); err != nil {
+		panic(err)
+	}
 	return r
 }
 
 // Get 相当于 ServeMux.Get(pattern, h) 的简易写法
 func (r *Resource) Get(h http.Handler) *Resource {
-	return r.Add(h, http.MethodGet)
+	return r.add(h, http.MethodGet)
 }
 
 // Post 相当于 ServeMux.Post(pattern, h) 的简易写法
 func (r *Resource) Post(h http.Handler) *Resource {
-	return r.Add(h, http.MethodPost)
+	return r.add(h, http.MethodPost)
 }
 
 // Delete 相当于 ServeMux.Delete(pattern, h) 的简易写法
 func (r *Resource) Delete(h http.Handler) *Resource {
-	return r.Add(h, http.MethodDelete)
+	return r.add(h, http.MethodDelete)
 }
 
 // Put 相当于 ServeMux.Put(pattern, h) 的简易写法
 func (r *Resource) Put(h http.Handler) *Resource {
-	return r.Add(h, http.MethodPut)
+	return r.add(h, http.MethodPut)
 }
 
 // Patch 相当于 ServeMux.Patch(pattern, h) 的简易写法
 func (r *Resource) Patch(h http.Handler) *Resource {
-	return r.Add(h, http.MethodPatch)
+	return r.add(h, http.MethodPatch)
 }
 
 // Any 相当于 ServeMux.Any(pattern, h) 的简易写法
 func (r *Resource) Any(h http.Handler) *Resource {
-	return r.Add(h, defaultMethods...)
+	return r.add(h, defaultMethods...)
 }
 
 // AddFunc 功能同 ServeMux.AddFunc(pattern, fun, ...)
-func (r *Resource) AddFunc(fun func(http.ResponseWriter, *http.Request), methods ...string) *Resource {
-	r.mux.AddFunc(r.pattern, fun, methods...)
+func (r *Resource) AddFunc(fun func(http.ResponseWriter, *http.Request), methods ...string) error {
+	return r.mux.AddFunc(r.pattern, fun, methods...)
+}
+
+func (r *Resource) addFunc(fun func(http.ResponseWriter, *http.Request), methods ...string) *Resource {
+	if err := r.mux.AddFunc(r.pattern, fun, methods...); err != nil {
+		panic(err)
+	}
+
 	return r
 }
 
 // GetFunc 相当于 ServeMux.GetFunc(pattern, func) 的简易写法
 func (r *Resource) GetFunc(fun func(http.ResponseWriter, *http.Request)) *Resource {
-	return r.AddFunc(fun, http.MethodGet)
+	return r.addFunc(fun, http.MethodGet)
 }
 
 // PutFunc 相当于 ServeMux.PutFunc(pattern, func) 的简易写法
 func (r *Resource) PutFunc(fun func(http.ResponseWriter, *http.Request)) *Resource {
-	return r.AddFunc(fun, http.MethodPut)
+	return r.addFunc(fun, http.MethodPut)
 }
 
 // PostFunc 相当于 ServeMux.PostFunc(pattern, func) 的简易写法
 func (r *Resource) PostFunc(fun func(http.ResponseWriter, *http.Request)) *Resource {
-	return r.AddFunc(fun, http.MethodPost)
+	return r.addFunc(fun, http.MethodPost)
 }
 
 // DeleteFunc 相当于 ServeMux.DeleteFunc(pattern, func) 的简易写法
 func (r *Resource) DeleteFunc(fun func(http.ResponseWriter, *http.Request)) *Resource {
-	return r.AddFunc(fun, http.MethodDelete)
+	return r.addFunc(fun, http.MethodDelete)
 }
 
 // PatchFunc 相当于 ServeMux.PatchFunc(pattern, func) 的简易写法
 func (r *Resource) PatchFunc(fun func(http.ResponseWriter, *http.Request)) *Resource {
-	return r.AddFunc(fun, http.MethodPatch)
+	return r.addFunc(fun, http.MethodPatch)
 }
 
 // AnyFunc 相当于 ServeMux.AnyFunc(pattern, func) 的简易写法
 func (r *Resource) AnyFunc(fun func(http.ResponseWriter, *http.Request)) *Resource {
-	return r.AddFunc(fun, defaultMethods...)
+	return r.addFunc(fun, defaultMethods...)
 }
 
 // Remove 删除指定匹配模式的路由项

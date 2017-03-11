@@ -29,75 +29,88 @@ func (p *Prefix) Options(pattern string, methods string) *Prefix {
 }
 
 // Add 相当于 ServeMux.Add(prefix+pattern, h, "POST"...) 的简易写法
-func (p *Prefix) Add(pattern string, h http.Handler, methods ...string) *Prefix {
-	p.mux.Add(p.prefix+pattern, h, methods...)
+func (p *Prefix) Add(pattern string, h http.Handler, methods ...string) error {
+	return p.mux.Add(p.prefix+pattern, h, methods...)
+}
+
+func (p *Prefix) add(pattern string, h http.Handler, methods ...string) *Prefix {
+	if err := p.mux.Add(p.prefix+pattern, h, methods...); err != nil {
+		panic(err)
+	}
+
 	return p
 }
 
 // Get 相当于 ServeMux.Get(prefix+pattern, h) 的简易写法
 func (p *Prefix) Get(pattern string, h http.Handler) *Prefix {
-	return p.Add(pattern, h, http.MethodGet)
+	return p.add(pattern, h, http.MethodGet)
 }
 
 // Post 相当于 ServeMux.Post(prefix+pattern, h) 的简易写法
 func (p *Prefix) Post(pattern string, h http.Handler) *Prefix {
-	return p.Add(pattern, h, http.MethodPost)
+	return p.add(pattern, h, http.MethodPost)
 }
 
 // Delete 相当于ServeMux.Delete(prefix+pattern, h)的简易写法
 func (p *Prefix) Delete(pattern string, h http.Handler) *Prefix {
-	return p.Add(pattern, h, http.MethodDelete)
+	return p.add(pattern, h, http.MethodDelete)
 }
 
 // Put 相当于ServeMux.Put(prefix+pattern, h)的简易写法
 func (p *Prefix) Put(pattern string, h http.Handler) *Prefix {
-	return p.Add(pattern, h, http.MethodPut)
+	return p.add(pattern, h, http.MethodPut)
 }
 
 // Patch 相当于ServeMux.Patch(prefix+pattern, h)的简易写法
 func (p *Prefix) Patch(pattern string, h http.Handler) *Prefix {
-	return p.Add(pattern, h, http.MethodPatch)
+	return p.add(pattern, h, http.MethodPatch)
 }
 
 // Any 相当于ServeMux.Any(prefix+pattern, h)的简易写法
 func (p *Prefix) Any(pattern string, h http.Handler) *Prefix {
-	return p.Add(pattern, h, defaultMethods...)
+	return p.add(pattern, h, defaultMethods...)
 }
 
 // AddFunc 功能同ServeMux.AddFunc(prefix+pattern, fun, ...)
-func (p *Prefix) AddFunc(pattern string, fun func(http.ResponseWriter, *http.Request), methods ...string) *Prefix {
-	p.mux.AddFunc(p.prefix+pattern, fun, methods...)
+func (p *Prefix) AddFunc(pattern string, fun func(http.ResponseWriter, *http.Request), methods ...string) error {
+	return p.mux.AddFunc(p.prefix+pattern, fun, methods...)
+}
+
+func (p *Prefix) addFunc(pattern string, fun func(http.ResponseWriter, *http.Request), methods ...string) *Prefix {
+	if err := p.mux.AddFunc(p.prefix+pattern, fun, methods...); err != nil {
+		panic(err)
+	}
 	return p
 }
 
 // GetFunc 相当于ServeMux.GetFunc(prefix+pattern, func)的简易写法
 func (p *Prefix) GetFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
-	return p.AddFunc(pattern, fun, http.MethodGet)
+	return p.addFunc(pattern, fun, http.MethodGet)
 }
 
 // PutFunc 相当于ServeMux.PutFunc(prefix+pattern, func)的简易写法
 func (p *Prefix) PutFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
-	return p.AddFunc(pattern, fun, http.MethodPut)
+	return p.addFunc(pattern, fun, http.MethodPut)
 }
 
 // PostFunc 相当于ServeMux.PostFunc(prefix+pattern, func)的简易写法
 func (p *Prefix) PostFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
-	return p.AddFunc(pattern, fun, http.MethodPost)
+	return p.addFunc(pattern, fun, http.MethodPost)
 }
 
 // DeleteFunc 相当于ServeMux.DeleteFunc(prefix+pattern, func)的简易写法
 func (p *Prefix) DeleteFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
-	return p.AddFunc(pattern, fun, http.MethodDelete)
+	return p.addFunc(pattern, fun, http.MethodDelete)
 }
 
 // PatchFunc 相当于ServeMux.PatchFunc(prefix+pattern, func)的简易写法
 func (p *Prefix) PatchFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
-	return p.AddFunc(pattern, fun, http.MethodPatch)
+	return p.addFunc(pattern, fun, http.MethodPatch)
 }
 
 // AnyFunc 相当于ServeMux.AnyFunc(prefix+pattern, func)的简易写法
 func (p *Prefix) AnyFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
-	return p.AddFunc(pattern, fun, defaultMethods...)
+	return p.addFunc(pattern, fun, defaultMethods...)
 }
 
 // Remove 删除指定匹配模式的路由项
