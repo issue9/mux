@@ -18,8 +18,8 @@ type Resource struct {
 // Options 手动指定 OPTIONS 请求方法的值。
 //
 // 若无特殊需求，不用调用些方法，系统会自动计算符合当前路由的请求方法列表。
-func (r *Resource) Options(allowMethods ...string) *Resource {
-	r.mux.Options(r.pattern, allowMethods...)
+func (r *Resource) Options(methods string) *Resource {
+	r.mux.Options(r.pattern, methods)
 	return r
 }
 

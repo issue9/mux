@@ -171,14 +171,14 @@ func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) *Ser
 // Options 手动指定 OPTIONS 请求方法的值。
 //
 // 若无特殊需求，不用调用此方法，系统会自动计算符合当前路由的请求方法列表。
-func (mux *ServeMux) Options(pattern string, allowMethods ...string) *ServeMux {
+func (mux *ServeMux) Options(pattern string, methods string) *ServeMux {
 	for item := mux.entries.Front(); item != nil; item = item.Next() {
 		e := item.Value.(entry.Entry)
 		if e.Pattern() != pattern {
 			continue
 		}
 
-		e.SetAllow(strings.Join(allowMethods, ", "))
+		e.SetAllow(methods)
 		break
 	}
 	return mux
