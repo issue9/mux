@@ -9,11 +9,21 @@ import (
 	"strings"
 )
 
+// 所有 Entry 实现的公用部分。
 type items struct {
-	handlers            map[string]http.Handler // 请求方法及其对应的 Handler
-	optionsAllow        string                  // 缓存的 OPTIONS 请求头的 allow 报头内容，每次更新 handlers 时自动更新。
-	fixedOptionsAllow   bool                    // 固定 optionsAllow 不再修改，一般为外部作了强制修改所致。
-	fixedOptionsHandler bool                    // 固定 handlers[http.MethodOptions] 不再修改，一般为外部作了强制修改。
+	// 请求方法及其对应的 Handler
+	handlers map[string]http.Handler
+
+	// 缓存的 OPTIONS 请求头的 allow 报头内容，每次更新 handlers 时更新。
+	optionsAllow string
+
+	// 固定 optionsAllow 不再修改，
+	// 调用 SetAllow() 进行强制修改之后为 true。
+	fixedOptionsAllow bool
+
+	// 固定 handlers[http.MethodOptions] 不再修改，
+	// 显示地调用 items.Add(http.MethodOptions,...) 进行赋值之后为 true。
+	fixedOptionsHandler bool
 }
 
 func newItems() *items {
@@ -78,7 +88,7 @@ func (i *items) Remove(methods ...string) bool {
 		return true
 	}
 
-	// 只有一个 OPTIONS 了
+	// 只有一个 OPTIONS 了，且未经外界强制修改，则将其也一并删除。
 	if len(i.handlers) == 1 && i.handlers[http.MethodOptions] != nil {
 		if !i.fixedOptionsAllow && !i.fixedOptionsHandler {
 			delete(i.handlers, http.MethodOptions)

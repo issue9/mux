@@ -33,8 +33,8 @@ func BenchmarkStatic_Match(b *testing.B) {
 	}
 }
 
-// BenchmarkRegexp_Match-4   	 5000000	       337 ns/op		go1.8
-func BenchmarkRegexp_Match(b *testing.B) {
+// BenchmarkRegexpr_Match-4   	 5000000	       337 ns/op		go1.8
+func BenchmarkRegexpr_Match(b *testing.B) {
 	hf := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	})
 	e := New("/blog/post/{id:\\d+}", hf)
