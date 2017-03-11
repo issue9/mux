@@ -41,6 +41,8 @@ type Entry interface {
 	Add(method string, handler http.Handler) error
 
 	// 移除指定方法的处理池数。若 Entry 中已经没有任何 http.Handler，则返回 true
+	//
+	// 可以通过指定 http.MethodOptions 的方式，来强制删除 OPTIONS 请求方法的处理。
 	Remove(method ...string) (empty bool)
 
 	// 手动设置 OPTIONS 的 Allow 报头。不调用此函数，会自动根据
@@ -180,8 +182,8 @@ func New(pattern string, h http.Handler) Entry {
 	}
 
 	return &basic{
-		pattern: pattern,
 		items:   newItems(),
+		pattern: pattern,
 	}
 }
 

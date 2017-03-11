@@ -79,9 +79,6 @@ func (i *items) getOptionsAllow() string {
 }
 
 // 返回值表示，是否还有路由项
-//
-// 若指定删除了 http.MethodOptions 方法，则不是恢复旧的默认处理方式，
-// 而是直接无法查找到该方法，这样可以禁用 Options 方法。
 func (i *items) Remove(methods ...string) bool {
 	for _, method := range methods {
 		delete(i.handlers, method)
