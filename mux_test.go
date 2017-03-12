@@ -181,8 +181,46 @@ func TestServeMux_Params(t *testing.T) {
 	a := assert.New(t)
 	srvmux := NewServeMux(false)
 	a.NotNil(srvmux)
+	params := map[string]string{}
 
-	// TODO
+	buildParamsHandler := func() http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context().Value(ContextKeyParams)
+			if ctx == nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			ps, ok := ctx.(Params)
+			if !ok {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			params = ps
+		})
+	}
+
+	requestParams := func(a *assert.Assertion, srvmux *ServeMux, method, url string, status int, ps map[string]string) {
+		w := httptest.NewRecorder()
+		a.NotNil(w)
+
+		r, err := http.NewRequest(method, url, nil)
+		a.NotError(err).NotNil(r)
+
+		srvmux.ServeHTTP(w, r)
+
+		a.Equal(w.Code, status)
+		if ps != nil { // 由于 params 是公用数据，会保存上一次获取的值，所以只在有值时才比较
+			a.Equal(params, ps)
+		}
+	}
+
+	// 添加 patch /api/{version:\\d+}
+	a.NotError(srvmux.Patch("/api/{version:\\d+}", buildParamsHandler()))
+	requestParams(a, srvmux, http.MethodPatch, "/api/2", http.StatusOK, map[string]string{"version": "2"})
+	requestParams(a, srvmux, http.MethodPatch, "/api/256", http.StatusOK, map[string]string{"version": "256"})
+	requestParams(a, srvmux, http.MethodGet, "/api/256", http.StatusMethodNotAllowed, nil) // 不存在的请求方法
 }
 
 // 测试匹配顺序是否正确
@@ -191,13 +229,13 @@ func TestServeMux_ServeHTTP_Order(t *testing.T) {
 	serveMux := NewServeMux(false)
 	a.NotNil(serveMux)
 
-	a.NotError(serveMux.AddFunc("/post/", f1, "GET"))          // f1
-	a.NotError(serveMux.AddFunc("/post/{id:\\d+}", f2, "GET")) // f2
-	a.NotError(serveMux.AddFunc("/post/1", f3, "GET"))         // f3
+	a.NotError(serveMux.GetFunc("/post/", f1))          // f1
+	a.NotError(serveMux.GetFunc("/post/{id:\\d+}", f2)) // f2
+	a.NotError(serveMux.GetFunc("/post/1", f3))         // f3
 
-	request(a, serveMux, "GET", "/post/1", 3)   // f3 静态路由项完全匹配
-	request(a, serveMux, "GET", "/post/2", 2)   // f2 正则完全匹配
-	request(a, serveMux, "GET", "/post/abc", 1) // f1 匹配度最高
+	request(a, serveMux, http.MethodGet, "/post/1", 3)   // f3 静态路由项完全匹配
+	request(a, serveMux, http.MethodGet, "/post/2", 2)   // f2 正则完全匹配
+	request(a, serveMux, http.MethodGet, "/post/abc", 1) // f1 匹配度最高
 }
 
 func TestMethodIsSupported(t *testing.T) {

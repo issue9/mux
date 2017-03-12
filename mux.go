@@ -51,6 +51,18 @@ var (
 	}
 )
 
+// MethodIsSupported 是否支持某请求方法
+func MethodIsSupported(method string) bool {
+	method = strings.ToUpper(method)
+	for _, m := range supportedMethods {
+		if m == method {
+			return true
+		}
+	}
+
+	return false
+}
+
 // ServeMux 是 http.ServeMux 的升级版，可处理对 URL 的正则匹配和根据 METHOD 进行过滤。
 //
 // 用法如下：
@@ -360,16 +372,4 @@ func cleanPath(p string) string {
 		pp += "/"
 	}
 	return pp
-}
-
-// MethodIsSupported 是否支持某请求方法
-func MethodIsSupported(method string) bool {
-	method = strings.ToUpper(method)
-	for _, m := range supportedMethods {
-		if m == method {
-			return true
-		}
-	}
-
-	return false
 }
