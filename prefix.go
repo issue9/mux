@@ -119,14 +119,16 @@ func (p *Prefix) Remove(pattern string, methods ...string) *Prefix {
 	return p
 }
 
-// Clean 清除所有以 Prefix.prefix 开头的路由项
+// Clean 清除所有以 Prefix.prefix 开头的 Entry。
+//
+// NOTE: 若 mux 中也有同样开头的 Entry，也照样会被删除。
 func (p *Prefix) Clean() *Prefix {
 	p.mux.mu.Lock()
 	defer p.mux.mu.Unlock()
 
 	for item := p.mux.entries.Front(); item != nil; {
 		curr := item
-		item = item.Next()
+		item = item.Next() // 提前记录下个元素，因为 item 有可能被删除
 
 		ety := curr.Value.(entry.Entry)
 		pattern := ety.Pattern()
