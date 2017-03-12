@@ -70,7 +70,6 @@ func TestClearPath(t *testing.T) {
 
 func TestServeMux_Add_Remove_1(t *testing.T) {
 	a := assert.New(t)
-
 	srvmux := NewServeMux(false)
 	a.NotNil(srvmux)
 
@@ -146,6 +145,22 @@ func TestServeMux_Add_Remove_2(t *testing.T) {
 	// 删除 ANY /api/1
 	srvmux.Remove("/api/1")
 	request(a, srvmux, http.MethodPost, "/api/1", http.StatusNotFound) // 404 表示整个 entry 都没了
+}
+
+func TestServeMux_Clean(t *testing.T) {
+	a := assert.New(t)
+	srvmux := NewServeMux(false)
+	a.NotNil(srvmux)
+
+	// 添加 delete /api/1
+	a.NotPanic(func() {
+		srvmux.DeleteFunc("/api/1", f1).
+			PatchFunc("/api/1", f1)
+	})
+	a.Equal(srvmux.entries.Len(), 1)
+
+	srvmux.Clean()
+	a.Equal(srvmux.entries.Len(), 0)
 }
 
 func TestServeMux_Options(t *testing.T) {
