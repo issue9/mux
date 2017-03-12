@@ -30,7 +30,6 @@ type tester struct {
 
 // 运行一组 tester 测试内容
 func runTester(a *assert.Assertion, tests []*tester) {
-
 	// 包含一个默认的错误处理函数，用于在出错时，输出 error 字符串.
 
 	// 依次检测各个测试用例

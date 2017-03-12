@@ -23,15 +23,10 @@ var (
 	f3 = func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(3)
 	}
-	f4 = func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(4)
-	}
-	f5 = func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(5)
-	}
-	f6 = func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(6)
-	}
+
+	h1 = http.HandlerFunc(f1)
+	h2 = http.HandlerFunc(f2)
+	h3 = http.HandlerFunc(f3)
 )
 
 func request(a *assert.Assertion, srvmux *ServeMux, method, url string, status int) {
@@ -43,6 +38,18 @@ func request(a *assert.Assertion, srvmux *ServeMux, method, url string, status i
 
 	srvmux.ServeHTTP(w, r)
 	a.Equal(w.Code, status)
+}
+
+func requestOptions(a *assert.Assertion, srvmux *ServeMux, url string, status int, allow string) {
+	w := httptest.NewRecorder()
+	a.NotNil(w)
+
+	r, err := http.NewRequest(http.MethodOptions, url, nil)
+	a.NotError(err).NotNil(r)
+
+	srvmux.ServeHTTP(w, r)
+	a.Equal(w.Code, status)
+	a.Equal(w.Header().Get("Allow"), allow)
 }
 
 func TestClearPath(t *testing.T) {
@@ -146,7 +153,28 @@ func TestServeMux_Options(t *testing.T) {
 	srvmux := NewServeMux(false)
 	a.NotNil(srvmux)
 
-	// TODO
+	// 添加 GET /api/1
+	a.NotError(srvmux.Add("/api/1", h1, http.MethodGet))
+	requestOptions(a, srvmux, "/api/1", http.StatusOK, "GET, OPTIONS")
+
+	// 添加 DELETE /api/1
+	a.NotPanic(func() {
+		srvmux.Delete("/api/1", h1)
+	})
+	requestOptions(a, srvmux, "/api/1", http.StatusOK, "DELETE, GET, OPTIONS")
+
+	// 删除 DELETE /api/1
+	srvmux.Remove("/api/1", http.MethodDelete)
+	requestOptions(a, srvmux, "/api/1", http.StatusOK, "GET, OPTIONS")
+
+	// 通过 Options 自定义 Allow 报头
+	srvmux.Options("/api/1", "CUSTOM OPTIONS1")
+	requestOptions(a, srvmux, "/api/1", http.StatusOK, "CUSTOM OPTIONS1")
+	srvmux.Options("/api/1", "CUSTOM OPTIONS2")
+	requestOptions(a, srvmux, "/api/1", http.StatusOK, "CUSTOM OPTIONS2")
+
+	srvmux.AddFunc("/api/1", f1, http.MethodOptions)
+	requestOptions(a, srvmux, "/api/1", 1, "")
 }
 
 func TestServeMux_Params(t *testing.T) {
