@@ -23,8 +23,8 @@ type Prefix struct {
 // Options 手动指定 OPTIONS 请求方法的值。
 //
 // 若无特殊需求，不用调用些方法，系统会自动计算符合当前路由的请求方法列表。
-func (p *Prefix) Options(pattern string, methods string) *Prefix {
-	p.mux.Options(p.prefix+pattern, methods)
+func (p *Prefix) Options(pattern string, allow string) *Prefix {
+	p.mux.Options(p.prefix+pattern, allow)
 	return p
 }
 

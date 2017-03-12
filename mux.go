@@ -205,17 +205,19 @@ func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) erro
 	return nil
 }
 
-// Options 手动指定 OPTIONS 请求方法的值。
+// Options 手动指定 OPTIONS 请求方法的报头 allow 的值。
 //
 // 若无特殊需求，不用调用此方法，系统会自动计算符合当前路由的请求方法列表。
-func (mux *ServeMux) Options(pattern string, methods string) *ServeMux {
+// 如果想实现对处理方法的自定义，可以显示地调用 Add 方法:
+//  ServeMux.Add("/api/1", handle, http.MethodOptions)
+func (mux *ServeMux) Options(pattern string, allow string) *ServeMux {
 	for item := mux.entries.Front(); item != nil; item = item.Next() {
 		e := item.Value.(entry.Entry)
 		if e.Pattern() != pattern {
 			continue
 		}
 
-		e.SetAllow(methods)
+		e.SetAllow(allow)
 		break
 	}
 	return mux

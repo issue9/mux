@@ -4,7 +4,7 @@
 
 // Package mux 提供了相对 http.ServeMux 更加复杂的路径功能。
 //
-//  m := mux.NewServerMux().
+//  m := mux.NewServerMux(false).
 //          Get("/user/1", h).
 //          Post("/api/login", h).
 //          Get("/blog/post/{id:\\d+}", h). // 正则路由
