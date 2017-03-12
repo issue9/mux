@@ -111,7 +111,8 @@ func (mux *ServeMux) Clean() *ServeMux {
 	return mux
 }
 
-// Remove 移除指定的路由项，通过路由表达式和 method 来匹配。
+// Remove 移除指定的路由项。
+//
 // 当未指定 methods 时，将删除所有 method 匹配的项。
 // 指定错误的 methods 值，将自动忽略该值。
 func (mux *ServeMux) Remove(pattern string, methods ...string) {
@@ -131,6 +132,7 @@ func (mux *ServeMux) Remove(pattern string, methods ...string) {
 		if empty := e.Remove(methods...); empty { // 该 Entry 下已经没有路由项了
 			mux.entries.Remove(item)
 		}
+
 		break
 	}
 }
@@ -156,16 +158,27 @@ func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) erro
 	mux.mu.Lock()
 	defer mux.mu.Unlock()
 
+	var ety entry.Entry
+
 	for item := mux.entries.Front(); item != nil; item = item.Next() {
 		e := item.Value.(entry.Entry)
 		if e.Pattern() == pattern {
-			return fmt.Errorf("该资源[%v]已经存在", pattern)
+			ety = e
+			break
 		}
 	}
 
-	ety := entry.New(pattern, h)
-	if mux.disableOptions { // 禁用 OPTIONS
-		ety.Remove(http.MethodOptions)
+	if ety == nil {
+		ety = entry.New(pattern, h)
+
+		if mux.disableOptions { // 禁用 OPTIONS
+			ety.Remove(http.MethodOptions)
+		}
+
+		if ety.IsRegexp() { // 正则路由，在后端插入
+			mux.entries.PushBack(ety)
+		}
+		mux.entries.PushFront(ety)
 	}
 
 	for _, method := range methods {
@@ -176,11 +189,6 @@ func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) erro
 			return err
 		}
 	}
-
-	if ety.IsRegexp() { // 正则路由，在后端插入
-		mux.entries.PushBack(ety)
-	}
-	mux.entries.PushFront(ety)
 
 	return nil
 }
