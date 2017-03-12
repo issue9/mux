@@ -141,31 +141,35 @@ func TestServeMux_Add_Remove_2(t *testing.T) {
 	request(a, srvmux, http.MethodPost, "/api/1", http.StatusNotFound) // 404 表示整个 entry 都没了
 }
 
+func TestServeMux_Options(t *testing.T) {
+	a := assert.New(t)
+	srvmux := NewServeMux(false)
+	a.NotNil(srvmux)
+
+	// TODO
+}
+
+func TestServeMux_Params(t *testing.T) {
+	a := assert.New(t)
+	srvmux := NewServeMux(false)
+	a.NotNil(srvmux)
+
+	// TODO
+}
+
 // 测试匹配顺序是否正确
 func TestServeMux_ServeHTTP_Order(t *testing.T) {
 	a := assert.New(t)
-
-	test := func(m *ServeMux, method, host, path string, code int) {
-		r, err := http.NewRequest(method, path, nil)
-		if len(host) > 0 {
-			r.Host = host
-		}
-		a.NotError(err).NotNil(r)
-		w := httptest.NewRecorder()
-		a.NotNil(w)
-		m.ServeHTTP(w, r)
-		a.Equal(w.Code, code)
-	}
-
 	serveMux := NewServeMux(false)
 	a.NotNil(serveMux)
+
 	a.NotError(serveMux.AddFunc("/post/", f1, "GET"))          // f1
 	a.NotError(serveMux.AddFunc("/post/{id:\\d+}", f2, "GET")) // f2
 	a.NotError(serveMux.AddFunc("/post/1", f3, "GET"))         // f3
 
-	test(serveMux, "GET", "", "/post/1", 3)   // f3 静态路由项完全匹配
-	test(serveMux, "GET", "", "/post/2", 2)   // f2 正则完全匹配
-	test(serveMux, "GET", "", "/post/abc", 1) // f1 匹配度最高
+	request(a, serveMux, "GET", "/post/1", 3)   // f3 静态路由项完全匹配
+	request(a, serveMux, "GET", "/post/2", 2)   // f2 正则完全匹配
+	request(a, serveMux, "GET", "/post/abc", 1) // f1 匹配度最高
 }
 
 func TestMethodIsSupported(t *testing.T) {
