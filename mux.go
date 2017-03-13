@@ -17,14 +17,6 @@ import (
 	"github.com/issue9/mux/internal/entry"
 )
 
-type contextKey int
-
-// ContextKeyParams 表示从 context 中获取的参数列表的关键字。
-const ContextKeyParams contextKey = 0
-
-// Params 用以保存请求地址中的参数内容
-type Params map[string]string
-
 var (
 	// 支持的所有请求方法
 	supportedMethods = []string{
@@ -71,28 +63,6 @@ func MethodIsSupported(method string) bool {
 //    Post("/abc/h2", h2).
 //    Add("/api/{version:\\d+}",h3, http.MethodGet, "POST") // 只匹配 GET 和 POST
 //  http.ListenAndServe(m)
-//
-//
-// 路由参数：
-//
-// 路由参数可通过 r.Context 获取：
-//  params := r.Context().Value(mux.ContextKeyParams).(mux.Params)
-//
-//
-// 匹配规则：
-//
-// 可能会出现多条记录与同一请求都匹配的情况，这种情况下，
-// 系统会找到一条认为最匹配的路由来处理，判断规则如下：
-//  1. 静态路由优先于正则路由判断；
-//  2. 完全匹配的路由项优先于部分匹配的路由项；
-//  3. 正则只能是完全匹配；
-//  4. 只有以 / 结尾的静态路由才有部分匹配功能；
-//  5. 同类的后插入先匹配。
-//
-// 正则匹配语法：
-//  /post/{id}     // 匹配 /post/ 开头的任意字符串，其后的字符串保存到 id 中；
-//  /post/{id:\d+} // 同上，但 id 的值只能为 \d+；
-//  /post/{:\d+}   // 同上，但是没有命名；
 type ServeMux struct {
 	// 同时处理 entries 三个的竟争问题
 	mu sync.RWMutex
@@ -105,7 +75,9 @@ type ServeMux struct {
 	disableOptions bool
 }
 
-// NewServeMux 声明一个新的 ServeMux
+// NewServeMux 声明一个新的 ServeMux。
+//
+// disableOptions 是否禁用自动生成 OPTIONS 功能。
 func NewServeMux(disableOptions bool) *ServeMux {
 	return &ServeMux{
 		entries:        list.New(),
@@ -331,7 +303,6 @@ func (mux *ServeMux) match(r *http.Request) (p string, e entry.Entry) {
 	return p, e
 }
 
-// 若没有找到匹配路由，返回 404
 func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	p, e := mux.match(r)
 

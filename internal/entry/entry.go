@@ -128,12 +128,11 @@ func (re *regexpr) IsRegexp() bool {
 }
 
 func (re *regexpr) Match(url string) int {
-	// 正则匹配，没有部分匹配功能，匹配返回 0，否则返回 -1
 	loc := re.expr.FindStringIndex(url)
-	if loc == nil {
-		return -1
-	}
-	if loc[0] == 0 && loc[1] == len(url) {
+
+	if loc != nil &&
+		loc[0] == 0 &&
+		loc[1] == len(url) {
 		return 0
 	}
 	return -1
