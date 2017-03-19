@@ -200,18 +200,8 @@ func TestServeMux_Params(t *testing.T) {
 
 	buildParamsHandler := func() http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := r.Context().Value(ContextKeyParams)
-			if ctx == nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
-			ps, ok := ctx.(Params)
-			if !ok {
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
+			ps, err := GetParams(r)
+			a.NotError(err).NotNil(ps)
 			params = ps
 		})
 	}

@@ -1,14 +1,17 @@
 mux [![Build Status](https://travis-ci.org/issue9/mux.svg?branch=master)](https://travis-ci.org/issue9/mux)
 ======
 
-mux 是对 http.ServeMux 的扩展，添加正则路由等功能。
+mux 是对 http.ServeMux 的扩展。
 
 相对于 http.ServeMux 提供了以下功能：
 1. 正则路由；
+1. 路由参数；
 1. 自动生成 OPTIONS；
 
 
-通过与 [handlers](https://github.com/issue9/handlers) 还可以实现诸如按域名过滤等功能。
+##### 中间件
+所有符合官方接口 [http.Handler](https://godoc.org/net/http#Handler) 的都可以附加到 mux 上作为中间件使用。
+[handlers](https://github.com/issue9/handlers) 实现了诸如按域名过滤等常用的中间件功能。
 
 
 ```go
@@ -20,8 +23,8 @@ m := mux.NewServerMux(false).
 
 // 统一前缀名称的路由
 p := m.Prefix("/api")
-p.Get("/logout", h) // 相当于m.Get("/api/logout", h)
-p.Post("/login", h) // 相当于m.Get("/api/login", h)
+p.Get("/logout", h) // 相当于 m.Get("/api/logout", h)
+p.Post("/login", h) // 相当于 m.Get("/api/login", h)
 
 http.ListenAndServe("8080", m)
 ```

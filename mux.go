@@ -43,7 +43,7 @@ var (
 	}
 )
 
-// MethodIsSupported 是否支持某请求方法
+// MethodIsSupported 是否支持该请求方法
 func MethodIsSupported(method string) bool {
 	method = strings.ToUpper(method)
 	for _, m := range supportedMethods {
@@ -124,7 +124,7 @@ func (mux *ServeMux) Remove(pattern string, methods ...string) {
 // Add 添加一条路由数据。
 //
 // pattern 为路由匹配模式，可以是正则匹配也可以是字符串匹配，
-// methods 参数应该只能为 supportedMethods 中的字符串，若不指定，默认为所有，
+// methods 参数应该只能为 defaultMethods 中的字符串，若不指定，默认为所有，
 // 当 h 或是 pattern 为空时，将触发 panic。
 func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) error {
 	if len(pattern) == 0 {
@@ -319,7 +319,7 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	params := e.Params(p)
 	if params != nil {
-		ctx := context.WithValue(r.Context(), ContextKeyParams, Params(params))
+		ctx := context.WithValue(r.Context(), contextKeyParams, Params(params))
 		r = r.WithContext(ctx)
 	}
 	h.ServeHTTP(w, r)

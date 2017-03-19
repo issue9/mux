@@ -6,19 +6,36 @@ package mux
 
 import (
 	"errors"
+	"net/http"
 	"strconv"
 )
 
 type contextKey int
 
-// ContextKeyParams 表示从 context 中获取的参数列表的关键字。
-const ContextKeyParams contextKey = 0
+const contextKeyParams contextKey = 0
+
+// ErrParamNotExists 表示地址参数中并不存在该名称的值。
+var ErrParamNotExists = errors.New("不存在该值")
 
 // Params 用以保存请求地址中的参数内容
 type Params map[string]string
 
-// ErrParamNotExists 表示地址参数中并不存在该名称的值。
-var ErrParamNotExists = errors.New("不存在该值")
+// GetParams 从 r 中获取路由参数。
+//
+// 以下情况两个参数都会返回 nil：
+//  非正则路由；
+//  正则路由，但是所有匹配参数都是未命名的；
+func GetParams(r *http.Request) (Params, error) {
+	params := r.Context().Value(contextKeyParams)
+	if params == nil {
+		return nil, nil
+	}
+
+	if ret, ok := params.(Params); ok {
+		return ret, nil
+	}
+	return nil, errors.New("无法转换成 Params 类型")
+}
 
 // String 获取地址参数中的名为 key 的变量，并将其转换成 string
 func (p Params) String(key string) (string, error) {
