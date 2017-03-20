@@ -50,7 +50,7 @@
 // OPTIONS:
 //
 // OPTIONS 请求是一个比较特殊的存在，默认情况下，用户无须显示地实现它，
-// 系统会自动实现。当然用户也可以使用 ServeMux.Options() 函数指定特定的
-// 的数据；或是直接使用 ServeMux.Add() 指定一个自定义的实现方式。
+// 系统会自动实现。当然用户也可以使用 ServeMux.Options() 函数指定特定的数据；
+// 或是直接使用 ServeMux.Add() 指定一个自定义的实现方式。
 // 当然如果不需要的话，也可以在 NewServeMux() 中将 disableOptions 设置为 true。
 package mux
