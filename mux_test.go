@@ -219,6 +219,7 @@ func TestServeMux_Params(t *testing.T) {
 		if ps != nil { // 由于 params 是公用数据，会保存上一次获取的值，所以只在有值时才比较
 			a.Equal(params, ps)
 		}
+		params = nil // 清空全局的 params
 	}
 
 	// 添加 patch /api/{version:\\d+}
@@ -226,6 +227,16 @@ func TestServeMux_Params(t *testing.T) {
 	requestParams(a, srvmux, http.MethodPatch, "/api/2", http.StatusOK, map[string]string{"version": "2"})
 	requestParams(a, srvmux, http.MethodPatch, "/api/256", http.StatusOK, map[string]string{"version": "256"})
 	requestParams(a, srvmux, http.MethodGet, "/api/256", http.StatusMethodNotAllowed, nil) // 不存在的请求方法
+
+	// 添加 patch /api/v2/{version:\\d+}
+	a.NotError(srvmux.Patch("/api/v2/{version:\\d*}", buildParamsHandler()))
+	requestParams(a, srvmux, http.MethodPatch, "/api/v2/2", http.StatusOK, map[string]string{"version": "2"})
+	requestParams(a, srvmux, http.MethodPatch, "/api/v2/", http.StatusOK, map[string]string{"version": ""})
+
+	// 添加 patch /api/v2/{version:\\d+}/test
+	a.NotError(srvmux.Patch("/api/v2/{version:\\d*}/test", buildParamsHandler()))
+	requestParams(a, srvmux, http.MethodPatch, "/api/v2/2/test", http.StatusOK, map[string]string{"version": "2"})
+	requestParams(a, srvmux, http.MethodPatch, "/api/v2//test", http.StatusNotFound, nil) // 可选参数不能在路由中间
 }
 
 // 测试匹配顺序是否正确

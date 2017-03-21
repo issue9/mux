@@ -71,8 +71,14 @@ func TestEntry_Match(t *testing.T) {
 
 	// 多个命名正则表达式
 	e = New("/blog/{action:\\w+}-{id:\\d+}/", hf)
+	a.Equal(e.Match("/blog/post-1/"), 0)
 	a.Equal(e.Match("/blog/post-1/page-2"), -1) // 正则没有部分匹配功能
 	a.Equal(e.Match("/blog/post-1d/"), -1)      // 正则，不匹配
+
+	// 多个命名正则表达式，带可选参数
+	e = New("/blog/{action:\\w+}-{id:\\d*}/", hf)
+	a.Equal(e.Match("/blog/post-/"), 0)
+	a.Equal(e.Match("/blog/post-1/"), 0)
 }
 
 func TestEntry_Params(t *testing.T) {
