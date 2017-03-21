@@ -37,7 +37,16 @@ func GetParams(r *http.Request) (Params, error) {
 	return nil, errors.New("无法转换成 Params 类型")
 }
 
+// Exists 查找指定名称的参数是否存在。
+// 可选参数，可能会不存在。
+func (p Params) Exists(key string) bool {
+	_, found := p[key]
+	return found
+}
+
 // String 获取地址参数中的名为 key 的变量，并将其转换成 string
+//
+// 当参数不存在时，返回 ErrParamNotExists 错误。
 func (p Params) String(key string) (string, error) {
 	v, found := p[key]
 	if !found {
@@ -59,6 +68,8 @@ func (p Params) MustString(key, def string) string {
 }
 
 // Int 获取地址参数中的名为 key 的变量，并将其转换成 int64
+//
+// 当参数不存在时，返回 ErrParamNotExists 错误。
 func (p Params) Int(key string) (int64, error) {
 	str, found := p[key]
 	if !found {
@@ -84,6 +95,8 @@ func (p Params) MustInt(key string, def int64) int64 {
 }
 
 // Uint 获取地址参数中的名为 key 的变量，并将其转换成 uint64
+//
+// 当参数不存在时，返回 ErrParamNotExists 错误。
 func (p Params) Uint(key string) (uint64, error) {
 	str, found := p[key]
 	if !found {
@@ -109,6 +122,8 @@ func (p Params) MustUint(key string, def uint64) uint64 {
 }
 
 // Bool 获取地址参数中的名为 key 的变量，并将其转换成 bool
+//
+// 当参数不存在时，返回 ErrParamNotExists 错误。
 func (p Params) Bool(key string) (bool, error) {
 	str, found := p[key]
 	if !found {
