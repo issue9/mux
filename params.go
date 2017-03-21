@@ -147,3 +147,30 @@ func (p Params) MustBool(key string, def bool) bool {
 
 	return def
 }
+
+// Float 获取地址参数中的名为 key 的变量，并将其转换成 Float64
+//
+// 当参数不存在时，返回 ErrParamNotExists 错误。
+func (p Params) Float(key string) (float64, error) {
+	str, found := p[key]
+	if !found {
+		return 0, ErrParamNotExists
+	}
+
+	return strconv.ParseFloat(str, 64)
+}
+
+// MustFloat 获取地址参数中的名为 key 的变量，并将其转换成 float64，
+// 若不存在或是无法转换则返回 def。
+func (p Params) MustFloat(key string, def float64) float64 {
+	str, found := p[key]
+	if !found {
+		return def
+	}
+
+	if val, err := strconv.ParseFloat(str, 64); err == nil {
+		return val
+	}
+
+	return def
+}
