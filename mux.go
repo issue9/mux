@@ -144,6 +144,7 @@ func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) erro
 
 	var ety entry.Entry
 
+	// 查找是否存在相同的资源项。
 	for item := mux.entries.Front(); item != nil; item = item.Next() {
 		e := item.Value.(entry.Entry)
 		if e.Pattern() == pattern {
@@ -152,8 +153,13 @@ func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) erro
 		}
 	}
 
+	// 不存在相同的资源项，则声明新的。
 	if ety == nil {
-		ety = entry.New(pattern, h)
+		var err error
+		ety, err = entry.New(pattern, h)
+		if err != nil {
+			return err
+		}
 
 		if mux.disableOptions { // 禁用 OPTIONS
 			ety.Remove(http.MethodOptions)
@@ -161,10 +167,12 @@ func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) erro
 
 		if ety.IsRegexp() { // 正则路由，在后端插入
 			mux.entries.PushBack(ety)
+		} else {
+			mux.entries.PushFront(ety)
 		}
-		mux.entries.PushFront(ety)
 	}
 
+	// 添加指定请求方法的处理函数
 	for _, method := range methods {
 		if !MethodIsSupported(method) {
 			return fmt.Errorf("无效的 methods: %v", method)

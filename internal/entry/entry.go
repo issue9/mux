@@ -8,11 +8,19 @@ import (
 	"errors"
 	"net/http"
 	"regexp"
+	"sort"
 	"strings"
 )
 
-// ErrMethodExists 表示 Entry 中已经存在相同请求方法的 http.Handler
-var ErrMethodExists = errors.New("该请求方法已经存在")
+var (
+	// ErrMethodExists 表示 Entry 中已经存在相同请求方法的 http.Handler
+	ErrMethodExists = errors.New("该请求方法已经存在")
+
+	// ErrDuplicateParamName 表示路由中有相同的参数名，比如：
+	// /post/{id:\\d+}/{id:\\d+}
+	// 两个名称都是 id，则会报错。
+	ErrDuplicateParamName = errors.New("重复的参数名")
+)
 
 // Entry 表示一类资源的进入点，拥有统一的路由匹配模式。
 type Entry interface {
@@ -160,37 +168,42 @@ func (re *regexpr) Params(url string) map[string]string {
 //
 // pattern 匹配内容。
 // h 对应的 http.Handler，外层调用者确保该值不能为 nil.
-func New(pattern string, h http.Handler) Entry {
+func New(pattern string, h http.Handler) (Entry, error) {
 	strs := split(pattern)
 
 	if len(strs) > 1 { // 正则路由
-		p, hasParams := toPattern(strs)
+		p, hasParams, err := toPattern(strs)
+		if err != nil {
+			return nil, err
+		}
+
 		return &regexpr{
 			items:     newItems(),
 			pattern:   pattern,
 			hasParams: hasParams,
 			expr:      regexp.MustCompile(p),
-		}
+		}, nil
 	}
 
 	if pattern[len(pattern)-1] == '/' {
 		return &static{
 			items:   newItems(),
 			pattern: pattern,
-		}
+		}, nil
 	}
 
 	return &basic{
 		items:   newItems(),
 		pattern: pattern,
-	}
+	}, nil
 }
 
 // 将 strs 按照顺序合并成一个正则表达式
 // 返回参数正则表达式的字符串，和一个 bool 值用以表式正则中是否包含了命名匹配。
-func toPattern(strs []string) (string, bool) {
+func toPattern(strs []string) (string, bool, error) {
 	pattern := ""
 	hasParams := false
+	names := []string{}
 
 	for _, v := range strs {
 		lastIndex := len(v) - 1
@@ -205,6 +218,7 @@ func toPattern(strs []string) (string, bool) {
 		if index < 0 { // 只存在命名，而不存在正则表达式，默认匹配[^/]
 			pattern += "(?P<" + v + ">[^/]+)"
 			hasParams = true
+			names = append(names, v)
 			continue
 		}
 
@@ -214,10 +228,19 @@ func toPattern(strs []string) (string, bool) {
 		}
 
 		pattern += "(?P<" + v[:index] + ">" + v[index+1:] + ")"
+		names = append(names, v[:index])
 		hasParams = true
 	}
 
-	return pattern, hasParams
+	if len(names) > 1 {
+		sort.Strings(names)
+		for i := 1; i < len(names); i++ {
+			if names[i] == names[i-1] {
+				return "", false, ErrDuplicateParamName
+			}
+		}
+	}
+	return pattern, hasParams, nil
 }
 
 // 将 str 以 { 和 } 为分隔符进行分隔。
