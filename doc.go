@@ -5,7 +5,7 @@
 // Package mux 提供了相对 http.ServeMux 更加复杂的路径匹配功能。
 // 同时又兼容官方的 http.Handler 接口。
 //
-//  m := mux.NewServerMux(false).
+//  m := mux.NewServeMux(false).
 //          Get("/user/1", h).
 //          Post("/api/login", h).
 //          Get("/blog/post/{id:\\d+}", h). // 正则路由
@@ -13,10 +13,10 @@
 //
 //  // 统一前缀名称的路由
 //  p := m.Prefix("/api")
-//  p.Get("/logout", h) // 相当于m.Get("/api/logout", h)
-//  p.Post("/login", h) // 相当于m.Get("/api/login", h)
+//  p.Get("/logout", h) // 相当于 m.Get("/api/logout", h)
+//  p.Post("/login", h) // 相当于 m.Get("/api/login", h)
 //
-//  http.ListenAndServe("8080", m)
+//  http.ListenAndServe(":8080", m)
 //
 //
 // 正则表达式：

@@ -127,11 +127,11 @@ func (mux *ServeMux) Remove(pattern string, methods ...string) {
 // 当 h 或是 pattern 为空时，将触发 panic。
 func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) error {
 	if len(pattern) == 0 {
-		return errors.New("参数pattern不能为空")
+		return errors.New("参数 pattern 不能为空")
 	}
 
 	if h == nil {
-		return errors.New("参数h不能为空")
+		return errors.New("参数 h 不能为空")
 	}
 
 	if len(methods) == 0 {

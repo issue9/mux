@@ -15,7 +15,7 @@ mux 是对 http.ServeMux 的扩展。
 
 
 ```go
-m := mux.NewServerMux(false).
+m := mux.NewServeMux(false).
     Get("/user/1", h).              // GET /user/1
     Post("/api/login", h).          // POST /api/login
     Get("/blog/post/{id:\\d+}", h). // GET /blog/post/{id:\d+} 正则路由
@@ -26,7 +26,7 @@ p := m.Prefix("/api")
 p.Get("/logout", h) // 相当于 m.Get("/api/logout", h)
 p.Post("/login", h) // 相当于 m.Get("/api/login", h)
 
-http.ListenAndServe("8080", m)
+http.ListenAndServe(":8080", m)
 ```
 
 
