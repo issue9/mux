@@ -5,21 +5,11 @@
 package entry
 
 import (
-	"errors"
+	"fmt"
 	"net/http"
 	"regexp"
 	"sort"
 	"strings"
-)
-
-var (
-	// ErrMethodExists 表示 Entry 中已经存在相同请求方法的 http.Handler
-	ErrMethodExists = errors.New("该请求方法已经存在")
-
-	// ErrDuplicateParamName 表示路由中有相同的参数名，比如：
-	// /post/{id:\\d+}/{id:\\d+}
-	// 两个名称都是 id，则会报错。
-	ErrDuplicateParamName = errors.New("重复的参数名")
 )
 
 // Entry 表示一类资源的进入点，拥有统一的路由匹配模式。
@@ -232,11 +222,13 @@ func toPattern(strs []string) (string, bool, error) {
 		hasParams = true
 	}
 
+	// 检测是否存在同名参数：
+	// 先按名称排序，之后只要检测相邻两个名称是否相同即可。
 	if len(names) > 1 {
 		sort.Strings(names)
 		for i := 1; i < len(names); i++ {
 			if names[i] == names[i-1] {
-				return "", false, ErrDuplicateParamName
+				return "", false, fmt.Errorf("相同的路由参数名：%v", names[i])
 			}
 		}
 	}
