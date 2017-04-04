@@ -64,14 +64,13 @@ func MethodIsSupported(method string) bool {
 //    Add("/api/{version:\\d+}",h3, http.MethodGet, "POST") // 只匹配 GET 和 POST
 //  http.ListenAndServe(m)
 type ServeMux struct {
-	// 同时处理 entries 三个的竟争问题
 	mu sync.RWMutex
 
-	// 路由项，按请求方法进行分类，键名为请求方法名称，键值为路由项的列表。
+	// 路由项，按资源进行分类。
 	entries *list.List
 
-	// 是否禁用自动产生 OPTIONS 请求方法，该值不能中途修改，
-	// 否则会出现部分有 OPTIONS， 部分没有的情况。
+	// 是否禁用自动产生 OPTIONS 请求方法。
+	// 该值不能中途修改，否则会出现部分有 OPTIONS， 部分没有的情况。
 	disableOptions bool
 }
 
@@ -279,6 +278,28 @@ func (mux *ServeMux) AnyFunc(pattern string, fun func(http.ResponseWriter, *http
 	return mux.addFunc(pattern, fun, defaultMethods...)
 }
 
+func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	p, e := mux.match(r)
+
+	if e == nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	h := e.Handler(r.Method)
+	if h == nil {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	params := e.Params(p)
+	if params != nil {
+		ctx := context.WithValue(r.Context(), contextKeyParams, Params(params))
+		r = r.WithContext(ctx)
+	}
+	h.ServeHTTP(w, r)
+}
+
 // 查找最匹配的路由项
 func (mux *ServeMux) match(r *http.Request) (p string, e entry.Entry) {
 	size := -1 // 匹配度，0 表示完全匹配，负数表示完全不匹配，其它值越小匹配度越高
@@ -309,28 +330,6 @@ func (mux *ServeMux) match(r *http.Request) (p string, e entry.Entry) {
 		return "", nil
 	}
 	return p, e
-}
-
-func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	p, e := mux.match(r)
-
-	if e == nil {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-
-	h := e.Handler(r.Method)
-	if h == nil {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
-
-	params := e.Params(p)
-	if params != nil {
-		ctx := context.WithValue(r.Context(), contextKeyParams, Params(params))
-		r = r.WithContext(ctx)
-	}
-	h.ServeHTTP(w, r)
 }
 
 // 清除路径中的怪异符号
