@@ -70,7 +70,7 @@ type ServeMux struct {
 	entries *list.List
 
 	// 是否禁用自动产生 OPTIONS 请求方法。
-	// 该值不能中途修改，否则会出现部分有 OPTIONS， 部分没有的情况。
+	// 该值不能中途修改，否则会出现部分有 OPTIONS，部分没有的情况。
 	disableOptions bool
 }
 
@@ -282,13 +282,13 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	p, e := mux.match(r)
 
 	if e == nil {
-		w.WriteHeader(http.StatusNotFound)
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
 
 	h := e.Handler(r.Method)
 	if h == nil {
-		w.WriteHeader(http.StatusMethodNotAllowed)
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -301,8 +301,11 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // 查找最匹配的路由项
+//
+// p 为整理后的当前请求路径；
+// e 为当前匹配的 entry.Entry 实例。
 func (mux *ServeMux) match(r *http.Request) (p string, e entry.Entry) {
-	size := -1 // 匹配度，0 表示完全匹配，负数表示完全不匹配，其它值越小匹配度越高
+	size := -1 // 匹配度，0 表示完全匹配，-1 表示完全不匹配，其它值越小匹配度越高
 	p = cleanPath(r.URL.Path)
 
 	mux.mu.RLock()
@@ -310,7 +313,6 @@ func (mux *ServeMux) match(r *http.Request) (p string, e entry.Entry) {
 
 	for item := mux.entries.Front(); item != nil; item = item.Next() {
 		ety := item.Value.(entry.Entry)
-
 		s := ety.Match(p)
 
 		if s == 0 { // 完全匹配，可以中止匹配过程
@@ -321,7 +323,7 @@ func (mux *ServeMux) match(r *http.Request) (p string, e entry.Entry) {
 			continue
 		}
 
-		// 匹配度比当前的高
+		// 匹配度比当前的高，则保存下来
 		size = s
 		e = ety
 	} // end for
