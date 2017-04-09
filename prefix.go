@@ -165,3 +165,8 @@ func (mux *ServeMux) Prefix(prefix string) *Prefix {
 		prefix: prefix,
 	}
 }
+
+// Mux 返回与当前关联的 *ServeMux 实例
+func (p *Prefix) Mux() *ServeMux {
+	return p.mux
+}

@@ -143,3 +143,8 @@ func (p *Prefix) Resource(pattern string) *Resource {
 		pattern: p.prefix + pattern,
 	}
 }
+
+// Mux 返回与当前资源关联的 *ServeMux 实例
+func (r *Resource) Mux() *ServeMux {
+	return r.mux
+}

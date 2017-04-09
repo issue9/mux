@@ -33,3 +33,16 @@ func TestPrefix_Clean(t *testing.T) {
 	prefix.Clean()
 	a.Equal(srvmux.entries.Len(), 1)
 }
+
+func TestPrefix(t *testing.T) {
+	a := assert.New(t)
+	srvmux := NewServeMux(false)
+	a.NotNil(srvmux)
+
+	p := srvmux.Prefix("/abc")
+	a.Equal(p.prefix, "/abc")
+	a.Equal(p.Mux(), srvmux)
+
+	p = srvmux.Prefix("")
+	a.Equal(p.prefix, "")
+}
