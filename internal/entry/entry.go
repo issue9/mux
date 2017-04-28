@@ -34,7 +34,7 @@ type Entry interface {
 
 	// 添加请求方法及其对应的处理函数。
 	//
-	// 若已经存在，则返回 ErrMethodExists 错误。
+	// 若已经存在，则返回错误。
 	// 若 method == http.MethodOptions，则可以去覆盖默认的处理方式。
 	Add(method string, handler http.Handler) error
 

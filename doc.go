@@ -16,6 +16,11 @@
 //  p.Get("/logout", h) // 相当于 m.Get("/api/logout", h)
 //  p.Post("/login", h) // 相当于 m.Get("/api/login", h)
 //
+//  对同一资源的不同操作
+//  res := p.Resource("/users/{id\\d+}")
+//  res.Get(h)   // 相当于 m.Get("/api/users/{id}", h)
+//  res.Post(h)  // 相当于 m.Post("/api/users/{id}", h)
+//
 //  http.ListenAndServe(":8080", m)
 //
 //
