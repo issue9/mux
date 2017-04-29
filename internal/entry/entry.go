@@ -103,17 +103,14 @@ func (s *static) Params(url string) map[string]string {
 
 func (s *static) Match(url string) int {
 	l := len(url) - len(s.pattern)
-	switch {
-	case l < 0:
+	if l < 0 {
 		return -1
-	case l >= 0:
-		if (s.pattern[len(s.pattern)-1] == '/') &&
-			(s.pattern == url[:len(s.pattern)]) {
-			return l
-		}
-		return -1
-	} // end switch
+	}
 
+	// 由 New 函数确保 s.pattern 都是以 '/' 结尾的
+	if s.pattern == url[:len(s.pattern)] {
+		return l
+	}
 	return -1
 }
 

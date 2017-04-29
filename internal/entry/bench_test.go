@@ -26,7 +26,7 @@ func BenchmarkBasic_Match(b *testing.B) {
 	}
 }
 
-// BenchmarkStatic_Match-4   	200000000	         8.05 ns/op		go1.8
+// BenchmarkStatic_Match-4    	200000000	         7.85 ns/op     go1.8
 func BenchmarkStatic_Match(b *testing.B) {
 	a := assert.New(b)
 	hf := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

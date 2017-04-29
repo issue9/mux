@@ -67,6 +67,7 @@ func TestEntry_Match(t *testing.T) {
 	e, err = New("/blog/post/", hf)
 	a.NotError(err)
 	a.Equal(e.Match("/blog/post/1"), 1)
+	a.Equal(e.Match("/blog/post/"), 0)
 	a.Equal(e.Match("/blog/post/1/page/2"), 8)
 	a.Equal(e.Match("/blog"), -1) // 不匹配，长度太短
 
