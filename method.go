@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	// 支持的所有请求方法
+	// 支持的请求方法
 	supportedMethods = []string{
 		http.MethodGet,
 		http.MethodPost,
@@ -22,7 +22,8 @@ var (
 		http.MethodTrace,
 	}
 
-	// 调用 Any 添加的列表，默认不添加 OPTIONS 请求
+	// 调用 *.Any 时添加所使用的请求方法列表，
+	// 默认为添加除 htp.MethodOptions 之外的所有 supportedMethods 中的元素
 	defaultMethods = []string{
 		http.MethodGet,
 		http.MethodPost,
