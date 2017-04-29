@@ -11,7 +11,7 @@ import (
 	"github.com/issue9/mux/internal/entry"
 )
 
-// Prefix 封装了 ServeMux，使所有添加的路由项的匹配模式都带上指定的前缀。
+// Prefix 封装了 Mux，使所有添加的路由项的匹配模式都带上指定的路径前缀。
 //  p := srv.Prefix("/api")
 //  p.Get("/users")  // 相当于 srv.Get("/api/users")
 //  p.Get("/user/1") // 相当于 srv.Get("/api/user/1")
@@ -21,7 +21,7 @@ import (
 //  p2 := srv.Prefix("prefix")
 //  p2.Clean() 将同时清除 p1 的内容，因为有相同的前缀
 type Prefix struct {
-	mux    *ServeMux
+	mux    *Mux
 	prefix string
 }
 
@@ -33,7 +33,7 @@ func (p *Prefix) Options(pattern string, allow string) *Prefix {
 	return p
 }
 
-// Add 相当于 ServeMux.Add(prefix+pattern, h, "POST"...) 的简易写法
+// Add 相当于 Mux.Add(prefix+pattern, h, "POST"...) 的简易写法
 func (p *Prefix) Add(pattern string, h http.Handler, methods ...string) error {
 	return p.mux.Add(p.prefix+pattern, h, methods...)
 }
@@ -46,37 +46,37 @@ func (p *Prefix) add(pattern string, h http.Handler, methods ...string) *Prefix 
 	return p
 }
 
-// Get 相当于 ServeMux.Get(prefix+pattern, h) 的简易写法
+// Get 相当于 Mux.Get(prefix+pattern, h) 的简易写法
 func (p *Prefix) Get(pattern string, h http.Handler) *Prefix {
 	return p.add(pattern, h, http.MethodGet)
 }
 
-// Post 相当于 ServeMux.Post(prefix+pattern, h) 的简易写法
+// Post 相当于 Mux.Post(prefix+pattern, h) 的简易写法
 func (p *Prefix) Post(pattern string, h http.Handler) *Prefix {
 	return p.add(pattern, h, http.MethodPost)
 }
 
-// Delete 相当于 ServeMux.Delete(prefix+pattern, h)的简易写法
+// Delete 相当于 Mux.Delete(prefix+pattern, h)的简易写法
 func (p *Prefix) Delete(pattern string, h http.Handler) *Prefix {
 	return p.add(pattern, h, http.MethodDelete)
 }
 
-// Put 相当于 ServeMux.Put(prefix+pattern, h) 的简易写法
+// Put 相当于 Mux.Put(prefix+pattern, h) 的简易写法
 func (p *Prefix) Put(pattern string, h http.Handler) *Prefix {
 	return p.add(pattern, h, http.MethodPut)
 }
 
-// Patch 相当于 ServeMux.Patch(prefix+pattern, h) 的简易写法
+// Patch 相当于 Mux.Patch(prefix+pattern, h) 的简易写法
 func (p *Prefix) Patch(pattern string, h http.Handler) *Prefix {
 	return p.add(pattern, h, http.MethodPatch)
 }
 
-// Any 相当于 ServeMux.Any(prefix+pattern, h) 的简易写法
+// Any 相当于 Mux.Any(prefix+pattern, h) 的简易写法
 func (p *Prefix) Any(pattern string, h http.Handler) *Prefix {
 	return p.add(pattern, h, defaultMethods...)
 }
 
-// AddFunc 功能同 ServeMux.AddFunc(prefix+pattern, fun, ...)
+// AddFunc 功能同 Mux.AddFunc(prefix+pattern, fun, ...)
 func (p *Prefix) AddFunc(pattern string, fun func(http.ResponseWriter, *http.Request), methods ...string) error {
 	return p.mux.AddFunc(p.prefix+pattern, fun, methods...)
 }
@@ -88,32 +88,32 @@ func (p *Prefix) addFunc(pattern string, fun func(http.ResponseWriter, *http.Req
 	return p
 }
 
-// GetFunc 相当于 ServeMux.GetFunc(prefix+pattern, func) 的简易写法
+// GetFunc 相当于 Mux.GetFunc(prefix+pattern, func) 的简易写法
 func (p *Prefix) GetFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
 	return p.addFunc(pattern, fun, http.MethodGet)
 }
 
-// PutFunc 相当于 ServeMux.PutFunc(prefix+pattern, func) 的简易写法
+// PutFunc 相当于 Mux.PutFunc(prefix+pattern, func) 的简易写法
 func (p *Prefix) PutFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
 	return p.addFunc(pattern, fun, http.MethodPut)
 }
 
-// PostFunc 相当 于ServeMux.PostFunc(prefix+pattern, func) 的简易写法
+// PostFunc 相当 于Mux.PostFunc(prefix+pattern, func) 的简易写法
 func (p *Prefix) PostFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
 	return p.addFunc(pattern, fun, http.MethodPost)
 }
 
-// DeleteFunc 相当于 ServeMux.DeleteFunc(prefix+pattern, func) 的简易写法
+// DeleteFunc 相当于 Mux.DeleteFunc(prefix+pattern, func) 的简易写法
 func (p *Prefix) DeleteFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
 	return p.addFunc(pattern, fun, http.MethodDelete)
 }
 
-// PatchFunc 相当于 ServeMux.PatchFunc(prefix+pattern, func) 的简易写法
+// PatchFunc 相当于 Mux.PatchFunc(prefix+pattern, func) 的简易写法
 func (p *Prefix) PatchFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
 	return p.addFunc(pattern, fun, http.MethodPatch)
 }
 
-// AnyFunc 相当于 ServeMux.AnyFunc(prefix+pattern, func) 的简易写法
+// AnyFunc 相当于 Mux.AnyFunc(prefix+pattern, func) 的简易写法
 func (p *Prefix) AnyFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
 	return p.addFunc(pattern, fun, defaultMethods...)
 }
@@ -164,14 +164,14 @@ func (p *Prefix) Prefix(prefix string) *Prefix {
 //  p := srv.Prefix("/api")
 //  p.Get("/users")  // 相当于 srv.Get("/api/users")
 //  p.Get("/user/1") // 相当于 srv.Get("/api/user/1")
-func (mux *ServeMux) Prefix(prefix string) *Prefix {
+func (mux *Mux) Prefix(prefix string) *Prefix {
 	return &Prefix{
 		mux:    mux,
 		prefix: prefix,
 	}
 }
 
-// Mux 返回与当前关联的 *ServeMux 实例
-func (p *Prefix) Mux() *ServeMux {
+// Mux 返回与当前关联的 *Mux 实例
+func (p *Prefix) Mux() *Mux {
 	return p.mux
 }

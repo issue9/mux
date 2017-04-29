@@ -12,7 +12,7 @@ import (
 
 func TestResource_Clean(t *testing.T) {
 	a := assert.New(t)
-	srvmux := NewServeMux(false, nil, nil)
+	srvmux := New(false, nil, nil)
 	a.NotNil(srvmux)
 
 	// 添加 delete /api/1
@@ -34,9 +34,9 @@ func TestResource_Clean(t *testing.T) {
 	a.Equal(srvmux.entries.Len(), 1)
 }
 
-func TestServeMux_Resource(t *testing.T) {
+func TestMux_Resource(t *testing.T) {
 	a := assert.New(t)
-	srvmux := NewServeMux(false, nil, nil)
+	srvmux := New(false, nil, nil)
 	a.NotNil(srvmux)
 
 	res := srvmux.Resource("/abc/1")

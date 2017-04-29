@@ -1,9 +1,8 @@
 mux [![Build Status](https://travis-ci.org/issue9/mux.svg?branch=master)](https://travis-ci.org/issue9/mux)
 ======
 
-mux 是对 http.ServeMux 的扩展。
+mux 是对 http.ServeMux 的扩展。相对于 http.ServeMux 提供了以下功能：
 
-相对于 http.ServeMux 提供了以下功能：
 1. 正则路由；
 1. 路由参数；
 1. 自动生成 OPTIONS；
@@ -16,7 +15,7 @@ mux 本身就是一个实现了 [http.Handler](https://godoc.org/net/http#Handle
 
 
 ```go
-m := mux.NewServeMux(false, nil, nil).
+m := mux.New(false, nil, nil).
     Get("/user/1", h).              // GET /user/1
     Post("/api/login", h).          // POST /api/login
     Get("/blog/post/{id:\\d+}", h). // GET /blog/post/{id:\d+} 正则路由

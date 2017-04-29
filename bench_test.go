@@ -12,14 +12,14 @@ import (
 	"github.com/issue9/assert"
 )
 
-// go1.8 BenchmarkServeMux_ServeHTTPBasic-4    	 5000000	       281 ns/op
-func BenchmarkServeMux_ServeHTTPBasic(b *testing.B) {
+// go1.8 BenchmarkMux_ServeHTTPBasic-4    	 5000000	       281 ns/op
+func BenchmarkMux_ServeHTTPBasic(b *testing.B) {
 	a := assert.New(b)
 
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("handler"))
 	})
-	srv := NewServeMux(false, nil, nil)
+	srv := New(false, nil, nil)
 	srv.Get("/blog/post/1", h)
 	srv.Get("/api/v2/login", h)
 
@@ -45,14 +45,14 @@ func BenchmarkServeMux_ServeHTTPBasic(b *testing.B) {
 	}
 }
 
-// go1.8 BenchmarkServeMux_ServeHTTPStatic-4   	 5000000	       297 ns/op
-func BenchmarkServeMux_ServeHTTPStatic(b *testing.B) {
+// go1.8 BenchmarkMux_ServeHTTPStatic-4   	 5000000	       297 ns/op
+func BenchmarkMux_ServeHTTPStatic(b *testing.B) {
 	a := assert.New(b)
 
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("handler"))
 	})
-	srv := NewServeMux(false, nil, nil)
+	srv := New(false, nil, nil)
 	srv.Get("/blog/post/", h)
 	srv.Get("/api/v2/", h)
 
@@ -78,14 +78,14 @@ func BenchmarkServeMux_ServeHTTPStatic(b *testing.B) {
 	}
 }
 
-// go1.8 BenchmarkServeMux_ServeHTTPRegexp-4   	 1000000	      1350 ns/op
-func BenchmarkServeMux_ServeHTTPRegexp(b *testing.B) {
+// go1.8 BenchmarkMux_ServeHTTPRegexp-4   	 1000000	      1350 ns/op
+func BenchmarkMux_ServeHTTPRegexp(b *testing.B) {
 	a := assert.New(b)
 
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("handler"))
 	})
-	srv := NewServeMux(false, nil, nil)
+	srv := New(false, nil, nil)
 	srv.Get("/blog/post/{id}", h)
 	srv.Get("/api/v{version:\\d+}/login", h)
 
@@ -111,14 +111,14 @@ func BenchmarkServeMux_ServeHTTPRegexp(b *testing.B) {
 	}
 }
 
-// go1.8 BenchmarkServeMux_ServeHTTPAll-4      	 2000000	       737 ns/op
-func BenchmarkServeMux_ServeHTTPAll(b *testing.B) {
+// go1.8 BenchmarkMux_ServeHTTPAll-4      	 2000000	       737 ns/op
+func BenchmarkMux_ServeHTTPAll(b *testing.B) {
 	a := assert.New(b)
 
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("handler"))
 	})
-	srv := NewServeMux(false, nil, nil)
+	srv := New(false, nil, nil)
 	srv.Get("/blog/basic/1", h)
 	srv.Get("/blog/static/", h)
 	srv.Get("/api/v{version:\\d+}/login", h)
