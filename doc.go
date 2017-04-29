@@ -5,7 +5,7 @@
 // Package mux 提供了相对 http.ServeMux 更加复杂的路径匹配功能。
 // 同时又兼容官方的 http.Handler 接口。
 //
-//  m := mux.NewServeMux(false, nil, nil).
+//  m := mux.New(false, nil, nil).
 //          Get("/user/1", h).
 //          Post("/api/login", h).
 //          Get("/blog/post/{id:\\d+}", h). // 正则路由
@@ -60,5 +60,5 @@
 // OPTIONS 请求是一个比较特殊的存在，默认情况下，用户无须显示地实现它，
 // 系统会自动实现。当然用户也可以使用 *.Options() 函数指定特定的数据；
 // 或是直接使用 *.Add() 指定一个自定义的实现方式。
-// 如果不需要的话，也可以在 NewServeMux() 中将 disableOptions 设置为 true。
+// 如果不需要的话，也可以在 New() 中将 disableOptions 设置为 true。
 package mux

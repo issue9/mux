@@ -29,7 +29,7 @@ var (
 	h3 = http.HandlerFunc(f3)
 )
 
-func request(a *assert.Assertion, srvmux *ServeMux, method, url string, status int) {
+func request(a *assert.Assertion, srvmux *Mux, method, url string, status int) {
 	w := httptest.NewRecorder()
 	a.NotNil(w)
 
@@ -40,7 +40,7 @@ func request(a *assert.Assertion, srvmux *ServeMux, method, url string, status i
 	a.Equal(w.Code, status)
 }
 
-func requestOptions(a *assert.Assertion, srvmux *ServeMux, url string, status int, allow string) {
+func requestOptions(a *assert.Assertion, srvmux *Mux, url string, status int, allow string) {
 	w := httptest.NewRecorder()
 	a.NotNil(w)
 
@@ -71,9 +71,9 @@ func TestClearPath(t *testing.T) {
 	a.Equal(cleanPath("/api../"), "/api../")
 }
 
-func TestServeMux_Add_Remove_1(t *testing.T) {
+func TestMux_Add_Remove_1(t *testing.T) {
 	a := assert.New(t)
-	srvmux := NewServeMux(false, nil, nil)
+	srvmux := New(false, nil, nil)
 	a.NotNil(srvmux)
 
 	// 添加 delete /api/1
@@ -107,9 +107,9 @@ func TestServeMux_Add_Remove_1(t *testing.T) {
 	a.Equal(srvmux.entries.Len(), 0)
 }
 
-func TestServeMux_Add_Remove_2(t *testing.T) {
+func TestMux_Add_Remove_2(t *testing.T) {
 	a := assert.New(t)
-	srvmux := NewServeMux(false, nil, nil)
+	srvmux := New(false, nil, nil)
 	a.NotNil(srvmux)
 
 	// 添加 GET /api/1
@@ -150,9 +150,9 @@ func TestServeMux_Add_Remove_2(t *testing.T) {
 	request(a, srvmux, http.MethodPost, "/api/1", http.StatusNotFound) // 404 表示整个 entry 都没了
 }
 
-func TestServeMux_Clean(t *testing.T) {
+func TestMux_Clean(t *testing.T) {
 	a := assert.New(t)
-	srvmux := NewServeMux(false, nil, nil)
+	srvmux := New(false, nil, nil)
 	a.NotNil(srvmux)
 
 	// 添加 delete /api/1
@@ -166,9 +166,9 @@ func TestServeMux_Clean(t *testing.T) {
 	a.Equal(srvmux.entries.Len(), 0)
 }
 
-func TestServeMux_Options(t *testing.T) {
+func TestMux_Options(t *testing.T) {
 	a := assert.New(t)
-	srvmux := NewServeMux(false, nil, nil)
+	srvmux := New(false, nil, nil)
 	a.NotNil(srvmux)
 
 	// 添加 GET /api/1
@@ -195,9 +195,9 @@ func TestServeMux_Options(t *testing.T) {
 	requestOptions(a, srvmux, "/api/1", 1, "")
 }
 
-func TestServeMux_Params(t *testing.T) {
+func TestMux_Params(t *testing.T) {
 	a := assert.New(t)
-	srvmux := NewServeMux(false, nil, nil)
+	srvmux := New(false, nil, nil)
 	a.NotNil(srvmux)
 	params := map[string]string{}
 
@@ -209,7 +209,7 @@ func TestServeMux_Params(t *testing.T) {
 		})
 	}
 
-	requestParams := func(a *assert.Assertion, srvmux *ServeMux, method, url string, status int, ps map[string]string) {
+	requestParams := func(a *assert.Assertion, srvmux *Mux, method, url string, status int, ps map[string]string) {
 		w := httptest.NewRecorder()
 		a.NotNil(w)
 
@@ -243,9 +243,9 @@ func TestServeMux_Params(t *testing.T) {
 }
 
 // 测试匹配顺序是否正确
-func TestServeMux_ServeHTTP_Order(t *testing.T) {
+func TestMux_ServeHTTP_Order(t *testing.T) {
 	a := assert.New(t)
-	serveMux := NewServeMux(false, nil, nil)
+	serveMux := New(false, nil, nil)
 	a.NotNil(serveMux)
 
 	a.NotError(serveMux.GetFunc("/post/", f1))          // f1
