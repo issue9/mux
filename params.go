@@ -25,16 +25,13 @@ type Params map[string]string
 // 以下情况两个参数都会返回 nil：
 //  非正则路由；
 //  正则路由，但是所有匹配参数都是未命名的；
-func GetParams(r *http.Request) (Params, error) {
+func GetParams(r *http.Request) Params {
 	params := r.Context().Value(contextKeyParams)
 	if params == nil {
-		return nil, nil
+		return nil
 	}
 
-	if ret, ok := params.(Params); ok {
-		return ret, nil
-	}
-	return nil, errors.New("无法转换成 Params 类型")
+	return params.(Params)
 }
 
 // Exists 查找指定名称的参数是否存在。

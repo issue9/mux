@@ -5,10 +5,33 @@
 package mux
 
 import (
+	"context"
 	"testing"
+
+	"net/http"
 
 	"github.com/issue9/assert"
 )
+
+func setParams(params map[string]string, a *assert.Assertion) *http.Request {
+	r, err := http.NewRequest(http.MethodGet, "/to/path", nil)
+	a.NotError(err).NotNil(r)
+
+	ctx := context.WithValue(r.Context(), contextKeyParams, Params(params))
+	return r.WithContext(ctx)
+}
+
+func TestGetParams(t *testing.T) {
+	a := assert.New(t)
+
+	r := setParams(nil, a)
+	ps := GetParams(r)
+	a.Nil(ps)
+
+	r = setParams(map[string]string{"key1": "1"}, a)
+	ps = GetParams(r)
+	a.Equal(ps, map[string]string{"key1": "1"})
+}
 
 func TestParams_Int(t *testing.T) {
 	a := assert.New(t)
