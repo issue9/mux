@@ -11,49 +11,10 @@ import (
 	"fmt"
 	"net/http"
 	"path"
-	"strings"
 	"sync"
 
 	"github.com/issue9/mux/internal/entry"
 )
-
-var (
-	// 支持的所有请求方法
-	supportedMethods = []string{
-		http.MethodGet,
-		http.MethodPost,
-		http.MethodDelete,
-		http.MethodPut,
-		http.MethodPatch,
-		http.MethodOptions,
-		http.MethodHead,
-		http.MethodTrace,
-	}
-
-	// 调用 Any 添加的列表，默认不添加 OPTIONS 请求
-	defaultMethods = []string{
-		http.MethodGet,
-		http.MethodPost,
-		http.MethodDelete,
-		http.MethodPut,
-		http.MethodPatch,
-		// http.MethodOptions,
-		http.MethodHead,
-		http.MethodTrace,
-	}
-)
-
-// MethodIsSupported 是否支持该请求方法
-func MethodIsSupported(method string) bool {
-	method = strings.ToUpper(method)
-	for _, m := range supportedMethods {
-		if m == method {
-			return true
-		}
-	}
-
-	return false
-}
 
 // ServeMux 是 http.ServeMux 的升级版，可处理对 URL 的正则匹配和根据 METHOD 进行过滤。
 //
@@ -72,15 +33,37 @@ type ServeMux struct {
 	// 是否禁用自动产生 OPTIONS 请求方法。
 	// 该值不能中途修改，否则会出现部分有 OPTIONS，部分没有的情况。
 	disableOptions bool
+
+	// 404 的处理方式
+	notFound http.HandlerFunc
+
+	// 405 的处理方式
+	methodNotAllowed http.HandlerFunc
 }
 
 // NewServeMux 声明一个新的 ServeMux。
 //
 // disableOptions 是否禁用自动生成 OPTIONS 功能。
-func NewServeMux(disableOptions bool) *ServeMux {
+// notFound 404 页面的处理方式，为 nil 时会调用 http.Error 进行处理
+// methodNotAllowed 405 页面的处理方式，为 nil 时会调用 http.Error 进行处理
+func NewServeMux(disableOptions bool, notFound, methodNotAllowed http.HandlerFunc) *ServeMux {
+	if notFound == nil {
+		notFound = func(w http.ResponseWriter, r *http.Request) {
+			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		}
+	}
+
+	if methodNotAllowed == nil {
+		methodNotAllowed = func(w http.ResponseWriter, r *http.Request) {
+			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		}
+	}
+
 	return &ServeMux{
-		entries:        list.New(),
-		disableOptions: disableOptions,
+		entries:          list.New(),
+		disableOptions:   disableOptions,
+		notFound:         notFound,
+		methodNotAllowed: methodNotAllowed,
 	}
 }
 
@@ -282,13 +265,13 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	p, e := mux.match(r)
 
 	if e == nil {
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		mux.notFound(w, r)
 		return
 	}
 
 	h := e.Handler(r.Method)
 	if h == nil {
-		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		mux.methodNotAllowed(w, r)
 		return
 	}
 

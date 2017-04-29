@@ -10,9 +10,9 @@ import (
 	"github.com/issue9/assert"
 )
 
-func TestPrefix_Clean(t *testing.T) {
+func TestPrefix_Clean1(t *testing.T) {
 	a := assert.New(t)
-	srvmux := NewServeMux(false)
+	srvmux := NewServeMux(false, nil, nil)
 	a.NotNil(srvmux)
 
 	// 添加 delete /api/1
@@ -22,7 +22,7 @@ func TestPrefix_Clean(t *testing.T) {
 	})
 	a.Equal(srvmux.entries.Len(), 1)
 
-	// 添加 patch /api/1 和 delete /api/1
+	// 添加 patch /api/2/1 和 delete /api/2/1
 	prefix := srvmux.Prefix("/api/2")
 	a.NotPanic(func() {
 		prefix.PatchFunc("/1", f1).
@@ -34,9 +34,32 @@ func TestPrefix_Clean(t *testing.T) {
 	a.Equal(srvmux.entries.Len(), 1)
 }
 
-func TestPrefix(t *testing.T) {
+func TestPrefix_Clean2(t *testing.T) {
 	a := assert.New(t)
-	srvmux := NewServeMux(false)
+	srvmux := NewServeMux(false, nil, nil)
+	a.NotNil(srvmux)
+
+	p1 := srvmux.Prefix("/api")
+	a.NotPanic(func() {
+		p1.PatchFunc("/1", f1).
+			Delete("/1", h1)
+	})
+	a.Equal(srvmux.entries.Len(), 1)
+
+	p2 := srvmux.Prefix("/api")
+	a.NotPanic(func() {
+		p2.PatchFunc("/2", f1).
+			Delete("/3", h1)
+	})
+	a.Equal(srvmux.entries.Len(), 3)
+
+	p2.Clean()
+	a.Equal(srvmux.entries.Len(), 0)
+}
+
+func TestServeMux_Prefix(t *testing.T) {
+	a := assert.New(t)
+	srvmux := NewServeMux(false, nil, nil)
 	a.NotNil(srvmux)
 
 	p := srvmux.Prefix("/abc")
@@ -45,4 +68,19 @@ func TestPrefix(t *testing.T) {
 
 	p = srvmux.Prefix("")
 	a.Equal(p.prefix, "")
+}
+
+func TestPrefix_Prefix(t *testing.T) {
+	a := assert.New(t)
+	srvmux := NewServeMux(false, nil, nil)
+	a.NotNil(srvmux)
+
+	p := srvmux.Prefix("/abc")
+	pp := p.Prefix("/def")
+	a.Equal(pp.prefix, "/abc/def")
+	a.Equal(p.Mux(), srvmux)
+
+	p = srvmux.Prefix("")
+	pp = p.Prefix("/abc")
+	a.Equal(pp.prefix, "/abc")
 }
