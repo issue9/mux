@@ -5,5 +5,3 @@ go:
     - 1.7
 install:
     - go get github.com/issue9/assert
-    - go get github.com/issue9/context
-    - go get github.com/issue9/handlers

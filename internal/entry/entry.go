@@ -5,14 +5,12 @@
 package entry
 
 import (
-	"errors"
+	"fmt"
 	"net/http"
 	"regexp"
+	"sort"
 	"strings"
 )
-
-// ErrMethodExists 表示 Entry 中已经存在相同请求方法的 http.Handler
-var ErrMethodExists = errors.New("该请求方法已经存在")
 
 // Entry 表示一类资源的进入点，拥有统一的路由匹配模式。
 type Entry interface {
@@ -36,7 +34,7 @@ type Entry interface {
 
 	// 添加请求方法及其对应的处理函数。
 	//
-	// 若已经存在，则返回 ErrMethodExists 错误。
+	// 若已经存在，则返回错误。
 	// 若 method == http.MethodOptions，则可以去覆盖默认的处理方式。
 	Add(method string, handler http.Handler) error
 
@@ -105,17 +103,14 @@ func (s *static) Params(url string) map[string]string {
 
 func (s *static) Match(url string) int {
 	l := len(url) - len(s.pattern)
-	switch {
-	case l < 0:
+	if l < 0 {
 		return -1
-	case l >= 0:
-		if (s.pattern[len(s.pattern)-1] == '/') &&
-			(s.pattern == url[:len(s.pattern)]) {
-			return l
-		}
-		return -1
-	} // end switch
+	}
 
+	// 由 New 函数确保 s.pattern 都是以 '/' 结尾的
+	if s.pattern == url[:len(s.pattern)] {
+		return l
+	}
 	return -1
 }
 
@@ -128,12 +123,11 @@ func (re *regexpr) IsRegexp() bool {
 }
 
 func (re *regexpr) Match(url string) int {
-	// 正则匹配，没有部分匹配功能，匹配返回 0，否则返回 -1
 	loc := re.expr.FindStringIndex(url)
-	if loc == nil {
-		return -1
-	}
-	if loc[0] == 0 && loc[1] == len(url) {
+
+	if loc != nil &&
+		loc[0] == 0 &&
+		loc[1] == len(url) {
 		return 0
 	}
 	return -1
@@ -161,37 +155,42 @@ func (re *regexpr) Params(url string) map[string]string {
 //
 // pattern 匹配内容。
 // h 对应的 http.Handler，外层调用者确保该值不能为 nil.
-func New(pattern string, h http.Handler) Entry {
+func New(pattern string, h http.Handler) (Entry, error) {
 	strs := split(pattern)
 
 	if len(strs) > 1 { // 正则路由
-		p, hasParams := toPattern(strs)
+		p, hasParams, err := toPattern(strs)
+		if err != nil {
+			return nil, err
+		}
+
 		return &regexpr{
 			items:     newItems(),
 			pattern:   pattern,
 			hasParams: hasParams,
 			expr:      regexp.MustCompile(p),
-		}
+		}, nil
 	}
 
 	if pattern[len(pattern)-1] == '/' {
 		return &static{
 			items:   newItems(),
 			pattern: pattern,
-		}
+		}, nil
 	}
 
 	return &basic{
 		items:   newItems(),
 		pattern: pattern,
-	}
+	}, nil
 }
 
 // 将 strs 按照顺序合并成一个正则表达式
 // 返回参数正则表达式的字符串，和一个 bool 值用以表式正则中是否包含了命名匹配。
-func toPattern(strs []string) (string, bool) {
+func toPattern(strs []string) (string, bool, error) {
 	pattern := ""
 	hasParams := false
+	names := []string{}
 
 	for _, v := range strs {
 		lastIndex := len(v) - 1
@@ -206,6 +205,7 @@ func toPattern(strs []string) (string, bool) {
 		if index < 0 { // 只存在命名，而不存在正则表达式，默认匹配[^/]
 			pattern += "(?P<" + v + ">[^/]+)"
 			hasParams = true
+			names = append(names, v)
 			continue
 		}
 
@@ -215,10 +215,21 @@ func toPattern(strs []string) (string, bool) {
 		}
 
 		pattern += "(?P<" + v[:index] + ">" + v[index+1:] + ")"
+		names = append(names, v[:index])
 		hasParams = true
 	}
 
-	return pattern, hasParams
+	// 检测是否存在同名参数：
+	// 先按名称排序，之后只要检测相邻两个名称是否相同即可。
+	if len(names) > 1 {
+		sort.Strings(names)
+		for i := 1; i < len(names); i++ {
+			if names[i] == names[i-1] {
+				return "", false, fmt.Errorf("相同的路由参数名：%v", names[i])
+			}
+		}
+	}
+	return pattern, hasParams, nil
 }
 
 // 将 str 以 { 和 } 为分隔符进行分隔。

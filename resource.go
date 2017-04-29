@@ -18,8 +18,8 @@ type Resource struct {
 // Options 手动指定 OPTIONS 请求方法的值。
 //
 // 若无特殊需求，不用调用些方法，系统会自动计算符合当前路由的请求方法列表。
-func (r *Resource) Options(methods string) *Resource {
-	r.mux.Options(r.pattern, methods)
+func (r *Resource) Options(allow string) *Resource {
+	r.mux.Options(r.pattern, allow)
 	return r
 }
 
@@ -142,4 +142,9 @@ func (p *Prefix) Resource(pattern string) *Resource {
 		mux:     p.mux,
 		pattern: p.prefix + pattern,
 	}
+}
+
+// Mux 返回与当前资源关联的 *ServeMux 实例
+func (r *Resource) Mux() *ServeMux {
+	return r.mux
 }

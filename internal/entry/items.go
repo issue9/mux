@@ -5,6 +5,8 @@
 package entry
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 	"sort"
 	"strings"
@@ -43,17 +45,17 @@ func newItems() *items {
 func (i *items) Add(method string, h http.Handler) error {
 	if method == http.MethodOptions { // 强制修改 OPTIONS 方法的处理方式
 		if i.fixedOptionsHandler { // 被强制修改过，不能再受理。
-			return ErrMethodExists
+			return errors.New("该请求方法 OPTIONS 已经存在") // 与以下的错误提示相同
 		}
 
-		i.handlers[method] = h
+		i.handlers[http.MethodOptions] = h
 		i.fixedOptionsHandler = true
 		return nil
 	}
 
 	// 非 OPTIONS 请求
 	if _, found := i.handlers[method]; found {
-		return ErrMethodExists
+		return fmt.Errorf("该请求方法 %v 已经存在", method)
 	}
 	i.handlers[method] = h
 
@@ -78,11 +80,11 @@ func (i *items) getOptionsAllow() string {
 	return strings.Join(methods, ", ")
 }
 
-// 返回值表示，是否还有路由项
+// 返回值表示，是否所有请求方法都已经删完
 func (i *items) Remove(methods ...string) bool {
 	for _, method := range methods {
 		delete(i.handlers, method)
-		if method == http.MethodOptions { // 不恢复方法，只恢复了 fixOptionsHandler
+		if method == http.MethodOptions { // 不恢复方法，只恢复了 fixedOptionsHandler
 			i.fixedOptionsHandler = false
 		}
 	}
@@ -100,7 +102,6 @@ func (i *items) Remove(methods ...string) bool {
 			i.optionsAllow = ""
 			return true
 		}
-
 	}
 
 	if !i.fixedOptionsAllow {

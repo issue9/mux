@@ -17,14 +17,6 @@ import (
 	"github.com/issue9/mux/internal/entry"
 )
 
-type contextKey int
-
-// ContextKeyParams 表示从 context 中获取的参数列表的关键字。
-const ContextKeyParams contextKey = 0
-
-// Params 用以保存请求地址中的参数内容
-type Params map[string]string
-
 var (
 	// 支持的所有请求方法
 	supportedMethods = []string{
@@ -51,6 +43,18 @@ var (
 	}
 )
 
+// MethodIsSupported 是否支持该请求方法
+func MethodIsSupported(method string) bool {
+	method = strings.ToUpper(method)
+	for _, m := range supportedMethods {
+		if m == method {
+			return true
+		}
+	}
+
+	return false
+}
+
 // ServeMux 是 http.ServeMux 的升级版，可处理对 URL 的正则匹配和根据 METHOD 进行过滤。
 //
 // 用法如下：
@@ -59,41 +63,20 @@ var (
 //    Post("/abc/h2", h2).
 //    Add("/api/{version:\\d+}",h3, http.MethodGet, "POST") // 只匹配 GET 和 POST
 //  http.ListenAndServe(m)
-//
-//
-// 路由参数：
-//
-// 路由参数可通过 r.Context 获取：
-//  params := r.Context().Value(mux.ContextKeyParams).(mux.Params)
-//
-//
-// 匹配规则：
-//
-// 可能会出现多条记录与同一请求都匹配的情况，这种情况下，
-// 系统会找到一条认为最匹配的路由来处理，判断规则如下：
-//  1. 静态路由优先于正则路由判断；
-//  2. 完全匹配的路由项优先于部分匹配的路由项；
-//  3. 正则只能是完全匹配；
-//  4. 只有以 / 结尾的静态路由才有部分匹配功能；
-//  5. 同类的后插入先匹配。
-//
-// 正则匹配语法：
-//  /post/{id}     // 匹配 /post/ 开头的任意字符串，其后的字符串保存到 id 中；
-//  /post/{id:\d+} // 同上，但 id 的值只能为 \d+；
-//  /post/{:\d+}   // 同上，但是没有命名；
 type ServeMux struct {
-	// 同时处理 entries 三个的竟争问题
 	mu sync.RWMutex
 
-	// 路由项，按请求方法进行分类，键名为请求方法名称，键值为路由项的列表。
+	// 路由项，按资源进行分类。
 	entries *list.List
 
-	// 是否禁用自动产生 OPTIONS 请求方法，该值不能中途修改，
-	// 否则会出现部分有 OPTIONS， 部分没有的情况。
+	// 是否禁用自动产生 OPTIONS 请求方法。
+	// 该值不能中途修改，否则会出现部分有 OPTIONS，部分没有的情况。
 	disableOptions bool
 }
 
-// NewServeMux 声明一个新的 ServeMux
+// NewServeMux 声明一个新的 ServeMux。
+//
+// disableOptions 是否禁用自动生成 OPTIONS 功能。
 func NewServeMux(disableOptions bool) *ServeMux {
 	return &ServeMux{
 		entries:        list.New(),
@@ -111,7 +94,8 @@ func (mux *ServeMux) Clean() *ServeMux {
 	return mux
 }
 
-// Remove 移除指定的路由项，通过路由表达式和 method 来匹配。
+// Remove 移除指定的路由项。
+//
 // 当未指定 methods 时，将删除所有 method 匹配的项。
 // 指定错误的 methods 值，将自动忽略该值。
 func (mux *ServeMux) Remove(pattern string, methods ...string) {
@@ -131,6 +115,7 @@ func (mux *ServeMux) Remove(pattern string, methods ...string) {
 		if empty := e.Remove(methods...); empty { // 该 Entry 下已经没有路由项了
 			mux.entries.Remove(item)
 		}
+
 		break
 	}
 }
@@ -138,15 +123,15 @@ func (mux *ServeMux) Remove(pattern string, methods ...string) {
 // Add 添加一条路由数据。
 //
 // pattern 为路由匹配模式，可以是正则匹配也可以是字符串匹配，
-// methods 参数应该只能为 supportedMethods 中的字符串，若不指定，默认为所有，
+// methods 参数应该只能为 defaultMethods 中的字符串，若不指定，默认为所有，
 // 当 h 或是 pattern 为空时，将触发 panic。
 func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) error {
 	if len(pattern) == 0 {
-		return errors.New("参数pattern不能为空")
+		return errors.New("参数 pattern 不能为空")
 	}
 
 	if h == nil {
-		return errors.New("参数h不能为空")
+		return errors.New("参数 h 不能为空")
 	}
 
 	if len(methods) == 0 {
@@ -156,18 +141,37 @@ func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) erro
 	mux.mu.Lock()
 	defer mux.mu.Unlock()
 
+	var ety entry.Entry
+
+	// 查找是否存在相同的资源项。
 	for item := mux.entries.Front(); item != nil; item = item.Next() {
 		e := item.Value.(entry.Entry)
 		if e.Pattern() == pattern {
-			return fmt.Errorf("该资源[%v]已经存在", pattern)
+			ety = e
+			break
 		}
 	}
 
-	ety := entry.New(pattern, h)
-	if mux.disableOptions { // 禁用 OPTIONS
-		ety.Remove(http.MethodOptions)
+	// 不存在相同的资源项，则声明新的。
+	if ety == nil {
+		var err error
+		ety, err = entry.New(pattern, h)
+		if err != nil {
+			return err
+		}
+
+		if mux.disableOptions { // 禁用 OPTIONS
+			ety.Remove(http.MethodOptions)
+		}
+
+		if ety.IsRegexp() { // 正则路由，在后端插入
+			mux.entries.PushBack(ety)
+		} else {
+			mux.entries.PushFront(ety)
+		}
 	}
 
+	// 添加指定请求方法的处理函数
 	for _, method := range methods {
 		if !MethodIsSupported(method) {
 			return fmt.Errorf("无效的 methods: %v", method)
@@ -177,25 +181,22 @@ func (mux *ServeMux) Add(pattern string, h http.Handler, methods ...string) erro
 		}
 	}
 
-	if ety.IsRegexp() { // 正则路由，在后端插入
-		mux.entries.PushBack(ety)
-	}
-	mux.entries.PushFront(ety)
-
 	return nil
 }
 
-// Options 手动指定 OPTIONS 请求方法的值。
+// Options 手动指定 OPTIONS 请求方法的报头 allow 的值。
 //
 // 若无特殊需求，不用调用此方法，系统会自动计算符合当前路由的请求方法列表。
-func (mux *ServeMux) Options(pattern string, methods string) *ServeMux {
+// 如果想实现对处理方法的自定义，可以显示地调用 Add 方法:
+//  ServeMux.Add("/api/1", handle, http.MethodOptions)
+func (mux *ServeMux) Options(pattern string, allow string) *ServeMux {
 	for item := mux.entries.Front(); item != nil; item = item.Next() {
 		e := item.Value.(entry.Entry)
 		if e.Pattern() != pattern {
 			continue
 		}
 
-		e.SetAllow(methods)
+		e.SetAllow(allow)
 		break
 	}
 	return mux
@@ -277,9 +278,34 @@ func (mux *ServeMux) AnyFunc(pattern string, fun func(http.ResponseWriter, *http
 	return mux.addFunc(pattern, fun, defaultMethods...)
 }
 
+func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	p, e := mux.match(r)
+
+	if e == nil {
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	}
+
+	h := e.Handler(r.Method)
+	if h == nil {
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
+	}
+
+	params := e.Params(p)
+	if params != nil {
+		ctx := context.WithValue(r.Context(), contextKeyParams, Params(params))
+		r = r.WithContext(ctx)
+	}
+	h.ServeHTTP(w, r)
+}
+
 // 查找最匹配的路由项
+//
+// p 为整理后的当前请求路径；
+// e 为当前匹配的 entry.Entry 实例。
 func (mux *ServeMux) match(r *http.Request) (p string, e entry.Entry) {
-	size := -1 // 匹配度，0 表示完全匹配，负数表示完全不匹配，其它值越小匹配度越高
+	size := -1 // 匹配度，0 表示完全匹配，-1 表示完全不匹配，其它值越小匹配度越高
 	p = cleanPath(r.URL.Path)
 
 	mux.mu.RLock()
@@ -287,7 +313,6 @@ func (mux *ServeMux) match(r *http.Request) (p string, e entry.Entry) {
 
 	for item := mux.entries.Front(); item != nil; item = item.Next() {
 		ety := item.Value.(entry.Entry)
-
 		s := ety.Match(p)
 
 		if s == 0 { // 完全匹配，可以中止匹配过程
@@ -298,7 +323,7 @@ func (mux *ServeMux) match(r *http.Request) (p string, e entry.Entry) {
 			continue
 		}
 
-		// 匹配度比当前的高
+		// 匹配度比当前的高，则保存下来
 		size = s
 		e = ety
 	} // end for
@@ -307,29 +332,6 @@ func (mux *ServeMux) match(r *http.Request) (p string, e entry.Entry) {
 		return "", nil
 	}
 	return p, e
-}
-
-// 若没有找到匹配路由，返回 404
-func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	p, e := mux.match(r)
-
-	if e == nil {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-
-	h := e.Handler(r.Method)
-	if h == nil {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
-
-	params := e.Params(p)
-	if params != nil {
-		ctx := context.WithValue(r.Context(), ContextKeyParams, Params(params))
-		r = r.WithContext(ctx)
-	}
-	h.ServeHTTP(w, r)
 }
 
 // 清除路径中的怪异符号
@@ -352,16 +354,4 @@ func cleanPath(p string) string {
 		pp += "/"
 	}
 	return pp
-}
-
-// MethodIsSupported 是否支持某请求方法
-func MethodIsSupported(method string) bool {
-	method = strings.ToUpper(method)
-	for _, m := range supportedMethods {
-		if m == method {
-			return true
-		}
-	}
-
-	return false
 }

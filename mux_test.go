@@ -12,6 +12,46 @@ import (
 	"github.com/issue9/assert"
 )
 
+// 一些预定义的处理函数
+var (
+	f1 = func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(1)
+	}
+	f2 = func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(2)
+	}
+	f3 = func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(3)
+	}
+
+	h1 = http.HandlerFunc(f1)
+	h2 = http.HandlerFunc(f2)
+	h3 = http.HandlerFunc(f3)
+)
+
+func request(a *assert.Assertion, srvmux *ServeMux, method, url string, status int) {
+	w := httptest.NewRecorder()
+	a.NotNil(w)
+
+	r, err := http.NewRequest(method, url, nil)
+	a.NotError(err).NotNil(r)
+
+	srvmux.ServeHTTP(w, r)
+	a.Equal(w.Code, status)
+}
+
+func requestOptions(a *assert.Assertion, srvmux *ServeMux, url string, status int, allow string) {
+	w := httptest.NewRecorder()
+	a.NotNil(w)
+
+	r, err := http.NewRequest(http.MethodOptions, url, nil)
+	a.NotError(err).NotNil(r)
+
+	srvmux.ServeHTTP(w, r)
+	a.Equal(w.Code, status)
+	a.Equal(w.Header().Get("Allow"), allow)
+}
+
 func TestClearPath(t *testing.T) {
 	a := assert.New(t)
 
@@ -28,167 +68,190 @@ func TestClearPath(t *testing.T) {
 	a.Equal(cleanPath("/api../"), "/api../")
 }
 
-// 测试各种匹配模式是否正常工作
-func TestServeMux_ServeHTTP(t *testing.T) {
+func TestServeMux_Add_Remove_1(t *testing.T) {
 	a := assert.New(t)
+	srvmux := NewServeMux(false)
+	a.NotNil(srvmux)
 
-	tests := []*tester{
-		&tester{
-			name:    "普通匹配",
-			pattern: "/abc",
-			url:     "/abc",
-			status:  http.StatusOK,
-		},
-		&tester{
-			name:    "普通部分匹配",
-			pattern: "/abc/",
-			url:     "/abc/d",
-			status:  http.StatusOK,
-		},
-		&tester{
-			name:    "普通不匹配-1",
-			pattern: "/abc",
-			url:     "/abcd",
-			status:  http.StatusNotFound,
-		},
-		&tester{
-			name:    "普通不匹配-2",
-			pattern: "/abc",
-			url:     "/cba",
-			status:  http.StatusNotFound,
-		},
-		&tester{
-			name:    "正则匹配数字",
-			pattern: "/api/{version:\\d+}",
-			url:     "/api/2",
-			status:  http.StatusOK,
-			params:  map[string]string{"version": "2"},
-		},
-		&tester{
-			name:    "不规则的路径-1",
-			pattern: "/api/{version:\\d+}",
-			url:     "/api//2",
-			status:  http.StatusOK,
-			params:  map[string]string{"version": "2"},
-		},
-		&tester{
-			name:    "不规则的路径-2",
-			pattern: "/api/{version:\\d+}",
-			url:     "/api/nest/../2", // 上一层路径
-			status:  http.StatusOK,
-			params:  map[string]string{"version": "2"},
-		},
-		&tester{
-			name:    "不规则的路径-3",
-			pattern: "/{version:\\d+}",
-			url:     "/api/../../../2", // 上 N 层路径，超过根路径
-			status:  http.StatusOK,
-			params:  map[string]string{"version": "2"},
-		},
-		&tester{
-			name:    "不规则的路径-4",
-			pattern: "/api/a../{version:\\d+}",
-			url:     "/api/a../2",
-			status:  http.StatusOK,
-			params:  map[string]string{"version": "2"},
-		},
-		&tester{
-			name:    "正则匹配多个名称",
-			pattern: "/api/{version:\\d+}/{name:\\w+}",
-			url:     "/api/2/login",
-			status:  http.StatusOK,
-			params:  map[string]string{"version": "2", "name": "login"},
-		},
-		&tester{
-			name:    "正则不匹配多个名称",
-			pattern: "/api/{version:\\d+}/{name:\\w+}",
-			url:     "/api/2.0/login",
-			status:  http.StatusNotFound,
-		},
-		/*&tester{
-			name:       "带域名的字符串不匹配", //无法匹配端口信息
-			pattern:    "127.0.0.1/abc",
-			url:      "/cba",
-			status: 404,
-		},
-		&tester{
-			name:       "带域名的正则匹配", //无法匹配端口信息
-			pattern:    "127.0.0.1:{:\\d+}/abc",
-			url:      "/abc",
-			status: 200,
-		},
-		&tester{
-			name:       "带域名的命名正则匹配", //无法匹配端口信息
-			pattern:    "127.0.0.1:{:\\d+}/api/v{version:\\d+}/login",
-			url:      "/api/v2/login",
-			status: 200,
-			params:     map[string]string{"version": "2"},
-		},*/
-	}
+	// 添加 delete /api/1
+	a.NotPanic(func() {
+		srvmux.DeleteFunc("/api/1", f1)
+	})
+	a.Equal(srvmux.entries.Len(), 1)
 
-	runTester(a, tests)
+	// 添加 patch /api/1
+	a.NotPanic(func() {
+		srvmux.PatchFunc("/api/1", f1)
+	})
+	a.Equal(srvmux.entries.Len(), 1) // 加在同一个 Entry 下，所以数量不变
+
+	// 添加 post /api/2
+	a.NotPanic(func() {
+		srvmux.PostFunc("/api/2", f1)
+	})
+	a.Equal(srvmux.entries.Len(), 2)
+
+	// 删除 any /api/2
+	srvmux.Remove("/api/2")
+	a.Equal(srvmux.entries.Len(), 1)
+
+	// 删除 delete /api/1
+	srvmux.Remove("/api/1", http.MethodDelete)
+	a.Equal(srvmux.entries.Len(), 1)
+
+	// 删除 patch /api/1
+	srvmux.Remove("/api/1", http.MethodPatch)
+	a.Equal(srvmux.entries.Len(), 0)
 }
 
-func TestServeMux_Remove(t *testing.T) {
+func TestServeMux_Add_Remove_2(t *testing.T) {
 	a := assert.New(t)
+	srvmux := NewServeMux(false)
+	a.NotNil(srvmux)
 
-	serveMux := NewServeMux(false)
-	a.NotNil(serveMux)
+	// 添加 GET /api/1
+	// 添加 PUT /api/1
+	// 添加 GET /api/2
+	a.NotError(srvmux.AddFunc("/api/1", f1, http.MethodGet))
+	a.NotPanic(func() {
+		srvmux.PutFunc("/api/1", f1)
+	})
+	a.NotPanic(func() {
+		srvmux.GetFunc("/api/2", f2)
+	})
+	request(a, srvmux, http.MethodGet, "/api/1", 1)
+	request(a, srvmux, http.MethodPut, "/api/1", 1)
+	request(a, srvmux, http.MethodGet, "/api/2", 2)
+	request(a, srvmux, http.MethodDelete, "/api/1", http.StatusMethodNotAllowed) // 未实现
 
-	//
+	// 删除 GET /api/1
+	srvmux.Remove("/api/1", http.MethodGet)
+	request(a, srvmux, http.MethodGet, "/api/1", http.StatusMethodNotAllowed)
+	request(a, srvmux, http.MethodPut, "/api/1", 1) // 不影响 PUT
+	request(a, srvmux, http.MethodGet, "/api/2", 2)
+
+	// 删除 GET /api/2，只有一个，所以相当于整个 Entry 被删除
+	srvmux.Remove("/api/2", http.MethodGet)
+	request(a, srvmux, http.MethodGet, "/api/1", http.StatusMethodNotAllowed)
+	request(a, srvmux, http.MethodPut, "/api/1", 1)                   // 不影响 PUT
+	request(a, srvmux, http.MethodGet, "/api/2", http.StatusNotFound) // 整个 entry 被删除
+
+	// 添加 POST /api/1
+	a.NotPanic(func() {
+		srvmux.PostFunc("/api/1", f1)
+	})
+	request(a, srvmux, http.MethodPost, "/api/1", 1)
+
+	// 删除 ANY /api/1
+	srvmux.Remove("/api/1")
+	request(a, srvmux, http.MethodPost, "/api/1", http.StatusNotFound) // 404 表示整个 entry 都没了
+}
+
+func TestServeMux_Clean(t *testing.T) {
+	a := assert.New(t)
+	srvmux := NewServeMux(false)
+	a.NotNil(srvmux)
+
+	// 添加 delete /api/1
+	a.NotPanic(func() {
+		srvmux.DeleteFunc("/api/1", f1).
+			PatchFunc("/api/1", f1)
+	})
+	a.Equal(srvmux.entries.Len(), 1)
+
+	srvmux.Clean()
+	a.Equal(srvmux.entries.Len(), 0)
+}
+
+func TestServeMux_Options(t *testing.T) {
+	a := assert.New(t)
+	srvmux := NewServeMux(false)
+	a.NotNil(srvmux)
+
+	// 添加 GET /api/1
+	a.NotError(srvmux.Add("/api/1", h1, http.MethodGet))
+	requestOptions(a, srvmux, "/api/1", http.StatusOK, "GET, OPTIONS")
+
+	// 添加 DELETE /api/1
+	a.NotPanic(func() {
+		srvmux.Delete("/api/1", h1)
+	})
+	requestOptions(a, srvmux, "/api/1", http.StatusOK, "DELETE, GET, OPTIONS")
+
+	// 删除 DELETE /api/1
+	srvmux.Remove("/api/1", http.MethodDelete)
+	requestOptions(a, srvmux, "/api/1", http.StatusOK, "GET, OPTIONS")
+
+	// 通过 Options 自定义 Allow 报头
+	srvmux.Options("/api/1", "CUSTOM OPTIONS1")
+	requestOptions(a, srvmux, "/api/1", http.StatusOK, "CUSTOM OPTIONS1")
+	srvmux.Options("/api/1", "CUSTOM OPTIONS2")
+	requestOptions(a, srvmux, "/api/1", http.StatusOK, "CUSTOM OPTIONS2")
+
+	srvmux.AddFunc("/api/1", f1, http.MethodOptions)
+	requestOptions(a, srvmux, "/api/1", 1, "")
+}
+
+func TestServeMux_Params(t *testing.T) {
+	a := assert.New(t)
+	srvmux := NewServeMux(false)
+	a.NotNil(srvmux)
+	params := map[string]string{}
+
+	buildParamsHandler := func() http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ps, err := GetParams(r)
+			a.NotError(err).NotNil(ps)
+			params = ps
+		})
+	}
+
+	requestParams := func(a *assert.Assertion, srvmux *ServeMux, method, url string, status int, ps map[string]string) {
+		w := httptest.NewRecorder()
+		a.NotNil(w)
+
+		r, err := http.NewRequest(method, url, nil)
+		a.NotError(err).NotNil(r)
+
+		srvmux.ServeHTTP(w, r)
+
+		a.Equal(w.Code, status)
+		if ps != nil { // 由于 params 是公用数据，会保存上一次获取的值，所以只在有值时才比较
+			a.Equal(params, ps)
+		}
+		params = nil // 清空全局的 params
+	}
+
+	// 添加 patch /api/{version:\\d+}
+	a.NotError(srvmux.Patch("/api/{version:\\d+}", buildParamsHandler()))
+	requestParams(a, srvmux, http.MethodPatch, "/api/2", http.StatusOK, map[string]string{"version": "2"})
+	requestParams(a, srvmux, http.MethodPatch, "/api/256", http.StatusOK, map[string]string{"version": "256"})
+	requestParams(a, srvmux, http.MethodGet, "/api/256", http.StatusMethodNotAllowed, nil) // 不存在的请求方法
+
+	// 添加 patch /api/v2/{version:\\d+}
+	a.NotError(srvmux.Patch("/api/v2/{version:\\d*}", buildParamsHandler()))
+	requestParams(a, srvmux, http.MethodPatch, "/api/v2/2", http.StatusOK, map[string]string{"version": "2"})
+	requestParams(a, srvmux, http.MethodPatch, "/api/v2/", http.StatusOK, map[string]string{"version": ""})
+
+	// 添加 patch /api/v2/{version:\\d+}/test
+	a.NotError(srvmux.Patch("/api/v2/{version:\\d*}/test", buildParamsHandler()))
+	requestParams(a, srvmux, http.MethodPatch, "/api/v2/2/test", http.StatusOK, map[string]string{"version": "2"})
+	requestParams(a, srvmux, http.MethodPatch, "/api/v2//test", http.StatusNotFound, nil) // 可选参数不能在路由中间
 }
 
 // 测试匹配顺序是否正确
 func TestServeMux_ServeHTTP_Order(t *testing.T) {
 	a := assert.New(t)
-
-	// 一些预定义的处理函数
-	f1 := func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(1)
-	}
-	f2 := func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(2)
-	}
-	f3 := func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(3)
-	}
-	/*f4 := func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(4)
-	}
-	f5 := func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(5)
-	}
-	f6 := func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(6)
-	}*/
-
-	test := func(m *ServeMux, method, host, path string, code int) {
-		r, err := http.NewRequest(method, path, nil)
-		if len(host) > 0 {
-			r.Host = host
-		}
-		a.NotError(err).NotNil(r)
-		w := httptest.NewRecorder()
-		a.NotNil(w)
-		m.ServeHTTP(w, r)
-		a.Equal(w.Code, code)
-	}
-
 	serveMux := NewServeMux(false)
 	a.NotNil(serveMux)
-	a.NotError(serveMux.AddFunc("/post/", f1, "GET"))          // f1
-	a.NotError(serveMux.AddFunc("/post/{id:\\d+}", f2, "GET")) // f2
-	a.NotError(serveMux.AddFunc("/post/1", f3, "GET"))         // f3
-	//serveMux.AddFunc("127.0.0.1/post/", f4, "GET")          // f4
-	//serveMux.AddFunc("127.0.0.1/post/{id:\\d+}", f5, "GET") // f5
-	//serveMux.AddFunc("127.0.0.1/post/1", f6, "GET")         // f6
 
-	test(serveMux, "GET", "", "/post/1", 3)   // f3 静态路由项完全匹配
-	test(serveMux, "GET", "", "/post/2", 2)   // f2 正则完全匹配
-	test(serveMux, "GET", "", "/post/abc", 1) // f1 匹配度最高
-	//test(serveMux, "GET", "127.0.0.1", "/post/1", 6)   // f6 静态路由项完全匹配
-	//test(serveMux, "GET", "127.0.0.1", "/post/2", 5)   // f5 正则完全匹配
-	//test(serveMux, "GET", "127.0.0.1", "/post/abc", 4) // f4 匹配度最高
+	a.NotError(serveMux.GetFunc("/post/", f1))          // f1
+	a.NotError(serveMux.GetFunc("/post/{id:\\d+}", f2)) // f2
+	a.NotError(serveMux.GetFunc("/post/1", f3))         // f3
+
+	request(a, serveMux, http.MethodGet, "/post/1", 3)   // f3 静态路由项完全匹配
+	request(a, serveMux, http.MethodGet, "/post/2", 2)   // f2 正则完全匹配
+	request(a, serveMux, http.MethodGet, "/post/abc", 1) // f1 匹配度最高
 }
 
 func TestMethodIsSupported(t *testing.T) {
