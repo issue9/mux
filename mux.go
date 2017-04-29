@@ -72,15 +72,37 @@ type ServeMux struct {
 	// 是否禁用自动产生 OPTIONS 请求方法。
 	// 该值不能中途修改，否则会出现部分有 OPTIONS，部分没有的情况。
 	disableOptions bool
+
+	// 404 的处理方式
+	notFound http.HandlerFunc
+
+	// 405 的处理方式
+	methodNotAllowed http.HandlerFunc
 }
 
 // NewServeMux 声明一个新的 ServeMux。
 //
 // disableOptions 是否禁用自动生成 OPTIONS 功能。
-func NewServeMux(disableOptions bool) *ServeMux {
+// notFound 404 页面的处理方式，为 nil 时会调用 http.Error 进行处理
+// methodNotAllowed 405 页面的处理方式，为 nil 时会调用 http.Error 进行处理
+func NewServeMux(disableOptions bool, notFound, methodNotAllowed http.HandlerFunc) *ServeMux {
+	if notFound == nil {
+		notFound = func(w http.ResponseWriter, r *http.Request) {
+			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		}
+	}
+
+	if methodNotAllowed == nil {
+		methodNotAllowed = func(w http.ResponseWriter, r *http.Request) {
+			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		}
+	}
+
 	return &ServeMux{
-		entries:        list.New(),
-		disableOptions: disableOptions,
+		entries:          list.New(),
+		disableOptions:   disableOptions,
+		notFound:         notFound,
+		methodNotAllowed: methodNotAllowed,
 	}
 }
 
@@ -282,13 +304,13 @@ func (mux *ServeMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	p, e := mux.match(r)
 
 	if e == nil {
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		mux.notFound(w, r)
 		return
 	}
 
 	h := e.Handler(r.Method)
 	if h == nil {
-		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		mux.methodNotAllowed(w, r)
 		return
 	}
 

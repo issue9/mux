@@ -19,7 +19,7 @@ func BenchmarkServeMux_ServeHTTPBasic(b *testing.B) {
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("handler"))
 	})
-	srv := NewServeMux(false)
+	srv := NewServeMux(false, nil, nil)
 	srv.Get("/blog/post/1", h)
 	srv.Get("/api/v2/login", h)
 
@@ -52,7 +52,7 @@ func BenchmarkServeMux_ServeHTTPStatic(b *testing.B) {
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("handler"))
 	})
-	srv := NewServeMux(false)
+	srv := NewServeMux(false, nil, nil)
 	srv.Get("/blog/post/", h)
 	srv.Get("/api/v2/", h)
 
@@ -85,7 +85,7 @@ func BenchmarkServeMux_ServeHTTPRegexp(b *testing.B) {
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("handler"))
 	})
-	srv := NewServeMux(false)
+	srv := NewServeMux(false, nil, nil)
 	srv.Get("/blog/post/{id}", h)
 	srv.Get("/api/v{version:\\d+}/login", h)
 
@@ -118,7 +118,7 @@ func BenchmarkServeMux_ServeHTTPAll(b *testing.B) {
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("handler"))
 	})
-	srv := NewServeMux(false)
+	srv := NewServeMux(false, nil, nil)
 	srv.Get("/blog/basic/1", h)
 	srv.Get("/blog/static/", h)
 	srv.Get("/api/v{version:\\d+}/login", h)
