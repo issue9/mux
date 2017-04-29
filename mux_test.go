@@ -56,7 +56,10 @@ func TestClearPath(t *testing.T) {
 	a := assert.New(t)
 
 	a.Equal(cleanPath(""), "/")
+
 	a.Equal(cleanPath("/api//"), "/api/")
+	a.Equal(cleanPath("api//"), "/api/")
+	a.Equal(cleanPath("//api//"), "/api/")
 
 	a.Equal(cleanPath("/api/"), "/api/")
 	a.Equal(cleanPath("/api/./"), "/api/")
