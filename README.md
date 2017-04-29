@@ -16,13 +16,13 @@ mux 本身就是一个实现了 [http.Handler](https://godoc.org/net/http#Handle
 
 
 ```go
-m := mux.NewServeMux(false).
+m := mux.NewServeMux(false, nil, nil).
     Get("/user/1", h).              // GET /user/1
     Post("/api/login", h).          // POST /api/login
     Get("/blog/post/{id:\\d+}", h). // GET /blog/post/{id:\d+} 正则路由
     Options("/user/1", "GET")       // OPTIONS /user/1 手动指定该路由项的 OPTIONS 请求方法返回内容
 
-// 统一前缀名称的路由
+// 统一前缀路径的路由
 p := m.Prefix("/api")
 p.Get("/logout", h) // 相当于 m.Get("/api/logout", h)
 p.Post("/login", h) // 相当于 m.Get("/api/login", h)
