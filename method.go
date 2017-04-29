@@ -36,6 +36,11 @@ var (
 	}
 )
 
+// SupportedMethods 获得 mux 包支持的请求方法列表。
+func SupportedMethods() []string {
+	return supportedMethods
+}
+
 // MethodIsSupported 是否支持该请求方法
 func MethodIsSupported(method string) bool {
 	method = strings.ToUpper(method)
