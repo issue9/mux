@@ -15,6 +15,11 @@ import (
 //  p := srv.Prefix("/api")
 //  p.Get("/users")  // 相当于 srv.Get("/api/users")
 //  p.Get("/user/1") // 相当于 srv.Get("/api/user/1")
+//
+// 当指定多个相同的 Prefix 时，调用其中的一个 Clean 也将会清除其它的：
+//  p1 := srv.Prefix("prefix")
+//  p2 := srv.Prefix("prefix")
+//  p2.Clean() 将同时清除 p1 的内容，因为有相同的前缀
 type Prefix struct {
 	mux    *ServeMux
 	prefix string

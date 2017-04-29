@@ -10,7 +10,7 @@ import (
 	"github.com/issue9/assert"
 )
 
-func TestPrefix_Clean(t *testing.T) {
+func TestPrefix_Clean1(t *testing.T) {
 	a := assert.New(t)
 	srvmux := NewServeMux(false, nil, nil)
 	a.NotNil(srvmux)
@@ -32,6 +32,29 @@ func TestPrefix_Clean(t *testing.T) {
 
 	prefix.Clean()
 	a.Equal(srvmux.entries.Len(), 1)
+}
+
+func TestPrefix_Clean2(t *testing.T) {
+	a := assert.New(t)
+	srvmux := NewServeMux(false, nil, nil)
+	a.NotNil(srvmux)
+
+	p1 := srvmux.Prefix("/api")
+	a.NotPanic(func() {
+		p1.PatchFunc("/1", f1).
+			Delete("/1", h1)
+	})
+	a.Equal(srvmux.entries.Len(), 1)
+
+	p2 := srvmux.Prefix("/api")
+	a.NotPanic(func() {
+		p2.PatchFunc("/2", f1).
+			Delete("/3", h1)
+	})
+	a.Equal(srvmux.entries.Len(), 3)
+
+	p2.Clean()
+	a.Equal(srvmux.entries.Len(), 0)
 }
 
 func TestServeMux_Prefix(t *testing.T) {
