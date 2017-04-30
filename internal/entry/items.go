@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"sort"
 	"strings"
+
+	"github.com/issue9/mux/internal/method"
 )
 
 // 所有 Entry 实现的公用部分。
@@ -42,7 +44,25 @@ func newItems() *items {
 }
 
 // 实现 Entry.Add() 接口方法。
-func (i *items) Add(method string, h http.Handler) error {
+func (i *items) Add(h http.Handler, methods ...string) error {
+	if len(methods) == 0 {
+		methods = method.Default
+	}
+
+	for _, m := range methods {
+		if !method.IsSupported(m) {
+			return fmt.Errorf("不支持的请求方法 %v", m)
+		}
+
+		if err := i.add(h, m); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (i *items) add(h http.Handler, method string) error {
 	if method == http.MethodOptions { // 强制修改 OPTIONS 方法的处理方式
 		if i.fixedOptionsHandler { // 被强制修改过，不能再受理。
 			return errors.New("该请求方法 OPTIONS 已经存在") // 与以下的错误提示相同

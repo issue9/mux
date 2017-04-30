@@ -8,12 +8,12 @@ import (
 	"container/list"
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"path"
 	"sync"
 
 	"github.com/issue9/mux/internal/entry"
+	"github.com/issue9/mux/internal/method"
 )
 
 // Mux 提供了强大的路由匹配功能，可以处理正则路径和按请求方法进行匹配。
@@ -83,7 +83,7 @@ func (mux *Mux) Clean() *Mux {
 // 指定错误的 methods 值，将自动忽略该值。
 func (mux *Mux) Remove(pattern string, methods ...string) {
 	if len(methods) == 0 { // 删除所有 method 下匹配的项
-		methods = supportedMethods
+		methods = method.Supported
 	}
 
 	mux.mu.Lock()
@@ -106,7 +106,7 @@ func (mux *Mux) Remove(pattern string, methods ...string) {
 // Add 添加一条路由数据。
 //
 // pattern 为路由匹配模式，可以是正则匹配也可以是字符串匹配，
-// methods 参数应该只能为 defaultMethods 中的字符串，若不指定，默认为所有，
+// methods 参数应该只能为 method.Default 中的字符串，若不指定，默认为所有，
 // 当 h 或是 pattern 为空时，将触发 panic。
 func (mux *Mux) Add(pattern string, h http.Handler, methods ...string) error {
 	if len(pattern) == 0 {
@@ -115,10 +115,6 @@ func (mux *Mux) Add(pattern string, h http.Handler, methods ...string) error {
 
 	if h == nil {
 		return errors.New("参数 h 不能为空")
-	}
-
-	if len(methods) == 0 {
-		methods = defaultMethods
 	}
 
 	mux.mu.Lock()
@@ -147,24 +143,14 @@ func (mux *Mux) Add(pattern string, h http.Handler, methods ...string) error {
 			ety.Remove(http.MethodOptions)
 		}
 
-		if ety.IsRegexp() { // 正则路由，在后端插入
+		if ety.Type() == entry.TypeRegexp { // 正则路由，在后端插入
 			mux.entries.PushBack(ety)
 		} else {
 			mux.entries.PushFront(ety)
 		}
 	}
 
-	// 添加指定请求方法的处理函数
-	for _, method := range methods {
-		if !MethodIsSupported(method) {
-			return fmt.Errorf("无效的 methods: %v", method)
-		}
-		if err := ety.Add(method, h); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return ety.Add(h, methods...)
 }
 
 // Options 手动指定 OPTIONS 请求方法的报头 allow 的值。
@@ -219,7 +205,7 @@ func (mux *Mux) Patch(pattern string, h http.Handler) *Mux {
 
 // Any 相当于 Mux.Add(pattern, h) 的简易写法
 func (mux *Mux) Any(pattern string, h http.Handler) *Mux {
-	return mux.add(pattern, h, defaultMethods...)
+	return mux.add(pattern, h, method.Default...)
 }
 
 // AddFunc 功能同 Mux.Add()，但是将第二个参数从 http.Handler 换成了 func(http.ResponseWriter, *http.Request)
@@ -258,7 +244,7 @@ func (mux *Mux) PatchFunc(pattern string, fun func(http.ResponseWriter, *http.Re
 
 // AnyFunc 相当于 Mux.AddFunc(pattern, func) 的简易写法
 func (mux *Mux) AnyFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Mux {
-	return mux.addFunc(pattern, fun, defaultMethods...)
+	return mux.addFunc(pattern, fun, method.Default...)
 }
 
 func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -275,8 +261,7 @@ func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	params := e.Params(p)
-	if params != nil {
+	if params := e.Params(p); params != nil {
 		ctx := context.WithValue(r.Context(), contextKeyParams, Params(params))
 		r = r.WithContext(ctx)
 	}
@@ -337,4 +322,14 @@ func cleanPath(p string) string {
 		pp += "/"
 	}
 	return pp
+}
+
+// MethodIsSuppotred 检测请求方法当前包是否支持
+func MethodIsSuppotred(m string) bool {
+	return method.IsSupported(m)
+}
+
+// SupportedMethods 返回所有支持的请求方法
+func SupportedMethods() []string {
+	return method.Supported
 }

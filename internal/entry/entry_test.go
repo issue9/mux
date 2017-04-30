@@ -15,41 +15,6 @@ var _ Entry = &basic{}
 var _ Entry = &static{}
 var _ Entry = &regexpr{}
 
-func TestSplit(t *testing.T) {
-	a := assert.New(t)
-
-	a.Equal(split("/blog/post/1"), []string{"/blog/post/1"})
-	a.Equal(split("/blog/post/{id}"), []string{"/blog/post/", "{id}"})
-	a.Equal(split("/blog/post/{id:\\d}"), []string{"/blog/post/", "{id:\\d}"})
-	a.Equal(split("/blog/{post}/{id}"), []string{"/blog/", "{post}", "/", "{id}"})
-	a.Equal(split("/blog/{post}-{id}"), []string{"/blog/", "{post}", "-", "{id}"})
-
-	a.Equal(split("{/blog/post/{id}"), []string{"{/blog/post/{id}"})
-	a.Equal(split("}/blog/post/{id}"), []string{"}/blog/post/", "{id}"})
-}
-
-func TestToPattern(t *testing.T) {
-	a := assert.New(t)
-
-	fn := func(str []string, pattern string, hasParams bool, hasError bool) {
-		p, b, err := toPattern(str)
-		if hasError {
-			a.Error(err)
-		} else {
-			a.NotError(err).Equal(p, pattern).Equal(b, hasParams)
-		}
-	}
-
-	fn([]string{"/blog/post/1"}, "/blog/post/1", false, false)              // 静态
-	fn([]string{"/blog/post/", "{:\\d+}"}, "/blog/post/\\d+", false, false) // 无命名路由参数
-
-	fn([]string{"/blog/post/", "{id}"}, "/blog/post/(?P<id>[^/]+)", true, false)
-	fn([]string{"/blog/post/", "{id}", "/", "{id:\\d+}"}, "", true, true) // 重复的参数名
-	fn([]string{"/blog/post/", "{id:\\d+}"}, "/blog/post/(?P<id>\\d+)", true, false)
-	fn([]string{"/blog/", "{post}", "-", "{id}"}, "/blog/(?P<post>[^/]+)-(?P<id>[^/]+)", true, false) // 两个参数
-	fn([]string{"/blog/", "{:\\w+}", "-", "{id}"}, "/blog/\\w+-(?P<id>[^/]+)", true, false)
-}
-
 func TestEntry_Match(t *testing.T) {
 	a := assert.New(t)
 	hf := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

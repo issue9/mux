@@ -34,18 +34,17 @@ func TestItems_Add_Remove(t *testing.T) {
 	i := newItems()
 	a.NotNil(i)
 
-	a.NotError(i.Add(http.MethodGet, get))
-	a.NotError(i.Add(http.MethodPost, get))
-	a.Error(i.Add(http.MethodPost, get)) // 存在相同的
+	a.NotError(i.Add(get, http.MethodGet, http.MethodPost))
+	a.Error(i.Add(get, http.MethodPost)) // 存在相同的
 	a.False(i.Remove(http.MethodPost))
 	a.True(i.Remove(http.MethodGet))
 	a.True(i.Remove(http.MethodGet))
 
 	// OPTIONS
-	a.NotError(i.Add(http.MethodOptions, get))
-	a.Error(i.Add(http.MethodOptions, get))
+	a.NotError(i.Add(get, http.MethodOptions))
+	a.Error(i.Add(get, http.MethodOptions))
 	i.Remove(http.MethodOptions)
-	a.NotError(i.Add(http.MethodOptions, get))
+	a.NotError(i.Add(get, http.MethodOptions))
 
 	// 删除不存在的内容
 	i.Remove("not exists")
@@ -67,21 +66,21 @@ func TestItems_OptionsAllow(t *testing.T) {
 	// 默认
 	a.Equal(i.optionsAllow, "OPTIONS")
 
-	a.NotError(i.Add(http.MethodGet, get))
+	a.NotError(i.Add(get, http.MethodGet))
 	test("GET, OPTIONS")
 
-	a.NotError(i.Add(http.MethodPost, get))
+	a.NotError(i.Add(get, http.MethodPost))
 	test("GET, OPTIONS, POST")
 
 	// 显式调用 SetAllow() 之后，不再改变 optionsallow
 	i.SetAllow("TEST,TEST1")
 	test("TEST,TEST1")
-	a.NotError(i.Add(http.MethodDelete, get))
+	a.NotError(i.Add(get, http.MethodDelete))
 	test("TEST,TEST1")
 
 	// 显式使用 http.MehtodOptions 之后，所有输出都以 options 为主。
-	a.NotError(i.Add(http.MethodOptions, options))
+	a.NotError(i.Add(options, http.MethodOptions))
 	test("options")
-	a.NotError(i.Add(http.MethodPatch, get))
+	a.NotError(i.Add(get, http.MethodPatch))
 	test("options")
 }
