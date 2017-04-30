@@ -18,6 +18,9 @@ var _ Entry = &regexpr{}
 func TestSplit(t *testing.T) {
 	a := assert.New(t)
 
+	// 为空
+	a.Equal(split(""), []string{})
+
 	// 不存在 {}
 	a.Equal(split("/blog/post/1"), []string{"/blog/post/1"})
 

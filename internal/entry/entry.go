@@ -12,6 +12,12 @@ import (
 	"strings"
 )
 
+// 表示正则路由中，表达式的起止字符
+const (
+	RegexpStart = '{'
+	RegexpEnd   = '}'
+)
+
 // Entry 表示一类资源的进入点，拥有统一的路由匹配模式。
 type Entry interface {
 	// 返回路由的匹配字符串
@@ -194,7 +200,7 @@ func toPattern(strs []string) (string, bool, error) {
 
 	for _, v := range strs {
 		lastIndex := len(v) - 1
-		if v[0] != '{' || v[lastIndex] != '}' { // 普通字符串
+		if v[0] != RegexpStart || v[lastIndex] != RegexpEnd { // 普通字符串
 			pattern += v
 			continue
 		}
@@ -237,34 +243,30 @@ func toPattern(strs []string) (string, bool, error) {
 //  /api/{id:\\d+}/users/ ==> {"/api/", "{id:\\d+}", "/users/"}
 func split(str string) []string {
 	ret := []string{}
-	var seq byte = '{'
 
+	var start, end int
 	for {
-		if len(str) == 0 { // 没有更多字符了，结束
-			break
+		if len(str) == 0 {
+			return ret
 		}
 
-		index := strings.IndexByte(str, seq)
-		if index < 0 { // 未找到分隔符，结束
-			ret = append(ret, str)
-			break
+		start = strings.IndexByte(str, RegexpStart)
+		if start < 0 { // 不存在 start
+			return append(ret, str)
 		}
 
-		if seq == '}' { // 将 } 字符留在当前字符串中
-			index++
+		end = strings.IndexByte(str[start:], RegexpEnd)
+		if end < 0 { // 不存在 end
+			return append(ret, str)
+		}
+		end++
+		end += start
+
+		if start > 0 {
+			ret = append(ret, str[:start])
 		}
 
-		if index > 0 { // 为零表示当前字符串为空，无须理会。
-			ret = append(ret, str[:index])
-			str = str[index:]
-		}
-
-		if seq == '{' {
-			seq = '}'
-		} else {
-			seq = '{'
-		}
+		ret = append(ret, str[start:end])
+		str = str[end:]
 	}
-
-	return ret
 }
