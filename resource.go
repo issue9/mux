@@ -120,8 +120,7 @@ func (r *Resource) Clean() *Resource {
 	return r
 }
 
-// Resource 创建一个路由组，该组中添加的路由项，其地址均为 pattern。
-// pattern 前缀字符串，所有从 Resource 中声明的路由都将包含此前缀。
+// Resource 创建一个资源路由项，之后可以为该资源指定各种请求方法。
 //  p := srv.Resource("/api")
 //  p.Get("/users")  // 相当于 srv.Get("/api/users")
 //  p.Get("/user/1") // 相当于 srv.Get("/api/user/1")
@@ -132,8 +131,7 @@ func (mux *Mux) Resource(pattern string) *Resource {
 	}
 }
 
-// Resource 创建一个路由组，该组中添加的路由项，其地址均为 pattern。
-// pattern 前缀字符串，所有从 Resource 中声明的路由都将包含此前缀。
+// Resource 创建一个资源路由项，之后可以为该资源指定各种请求方法。
 //  p := srv.Resource("/api")
 //  p.Get("/users")  // 相当于 srv.Get("/api/users")
 //  p.Get("/user/1") // 相当于 srv.Get("/api/user/1")
