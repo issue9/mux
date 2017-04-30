@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/issue9/mux/internal/entry"
+	"github.com/issue9/mux/internal/method"
 )
 
 // Prefix 封装了 Mux，使所有添加的路由项的匹配模式都带上指定的路径前缀。
@@ -73,7 +74,7 @@ func (p *Prefix) Patch(pattern string, h http.Handler) *Prefix {
 
 // Any 相当于 Mux.Any(prefix+pattern, h) 的简易写法
 func (p *Prefix) Any(pattern string, h http.Handler) *Prefix {
-	return p.add(pattern, h, defaultMethods...)
+	return p.add(pattern, h, method.Default...)
 }
 
 // AddFunc 功能同 Mux.AddFunc(prefix+pattern, fun, ...)
@@ -115,7 +116,7 @@ func (p *Prefix) PatchFunc(pattern string, fun func(http.ResponseWriter, *http.R
 
 // AnyFunc 相当于 Mux.AnyFunc(prefix+pattern, func) 的简易写法
 func (p *Prefix) AnyFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
-	return p.addFunc(pattern, fun, defaultMethods...)
+	return p.addFunc(pattern, fun, method.Default...)
 }
 
 // Remove 删除指定匹配模式的路由项
@@ -138,7 +139,7 @@ func (p *Prefix) Clean() *Prefix {
 		ety := curr.Value.(entry.Entry)
 		pattern := ety.Pattern()
 		if strings.HasPrefix(pattern, p.prefix) {
-			if empty := ety.Remove(supportedMethods...); empty {
+			if empty := ety.Remove(method.Supported...); empty {
 				p.mux.entries.Remove(curr)
 			}
 		}

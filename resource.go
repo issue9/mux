@@ -4,7 +4,11 @@
 
 package mux
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/issue9/mux/internal/method"
+)
 
 // Resource 以资源地址为对象的路由配置。
 //  r := srv.Resource("/api/users/{id}")
@@ -62,7 +66,7 @@ func (r *Resource) Patch(h http.Handler) *Resource {
 
 // Any 相当于 Mux.Any(pattern, h) 的简易写法
 func (r *Resource) Any(h http.Handler) *Resource {
-	return r.add(h, defaultMethods...)
+	return r.add(h, method.Default...)
 }
 
 // AddFunc 功能同 Mux.AddFunc(pattern, fun, ...)
@@ -105,7 +109,7 @@ func (r *Resource) PatchFunc(fun func(http.ResponseWriter, *http.Request)) *Reso
 
 // AnyFunc 相当于 Mux.AnyFunc(pattern, func) 的简易写法
 func (r *Resource) AnyFunc(fun func(http.ResponseWriter, *http.Request)) *Resource {
-	return r.addFunc(fun, defaultMethods...)
+	return r.addFunc(fun, method.Default...)
 }
 
 // Remove 删除指定匹配模式的路由项
@@ -116,7 +120,7 @@ func (r *Resource) Remove(methods ...string) *Resource {
 
 // Clean 清除当前资源的所有路由项
 func (r *Resource) Clean() *Resource {
-	r.mux.Remove(r.pattern, supportedMethods...)
+	r.mux.Remove(r.pattern, method.Supported...)
 	return r
 }
 
