@@ -39,7 +39,7 @@
 // 路由参数：
 //
 // 通过正则表达式匹配的路由，其中带命名的参数可通过 r.Context() 获取：
-//  params,err := GetParams(r)
+//  params := GetParams(r)
 //  id, err := params.Int("id")
 //  // 或是
 //  id := params.MustInt("id", 0) // 0 表示在无法获取 id 参数的默认值

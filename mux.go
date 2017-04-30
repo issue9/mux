@@ -22,7 +22,7 @@ import (
 //  m := mux.New()
 //  m.Get("/abc/h1", h1).
 //    Post("/abc/h2", h2).
-//    Add("/api/{version:\\d+}",h3, http.MethodGet, "POST") // 只匹配 GET 和 POST
+//    Add("/api/{version:\\d+}",h3, http.MethodGet, http.MethodPost) // 只匹配 GET 和 POST
 //  http.ListenAndServe(m)
 type Mux struct {
 	mu sync.RWMutex
