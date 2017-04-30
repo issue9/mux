@@ -49,7 +49,7 @@ type Entry interface {
 	//
 	// 若已经存在，则返回错误。
 	// 若 method == http.MethodOptions，则可以去覆盖默认的处理方式。
-	Add(method string, handler http.Handler) error
+	Add(handler http.Handler, methods ...string) error
 
 	// 移除指定方法的处理池数。若 Entry 中已经没有任何 http.Handler，则返回 true
 	//

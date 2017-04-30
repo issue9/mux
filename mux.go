@@ -8,7 +8,6 @@ import (
 	"container/list"
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"path"
 	"sync"
@@ -155,17 +154,7 @@ func (mux *Mux) Add(pattern string, h http.Handler, methods ...string) error {
 		}
 	}
 
-	// 添加指定请求方法的处理函数
-	for _, m := range methods {
-		if !method.IsSupported(m) {
-			return fmt.Errorf("无效的 methods: %v", m)
-		}
-		if err := ety.Add(m, h); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return ety.Add(h, methods...)
 }
 
 // Options 手动指定 OPTIONS 请求方法的报头 allow 的值。
