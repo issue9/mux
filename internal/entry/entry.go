@@ -7,6 +7,8 @@ package entry
 import (
 	"net/http"
 	"regexp"
+
+	"github.com/issue9/mux/internal/syntax"
 )
 
 // 表示 Entry 接口的类型
@@ -162,14 +164,9 @@ func (r *regexpr) Params(url string) map[string]string {
 // pattern 匹配内容。
 // h 对应的 http.Handler，外层调用者确保该值不能为 nil.
 func New(pattern string, h http.Handler) (Entry, error) {
-	strs := split(pattern)
+	p, hasParams, err := syntax.Parse(pattern)
 
-	if len(strs) > 1 { // 正则路由
-		p, hasParams, err := toPattern(strs)
-		if err != nil {
-			return nil, err
-		}
-
+	if err == nil {
 		expr, err := regexp.Compile(p)
 		if err != nil {
 			return nil, err
@@ -181,6 +178,11 @@ func New(pattern string, h http.Handler) (Entry, error) {
 			hasParams: hasParams,
 			expr:      expr,
 		}, nil
+	}
+
+	// 真的有错误
+	if err != syntax.ErrIsNotRegexp {
+		return nil, err
 	}
 
 	if pattern[len(pattern)-1] == '/' {

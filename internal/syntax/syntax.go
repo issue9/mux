@@ -2,9 +2,10 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
-package entry
+package syntax
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -16,13 +17,25 @@ const (
 	regexpEnd   = '}'
 )
 
-// 将 strs 按照顺序合并成一个正则表达式
+// ErrIsNotRegexp 这不是一个真正意义上的错误，
+// 而是用于指出当前的表达式只是个普通的字符串，
+// 不会被转换成一个正则表达式字符串。
+var ErrIsNotRegexp = errors.New("这不是一个正则表达式")
+
+// Parse 分析 pattern，如果可能的话就将其转换成正则表达式字符串。
+// 具体语法可参照根目录的文档。
+//
 // 返回参数正则表达式的字符串，和一个 bool 值用以表式正则中是否包含了命名匹配。
-func toPattern(strs []string) (string, bool, error) {
-	pattern := ""
+func Parse(pattern string) (string, bool, error) {
 	hasParams := false
 	names := []string{}
 
+	strs := split(pattern)
+	if len(strs) == 1 {
+		return "", false, ErrIsNotRegexp
+	}
+
+	pattern = pattern[:0]
 	for _, v := range strs {
 		lastIndex := len(v) - 1
 		if v[0] != regexpStart || v[lastIndex] != regexpEnd { // 普通字符串
