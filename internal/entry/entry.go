@@ -18,6 +18,13 @@ const (
 	RegexpEnd   = '}'
 )
 
+// 表示 Entry 接口的类型
+const (
+	TypeBasic = iota + 1
+	TypeStatic
+	TypeRegexp
+)
+
 // Entry 表示一类资源的进入点，拥有统一的路由匹配模式。
 type Entry interface {
 	// 返回路由的匹配字符串
@@ -32,8 +39,8 @@ type Entry interface {
 	// 获取路由中的参数，非正则匹配返回 nil。
 	Params(url string) map[string]string
 
-	// 是否为正则表达式
-	IsRegexp() bool
+	// 接口的实现类型
+	Type() int
 
 	// 获取指定请求方法对应的 http.Handler 实例，若不存在，则返回 nil。
 	Handler(method string) http.Handler
@@ -80,8 +87,8 @@ func (b *basic) Pattern() string {
 	return b.pattern
 }
 
-func (b *basic) IsRegexp() bool {
-	return false
+func (b *basic) Type() int {
+	return TypeBasic
 }
 
 func (b *basic) Params(url string) map[string]string {
@@ -99,8 +106,8 @@ func (s *static) Pattern() string {
 	return s.pattern
 }
 
-func (s *static) IsRegexp() bool {
-	return false
+func (s *static) Type() int {
+	return TypeStatic
 }
 
 func (s *static) Params(url string) map[string]string {
@@ -124,8 +131,8 @@ func (re *regexpr) Pattern() string {
 	return re.pattern
 }
 
-func (re *regexpr) IsRegexp() bool {
-	return true
+func (re *regexpr) Type() int {
+	return TypeRegexp
 }
 
 func (re *regexpr) Match(url string) int {

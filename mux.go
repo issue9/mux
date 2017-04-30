@@ -147,7 +147,7 @@ func (mux *Mux) Add(pattern string, h http.Handler, methods ...string) error {
 			ety.Remove(http.MethodOptions)
 		}
 
-		if ety.IsRegexp() { // 正则路由，在后端插入
+		if ety.Type() == entry.TypeRegexp { // 正则路由，在后端插入
 			mux.entries.PushBack(ety)
 		} else {
 			mux.entries.PushFront(ety)
