@@ -18,13 +18,22 @@ var _ Entry = &regexpr{}
 func TestSplit(t *testing.T) {
 	a := assert.New(t)
 
+	// 不存在 {}
 	a.Equal(split("/blog/post/1"), []string{"/blog/post/1"})
-	a.Equal(split("/blog/post/{id}/author"), []string{"/blog/post/", "{id}", "/author"})
+
+	// 开头包含 {}
+	a.Equal(split("{action}/post/1"), []string{"{action}", "/post/1"})
+
+	// 结尾包含 {}
 	a.Equal(split("/blog/post/{id}"), []string{"/blog/post/", "{id}"})
 	a.Equal(split("/blog/post/{id:\\d}"), []string{"/blog/post/", "{id:\\d}"})
-	a.Equal(split("/blog/{post}/{id}"), []string{"/blog/", "{post}", "/", "{id}"})
-	a.Equal(split("/blog/{post}-{id}"), []string{"/blog/", "{post}", "-", "{id}"})
+
+	// 中间包含
+	a.Equal(split("/blog/post/{id}/author"), []string{"/blog/post/", "{id}", "/author"})
 	a.Equal(split("/blog/{post}-{id}/author"), []string{"/blog/", "{post}", "-", "{id}", "/author"})
+
+	a.Equal(split("{action}/{post}/{id}"), []string{"{action}", "/", "{post}", "/", "{id}"})
+	a.Equal(split("{action}/{post}-{id}"), []string{"{action}", "/", "{post}", "-", "{id}"})
 
 	// 无法解析的内容
 	a.Equal(split("{/blog/post/{id}"), []string{"{/blog/post/{id}"})
