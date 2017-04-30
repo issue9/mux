@@ -13,6 +13,7 @@ import (
 
 var _ Entry = &basic{}
 var _ Entry = &static{}
+var _ Entry = &regexpr{}
 
 func TestEntry_Match(t *testing.T) {
 	a := assert.New(t)

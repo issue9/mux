@@ -10,8 +10,6 @@ import (
 	"github.com/issue9/assert"
 )
 
-var _ Entry = &Regexp{}
-
 func TestSplit(t *testing.T) {
 	a := assert.New(t)
 

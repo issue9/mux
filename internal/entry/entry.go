@@ -27,7 +27,7 @@ type Entry interface {
 	//  >0 表示部分匹配，值越小表示匹配程度越高。
 	Match(url string) int
 
-	// 获取路由中的参数，非正则匹配返回 nil。
+	// 获取路由中的参数，非正则匹配或是无参数返回 nil。
 	Params(url string) map[string]string
 
 	// 接口的实现类型
@@ -64,6 +64,13 @@ type basic struct {
 type static struct {
 	*items
 	pattern string
+}
+
+type regexpr struct {
+	*items
+	pattern   string
+	expr      *regexp.Regexp
+	hasParams bool
 }
 
 func (b *basic) Pattern() string {
@@ -110,6 +117,46 @@ func (s *static) Match(url string) int {
 	return -1
 }
 
+// Entry.Pattern()
+func (r *regexpr) Pattern() string {
+	return r.pattern
+}
+
+// Entry.Type
+func (r *regexpr) Type() int {
+	return TypeRegexp
+}
+
+// Entry.Match
+func (r *regexpr) Match(url string) int {
+	loc := r.expr.FindStringIndex(url)
+
+	if loc != nil &&
+		loc[0] == 0 &&
+		loc[1] == len(url) {
+		return 0
+	}
+	return -1
+}
+
+// Entry.Params
+func (r *regexpr) Params(url string) map[string]string {
+	if !r.hasParams {
+		return nil
+	}
+
+	// 正确匹配正则表达式，则获相关的正则表达式命名变量。
+	mapped := make(map[string]string, 3)
+	subexps := r.expr.SubexpNames()
+	args := r.expr.FindStringSubmatch(url)
+	for index, name := range subexps {
+		if len(name) > 0 && index < len(args) {
+			mapped[name] = args[index]
+		}
+	}
+	return mapped
+}
+
 // New 根据内容，生成相应的 Entry 接口实例。
 //
 // pattern 匹配内容。
@@ -128,7 +175,7 @@ func New(pattern string, h http.Handler) (Entry, error) {
 			return nil, err
 		}
 
-		return &Regexp{
+		return &regexpr{
 			items:     newItems(),
 			pattern:   pattern,
 			hasParams: hasParams,
