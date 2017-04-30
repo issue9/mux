@@ -16,6 +16,17 @@ import (
 	"github.com/issue9/mux/internal/method"
 )
 
+// 两个默认处理函数
+var (
+	defaultNotFound = func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+	}
+
+	defaultMethodNotAllowed = func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+	}
+)
+
 // Mux 提供了强大的路由匹配功能，可以处理正则路径和按请求方法进行匹配。
 //
 // 用法如下：
@@ -48,15 +59,10 @@ type Mux struct {
 // methodNotAllowed 405 页面的处理方式，为 nil 时会调用 http.Error 进行处理
 func New(disableOptions bool, notFound, methodNotAllowed http.HandlerFunc) *Mux {
 	if notFound == nil {
-		notFound = func(w http.ResponseWriter, r *http.Request) {
-			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-		}
+		notFound = defaultNotFound
 	}
-
 	if methodNotAllowed == nil {
-		methodNotAllowed = func(w http.ResponseWriter, r *http.Request) {
-			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-		}
+		methodNotAllowed = defaultMethodNotAllowed
 	}
 
 	return &Mux{
