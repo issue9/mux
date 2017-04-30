@@ -76,11 +76,11 @@ func (r *Resource) Any(h http.Handler) *Resource {
 }
 
 // AddFunc 功能同 Mux.AddFunc(pattern, fun, ...)
-func (r *Resource) AddFunc(fun func(http.ResponseWriter, *http.Request), methods ...string) error {
+func (r *Resource) AddFunc(fun http.HandlerFunc, methods ...string) error {
 	return r.mux.AddFunc(r.pattern, fun, methods...)
 }
 
-func (r *Resource) addFunc(fun func(http.ResponseWriter, *http.Request), methods ...string) *Resource {
+func (r *Resource) addFunc(fun http.HandlerFunc, methods ...string) *Resource {
 	if err := r.mux.AddFunc(r.pattern, fun, methods...); err != nil {
 		panic(err)
 	}
@@ -89,32 +89,32 @@ func (r *Resource) addFunc(fun func(http.ResponseWriter, *http.Request), methods
 }
 
 // GetFunc 相当于 Mux.GetFunc(pattern, func) 的简易写法
-func (r *Resource) GetFunc(fun func(http.ResponseWriter, *http.Request)) *Resource {
+func (r *Resource) GetFunc(fun http.HandlerFunc) *Resource {
 	return r.addFunc(fun, http.MethodGet)
 }
 
 // PutFunc 相当于 Mux.PutFunc(pattern, func) 的简易写法
-func (r *Resource) PutFunc(fun func(http.ResponseWriter, *http.Request)) *Resource {
+func (r *Resource) PutFunc(fun http.HandlerFunc) *Resource {
 	return r.addFunc(fun, http.MethodPut)
 }
 
 // PostFunc 相当于 Mux.PostFunc(pattern, func) 的简易写法
-func (r *Resource) PostFunc(fun func(http.ResponseWriter, *http.Request)) *Resource {
+func (r *Resource) PostFunc(fun http.HandlerFunc) *Resource {
 	return r.addFunc(fun, http.MethodPost)
 }
 
 // DeleteFunc 相当于 Mux.DeleteFunc(pattern, func) 的简易写法
-func (r *Resource) DeleteFunc(fun func(http.ResponseWriter, *http.Request)) *Resource {
+func (r *Resource) DeleteFunc(fun http.HandlerFunc) *Resource {
 	return r.addFunc(fun, http.MethodDelete)
 }
 
 // PatchFunc 相当于 Mux.PatchFunc(pattern, func) 的简易写法
-func (r *Resource) PatchFunc(fun func(http.ResponseWriter, *http.Request)) *Resource {
+func (r *Resource) PatchFunc(fun http.HandlerFunc) *Resource {
 	return r.addFunc(fun, http.MethodPatch)
 }
 
 // AnyFunc 相当于 Mux.AnyFunc(pattern, func) 的简易写法
-func (r *Resource) AnyFunc(fun func(http.ResponseWriter, *http.Request)) *Resource {
+func (r *Resource) AnyFunc(fun http.HandlerFunc) *Resource {
 	return r.addFunc(fun, method.Default...)
 }
 

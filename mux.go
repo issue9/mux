@@ -215,41 +215,41 @@ func (mux *Mux) Any(pattern string, h http.Handler) *Mux {
 }
 
 // AddFunc 功能同 Mux.Add()，但是将第二个参数从 http.Handler 换成了 func(http.ResponseWriter, *http.Request)
-func (mux *Mux) AddFunc(pattern string, fun func(http.ResponseWriter, *http.Request), methods ...string) error {
+func (mux *Mux) AddFunc(pattern string, fun http.HandlerFunc, methods ...string) error {
 	return mux.Add(pattern, http.HandlerFunc(fun), methods...)
 }
 
-func (mux *Mux) addFunc(pattern string, fun func(http.ResponseWriter, *http.Request), methods ...string) *Mux {
+func (mux *Mux) addFunc(pattern string, fun http.HandlerFunc, methods ...string) *Mux {
 	return mux.add(pattern, http.HandlerFunc(fun), methods...)
 }
 
 // GetFunc 相当于 Mux.AddFunc(pattern, func, "GET") 的简易写法
-func (mux *Mux) GetFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Mux {
+func (mux *Mux) GetFunc(pattern string, fun http.HandlerFunc) *Mux {
 	return mux.addFunc(pattern, fun, http.MethodGet)
 }
 
 // PutFunc 相当于 Mux.AddFunc(pattern, func, "PUT") 的简易写法
-func (mux *Mux) PutFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Mux {
+func (mux *Mux) PutFunc(pattern string, fun http.HandlerFunc) *Mux {
 	return mux.addFunc(pattern, fun, http.MethodPut)
 }
 
 // PostFunc 相当于 Mux.AddFunc(pattern, func, "POST") 的简易写法
-func (mux *Mux) PostFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Mux {
+func (mux *Mux) PostFunc(pattern string, fun http.HandlerFunc) *Mux {
 	return mux.addFunc(pattern, fun, http.MethodPost)
 }
 
 // DeleteFunc 相当于 Mux.AddFunc(pattern, func, "DELETE") 的简易写法
-func (mux *Mux) DeleteFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Mux {
+func (mux *Mux) DeleteFunc(pattern string, fun http.HandlerFunc) *Mux {
 	return mux.addFunc(pattern, fun, http.MethodDelete)
 }
 
 // PatchFunc 相当于 Mux.AddFunc(pattern, func, "PATCH") 的简易写法
-func (mux *Mux) PatchFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Mux {
+func (mux *Mux) PatchFunc(pattern string, fun http.HandlerFunc) *Mux {
 	return mux.addFunc(pattern, fun, http.MethodPatch)
 }
 
 // AnyFunc 相当于 Mux.AddFunc(pattern, func) 的简易写法
-func (mux *Mux) AnyFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Mux {
+func (mux *Mux) AnyFunc(pattern string, fun http.HandlerFunc) *Mux {
 	return mux.addFunc(pattern, fun, method.Default...)
 }
 

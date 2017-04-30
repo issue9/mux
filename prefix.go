@@ -78,11 +78,11 @@ func (p *Prefix) Any(pattern string, h http.Handler) *Prefix {
 }
 
 // AddFunc 功能同 Mux.AddFunc(prefix+pattern, fun, ...)
-func (p *Prefix) AddFunc(pattern string, fun func(http.ResponseWriter, *http.Request), methods ...string) error {
+func (p *Prefix) AddFunc(pattern string, fun http.HandlerFunc, methods ...string) error {
 	return p.mux.AddFunc(p.prefix+pattern, fun, methods...)
 }
 
-func (p *Prefix) addFunc(pattern string, fun func(http.ResponseWriter, *http.Request), methods ...string) *Prefix {
+func (p *Prefix) addFunc(pattern string, fun http.HandlerFunc, methods ...string) *Prefix {
 	if err := p.mux.AddFunc(p.prefix+pattern, fun, methods...); err != nil {
 		panic(err)
 	}
@@ -90,32 +90,32 @@ func (p *Prefix) addFunc(pattern string, fun func(http.ResponseWriter, *http.Req
 }
 
 // GetFunc 相当于 Mux.GetFunc(prefix+pattern, func) 的简易写法
-func (p *Prefix) GetFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
+func (p *Prefix) GetFunc(pattern string, fun http.HandlerFunc) *Prefix {
 	return p.addFunc(pattern, fun, http.MethodGet)
 }
 
 // PutFunc 相当于 Mux.PutFunc(prefix+pattern, func) 的简易写法
-func (p *Prefix) PutFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
+func (p *Prefix) PutFunc(pattern string, fun http.HandlerFunc) *Prefix {
 	return p.addFunc(pattern, fun, http.MethodPut)
 }
 
 // PostFunc 相当 于Mux.PostFunc(prefix+pattern, func) 的简易写法
-func (p *Prefix) PostFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
+func (p *Prefix) PostFunc(pattern string, fun http.HandlerFunc) *Prefix {
 	return p.addFunc(pattern, fun, http.MethodPost)
 }
 
 // DeleteFunc 相当于 Mux.DeleteFunc(prefix+pattern, func) 的简易写法
-func (p *Prefix) DeleteFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
+func (p *Prefix) DeleteFunc(pattern string, fun http.HandlerFunc) *Prefix {
 	return p.addFunc(pattern, fun, http.MethodDelete)
 }
 
 // PatchFunc 相当于 Mux.PatchFunc(prefix+pattern, func) 的简易写法
-func (p *Prefix) PatchFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
+func (p *Prefix) PatchFunc(pattern string, fun http.HandlerFunc) *Prefix {
 	return p.addFunc(pattern, fun, http.MethodPatch)
 }
 
 // AnyFunc 相当于 Mux.AnyFunc(prefix+pattern, func) 的简易写法
-func (p *Prefix) AnyFunc(pattern string, fun func(http.ResponseWriter, *http.Request)) *Prefix {
+func (p *Prefix) AnyFunc(pattern string, fun http.HandlerFunc) *Prefix {
 	return p.addFunc(pattern, fun, method.Default...)
 }
 
