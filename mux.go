@@ -117,10 +117,6 @@ func (mux *Mux) Add(pattern string, h http.Handler, methods ...string) error {
 		return errors.New("参数 h 不能为空")
 	}
 
-	if len(methods) == 0 {
-		methods = method.Default
-	}
-
 	mux.mu.Lock()
 	defer mux.mu.Unlock()
 
@@ -265,8 +261,7 @@ func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	params := e.Params(p)
-	if params != nil {
+	if params := e.Params(p); params != nil {
 		ctx := context.WithValue(r.Context(), contextKeyParams, Params(params))
 		r = r.WithContext(ctx)
 	}

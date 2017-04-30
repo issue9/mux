@@ -45,6 +45,10 @@ func newItems() *items {
 
 // 实现 Entry.Add() 接口方法。
 func (i *items) Add(h http.Handler, methods ...string) error {
+	if len(methods) == 0 {
+		methods = method.Default
+	}
+
 	for _, m := range methods {
 		if !method.IsSupported(m) {
 			return fmt.Errorf("不支持的请求方法 %v", m)
