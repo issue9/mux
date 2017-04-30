@@ -328,3 +328,13 @@ func cleanPath(p string) string {
 	}
 	return pp
 }
+
+// MethodIsSuppotred 检测请求方法当前包是否支持
+func MethodIsSuppotred(m string) bool {
+	return method.IsSupported(m)
+}
+
+// SupportedMethods 返回所有支持的请求方法
+func SupportedMethods() []string {
+	return method.Supported
+}
