@@ -177,11 +177,16 @@ func New(pattern string, h http.Handler) (Entry, error) {
 			return nil, err
 		}
 
+		expr, err := regexp.Compile(p)
+		if err != nil {
+			return nil, err
+		}
+
 		return &regexpr{
 			items:     newItems(),
 			pattern:   pattern,
 			hasParams: hasParams,
-			expr:      regexp.MustCompile(p),
+			expr:      expr,
 		}, nil
 	}
 
