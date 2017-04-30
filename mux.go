@@ -118,30 +118,14 @@ func (mux *Mux) Add(pattern string, h http.Handler, methods ...string) error {
 	if len(pattern) == 0 {
 		return errors.New("参数 pattern 不能为空")
 	}
-
 	if h == nil {
 		return errors.New("参数 h 不能为空")
 	}
 
-	mux.mu.Lock()
-	defer mux.mu.Unlock()
-
-	var ety entry.Entry
-
-	// 查找是否存在相同的资源项。
-	for item := mux.entries.Front(); item != nil; item = item.Next() {
-		e := item.Value.(entry.Entry)
-		if e.Pattern() == pattern {
-			ety = e
-			break
-		}
-	}
-
-	// 不存在相同的资源项，则声明新的。
-	if ety == nil {
+	ety := mux.findEntry(pattern)
+	if ety == nil { // 不存在相同的资源项，则声明新的。
 		var err error
-		ety, err = entry.New(pattern, h)
-		if err != nil {
+		if ety, err = entry.New(pattern, h); err != nil {
 			return err
 		}
 
@@ -149,6 +133,8 @@ func (mux *Mux) Add(pattern string, h http.Handler, methods ...string) error {
 			ety.Remove(http.MethodOptions)
 		}
 
+		mux.mu.Lock()
+		defer mux.mu.Unlock()
 		if ety.Type() == entry.TypeRegexp { // 正则路由，在后端插入
 			mux.entries.PushBack(ety)
 		} else {
@@ -157,6 +143,20 @@ func (mux *Mux) Add(pattern string, h http.Handler, methods ...string) error {
 	}
 
 	return ety.Add(h, methods...)
+}
+
+func (mux *Mux) findEntry(pattern string) entry.Entry {
+	mux.mu.RLock()
+	defer mux.mu.RUnlock()
+
+	for item := mux.entries.Front(); item != nil; item = item.Next() {
+		e := item.Value.(entry.Entry)
+		if e.Pattern() == pattern {
+			return e
+		}
+	}
+
+	return nil
 }
 
 // Options 手动指定 OPTIONS 请求方法的报头 allow 的值。
