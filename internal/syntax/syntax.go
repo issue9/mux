@@ -2,6 +2,7 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
+// Package syntax 用于处理正则路由的语法问题。
 package syntax
 
 import (
