@@ -1,7 +1,8 @@
 mux [![Build Status](https://travis-ci.org/issue9/mux.svg?branch=master)](https://travis-ci.org/issue9/mux)
 ======
 
-mux 是对 http.ServeMux 的扩展。相对于 http.ServeMux 提供了以下功能：
+mux 是一个实现了 [http.Handler](https://godoc.org/net/http#Handler) 的中间件，
+为用户提供了正则路由等实用功能：
 
 1. 正则路由；
 1. 路由参数；
@@ -9,6 +10,7 @@ mux 是对 http.ServeMux 的扩展。相对于 http.ServeMux 提供了以下功�
 
 
 ##### 中间件
+
 mux 本身就是一个实现了 [http.Handler](https://godoc.org/net/http#Handler) 接口的中间件，
 所有实现官方接口 `http.Handler` 的都可以附加到 mux 上作为中间件使用。
 [handlers](https://github.com/issue9/handlers) 实现了诸如按域名过滤等常用的中间件功能。

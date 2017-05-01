@@ -2,8 +2,7 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
-// Package mux 提供了相对 http.ServeMux 更加复杂的路径匹配功能。
-// 同时又兼容官方的 http.Handler 接口。
+// Package mux 是一个实现了 http.Handler 的中间件，为用户提供了正则路由等实用功能。
 //
 //  m := mux.New(false, nil, nil).
 //          Get("/user/1", h).
