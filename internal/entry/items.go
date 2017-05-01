@@ -33,7 +33,7 @@ type items struct {
 
 func newItems() *items {
 	ret := &items{
-		handlers: make(map[string]http.Handler, 10),
+		handlers: make(map[string]http.Handler, len(method.Supported)),
 	}
 
 	// 添加默认的 OPTIONS 请求内容
