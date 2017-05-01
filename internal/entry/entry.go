@@ -44,14 +44,14 @@ type Entry interface {
 	// 若 method == http.MethodOptions，则可以去覆盖默认的处理方式。
 	Add(handler http.Handler, methods ...string) error
 
-	// 移除指定方法的处理池数。若 Entry 中已经没有任何 http.Handler，则返回 true
+	// 移除指定方法的处理函数。若 Entry 中已经没有任何 http.Handler，则返回 true
 	//
 	// 可以通过指定 http.MethodOptions 的方式，来强制删除 OPTIONS 请求方法的处理。
 	Remove(method ...string) (empty bool)
 
-	// 手动设置 OPTIONS 的 Allow 报头。不调用此函数，会自动根据
-	// 当前的 Add 和 Remove 调整 Allow 报头，调用 SetAll() 之后，
-	// 这些自动设置不再启作用。
+	// 手动设置 OPTIONS 的 Allow 报头。不调用此函数，
+	// 会自动根据当前的 Add 和 Remove 调整 Allow 报头，
+	// 调用 SetAllow() 之后，这些自动设置不再启作用。
 	SetAllow(string)
 }
 
