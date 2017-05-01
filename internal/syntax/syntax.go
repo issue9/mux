@@ -32,7 +32,7 @@ func Parse(pattern string) (string, bool, error) {
 	names := []string{}
 
 	strs := split(pattern)
-	if len(strs) == 1 {
+	if len(strs) == 1 && (strs[0][0] != regexpStart || strs[0][len(strs[0])-1] != regexpEnd) {
 		return "", false, ErrIsNotRegexp
 	}
 

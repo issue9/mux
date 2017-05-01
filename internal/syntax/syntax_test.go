@@ -56,6 +56,8 @@ func TestParse(t *testing.T) {
 	fn("/blog/post/1", "/blog/post/1", false, true)           // 静态
 	fn("/blog/post/{:\\d+}", "/blog/post/\\d+", false, false) // 无命名路由参数
 
+	fn("{id}", "(?P<id>[^/]+)", true, false)
+
 	fn("/blog/post/{id}", "/blog/post/(?P<id>[^/]+)", true, false)
 	fn("/blog/post/{id}/{id:\\d+}", "", true, true) // 重复的参数名
 	fn("/blog/post/{id:\\d+}", "/blog/post/(?P<id>\\d+)", true, false)
