@@ -19,7 +19,7 @@ func benchHandler(w http.ResponseWriter, r *http.Request) {
 // go1.8 BenchmarkMux_ServeHTTPBasic-4    	 5000000	       281 ns/op
 func BenchmarkMux_ServeHTTPBasic(b *testing.B) {
 	a := assert.New(b)
-	srv := New(false, nil, nil)
+	srv := New(false, false, nil, nil)
 
 	srv.GetFunc("/blog/post/1", benchHandler)
 	srv.GetFunc("/api/v2/login", benchHandler)
@@ -45,7 +45,7 @@ func BenchmarkMux_ServeHTTPBasic(b *testing.B) {
 // go1.8 BenchmarkMux_ServeHTTPStatic-4   	 5000000	       297 ns/op
 func BenchmarkMux_ServeHTTPStatic(b *testing.B) {
 	a := assert.New(b)
-	srv := New(false, nil, nil)
+	srv := New(false, false, nil, nil)
 
 	srv.GetFunc("/blog/post/", benchHandler)
 	srv.GetFunc("/api/v2/", benchHandler)
@@ -71,7 +71,7 @@ func BenchmarkMux_ServeHTTPStatic(b *testing.B) {
 // go1.8 BenchmarkMux_ServeHTTPRegexp-4   	 1000000	      1350 ns/op
 func BenchmarkMux_ServeHTTPRegexp(b *testing.B) {
 	a := assert.New(b)
-	srv := New(false, nil, nil)
+	srv := New(false, false, nil, nil)
 
 	srv.GetFunc("/blog/post/{id}", benchHandler)
 	srv.GetFunc("/api/v{version:\\d+}/login", benchHandler)
@@ -97,7 +97,7 @@ func BenchmarkMux_ServeHTTPRegexp(b *testing.B) {
 // go1.8 BenchmarkMux_ServeHTTPAll-4      	 2000000	       737 ns/op
 func BenchmarkMux_ServeHTTPAll(b *testing.B) {
 	a := assert.New(b)
-	srv := New(false, nil, nil)
+	srv := New(false, false, nil, nil)
 
 	srv.GetFunc("/blog/basic/1", benchHandler)
 	srv.GetFunc("/blog/static/", benchHandler)

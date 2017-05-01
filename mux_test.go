@@ -73,7 +73,7 @@ func TestClearPath(t *testing.T) {
 
 func TestMux_Add_Remove_1(t *testing.T) {
 	a := assert.New(t)
-	srvmux := New(false, nil, nil)
+	srvmux := New(false, false, nil, nil)
 	a.NotNil(srvmux)
 
 	// 添加 delete /api/1
@@ -109,7 +109,7 @@ func TestMux_Add_Remove_1(t *testing.T) {
 
 func TestMux_Add_Remove_2(t *testing.T) {
 	a := assert.New(t)
-	srvmux := New(false, nil, nil)
+	srvmux := New(false, false, nil, nil)
 	a.NotNil(srvmux)
 
 	// 添加 GET /api/1
@@ -152,7 +152,7 @@ func TestMux_Add_Remove_2(t *testing.T) {
 
 func TestMux_Clean(t *testing.T) {
 	a := assert.New(t)
-	srvmux := New(false, nil, nil)
+	srvmux := New(false, false, nil, nil)
 	a.NotNil(srvmux)
 
 	// 添加 delete /api/1
@@ -168,7 +168,7 @@ func TestMux_Clean(t *testing.T) {
 
 func TestMux_Options(t *testing.T) {
 	a := assert.New(t)
-	srvmux := New(false, nil, nil)
+	srvmux := New(false, false, nil, nil)
 	a.NotNil(srvmux)
 
 	// 添加 GET /api/1
@@ -197,7 +197,7 @@ func TestMux_Options(t *testing.T) {
 
 func TestMux_Params(t *testing.T) {
 	a := assert.New(t)
-	srvmux := New(false, nil, nil)
+	srvmux := New(false, false, nil, nil)
 	a.NotNil(srvmux)
 	params := map[string]string{}
 
@@ -245,7 +245,7 @@ func TestMux_Params(t *testing.T) {
 // 测试匹配顺序是否正确
 func TestMux_ServeHTTP_Order(t *testing.T) {
 	a := assert.New(t)
-	serveMux := New(false, nil, nil)
+	serveMux := New(false, false, nil, nil)
 	a.NotNil(serveMux)
 
 	a.NotError(serveMux.GetFunc("/post/", f1))          // f1

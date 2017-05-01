@@ -45,6 +45,9 @@ type Mux struct {
 	// 该值不能中途修改，否则会出现部分有 OPTIONS，部分没有的情况。
 	disableOptions bool
 
+	// 是否不对提交的路径作处理。
+	skipCleanPath bool
+
 	// 404 的处理方式
 	notFound http.HandlerFunc
 
@@ -55,9 +58,10 @@ type Mux struct {
 // New 声明一个新的 Mux。
 //
 // disableOptions 是否禁用自动生成 OPTIONS 功能。
+// skipCleanPath 是否忽略对访问路径作处理，比如 "//api" ==> "/api"
 // notFound 404 页面的处理方式，为 nil 时会调用 http.Error 进行处理
 // methodNotAllowed 405 页面的处理方式，为 nil 时会调用 http.Error 进行处理
-func New(disableOptions bool, notFound, methodNotAllowed http.HandlerFunc) *Mux {
+func New(disableOptions, skipCleanPath bool, notFound, methodNotAllowed http.HandlerFunc) *Mux {
 	if notFound == nil {
 		notFound = defaultNotFound
 	}
@@ -68,6 +72,7 @@ func New(disableOptions bool, notFound, methodNotAllowed http.HandlerFunc) *Mux 
 	return &Mux{
 		entries:          list.New(),
 		disableOptions:   disableOptions,
+		skipCleanPath:    skipCleanPath,
 		notFound:         notFound,
 		methodNotAllowed: methodNotAllowed,
 	}
@@ -279,7 +284,11 @@ func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // e 为当前匹配的 entry.Entry 实例。
 func (mux *Mux) match(r *http.Request) (p string, e entry.Entry) {
 	size := -1 // 匹配度，0 表示完全匹配，-1 表示完全不匹配，其它值越小匹配度越高
-	p = cleanPath(r.URL.Path)
+	if mux.skipCleanPath {
+		p = r.URL.Path
+	} else {
+		p = cleanPath(r.URL.Path)
+	}
 
 	mux.mu.RLock()
 	defer mux.mu.RUnlock()

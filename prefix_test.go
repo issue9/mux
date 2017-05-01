@@ -12,7 +12,7 @@ import (
 
 func TestPrefix_Clean1(t *testing.T) {
 	a := assert.New(t)
-	srvmux := New(false, nil, nil)
+	srvmux := New(false, false, nil, nil)
 	a.NotNil(srvmux)
 
 	// 添加 delete /api/1
@@ -36,7 +36,7 @@ func TestPrefix_Clean1(t *testing.T) {
 
 func TestPrefix_Clean2(t *testing.T) {
 	a := assert.New(t)
-	srvmux := New(false, nil, nil)
+	srvmux := New(false, false, nil, nil)
 	a.NotNil(srvmux)
 
 	p1 := srvmux.Prefix("/api")
@@ -59,7 +59,7 @@ func TestPrefix_Clean2(t *testing.T) {
 
 func TestMux_Prefix(t *testing.T) {
 	a := assert.New(t)
-	srvmux := New(false, nil, nil)
+	srvmux := New(false, false, nil, nil)
 	a.NotNil(srvmux)
 
 	p := srvmux.Prefix("/abc")
@@ -72,7 +72,7 @@ func TestMux_Prefix(t *testing.T) {
 
 func TestPrefix_Prefix(t *testing.T) {
 	a := assert.New(t)
-	srvmux := New(false, nil, nil)
+	srvmux := New(false, false, nil, nil)
 	a.NotNil(srvmux)
 
 	p := srvmux.Prefix("/abc")
