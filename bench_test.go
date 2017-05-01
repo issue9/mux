@@ -12,16 +12,17 @@ import (
 	"github.com/issue9/assert"
 )
 
+func benchHandler(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("handler"))
+}
+
 // go1.8 BenchmarkMux_ServeHTTPBasic-4    	 5000000	       281 ns/op
 func BenchmarkMux_ServeHTTPBasic(b *testing.B) {
 	a := assert.New(b)
-
-	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("handler"))
-	})
 	srv := New(false, nil, nil)
-	srv.Get("/blog/post/1", h)
-	srv.Get("/api/v2/login", h)
+
+	srv.GetFunc("/blog/post/1", benchHandler)
+	srv.GetFunc("/api/v2/login", benchHandler)
 
 	r1, err := http.NewRequest("GET", "/blog/post/1", nil)
 	a.NotError(err).NotNil(r1)
@@ -34,10 +35,6 @@ func BenchmarkMux_ServeHTTPBasic(b *testing.B) {
 	w := httptest.NewRecorder()
 
 	srvfun := func(reqIndex int) {
-		defer func() {
-			_ = recover()
-		}()
-
 		srv.ServeHTTP(w, reqs[reqIndex])
 	}
 	for i := 0; i < b.N; i++ {
@@ -48,13 +45,10 @@ func BenchmarkMux_ServeHTTPBasic(b *testing.B) {
 // go1.8 BenchmarkMux_ServeHTTPStatic-4   	 5000000	       297 ns/op
 func BenchmarkMux_ServeHTTPStatic(b *testing.B) {
 	a := assert.New(b)
-
-	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("handler"))
-	})
 	srv := New(false, nil, nil)
-	srv.Get("/blog/post/", h)
-	srv.Get("/api/v2/", h)
+
+	srv.GetFunc("/blog/post/", benchHandler)
+	srv.GetFunc("/api/v2/", benchHandler)
 
 	r1, err := http.NewRequest("GET", "/blog/post/1", nil)
 	a.NotError(err).NotNil(r1)
@@ -67,10 +61,6 @@ func BenchmarkMux_ServeHTTPStatic(b *testing.B) {
 	w := httptest.NewRecorder()
 
 	srvfun := func(reqIndex int) {
-		defer func() {
-			_ = recover()
-		}()
-
 		srv.ServeHTTP(w, reqs[reqIndex])
 	}
 	for i := 0; i < b.N; i++ {
@@ -81,13 +71,10 @@ func BenchmarkMux_ServeHTTPStatic(b *testing.B) {
 // go1.8 BenchmarkMux_ServeHTTPRegexp-4   	 1000000	      1350 ns/op
 func BenchmarkMux_ServeHTTPRegexp(b *testing.B) {
 	a := assert.New(b)
-
-	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("handler"))
-	})
 	srv := New(false, nil, nil)
-	srv.Get("/blog/post/{id}", h)
-	srv.Get("/api/v{version:\\d+}/login", h)
+
+	srv.GetFunc("/blog/post/{id}", benchHandler)
+	srv.GetFunc("/api/v{version:\\d+}/login", benchHandler)
 
 	r1, err := http.NewRequest("GET", "/blog/post/1", nil)
 	a.NotError(err).NotNil(r1)
@@ -100,10 +87,6 @@ func BenchmarkMux_ServeHTTPRegexp(b *testing.B) {
 	w := httptest.NewRecorder()
 
 	srvfun := func(reqIndex int) {
-		defer func() {
-			_ = recover()
-		}()
-
 		srv.ServeHTTP(w, reqs[reqIndex])
 	}
 	for i := 0; i < b.N; i++ {
@@ -114,14 +97,11 @@ func BenchmarkMux_ServeHTTPRegexp(b *testing.B) {
 // go1.8 BenchmarkMux_ServeHTTPAll-4      	 2000000	       737 ns/op
 func BenchmarkMux_ServeHTTPAll(b *testing.B) {
 	a := assert.New(b)
-
-	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("handler"))
-	})
 	srv := New(false, nil, nil)
-	srv.Get("/blog/basic/1", h)
-	srv.Get("/blog/static/", h)
-	srv.Get("/api/v{version:\\d+}/login", h)
+
+	srv.GetFunc("/blog/basic/1", benchHandler)
+	srv.GetFunc("/blog/static/", benchHandler)
+	srv.GetFunc("/api/v{version:\\d+}/login", benchHandler)
 
 	r1, err := http.NewRequest("GET", "/blog/static/1", nil)
 	a.NotError(err).NotNil(r1)
@@ -136,10 +116,6 @@ func BenchmarkMux_ServeHTTPAll(b *testing.B) {
 	w := httptest.NewRecorder()
 
 	srvfun := func(reqIndex int) {
-		defer func() {
-			_ = recover()
-		}()
-
 		srv.ServeHTTP(w, reqs[reqIndex])
 	}
 	for i := 0; i < b.N; i++ {
