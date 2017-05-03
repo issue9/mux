@@ -6,9 +6,7 @@ package mux
 
 import (
 	"net/http"
-	"strings"
 
-	"github.com/issue9/mux/internal/entry"
 	"github.com/issue9/mux/internal/method"
 )
 
@@ -129,22 +127,7 @@ func (p *Prefix) Remove(pattern string, methods ...string) *Prefix {
 //
 // NOTE: 若 mux 中也有同样开头的 Entry，也照样会被删除。
 func (p *Prefix) Clean() *Prefix {
-	p.mux.mu.Lock()
-	defer p.mux.mu.Unlock()
-
-	for item := p.mux.entries.Front(); item != nil; {
-		curr := item
-		item = item.Next() // 提前记录下个元素，因为 item 有可能被删除
-
-		ety := curr.Value.(entry.Entry)
-		pattern := ety.Pattern()
-		if strings.HasPrefix(pattern, p.prefix) {
-			if empty := ety.Remove(method.Supported...); empty {
-				p.mux.entries.Remove(curr)
-			}
-		}
-	} // end for
-
+	p.mux.entries.Clean(p.prefix)
 	return p
 }
 

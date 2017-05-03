@@ -10,31 +10,6 @@ import (
 	"github.com/issue9/assert"
 )
 
-func TestResource_Clean(t *testing.T) {
-	a := assert.New(t)
-	srvmux := New(false, false, nil, nil)
-	a.NotNil(srvmux)
-
-	// 添加 delete /api/1
-	a.NotPanic(func() {
-		srvmux.DeleteFunc("/api/1", f1).
-			PatchFunc("/api/1", f1)
-	})
-	a.Equal(srvmux.entries.Len(), 1)
-
-	// 添加 patch /api/2 和 delete /api/2
-	res, err := srvmux.Resource("/api/2")
-	a.NotError(err).NotNil(res)
-	a.NotPanic(func() {
-		res.PatchFunc(f1).
-			Delete(h1)
-	})
-	a.Equal(srvmux.entries.Len(), 2)
-
-	res.Clean()
-	a.Equal(srvmux.entries.Len(), 1)
-}
-
 func TestMux_Resource(t *testing.T) {
 	a := assert.New(t)
 	srvmux := New(false, false, nil, nil)
