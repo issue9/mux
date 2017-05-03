@@ -8,14 +8,8 @@ import "regexp"
 
 type regexpr struct {
 	*items
-	pattern   string
 	expr      *regexp.Regexp
 	hasParams bool
-}
-
-// Entry.Pattern()
-func (r *regexpr) Pattern() string {
-	return r.pattern
 }
 
 // Entry.Type

@@ -31,7 +31,7 @@ var put = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 func TestItems_Add_Remove(t *testing.T) {
 	a := assert.New(t)
 
-	i := newItems()
+	i := newItems("/")
 	a.NotNil(i)
 
 	a.NotError(i.Add(get, http.MethodGet, http.MethodPost))
@@ -53,7 +53,7 @@ func TestItems_Add_Remove(t *testing.T) {
 func TestItems_OptionsAllow(t *testing.T) {
 	a := assert.New(t)
 
-	i := newItems()
+	i := newItems("/")
 	a.NotNil(i)
 
 	test := func(allow string) {

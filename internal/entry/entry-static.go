@@ -8,11 +8,6 @@ package entry
 // 且 pattern 以 / 结尾，即表示匹配成功。根据 match() 的返回值来确定哪个最匹配。
 type static struct {
 	*items
-	pattern string
-}
-
-func (s *static) Pattern() string {
-	return s.pattern
 }
 
 func (s *static) Type() int {

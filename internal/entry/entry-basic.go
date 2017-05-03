@@ -7,11 +7,6 @@ package entry
 // 最基本的字符串匹配，只能全字符串匹配。
 type basic struct {
 	*items
-	pattern string
-}
-
-func (b *basic) Pattern() string {
-	return b.pattern
 }
 
 func (b *basic) Type() int {

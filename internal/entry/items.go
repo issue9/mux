@@ -16,6 +16,8 @@ import (
 
 // 所有 Entry 实现的公用部分。
 type items struct {
+	pattern string
+
 	// 请求方法及其对应的 Handler
 	handlers map[string]http.Handler
 
@@ -31,8 +33,9 @@ type items struct {
 	fixedOptionsHandler bool
 }
 
-func newItems() *items {
+func newItems(pattern string) *items {
 	ret := &items{
+		pattern:  pattern,
 		handlers: make(map[string]http.Handler, len(method.Supported)),
 	}
 
@@ -43,7 +46,11 @@ func newItems() *items {
 	return ret
 }
 
-// 实现 Entry.Add() 接口方法。
+func (i *items) Pattern() string {
+	return i.pattern
+}
+
+// Entry.Add()
 func (i *items) Add(h http.Handler, methods ...string) error {
 	if len(methods) == 0 {
 		methods = method.Default
@@ -100,7 +107,7 @@ func (i *items) getOptionsAllow() string {
 	return strings.Join(methods, ", ")
 }
 
-// 返回值表示，是否所有请求方法都已经删完
+// Entry.Remove()
 func (i *items) Remove(methods ...string) bool {
 	for _, method := range methods {
 		delete(i.handlers, method)
@@ -130,12 +137,13 @@ func (i *items) Remove(methods ...string) bool {
 	return false
 }
 
-// SetAllow 设置 Allow 报头的内容。
+// Entry.SetAllow()
 func (i *items) SetAllow(optionsAllow string) {
 	i.optionsAllow = optionsAllow
 	i.fixedOptionsAllow = true
 }
 
+// Entry.Handler()
 func (i *items) Handler(method string) http.Handler {
 	return i.handlers[method]
 }

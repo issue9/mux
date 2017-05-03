@@ -69,8 +69,7 @@ func New(pattern string, h http.Handler) (Entry, error) {
 		}
 
 		return &regexpr{
-			items:     newItems(),
-			pattern:   pattern,
+			items:     newItems(pattern),
 			hasParams: hasParams,
 			expr:      expr,
 		}, nil
@@ -83,13 +82,11 @@ func New(pattern string, h http.Handler) (Entry, error) {
 
 	if pattern[len(pattern)-1] == '/' {
 		return &static{
-			items:   newItems(),
-			pattern: pattern,
+			items: newItems(pattern),
 		}, nil
 	}
 
 	return &basic{
-		items:   newItems(),
-		pattern: pattern,
+		items: newItems(pattern),
 	}, nil
 }
