@@ -136,9 +136,8 @@ func (es *Entries) Entry(pattern string) entry.Entry {
 	return nil
 }
 
-// Match 查找最匹配的路由项
+// Match 查找与 path 最匹配的路由项
 //
-// p 为整理后的当前请求路径；
 // e 为当前匹配的 entry.Entry 实例。
 func (es *Entries) Match(path string) (e entry.Entry) {
 	size := -1 // 匹配度，0 表示完全匹配，-1 表示完全不匹配，其它值越小匹配度越高

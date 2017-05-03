@@ -188,7 +188,6 @@ func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	e := mux.entries.Match(p)
-
 	if e == nil {
 		mux.notFound(w, r)
 		return
@@ -204,6 +203,7 @@ func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		ctx := context.WithValue(r.Context(), contextKeyParams, Params(params))
 		r = r.WithContext(ctx)
 	}
+
 	h.ServeHTTP(w, r)
 }
 
