@@ -30,7 +30,7 @@ var (
 
 func TestEntries_Add_Remove_1(t *testing.T) {
 	a := assert.New(t)
-	es := New(false, false)
+	es := New(false)
 	a.NotNil(es)
 
 	// 添加 delete /api/1
@@ -60,7 +60,7 @@ func TestEntries_Add_Remove_1(t *testing.T) {
 
 func TestEntries_Clean(t *testing.T) {
 	a := assert.New(t)
-	es := New(false, false)
+	es := New(false)
 	a.NotNil(es)
 
 	// 添加 delete /api/1
@@ -85,23 +85,4 @@ func TestEntries_Clean(t *testing.T) {
 	a.NotError(es.Add("/1", h1, http.MethodDelete))
 	es.Clean("/api/") // 带路径参数的
 	a.Equal(es.entries.Len(), 1)
-}
-
-func TestClearPath(t *testing.T) {
-	a := assert.New(t)
-
-	a.Equal(cleanPath(""), "/")
-
-	a.Equal(cleanPath("/api//"), "/api/")
-	a.Equal(cleanPath("api//"), "/api/")
-	a.Equal(cleanPath("//api//"), "/api/")
-
-	a.Equal(cleanPath("/api/"), "/api/")
-	a.Equal(cleanPath("/api/./"), "/api/")
-
-	a.Equal(cleanPath("/api/.."), "/")
-	a.Equal(cleanPath("/api/../"), "/")
-
-	a.Equal(cleanPath("/api/../../"), "/")
-	a.Equal(cleanPath("/api../"), "/api../")
 }

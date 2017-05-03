@@ -9,7 +9,6 @@ import (
 	"container/list"
 	"errors"
 	"net/http"
-	"path"
 	"strings"
 	"sync"
 
@@ -25,18 +24,14 @@ type Entries struct {
 	// 该值不能中途修改，否则会出现部分有 OPTIONS，部分没有的情况。
 	disableOptions bool
 
-	// 是否不对提交的路径作处理。
-	skipCleanPath bool
-
 	// 路由项，按资源进行分类。
 	entries *list.List
 }
 
 // New 声明一个 Entries 实例
-func New(disableOptions, skipCleanPath bool) *Entries {
+func New(disableOptions bool) *Entries {
 	return &Entries{
 		disableOptions: disableOptions,
-		skipCleanPath:  skipCleanPath,
 		entries:        list.New(),
 	}
 }
@@ -145,23 +140,18 @@ func (es *Entries) Entry(pattern string) entry.Entry {
 //
 // p 为整理后的当前请求路径；
 // e 为当前匹配的 entry.Entry 实例。
-func (es *Entries) Match(r *http.Request) (p string, e entry.Entry) {
+func (es *Entries) Match(path string) (e entry.Entry) {
 	size := -1 // 匹配度，0 表示完全匹配，-1 表示完全不匹配，其它值越小匹配度越高
-	if es.skipCleanPath {
-		p = r.URL.Path
-	} else {
-		p = cleanPath(r.URL.Path)
-	}
 
 	es.mu.RLock()
 	defer es.mu.RUnlock()
 
 	for item := es.entries.Front(); item != nil; item = item.Next() {
 		ety := item.Value.(entry.Entry)
-		s := ety.Match(p)
+		s := ety.Match(path)
 
 		if s == 0 { // 完全匹配，可以中止匹配过程
-			return p, ety
+			return ety
 		}
 
 		if s == -1 || (size > 0 && s >= size) { // 完全不匹配，或是匹配度没有当前的高
@@ -174,29 +164,7 @@ func (es *Entries) Match(r *http.Request) (p string, e entry.Entry) {
 	} // end for
 
 	if size < 0 {
-		return "", nil
+		return nil
 	}
-	return p, e
-}
-
-// 清除路径中的怪异符号
-func cleanPath(p string) string {
-	if p == "" {
-		return "/"
-	}
-
-	if p[0] != '/' {
-		p = "/" + p
-	}
-
-	pp := path.Clean(p)
-	if pp == "/" {
-		return pp
-	}
-
-	// path.Clean 会去掉最后的 / 符号，所以原来有 / 的，需要加回去
-	if p[len(p)-1] == '/' {
-		pp += "/"
-	}
-	return pp
+	return e
 }

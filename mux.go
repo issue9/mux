@@ -7,6 +7,7 @@ package mux
 import (
 	"context"
 	"net/http"
+	"path"
 
 	"github.com/issue9/mux/internal/entries"
 	"github.com/issue9/mux/internal/method"
@@ -34,6 +35,9 @@ var (
 type Mux struct {
 	entries *entries.Entries
 
+	// 是否不对提交的路径作处理。
+	skipCleanPath bool
+
 	// 404 的处理方式
 	notFound http.HandlerFunc
 
@@ -56,7 +60,8 @@ func New(disableOptions, skipCleanPath bool, notFound, methodNotAllowed http.Han
 	}
 
 	return &Mux{
-		entries:          entries.New(disableOptions, skipCleanPath),
+		entries:          entries.New(disableOptions),
+		skipCleanPath:    skipCleanPath,
 		notFound:         notFound,
 		methodNotAllowed: methodNotAllowed,
 	}
@@ -177,7 +182,12 @@ func (mux *Mux) AnyFunc(pattern string, fun http.HandlerFunc) *Mux {
 }
 
 func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	p, e := mux.entries.Match(r)
+	p := r.URL.Path
+	if !mux.skipCleanPath {
+		p = cleanPath(p)
+	}
+
+	e := mux.entries.Match(p)
 
 	if e == nil {
 		mux.notFound(w, r)
@@ -205,4 +215,26 @@ func MethodIsSuppotred(m string) bool {
 // SupportedMethods 返回所有支持的请求方法
 func SupportedMethods() []string {
 	return method.Supported
+}
+
+// 清除路径中的怪异符号
+func cleanPath(p string) string {
+	if p == "" {
+		return "/"
+	}
+
+	if p[0] != '/' {
+		p = "/" + p
+	}
+
+	pp := path.Clean(p)
+	if pp == "/" {
+		return pp
+	}
+
+	// path.Clean 会去掉最后的 / 符号，所以原来有 / 的，需要加回去
+	if p[len(p)-1] == '/' {
+		pp += "/"
+	}
+	return pp
 }
