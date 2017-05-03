@@ -5,14 +5,10 @@
 package mux
 
 import (
-	"container/list"
 	"context"
-	"errors"
 	"net/http"
-	"path"
-	"sync"
 
-	"github.com/issue9/mux/internal/entry"
+	"github.com/issue9/mux/internal/entries"
 	"github.com/issue9/mux/internal/method"
 )
 
@@ -36,17 +32,7 @@ var (
 //    Add("/api/{version:\\d+}",h3, http.MethodGet, http.MethodPost) // 只匹配 GET 和 POST
 //  http.ListenAndServe(m)
 type Mux struct {
-	mu sync.RWMutex
-
-	// 路由项，按资源进行分类。
-	entries *list.List
-
-	// 是否禁用自动产生 OPTIONS 请求方法。
-	// 该值不能中途修改，否则会出现部分有 OPTIONS，部分没有的情况。
-	disableOptions bool
-
-	// 是否不对提交的路径作处理。
-	skipCleanPath bool
+	entries *entries.Entries
 
 	// 404 的处理方式
 	notFound http.HandlerFunc
@@ -70,9 +56,7 @@ func New(disableOptions, skipCleanPath bool, notFound, methodNotAllowed http.Han
 	}
 
 	return &Mux{
-		entries:          list.New(),
-		disableOptions:   disableOptions,
-		skipCleanPath:    skipCleanPath,
+		entries:          entries.New(disableOptions, skipCleanPath),
 		notFound:         notFound,
 		methodNotAllowed: methodNotAllowed,
 	}
@@ -80,11 +64,7 @@ func New(disableOptions, skipCleanPath bool, notFound, methodNotAllowed http.Han
 
 // Clean 清除所有的路由项
 func (mux *Mux) Clean() *Mux {
-	mux.mu.Lock()
-	defer mux.mu.Unlock()
-
-	mux.entries.Init()
-
+	mux.entries.Clean("")
 	return mux
 }
 
@@ -93,24 +73,7 @@ func (mux *Mux) Clean() *Mux {
 // 当未指定 methods 时，将删除所有 method 匹配的项。
 // 指定错误的 methods 值，将自动忽略该值。
 func (mux *Mux) Remove(pattern string, methods ...string) {
-	if len(methods) == 0 { // 删除所有 method 下匹配的项
-		methods = method.Supported
-	}
-
-	mux.mu.Lock()
-	defer mux.mu.Unlock()
-
-	for item := mux.entries.Front(); item != nil; item = item.Next() {
-		e := item.Value.(entry.Entry)
-		if e.Pattern() != pattern {
-			continue
-		}
-
-		if empty := e.Remove(methods...); empty { // 该 Entry 下已经没有路由项了
-			mux.entries.Remove(item)
-		}
-		return // 只可能有一相完全匹配，找到之后，即可返回
-	}
+	mux.entries.Remove(pattern, methods...)
 }
 
 // Add 添加一条路由数据。
@@ -119,48 +82,7 @@ func (mux *Mux) Remove(pattern string, methods ...string) {
 // methods 参数应该只能为 method.Default 中的字符串，若不指定，默认为所有，
 // 当 h 或是 pattern 为空时，将触发 panic。
 func (mux *Mux) Add(pattern string, h http.Handler, methods ...string) error {
-	if len(pattern) == 0 {
-		return errors.New("参数 pattern 不能为空")
-	}
-	if h == nil {
-		return errors.New("参数 h 不能为空")
-	}
-
-	ety := mux.findEntry(pattern)
-	if ety == nil { // 不存在相同的资源项，则声明新的。
-		var err error
-		if ety, err = entry.New(pattern, h); err != nil {
-			return err
-		}
-
-		if mux.disableOptions { // 禁用 OPTIONS
-			ety.Remove(http.MethodOptions)
-		}
-
-		mux.mu.Lock()
-		defer mux.mu.Unlock()
-		if ety.Type() == entry.TypeRegexp { // 正则路由，在后端插入
-			mux.entries.PushBack(ety)
-		} else {
-			mux.entries.PushFront(ety)
-		}
-	}
-
-	return ety.Add(h, methods...)
-}
-
-func (mux *Mux) findEntry(pattern string) entry.Entry {
-	mux.mu.RLock()
-	defer mux.mu.RUnlock()
-
-	for item := mux.entries.Front(); item != nil; item = item.Next() {
-		e := item.Value.(entry.Entry)
-		if e.Pattern() == pattern {
-			return e
-		}
-	}
-
-	return nil
+	return mux.entries.Add(pattern, h, methods...)
 }
 
 // Options 手动指定 OPTIONS 请求方法的报头 allow 的值。
@@ -169,14 +91,11 @@ func (mux *Mux) findEntry(pattern string) entry.Entry {
 // 如果想实现对处理方法的自定义，可以显示地调用 Add 方法:
 //  Mux.Add("/api/1", handle, http.MethodOptions)
 func (mux *Mux) Options(pattern string, allow string) *Mux {
-	for item := mux.entries.Front(); item != nil; item = item.Next() {
-		e := item.Value.(entry.Entry)
-		if e.Pattern() != pattern {
-			continue
-		}
-
-		e.SetAllow(allow)
-		break
+	ety := mux.entries.Entry(pattern)
+	if ety != nil {
+		ety.SetAllow(allow)
+	} else {
+		// BUG(caixw) 未定义时，直接添加？
 	}
 	return mux
 }
@@ -258,7 +177,7 @@ func (mux *Mux) AnyFunc(pattern string, fun http.HandlerFunc) *Mux {
 }
 
 func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	p, e := mux.match(r)
+	p, e := mux.entries.Match(r)
 
 	if e == nil {
 		mux.notFound(w, r)
@@ -276,66 +195,6 @@ func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		r = r.WithContext(ctx)
 	}
 	h.ServeHTTP(w, r)
-}
-
-// 查找最匹配的路由项
-//
-// p 为整理后的当前请求路径；
-// e 为当前匹配的 entry.Entry 实例。
-func (mux *Mux) match(r *http.Request) (p string, e entry.Entry) {
-	size := -1 // 匹配度，0 表示完全匹配，-1 表示完全不匹配，其它值越小匹配度越高
-	if mux.skipCleanPath {
-		p = r.URL.Path
-	} else {
-		p = cleanPath(r.URL.Path)
-	}
-
-	mux.mu.RLock()
-	defer mux.mu.RUnlock()
-
-	for item := mux.entries.Front(); item != nil; item = item.Next() {
-		ety := item.Value.(entry.Entry)
-		s := ety.Match(p)
-
-		if s == 0 { // 完全匹配，可以中止匹配过程
-			return p, ety
-		}
-
-		if s == -1 || (size > 0 && s >= size) { // 完全不匹配，或是匹配度没有当前的高
-			continue
-		}
-
-		// 匹配度比当前的高，则保存下来
-		size = s
-		e = ety
-	} // end for
-
-	if size < 0 {
-		return "", nil
-	}
-	return p, e
-}
-
-// 清除路径中的怪异符号
-func cleanPath(p string) string {
-	if p == "" {
-		return "/"
-	}
-
-	if p[0] != '/' {
-		p = "/" + p
-	}
-
-	pp := path.Clean(p)
-	if pp == "/" {
-		return pp
-	}
-
-	// path.Clean 会去掉最后的 / 符号，所以原来有 / 的，需要加回去
-	if p[len(p)-1] == '/' {
-		pp += "/"
-	}
-	return pp
 }
 
 // MethodIsSuppotred 检测请求方法当前包是否支持

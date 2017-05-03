@@ -2,6 +2,7 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
+// Package entries 管理 entry.Entry 的添加删除匹配等工作
 package entries
 
 import (

@@ -52,61 +52,6 @@ func requestOptions(a *assert.Assertion, srvmux *Mux, url string, status int, al
 	a.Equal(w.Header().Get("Allow"), allow)
 }
 
-func TestClearPath(t *testing.T) {
-	a := assert.New(t)
-
-	a.Equal(cleanPath(""), "/")
-
-	a.Equal(cleanPath("/api//"), "/api/")
-	a.Equal(cleanPath("api//"), "/api/")
-	a.Equal(cleanPath("//api//"), "/api/")
-
-	a.Equal(cleanPath("/api/"), "/api/")
-	a.Equal(cleanPath("/api/./"), "/api/")
-
-	a.Equal(cleanPath("/api/.."), "/")
-	a.Equal(cleanPath("/api/../"), "/")
-
-	a.Equal(cleanPath("/api/../../"), "/")
-	a.Equal(cleanPath("/api../"), "/api../")
-}
-
-func TestMux_Add_Remove_1(t *testing.T) {
-	a := assert.New(t)
-	srvmux := New(false, false, nil, nil)
-	a.NotNil(srvmux)
-
-	// 添加 delete /api/1
-	a.NotPanic(func() {
-		srvmux.DeleteFunc("/api/1", f1)
-	})
-	a.Equal(srvmux.entries.Len(), 1)
-
-	// 添加 patch /api/1
-	a.NotPanic(func() {
-		srvmux.PatchFunc("/api/1", f1)
-	})
-	a.Equal(srvmux.entries.Len(), 1) // 加在同一个 Entry 下，所以数量不变
-
-	// 添加 post /api/2
-	a.NotPanic(func() {
-		srvmux.PostFunc("/api/2", f1)
-	})
-	a.Equal(srvmux.entries.Len(), 2)
-
-	// 删除 any /api/2
-	srvmux.Remove("/api/2")
-	a.Equal(srvmux.entries.Len(), 1)
-
-	// 删除 delete /api/1
-	srvmux.Remove("/api/1", http.MethodDelete)
-	a.Equal(srvmux.entries.Len(), 1)
-
-	// 删除 patch /api/1
-	srvmux.Remove("/api/1", http.MethodPatch)
-	a.Equal(srvmux.entries.Len(), 0)
-}
-
 func TestMux_Add_Remove_2(t *testing.T) {
 	a := assert.New(t)
 	srvmux := New(false, false, nil, nil)
@@ -148,22 +93,6 @@ func TestMux_Add_Remove_2(t *testing.T) {
 	// 删除 ANY /api/1
 	srvmux.Remove("/api/1")
 	request(a, srvmux, http.MethodPost, "/api/1", http.StatusNotFound) // 404 表示整个 entry 都没了
-}
-
-func TestMux_Clean(t *testing.T) {
-	a := assert.New(t)
-	srvmux := New(false, false, nil, nil)
-	a.NotNil(srvmux)
-
-	// 添加 delete /api/1
-	a.NotPanic(func() {
-		srvmux.DeleteFunc("/api/1", f1).
-			PatchFunc("/api/1", f1)
-	})
-	a.Equal(srvmux.entries.Len(), 1)
-
-	srvmux.Clean()
-	a.Equal(srvmux.entries.Len(), 0)
 }
 
 func TestMux_Options(t *testing.T) {
