@@ -45,6 +45,8 @@ func BenchmarkRegexp_One(b *testing.B) {
 }
 
 // 将内容细分，仅将其中的正则部分处理成正则表达式，其它的仍然以字符串作比较
+//
+// 目前看来，仅在只有一条正则夹在其中的时候，才有一占点优势，否则可能更慢。
 func BenchmarkRegexp_Mult(b *testing.B) {
 	type item struct {
 		pattern string
