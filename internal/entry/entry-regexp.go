@@ -8,8 +8,8 @@ import stdregexp "regexp"
 
 type regexp struct {
 	*items
+	hasParams bool // 仅在正则中只包含未命名正则时，才为 true
 	expr      *stdregexp.Regexp
-	hasParams bool
 }
 
 // Entry.Type
