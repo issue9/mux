@@ -40,8 +40,8 @@ func BenchmarkStatic_Match(b *testing.B) {
 	}
 }
 
-// BenchmarkRegexpr_Match-4   	 5000000	       337 ns/op		go1.8
-func BenchmarkRegexpr_Match(b *testing.B) {
+// BenchmarkRegexp_Match-4   	 5000000	       337 ns/op		go1.8
+func BenchmarkRegexp_Match(b *testing.B) {
 	a := assert.New(b)
 	e, err := New("/blog/post/{id:\\d+}", benchHandler)
 	a.NotError(err)
@@ -49,6 +49,38 @@ func BenchmarkRegexpr_Match(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		if 0 != e.Match("/blog/post/1") {
 			b.Error("BenchmarkRegexp_Match:error")
+		}
+	}
+}
+
+// BenchmarkRegexpr_Match-4   	 5000000	       337 ns/op		go1.8
+func BenchmarkNamed_Match(b *testing.B) {
+	e := &named{
+		items: newItems("/blog/post/{id}/{id2}"),
+		names: []*name{
+			&name{
+				name:     "/blog/post/",
+				isString: true,
+			},
+			&name{
+				name:     "id",
+				isString: false,
+				endByte:  '/',
+			},
+			&name{
+				name:     "/",
+				isString: true,
+			},
+			&name{
+				name:     "id2",
+				isString: false,
+			},
+		},
+	}
+
+	for i := 0; i < b.N; i++ {
+		if 0 != e.Match("/blog/post/1/2") {
+			b.Error("BenchmarkNamed_Match:error")
 		}
 	}
 }

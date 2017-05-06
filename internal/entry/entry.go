@@ -16,6 +16,7 @@ const (
 	TypeBasic = iota + 1
 	TypeStatic
 	TypeRegexp
+	TypeNamed
 )
 
 // Entry 表示一类资源的进入点，拥有统一的路由匹配模式。
