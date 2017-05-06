@@ -6,7 +6,7 @@ package entry
 
 import (
 	"net/http"
-	"regexp"
+	stdregexp "regexp"
 
 	"github.com/issue9/mux/internal/syntax"
 )
@@ -63,12 +63,12 @@ func New(pattern string, h http.Handler) (Entry, error) {
 	p, hasParams, err := syntax.Parse(pattern)
 
 	if err == nil {
-		expr, err := regexp.Compile(p)
+		expr, err := stdregexp.Compile(p)
 		if err != nil {
 			return nil, err
 		}
 
-		return &regexpr{
+		return &regexp{
 			items:     newItems(pattern),
 			hasParams: hasParams,
 			expr:      expr,

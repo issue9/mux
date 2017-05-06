@@ -4,21 +4,21 @@
 
 package entry
 
-import "regexp"
+import stdregexp "regexp"
 
-type regexpr struct {
+type regexp struct {
 	*items
-	expr      *regexp.Regexp
+	expr      *stdregexp.Regexp
 	hasParams bool
 }
 
 // Entry.Type
-func (r *regexpr) Type() int {
+func (r *regexp) Type() int {
 	return TypeRegexp
 }
 
 // Entry.Match
-func (r *regexpr) Match(url string) int {
+func (r *regexp) Match(url string) int {
 	loc := r.expr.FindStringIndex(url)
 
 	if loc != nil &&
@@ -30,7 +30,7 @@ func (r *regexpr) Match(url string) int {
 }
 
 // Entry.Params
-func (r *regexpr) Params(url string) map[string]string {
+func (r *regexp) Params(url string) map[string]string {
 	if !r.hasParams {
 		return nil
 	}
