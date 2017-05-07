@@ -6,9 +6,9 @@
 package entries
 
 import (
-	"container/list"
 	"errors"
 	"net/http"
+	"sort"
 	"strings"
 	"sync"
 
@@ -25,14 +25,14 @@ type Entries struct {
 	disableOptions bool
 
 	// 路由项，按资源进行分类。
-	entries *list.List
+	entries []entry.Entry
 }
 
 // New 声明一个 Entries 实例
 func New(disableOptions bool) *Entries {
 	return &Entries{
 		disableOptions: disableOptions,
-		entries:        list.New(),
+		entries:        make([]entry.Entry, 0, 1000),
 	}
 }
 
@@ -42,22 +42,21 @@ func (es *Entries) Clean(prefix string) {
 	defer es.mu.Unlock()
 
 	if len(prefix) == 0 {
-		es.entries.Init()
+		es.entries = es.entries[:0]
 		return
 	}
 
-	for item := es.entries.Front(); item != nil; {
-		curr := item
-		item = item.Next() // 提前记录下个元素，因为 item 有可能被删除
-
-		ety := curr.Value.(entry.Entry)
+	dels := []string{}
+	for _, ety := range es.entries {
 		pattern := ety.Pattern()
 		if strings.HasPrefix(pattern, prefix) {
-			if empty := ety.Remove(method.Supported...); empty {
-				es.entries.Remove(curr)
-			}
+			dels = append(dels, pattern)
 		}
 	} // end for
+
+	for _, pattern := range dels {
+		es.entries = removeEntries(es.entries, pattern)
+	}
 }
 
 // Remove 移除指定的路由项。
@@ -72,14 +71,13 @@ func (es *Entries) Remove(pattern string, methods ...string) {
 	es.mu.Lock()
 	defer es.mu.Unlock()
 
-	for item := es.entries.Front(); item != nil; item = item.Next() {
-		e := item.Value.(entry.Entry)
+	for _, e := range es.entries {
 		if e.Pattern() != pattern {
 			continue
 		}
 
 		if empty := e.Remove(methods...); empty { // 该 Entry 下已经没有路由项了
-			es.entries.Remove(item)
+			es.entries = removeEntries(es.entries, e.Pattern())
 		}
 		return // 只可能有一相完全匹配，找到之后，即可返回
 	}
@@ -111,11 +109,8 @@ func (es *Entries) Add(pattern string, h http.Handler, methods ...string) error 
 
 		es.mu.Lock()
 		defer es.mu.Unlock()
-		if ety.Type() == entry.TypeRegexp { // 正则路由，在后端插入
-			es.entries.PushBack(ety)
-		} else {
-			es.entries.PushFront(ety)
-		}
+		es.entries = append(es.entries, ety)
+		sort.SliceStable(es.entries, func(i, j int) bool { return es.entries[i].Type() < es.entries[j].Type() })
 	}
 
 	return ety.Add(h, methods...)
@@ -126,8 +121,7 @@ func (es *Entries) Entry(pattern string) entry.Entry {
 	es.mu.RLock()
 	defer es.mu.RUnlock()
 
-	for item := es.entries.Front(); item != nil; item = item.Next() {
-		e := item.Value.(entry.Entry)
+	for _, e := range es.entries {
 		if e.Pattern() == pattern {
 			return e
 		}
@@ -145,8 +139,7 @@ func (es *Entries) Match(path string) (e entry.Entry) {
 	es.mu.RLock()
 	defer es.mu.RUnlock()
 
-	for item := es.entries.Front(); item != nil; item = item.Next() {
-		ety := item.Value.(entry.Entry)
+	for _, ety := range es.entries {
 		s := ety.Match(path)
 
 		if s == 0 { // 完全匹配，可以中止匹配过程
