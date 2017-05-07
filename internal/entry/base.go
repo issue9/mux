@@ -18,6 +18,9 @@ import (
 type base struct {
 	pattern string
 
+	// 是否包含通配符
+	wildcard bool
+
 	// 请求方法及其对应的 Handler
 	handlers map[string]http.Handler
 
@@ -37,6 +40,7 @@ func newItems(pattern string) *base {
 	ret := &base{
 		pattern:  pattern,
 		handlers: make(map[string]http.Handler, len(method.Supported)),
+		wildcard: strings.HasSuffix(pattern, "/*"),
 	}
 
 	// 添加默认的 OPTIONS 请求内容

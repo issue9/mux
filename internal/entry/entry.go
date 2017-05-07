@@ -78,7 +78,5 @@ func New(pattern string, h http.Handler) (Entry, error) {
 		}, nil
 	}
 
-	return &basic{
-		base: newItems(pattern),
-	}, nil
+	return newBasic(pattern), nil
 }

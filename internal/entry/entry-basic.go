@@ -4,9 +4,25 @@
 
 package entry
 
+import (
+	"strings"
+)
+
 // 最基本的字符串匹配，只能全字符串匹配。
 type basic struct {
 	*base
+	prefix string
+}
+
+func newBasic(pattern string) *basic {
+	ret := &basic{
+		base: newItems(pattern),
+	}
+	if ret.wildcard {
+		ret.prefix = pattern[:len(pattern)-1]
+	}
+
+	return ret
 }
 
 func (b *basic) Type() int {
@@ -18,6 +34,13 @@ func (b *basic) Params(url string) map[string]string {
 }
 
 func (b *basic) Match(url string) int {
+	if b.wildcard {
+		if strings.HasPrefix(url, b.prefix) {
+			return 0
+		}
+		return -1
+	}
+
 	if url == b.pattern {
 		return 0
 	}
