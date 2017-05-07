@@ -36,7 +36,7 @@ type base struct {
 	fixedOptionsHandler bool
 }
 
-func newItems(pattern string) *base {
+func newBase(pattern string) *base {
 	ret := &base{
 		pattern:  pattern,
 		handlers: make(map[string]http.Handler, len(method.Supported)),

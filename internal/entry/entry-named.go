@@ -43,7 +43,7 @@ func newNamed(pattern string, s *syntax) *named {
 		}
 	}
 	return &named{
-		base:  newItems(pattern),
+		base:  newBase(pattern),
 		names: names,
 	}
 }
