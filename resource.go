@@ -10,8 +10,8 @@ import (
 	stdsyntax "regexp/syntax"
 	"strings"
 
+	"github.com/issue9/mux/internal/entry"
 	"github.com/issue9/mux/internal/method"
-	"github.com/issue9/mux/internal/syntax"
 )
 
 // Resource 以资源地址为对象的路由配置。
@@ -175,9 +175,9 @@ func (r *Resource) Mux() *Mux {
 }
 
 func newResource(mux *Mux, pattern string) (*Resource, error) {
-	p, hasParams, err := syntax.Parse(pattern)
+	p, hasParams, err := entry.Parse(pattern)
 	if err != nil {
-		if err != syntax.ErrIsNotRegexp {
+		if err != entry.ErrIsNotRegexp {
 			return nil, err
 		}
 

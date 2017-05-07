@@ -7,8 +7,7 @@ package entry
 import (
 	"net/http"
 	"regexp"
-
-	"github.com/issue9/mux/internal/syntax"
+	"strings"
 )
 
 // 表示 Entry 接口的类型
@@ -16,6 +15,7 @@ const (
 	TypeBasic = iota + 1
 	TypeStatic
 	TypeRegexp
+	TypeNamed
 )
 
 // Entry 表示一类资源的进入点，拥有统一的路由匹配模式。
@@ -60,26 +60,29 @@ type Entry interface {
 // pattern 匹配内容。
 // h 对应的 http.Handler，外层调用者确保该值不能为 nil.
 func New(pattern string, h http.Handler) (Entry, error) {
-	p, hasParams, err := syntax.Parse(pattern)
+	s, err := parse(pattern)
+	if err != nil {
+		return nil, err
+	}
 
-	if err == nil {
-		expr, err := regexp.Compile(p)
+	if s.nType == TypeRegexp {
+		expr, err := regexp.Compile(strings.Join(s.patterns, ""))
 		if err != nil {
 			return nil, err
 		}
 
 		return &regexpr{
 			items:     newItems(pattern),
-			hasParams: hasParams,
+			hasParams: s.hasParams,
 			expr:      expr,
 		}, nil
+	} else if s.nType == TypeNamed {
+		return newNamed(pattern, s), nil
 	}
 
-	// 真的有错误
-	if err != syntax.ErrIsNotRegexp {
-		return nil, err
-	}
+	// TODO named
 
+	pattern = s.patterns[0]
 	if pattern[len(pattern)-1] == '/' {
 		return &static{
 			items: newItems(pattern),

@@ -36,11 +36,11 @@ func TestEntry_Match(t *testing.T) {
 	a.Equal(e.Match("/blog/post/1/page/2"), 8)
 	a.Equal(e.Match("/blog"), -1) // 不匹配，长度太短
 
-	// 正则路由
+	// 命名路由
 	e, err = New("/blog/post/{id}", hf)
 	a.NotError(err)
 	a.Equal(e.Match("/blog/post/1"), 0)
-	a.Equal(e.Match("/blog/post/2/page/1"), -1) // 正则没有部分匹配
+	a.Equal(e.Match("/blog/post/2/page/1"), -1) // 不匹配
 	a.Equal(e.Match("/plog/post/2"), -1)        // 不匹配
 
 	// 多个命名正则表达式
@@ -70,13 +70,11 @@ func TestEntry_Params(t *testing.T) {
 	a.Nil(e.Params("/blog/post/1/page/2"))
 	a.Nil(e.Params("/blog"))
 
-	// 正则路由
+	// 命名路由
 	e, err = New("/blog/post/{id}", hf)
 	a.NotError(err)
-	a.Equal(0, len(e.Params("/plog/post/2")))             // 不匹配
-	a.Equal(e.Params("/blog/post/"), map[string]string{}) // 匹配，但未指定参数，默认为空
+	a.Equal(0, len(e.Params("/plog/post/2"))) // 不匹配
 	a.Equal(e.Params("/blog/post/1"), map[string]string{"id": "1"})
-	a.Equal(e.Params("/blog/post/2/page/1"), map[string]string{"id": "2"})
 
 	// 多个命名正则表达式
 	e, err = New("/blog/{action:\\w+}-{id:\\d+}/", hf)
