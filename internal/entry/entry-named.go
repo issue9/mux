@@ -20,6 +20,8 @@ type named struct {
 	names []*name
 }
 
+// 声明一个新的 named 实例。
+// pattern 并不实际参与 synatax 的计算。
 func newNamed(pattern string, s *syntax) *named {
 	names := make([]*name, 0, len(s.patterns))
 	for index, str := range s.patterns {
@@ -107,10 +109,11 @@ func (n *named) URL(params map[string]string) (string, error) {
 	for _, name := range n.names {
 		if name.isString {
 			ret += name.name
+			continue
 		}
 
 		if param, exists := params[name.name]; exists {
-			params[name.name] = param
+			ret += param
 		} else {
 			return "", fmt.Errorf("参数 %v 未指定", name.name)
 		}

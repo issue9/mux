@@ -22,6 +22,10 @@ type syntax struct {
 	nType     int
 }
 
+func isSyntax(str string) bool {
+	return str[0] == syntaxStart && str[len(str)-1] == syntaxEnd
+}
+
 // 对字符串进行分析，判断其类型，以及是否包含参数
 func parse(pattern string) (*syntax, error) {
 	names := []string{} // 缓存各个参数的名称，用于判断是否有重名
@@ -30,7 +34,12 @@ func parse(pattern string) (*syntax, error) {
 	s := &syntax{
 		patterns: make([]string, 0, len(strs)),
 	}
-	if len(strs) == 1 && (strs[0][0] != syntaxStart || strs[0][len(strs[0])-1] != syntaxEnd) {
+	if len(strs) == 0 {
+		s.nType = TypeBasic
+		return s, nil
+	}
+
+	if len(strs) == 1 && !isSyntax(strs[0]) {
 		s.patterns = append(s.patterns, strs[0])
 		s.nType = TypeBasic
 		return s, nil
@@ -40,8 +49,7 @@ func parse(pattern string) (*syntax, error) {
 	for _, v := range strs {
 		s.patterns = append(s.patterns, v)
 
-		lastIndex := len(v) - 1
-		if v[0] != syntaxStart || v[lastIndex] != syntaxEnd { // 普通字符串
+		if !isSyntax(v) { // 普通字符串
 			continue
 		}
 
@@ -71,7 +79,7 @@ func parse(pattern string) (*syntax, error) {
 	// nType == TypeRegexp
 	for i, str := range s.patterns {
 		lastIndex := len(str) - 1
-		if str[0] != syntaxStart || str[lastIndex] != syntaxEnd {
+		if !isSyntax(str) {
 			continue
 		}
 

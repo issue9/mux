@@ -16,7 +16,6 @@ func benchHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("handler"))
 }
 
-// go1.8 BenchmarkMux_ServeHTTPBasic-4    	 5000000	       281 ns/op
 func BenchmarkMux_ServeHTTPBasic(b *testing.B) {
 	a := assert.New(b)
 	srv := New(false, false, nil, nil)
@@ -42,7 +41,6 @@ func BenchmarkMux_ServeHTTPBasic(b *testing.B) {
 	}
 }
 
-// go1.8 BenchmarkMux_ServeHTTPStatic-4   	 5000000	       297 ns/op
 func BenchmarkMux_ServeHTTPStatic(b *testing.B) {
 	a := assert.New(b)
 	srv := New(false, false, nil, nil)
@@ -68,7 +66,6 @@ func BenchmarkMux_ServeHTTPStatic(b *testing.B) {
 	}
 }
 
-// go1.8 BenchmarkMux_ServeHTTPRegexp-4   	 1000000	      1350 ns/op
 func BenchmarkMux_ServeHTTPRegexp(b *testing.B) {
 	a := assert.New(b)
 	srv := New(false, false, nil, nil)
@@ -94,7 +91,6 @@ func BenchmarkMux_ServeHTTPRegexp(b *testing.B) {
 	}
 }
 
-// go1.8 BenchmarkMux_ServeHTTPAll-4      	 2000000	       737 ns/op
 func BenchmarkMux_ServeHTTPAll(b *testing.B) {
 	a := assert.New(b)
 	srv := New(false, false, nil, nil)
@@ -123,7 +119,6 @@ func BenchmarkMux_ServeHTTPAll(b *testing.B) {
 	}
 }
 
-// go1.8 BenchmarkCleanPath-4             	10000000	       144 ns/op
 func BenchmarkCleanPath(b *testing.B) {
 	a := assert.New(b)
 

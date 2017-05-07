@@ -10,8 +10,125 @@ import (
 	"github.com/issue9/assert"
 )
 
+func TestNewNammed(t *testing.T) {
+	a := assert.New(t)
+
+	pattern := "/posts/{id}"
+	n := newNamed(pattern, &syntax{
+		hasParams: true,
+		nType:     TypeNamed,
+		patterns:  []string{"/posts/", "{id}"},
+	})
+	a.NotNil(n)
+	a.Equal(n.pattern, pattern)
+	a.Equal(len(n.names), 2)
+	n0 := n.names[0]
+	a.True(n0.isString).Equal(n0.name, "/posts/")
+	n1 := n.names[1]
+	a.False(n1.isString).
+		Equal(n1.name, "id").
+		Equal(n1.endByte, 0)
+
+	pattern = "/posts/{id}/page/{page}"
+	n = newNamed(pattern, &syntax{
+		hasParams: true,
+		nType:     TypeNamed,
+		patterns:  []string{"/posts/", "{id}", "/page/", "{page}"},
+	})
+	a.NotNil(n)
+	a.Equal(n.pattern, pattern)
+	a.Equal(len(n.names), 4)
+	n0 = n.names[0]
+	a.True(n0.isString).Equal(n0.name, "/posts/")
+	n1 = n.names[1]
+	a.False(n1.isString).
+		Equal(n1.name, "id").
+		Equal(n1.endByte, '/')
+	n3 := n.names[3]
+	a.False(n3.isString).
+		Equal(n3.name, "page").
+		Equal(n3.endByte, 0)
+}
+
 func TestNamed_Type(t *testing.T) {
 	a := assert.New(t)
 	n := &named{}
 	a.Equal(n.Type(), TypeNamed)
+}
+
+func TestNamed_Match(t *testing.T) {
+	a := assert.New(t)
+
+	n := newNamed("/posts/{id}", &syntax{
+		hasParams: true,
+		nType:     TypeNamed,
+		patterns:  []string{"/posts/", "{id}"},
+	})
+	a.NotNil(n)
+
+	a.Equal(n.Match("/posts/1"), 0)
+	a.Equal(n.Match("/posts/2"), 0)
+	a.Equal(n.Match("/posts/id"), 0)
+	a.Equal(n.Match("/posts/id.html"), 0)
+	a.Equal(n.Match("/posts/id.html/"), -1)
+	a.Equal(n.Match("/posts/id.html/page"), -1)
+	a.Equal(n.Match("/post/id"), -1)
+
+	n = newNamed("/posts/{id}/page/{page}", &syntax{
+		hasParams: true,
+		nType:     TypeNamed,
+		patterns:  []string{"/posts/", "{id}", "/page/", "{page}"},
+	})
+	a.Equal(n.Match("/posts/1/page/1"), 0)
+	a.Equal(n.Match("/posts/1.html/page/1"), 0)
+	a.Equal(n.Match("/posts/id-1/page/1/"), -1)
+	a.Equal(n.Match("/posts/id-1/page/1/size/1"), -1)
+}
+
+func TestNamed_Params(t *testing.T) {
+	a := assert.New(t)
+	n := newNamed("/posts/{id}", &syntax{
+		hasParams: true,
+		nType:     TypeNamed,
+		patterns:  []string{"/posts/", "{id}"},
+	})
+	a.NotNil(n)
+	a.Equal(n.Params("/posts/1"), map[string]string{"id": "1"})
+	a.Equal(n.Params("/posts/1.html"), map[string]string{"id": "1.html"})
+	a.Nil(n.Params("/posts/1.html/"))
+
+	n = newNamed("/posts/{id}/page/{page}", &syntax{
+		hasParams: true,
+		nType:     TypeNamed,
+		patterns:  []string{"/posts/", "{id}", "/page/", "{page}"},
+	})
+	a.Equal(n.Params("/posts/1/page/1"), map[string]string{"id": "1", "page": "1"})
+	a.Equal(n.Params("/posts/1.html/page/1"), map[string]string{"id": "1.html", "page": "1"})
+	a.Nil(n.Params("/posts/1.html/"))
+}
+
+func TestNamed_URL(t *testing.T) {
+	a := assert.New(t)
+	n := newNamed("/posts/{id}", &syntax{
+		hasParams: true,
+		nType:     TypeNamed,
+		patterns:  []string{"/posts/", "{id}"},
+	})
+	a.NotNil(n)
+	url, err := n.URL(map[string]string{"id": "5.html"})
+	a.NotError(err).Equal(url, "/posts/5.html")
+	url, err = n.URL(map[string]string{"id": "5.html/"})
+	a.NotError(err).Equal(url, "/posts/5.html/")
+
+	n = newNamed("/posts/{id}/page/{page}", &syntax{
+		hasParams: true,
+		nType:     TypeNamed,
+		patterns:  []string{"/posts/", "{id}", "/page/", "{page}"},
+	})
+	url, err = n.URL(map[string]string{"id": "5.html", "page": "1"})
+	a.NotError(err).Equal(url, "/posts/5.html/page/1")
+
+	// 少参数
+	url, err = n.URL(map[string]string{"id": "5.html"})
+	a.Error(err).Equal(url, "")
 }

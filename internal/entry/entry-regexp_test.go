@@ -12,6 +12,154 @@ import (
 	"github.com/issue9/assert"
 )
 
+func TestNewRegexp(t *testing.T) {
+	a := assert.New(t)
+
+	pattern := "/posts/{id:\\d+}"
+	r, err := newRegexp(pattern, &syntax{
+		hasParams: true,
+		nType:     TypeRegexp,
+		patterns:  []string{"/posts/", "(?P<id>\\d+)"},
+	})
+	a.NotError(err).NotNil(r)
+	a.Equal(r.pattern, pattern)
+	a.Equal(r.expr.String(), "/posts/(?P<id>\\d+)")
+
+	pattern = "/posts/{id}/page/{page:\\d+}"
+	r, err = newRegexp(pattern, &syntax{
+		hasParams: true,
+		nType:     TypeRegexp,
+		patterns:  []string{"/posts/", "(?P<id>[^/]+)", "/page/", "(?P<page>\\d+)"},
+	})
+	a.NotError(err).NotNil(r)
+	a.Equal(r.pattern, pattern)
+	a.Equal(r.expr.String(), "/posts/(?P<id>[^/]+)/page/(?P<page>\\d+)")
+
+	pattern = "/posts/{id}/page/{page:\\d+}/size/{:\\d+}"
+	r, err = newRegexp(pattern, &syntax{
+		hasParams: true,
+		nType:     TypeRegexp,
+		patterns:  []string{"/posts/", "(?P<id>[^/]+)", "/page/", "(?P<page>\\d+)", "/size/", "(\\d+)"},
+	})
+	a.NotError(err).NotNil(r)
+	a.Equal(r.pattern, pattern)
+	a.Equal(r.expr.String(), "/posts/(?P<id>[^/]+)/page/(?P<page>\\d+)/size/(\\d+)")
+}
+
+func TestRegexp_Type(t *testing.T) {
+	a := assert.New(t)
+	n := &regexp{}
+	a.Equal(n.Type(), TypeRegexp)
+}
+
+func TestRegexp_Match(t *testing.T) {
+	a := assert.New(t)
+
+	n, err := newRegexp("/posts/{id:\\d+}", &syntax{
+		hasParams: true,
+		nType:     TypeRegexp,
+		patterns:  []string{"/posts/", "(?P<id>\\d+)"},
+	})
+	a.NotError(err).NotNil(n)
+
+	a.Equal(n.Match("/posts/1"), 0)
+	a.Equal(n.Match("/posts/2"), 0)
+	a.Equal(n.Match("/posts/id"), -1)
+	a.Equal(n.Match("/posts/id.html"), -1)
+	a.Equal(n.Match("/posts/id.html/"), -1)
+	a.Equal(n.Match("/posts/id.html/page"), -1)
+	a.Equal(n.Match("/post/id"), -1)
+
+	n, err = newRegexp("/posts/{id}/page/{page:\\d+}", &syntax{
+		hasParams: true,
+		nType:     TypeRegexp,
+		patterns:  []string{"/posts/", "(?P<id>[^/]+)", "/page/", "(?P<page>\\d+)"},
+	})
+	a.Equal(n.Match("/posts/1/page/1"), 0)
+	a.Equal(n.Match("/posts/1.html/page/1"), 0)
+
+	a.Equal(n.Match("/posts/1.html/page/x"), -1)
+	a.Equal(n.Match("/posts/id-1/page/1/"), -1)
+	a.Equal(n.Match("/posts/id-1/page/1/size/1"), -1)
+
+	n, err = newRegexp("/posts/{id}/page/{page:\\d+}/size/{:\\d+}", &syntax{
+		hasParams: true,
+		nType:     TypeRegexp,
+		patterns:  []string{"/posts/", "(?P<id>[^/]+)", "/page/", "(?P<page>\\d+)", "/size/", "(\\d+)"},
+	})
+	a.Equal(n.Match("/posts/1.html/page/1/size/1"), 0)
+	a.Equal(n.Match("/posts/1.html/page/1/size/11"), 0)
+	a.Equal(n.Match("/posts/1.html/page/x/size/11"), -1)
+}
+
+func TestRegexp_Params(t *testing.T) {
+	a := assert.New(t)
+	n, err := newRegexp("/posts/{id}", &syntax{
+		hasParams: true,
+		nType:     TypeRegexp,
+		patterns:  []string{"/posts/", "(?P<id>[^/]+)"},
+	})
+	a.NotError(err).NotNil(n)
+	a.Equal(n.Params("/posts/1"), map[string]string{"id": "1"})
+	a.Equal(n.Params("/posts/1.html"), map[string]string{"id": "1.html"})
+	a.Equal(n.Params("/posts/1.html/"), map[string]string{"id": "1.html"})
+
+	n, err = newRegexp("/posts/{id}/page/{page:\\d+}", &syntax{
+		hasParams: true,
+		nType:     TypeRegexp,
+		patterns:  []string{"/posts/", "(?P<id>[^/]+)", "/page/", "(?P<page>\\d+)"},
+	})
+	a.Equal(n.Params("/posts/1/page/1"), map[string]string{"id": "1", "page": "1"})
+	a.Equal(n.Params("/posts/1.html/page/1"), map[string]string{"id": "1.html", "page": "1"})
+
+	// 带有未命名参数
+	n, err = newRegexp("/posts/{id}/page/{page:\\d+}/size/{:\\d+}", &syntax{
+		hasParams: true,
+		nType:     TypeRegexp,
+		patterns:  []string{"/posts/", "(?P<id>[^/]+)", "/page/", "(?P<page>\\d+)", "/size/", "(\\d+)"},
+	})
+	a.Equal(n.Params("/posts/1.html/page/1/size/1"), map[string]string{"id": "1.html", "page": "1"})
+}
+
+func TestRegexp_URL(t *testing.T) {
+	a := assert.New(t)
+	n, err := newRegexp("/posts/{id}", &syntax{
+		hasParams: true,
+		nType:     TypeRegexp,
+		patterns:  []string{"/posts/", "(?P<id>[^/]+)"},
+	})
+	a.NotError(err).NotNil(n)
+	url, err := n.URL(map[string]string{"id": "5.html"})
+	a.NotError(err).Equal(url, "/posts/5.html")
+	url, err = n.URL(map[string]string{"id": "5.html/"})
+	a.NotError(err).Equal(url, "/posts/5.html/")
+
+	n, err = newRegexp("/posts/{id}/page/{page}", &syntax{
+		hasParams: true,
+		nType:     TypeRegexp,
+		patterns:  []string{"/posts/", "(?P<id>[^/]+)", "/page/", "(?P<page>\\d+)"},
+	})
+	url, err = n.URL(map[string]string{"id": "5.html", "page": "1"})
+	a.NotError(err).Equal(url, "/posts/5.html/page/1")
+
+	// 少参数
+	url, err = n.URL(map[string]string{"id": "5.html"})
+	a.Error(err).Equal(url, "")
+
+	// 带有未命名参数
+	n, err = newRegexp("/posts/{id}/page/{page:\\d+}/size/{:\\d+}", &syntax{
+		hasParams: true,
+		nType:     TypeRegexp,
+		patterns:  []string{"/posts/", "(?P<id>[^/]+)", "/page/", "(?P<page>\\d+)", "/size/", "(\\d+)"},
+	})
+	url, err = n.URL(map[string]string{"id": "5.html", "page": "1"})
+	a.NotError(err).Equal(url, "/posts/5.html/page/1/size/([0-9]+)")
+}
+
+///////////////////////////////////////////////////////////////
+// 以下为一个性能测试用，用于验证将一个正则表达式折分成多个
+// 和不折分，哪个性能下高一点
+
 // 测试用内容，键名为正则，键值为或匹配的值
 var regexpStrs = map[string]string{
 	"/blog/posts/":   "/blog/posts/",

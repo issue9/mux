@@ -18,7 +18,7 @@ type regexp struct {
 	syntaxExpr *stdsyntax.Regexp
 }
 
-func newRegexp(pattern string, s *syntax) (Entry, error) {
+func newRegexp(pattern string, s *syntax) (*regexp, error) {
 	str := strings.Join(s.patterns, "")
 	expr, err := stdregexp.Compile(str)
 	if err != nil {

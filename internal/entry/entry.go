@@ -45,7 +45,7 @@ type Entry interface {
 	// 可以通过指定 http.MethodOptions 的方式，来强制删除 OPTIONS 请求方法的处理。
 	Remove(method ...string) (empty bool)
 
-	// 根据参数生成一条路径
+	// 根据参数生成一条路径。
 	URL(params map[string]string) (string, error)
 
 	// 手动设置 OPTIONS 的 Allow 报头。不调用此函数，

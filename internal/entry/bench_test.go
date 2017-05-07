@@ -14,7 +14,6 @@ import (
 var benchHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 })
 
-// BenchmarkBasic_Match-4    	200000000	         6.75 ns/op		go1.8
 func BenchmarkBasic_Match(b *testing.B) {
 	a := assert.New(b)
 	e, err := New("/blog/post/1", benchHandler)
@@ -27,7 +26,6 @@ func BenchmarkBasic_Match(b *testing.B) {
 	}
 }
 
-// BenchmarkStatic_Match-4    	200000000	         7.85 ns/op     go1.8
 func BenchmarkStatic_Match(b *testing.B) {
 	a := assert.New(b)
 	e, err := New("/blog/post/", benchHandler)
@@ -40,7 +38,6 @@ func BenchmarkStatic_Match(b *testing.B) {
 	}
 }
 
-// BenchmarkRegexp_Match-4   	 5000000	       337 ns/op		go1.8
 func BenchmarkRegexp_Match(b *testing.B) {
 	a := assert.New(b)
 	e, err := New("/blog/post/{id:\\d+}", benchHandler)
@@ -53,7 +50,6 @@ func BenchmarkRegexp_Match(b *testing.B) {
 	}
 }
 
-// BenchmarkRegexpr_Match-4   	 5000000	       337 ns/op		go1.8
 func BenchmarkNamed_Match(b *testing.B) {
 	a := assert.New(b)
 	e, err := New("/blog/post/{id}/{id2}", benchHandler)
