@@ -70,8 +70,6 @@ func New(pattern string, h http.Handler) (Entry, error) {
 		return newNamed(pattern, s), nil
 	}
 
-	// TODO named
-
 	pattern = s.patterns[0]
 	if pattern[len(pattern)-1] == '/' {
 		return &static{
