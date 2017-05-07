@@ -23,10 +23,20 @@ type named struct {
 // 声明一个新的 named 实例。
 // pattern 并不实际参与 synatax 的计算。
 func newNamed(pattern string, s *syntax) *named {
+	str := s.patterns[len(s.patterns)-1]
+	if strings.HasSuffix(str, "/*") {
+		str = str[:len(str)-2]
+		if len(str) == 0 {
+			s.patterns = s.patterns[:len(s.patterns)-1]
+		} else {
+			s.patterns[len(s.patterns)-1] = str
+		}
+	}
+
 	names := make([]*name, 0, len(s.patterns))
 	for index, str := range s.patterns {
 		if str[0] == syntaxStart {
-			var endByte byte
+			endByte := byte('/')
 			if index < len(s.patterns)-1 {
 				endByte = s.patterns[index+1][0]
 			}
@@ -42,6 +52,7 @@ func newNamed(pattern string, s *syntax) *named {
 			})
 		}
 	}
+
 	return &named{
 		base:  newBase(pattern),
 		names: names,
@@ -55,23 +66,33 @@ func (n *named) Type() int {
 
 // Entry.Match
 func (n *named) Match(path string) int {
-	for _, name := range n.names {
+	for i, name := range n.names {
+		islast := (i == len(n.names)-1)
+
 		if name.isString {
 			if !strings.HasPrefix(path, name.name) {
 				return -1
 			}
 			path = path[len(name.name):]
 		} else {
-			if name.endByte == 0 { // 最后了
-				if strings.IndexByte(path, '/') >= 0 {
-					return -1
-				}
-				return 0
-			}
-
 			index := strings.IndexByte(path, name.endByte)
-			path = path[index:]
-		}
+			if !islast {
+				path = path[index:]
+			} else {
+				if index < 0 { // 没有 / 符号了
+					if n.wildcard { // 通配符，但是没有后续内容
+						return -1
+					}
+					return 0
+				}
+
+				if n.wildcard { // 通配符，但是没有后续内容
+					return 0
+				}
+
+				return -1
+			}
+		} // end if
 	} // end false
 	return 0
 }
@@ -80,26 +101,33 @@ func (n *named) Match(path string) int {
 func (n *named) Params(path string) map[string]string {
 	params := make(map[string]string, len(n.names))
 
-	for _, name := range n.names {
+	for i, name := range n.names {
+		islast := (i == len(n.names)-1)
+
 		if name.isString {
 			if !strings.HasPrefix(path, name.name) {
 				return nil
 			}
 			path = path[len(name.name):]
 		} else {
-			if name.endByte == 0 { // 最后了
-				if strings.IndexByte(path, '/') >= 0 {
-					return nil
-				}
-				params[name.name] = path
-				break
-			}
-
 			index := strings.IndexByte(path, name.endByte)
-			params[name.name] = path[:index]
-			path = path[index:]
+
+			if !islast {
+				params[name.name] = path[:index]
+				path = path[index:]
+			} else {
+				if index < 0 { // 没有 / 符号了
+					params[name.name] = path
+					break
+				}
+
+				if n.wildcard {
+					params[name.name] = path[:index]
+					break
+				}
+			}
 		}
-	}
+	} // end for
 	return params
 }
 
