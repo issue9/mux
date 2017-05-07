@@ -55,28 +55,9 @@ func BenchmarkRegexp_Match(b *testing.B) {
 
 // BenchmarkRegexpr_Match-4   	 5000000	       337 ns/op		go1.8
 func BenchmarkNamed_Match(b *testing.B) {
-	e := &named{
-		items: newItems("/blog/post/{id}/{id2}"),
-		names: []*name{
-			&name{
-				name:     "/blog/post/",
-				isString: true,
-			},
-			&name{
-				name:     "id",
-				isString: false,
-				endByte:  '/',
-			},
-			&name{
-				name:     "/",
-				isString: true,
-			},
-			&name{
-				name:     "id2",
-				isString: false,
-			},
-		},
-	}
+	a := assert.New(b)
+	e, err := New("/blog/post/{id}/{id2}", benchHandler)
+	a.NotError(err)
 
 	for i := 0; i < b.N; i++ {
 		if 0 != e.Match("/blog/post/1/2") {
