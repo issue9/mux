@@ -62,6 +62,7 @@ func New(pattern string, h http.Handler) (Entry, error) {
 	s, err := parse(pattern)
 	if err != nil {
 		return nil, err
+
 	}
 
 	if s.nType == TypeRegexp {

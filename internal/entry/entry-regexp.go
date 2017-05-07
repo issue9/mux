@@ -6,21 +6,21 @@ package entry
 
 import (
 	"fmt"
-	"regexp"
+	stdregexp "regexp"
 	stdsyntax "regexp/syntax"
 	"strings"
 )
 
-type regexpr struct {
+type regexp struct {
 	*items
-	expr       *regexp.Regexp
+	expr       *stdregexp.Regexp
 	hasParams  bool
 	syntaxExpr *stdsyntax.Regexp
 }
 
 func newRegexp(pattern string, s *syntax) (Entry, error) {
 	str := strings.Join(s.patterns, "")
-	expr, err := regexp.Compile(str)
+	expr, err := stdregexp.Compile(str)
 	if err != nil {
 		return nil, err
 	}
@@ -30,21 +30,22 @@ func newRegexp(pattern string, s *syntax) (Entry, error) {
 		return nil, err
 	}
 
-	return &regexpr{
+	return &regexp{
 		items:      newItems(pattern),
 		hasParams:  s.hasParams,
 		expr:       expr,
 		syntaxExpr: syntaxExpr,
 	}, nil
+
 }
 
 // Entry.Type
-func (r *regexpr) Type() int {
+func (r *regexp) Type() int {
 	return TypeRegexp
 }
 
 // Entry.Match
-func (r *regexpr) Match(url string) int {
+func (r *regexp) Match(url string) int {
 	loc := r.expr.FindStringIndex(url)
 
 	if loc != nil &&
@@ -56,7 +57,7 @@ func (r *regexpr) Match(url string) int {
 }
 
 // Entry.Params
-func (r *regexpr) Params(url string) map[string]string {
+func (r *regexp) Params(url string) map[string]string {
 	if !r.hasParams {
 		return nil
 	}
@@ -74,7 +75,7 @@ func (r *regexpr) Params(url string) map[string]string {
 }
 
 // fun
-func (r *regexpr) URL(params map[string]string) (string, error) {
+func (r *regexp) URL(params map[string]string) (string, error) {
 	if r.syntaxExpr == nil {
 		return r.pattern, nil
 	}
