@@ -7,7 +7,7 @@ package entry
 // 静态文件匹配路由项，只要路径中的开头字符串与 pattern 相同，
 // 且 pattern 以 / 结尾，即表示匹配成功。根据 match() 的返回值来确定哪个最匹配。
 type static struct {
-	*items
+	*base
 }
 
 func (s *static) Type() int {

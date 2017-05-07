@@ -74,11 +74,11 @@ func New(pattern string, h http.Handler) (Entry, error) {
 	pattern = s.patterns[0]
 	if pattern[len(pattern)-1] == '/' {
 		return &static{
-			items: newItems(pattern),
+			base: newItems(pattern),
 		}, nil
 	}
 
 	return &basic{
-		items: newItems(pattern),
+		base: newItems(pattern),
 	}, nil
 }

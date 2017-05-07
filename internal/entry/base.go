@@ -15,7 +15,7 @@ import (
 )
 
 // 所有 Entry 实现的公用部分。
-type items struct {
+type base struct {
 	pattern string
 
 	// 请求方法及其对应的 Handler
@@ -33,8 +33,8 @@ type items struct {
 	fixedOptionsHandler bool
 }
 
-func newItems(pattern string) *items {
-	ret := &items{
+func newItems(pattern string) *base {
+	ret := &base{
 		pattern:  pattern,
 		handlers: make(map[string]http.Handler, len(method.Supported)),
 	}
@@ -46,12 +46,12 @@ func newItems(pattern string) *items {
 	return ret
 }
 
-func (i *items) Pattern() string {
+func (i *base) Pattern() string {
 	return i.pattern
 }
 
 // Entry.Add()
-func (i *items) Add(h http.Handler, methods ...string) error {
+func (i *base) Add(h http.Handler, methods ...string) error {
 	if len(methods) == 0 {
 		methods = method.Default
 	}
@@ -69,7 +69,7 @@ func (i *items) Add(h http.Handler, methods ...string) error {
 	return nil
 }
 
-func (i *items) add(h http.Handler, method string) error {
+func (i *base) add(h http.Handler, method string) error {
 	if method == http.MethodOptions { // 强制修改 OPTIONS 方法的处理方式
 		if i.fixedOptionsHandler { // 被强制修改过，不能再受理。
 			return errors.New("该请求方法 OPTIONS 已经存在") // 与以下的错误提示相同
@@ -93,11 +93,11 @@ func (i *items) add(h http.Handler, method string) error {
 	return nil
 }
 
-func (i *items) optionsServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (i *base) optionsServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Allow", i.optionsAllow)
 }
 
-func (i *items) getOptionsAllow() string {
+func (i *base) getOptionsAllow() string {
 	methods := make([]string, 0, len(i.handlers))
 	for method := range i.handlers {
 		methods = append(methods, method)
@@ -108,7 +108,7 @@ func (i *items) getOptionsAllow() string {
 }
 
 // Entry.Remove()
-func (i *items) Remove(methods ...string) bool {
+func (i *base) Remove(methods ...string) bool {
 	for _, method := range methods {
 		delete(i.handlers, method)
 		if method == http.MethodOptions { // 不恢复方法，只恢复了 fixedOptionsHandler
@@ -138,12 +138,12 @@ func (i *items) Remove(methods ...string) bool {
 }
 
 // Entry.SetAllow()
-func (i *items) SetAllow(optionsAllow string) {
+func (i *base) SetAllow(optionsAllow string) {
 	i.optionsAllow = optionsAllow
 	i.fixedOptionsAllow = true
 }
 
 // Entry.Handler()
-func (i *items) Handler(method string) http.Handler {
+func (i *base) Handler(method string) http.Handler {
 	return i.handlers[method]
 }

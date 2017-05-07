@@ -6,7 +6,7 @@ package entry
 
 // 最基本的字符串匹配，只能全字符串匹配。
 type basic struct {
-	*items
+	*base
 }
 
 func (b *basic) Type() int {

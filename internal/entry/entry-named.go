@@ -16,7 +16,7 @@ type name struct {
 }
 
 type named struct {
-	*items
+	*base
 	names []*name
 }
 
@@ -43,7 +43,7 @@ func newNamed(pattern string, s *syntax) *named {
 		}
 	}
 	return &named{
-		items: newItems(pattern),
+		base:  newItems(pattern),
 		names: names,
 	}
 }

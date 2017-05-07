@@ -12,7 +12,7 @@ import (
 )
 
 type regexp struct {
-	*items
+	*base
 	expr       *stdregexp.Regexp
 	hasParams  bool
 	syntaxExpr *stdsyntax.Regexp
@@ -31,7 +31,7 @@ func newRegexp(pattern string, s *syntax) (*regexp, error) {
 	}
 
 	return &regexp{
-		items:      newItems(pattern),
+		base:       newItems(pattern),
 		hasParams:  s.hasParams,
 		expr:       expr,
 		syntaxExpr: syntaxExpr,
