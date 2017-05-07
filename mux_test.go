@@ -177,11 +177,11 @@ func TestMux_ServeHTTP_Order(t *testing.T) {
 	serveMux := New(false, false, nil, nil)
 	a.NotNil(serveMux)
 
-	a.NotError(serveMux.GetFunc("/post/", f1))          // f1
+	a.NotError(serveMux.GetFunc("/post/*", f3))         // f3
 	a.NotError(serveMux.GetFunc("/post/{id:\\d+}", f2)) // f2
-	a.NotError(serveMux.GetFunc("/post/1", f3))         // f3
+	a.NotError(serveMux.GetFunc("/post/1", f1))         // f1
 
-	request(a, serveMux, http.MethodGet, "/post/1", 3)   // f3 静态路由项完全匹配
+	request(a, serveMux, http.MethodGet, "/post/1", 1)   // f1 静态路由项完全匹配
 	request(a, serveMux, http.MethodGet, "/post/2", 2)   // f2 正则完全匹配
 	request(a, serveMux, http.MethodGet, "/post/abc", 1) // f1 匹配度最高
 }

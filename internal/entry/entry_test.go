@@ -12,7 +12,7 @@ import (
 )
 
 var _ Entry = &basic{}
-var _ Entry = &static{}
+var _ Entry = &named{}
 var _ Entry = &regexp{}
 
 func TestEntry_Match(t *testing.T) {
@@ -28,12 +28,12 @@ func TestEntry_Match(t *testing.T) {
 	a.Equal(e.Match("/blog/post/1/page/2"), -1) // 非 / 结尾的，只能全路径匹配。
 	a.Equal(e.Match("/blog"), -1)               // 不匹配，长度太短
 
-	// 静态路由-2
-	e, err = New("/blog/post/", hf)
+	// basic with wildcard
+	e, err = New("/blog/post/*", hf)
 	a.NotError(err)
-	a.Equal(e.Match("/blog/post/1"), 1)
+	a.Equal(e.Match("/blog/post/1"), 0)
 	a.Equal(e.Match("/blog/post/"), 0)
-	a.Equal(e.Match("/blog/post/1/page/2"), 8)
+	a.Equal(e.Match("/blog/post/1/page/2"), 0)
 	a.Equal(e.Match("/blog"), -1) // 不匹配，长度太短
 
 	// 命名路由
