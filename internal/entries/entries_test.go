@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/issue9/assert"
+	"github.com/issue9/mux/internal/entry"
 )
 
 // 一些预定义的处理函数
@@ -85,4 +86,39 @@ func TestEntries_Clean(t *testing.T) {
 	a.NotError(es.Add("/1", h1, http.MethodDelete))
 	es.Clean("/api/") // 带路径参数的
 	a.Equal(es.entries.Len(), 1)
+}
+
+func TestRemoveEntries(t *testing.T) {
+	a := assert.New(t)
+
+	n1, err := entry.New("1", nil)
+	n2, err := entry.New("2", nil)
+	n3, err := entry.New("3", nil)
+	n4, err := entry.New("4", nil)
+	a.NotError(err)
+	es := []entry.Entry{n1, n2, n3, n4}
+
+	// 不存在的元素
+	es = removeEntries(es, "")
+	a.Equal(len(es), 4)
+
+	// 删除尾元素
+	es = removeEntries(es, "4")
+	a.Equal(len(es), 3)
+
+	// 删除中间无素
+	es = removeEntries(es, "2")
+	a.Equal(len(es), 2)
+
+	// 已删除，不存在的元素
+	es = removeEntries(es, "2")
+	a.Equal(len(es), 2)
+
+	// 第一个元素
+	es = removeEntries(es, "1")
+	a.Equal(len(es), 1)
+
+	// 最后一个元素
+	es = removeEntries(es, "3")
+	a.Equal(len(es), 0)
 }

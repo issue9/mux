@@ -167,3 +167,23 @@ func (es *Entries) Match(path string) (e entry.Entry) {
 	}
 	return e
 }
+
+func removeEntries(es []entry.Entry, pattern string) []entry.Entry {
+	lastIndex := len(es) - 1
+	for index, e := range es {
+		if e.Pattern() != pattern {
+			continue
+		}
+
+		switch {
+		case len(es) == 1: // 只有一个元素
+			return es[:0]
+		case index == lastIndex: // 最后一个元素
+			return es[:lastIndex]
+		default:
+			return append(es[:index], es[index+1:]...)
+		}
+	} // end for
+
+	return es
+}
