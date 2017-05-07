@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"path"
 
-	"github.com/issue9/mux/internal/entries"
+	"github.com/issue9/mux/internal/entry"
 	"github.com/issue9/mux/internal/method"
 )
 
@@ -33,7 +33,7 @@ var (
 //    Add("/api/{version:\\d+}",h3, http.MethodGet, http.MethodPost) // 只匹配 GET 和 POST
 //  http.ListenAndServe(m)
 type Mux struct {
-	entries *entries.Entries
+	entries *entry.Entries
 
 	// 是否不对提交的路径作处理。
 	skipCleanPath bool
@@ -60,7 +60,7 @@ func New(disableOptions, skipCleanPath bool, notFound, methodNotAllowed http.Han
 	}
 
 	return &Mux{
-		entries:          entries.New(disableOptions),
+		entries:          entry.NewEntries(disableOptions),
 		skipCleanPath:    skipCleanPath,
 		notFound:         notFound,
 		methodNotAllowed: methodNotAllowed,

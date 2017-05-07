@@ -2,8 +2,7 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
-// Package entries 管理 entry.Entry 的添加删除匹配等工作
-package entries
+package entry
 
 import (
 	"errors"
@@ -12,7 +11,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/issue9/mux/internal/entry"
 	"github.com/issue9/mux/internal/method"
 )
 
@@ -25,14 +23,14 @@ type Entries struct {
 	disableOptions bool
 
 	// 路由项，按资源进行分类。
-	entries []entry.Entry
+	entries []Entry
 }
 
-// New 声明一个 Entries 实例
-func New(disableOptions bool) *Entries {
+// NewEntries 声明一个 Entries 实例
+func NewEntries(disableOptions bool) *Entries {
 	return &Entries{
 		disableOptions: disableOptions,
-		entries:        make([]entry.Entry, 0, 1000),
+		entries:        make([]Entry, 0, 1000),
 	}
 }
 
@@ -99,7 +97,7 @@ func (es *Entries) Add(pattern string, h http.Handler, methods ...string) error 
 	ety := es.Entry(pattern)
 	if ety == nil { // 不存在相同的资源项，则声明新的。
 		var err error
-		if ety, err = entry.New(pattern, h); err != nil {
+		if ety, err = New(pattern, h); err != nil {
 			return err
 		}
 
@@ -117,7 +115,7 @@ func (es *Entries) Add(pattern string, h http.Handler, methods ...string) error 
 }
 
 // Entry 查找指定匹配模式下的 Entry
-func (es *Entries) Entry(pattern string) entry.Entry {
+func (es *Entries) Entry(pattern string) Entry {
 	es.mu.RLock()
 	defer es.mu.RUnlock()
 
@@ -132,8 +130,8 @@ func (es *Entries) Entry(pattern string) entry.Entry {
 
 // Match 查找与 path 最匹配的路由项
 //
-// e 为当前匹配的 entry.Entry 实例。
-func (es *Entries) Match(path string) (e entry.Entry) {
+// e 为当前匹配的 Entry 实例。
+func (es *Entries) Match(path string) (e Entry) {
 	size := -1 // 匹配度，0 表示完全匹配，-1 表示完全不匹配，其它值越小匹配度越高
 
 	es.mu.RLock()
@@ -161,7 +159,7 @@ func (es *Entries) Match(path string) (e entry.Entry) {
 	return e
 }
 
-func removeEntries(es []entry.Entry, pattern string) []entry.Entry {
+func removeEntries(es []Entry, pattern string) []Entry {
 	lastIndex := len(es) - 1
 	for index, e := range es {
 		if e.Pattern() != pattern {

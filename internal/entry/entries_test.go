@@ -2,14 +2,13 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
-package entries
+package entry
 
 import (
 	"net/http"
 	"testing"
 
 	"github.com/issue9/assert"
-	"github.com/issue9/mux/internal/entry"
 )
 
 // 一些预定义的处理函数
@@ -31,7 +30,7 @@ var (
 
 func TestEntries_Add_Remove_1(t *testing.T) {
 	a := assert.New(t)
-	es := New(false)
+	es := NewEntries(false)
 	a.NotNil(es)
 
 	// 添加 delete /api/1
@@ -61,7 +60,7 @@ func TestEntries_Add_Remove_1(t *testing.T) {
 
 func TestEntries_Clean(t *testing.T) {
 	a := assert.New(t)
-	es := New(false)
+	es := NewEntries(false)
 	a.NotNil(es)
 
 	// 添加 delete /api/1
@@ -91,12 +90,12 @@ func TestEntries_Clean(t *testing.T) {
 func TestRemoveEntries(t *testing.T) {
 	a := assert.New(t)
 
-	n1, err := entry.New("1", nil)
-	n2, err := entry.New("2", nil)
-	n3, err := entry.New("3", nil)
-	n4, err := entry.New("4", nil)
+	n1, err := New("1", nil)
+	n2, err := New("2", nil)
+	n3, err := New("3", nil)
+	n4, err := New("4", nil)
 	a.NotError(err)
-	es := []entry.Entry{n1, n2, n3, n4}
+	es := []Entry{n1, n2, n3, n4}
 
 	// 不存在的元素
 	es = removeEntries(es, "")
