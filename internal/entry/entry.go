@@ -9,7 +9,6 @@ import "net/http"
 // 表示 Entry 接口的类型
 const (
 	TypeBasic = iota + 1
-	TypeStatic
 	TypeRegexp
 	TypeNamed
 )
