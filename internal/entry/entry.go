@@ -7,8 +7,6 @@ package entry
 import (
 	"net/http"
 	"regexp"
-
-	"github.com/issue9/mux/internal/syntax"
 )
 
 // 表示 Entry 接口的类型
@@ -61,7 +59,7 @@ type Entry interface {
 // pattern 匹配内容。
 // h 对应的 http.Handler，外层调用者确保该值不能为 nil.
 func New(pattern string, h http.Handler) (Entry, error) {
-	p, hasParams, err := syntax.Parse(pattern)
+	p, hasParams, err := Parse(pattern)
 
 	if err == nil {
 		expr, err := regexp.Compile(p)
@@ -77,7 +75,7 @@ func New(pattern string, h http.Handler) (Entry, error) {
 	}
 
 	// 真的有错误
-	if err != syntax.ErrIsNotRegexp {
+	if err != ErrIsNotRegexp {
 		return nil, err
 	}
 
