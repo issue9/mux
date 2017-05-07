@@ -13,15 +13,15 @@ import (
 
 // 表示正则路由中，表达式的起止字符
 const (
-	regexpStart = '{'
-	regexpEnd   = '}'
+	syntaxStart = '{'
+	syntaxEnd   = '}'
 )
 
 var ErrIsNotRegexp = errors.New("delet")
 
 type syntax struct {
 	hasParams bool
-	patterns  []string
+	patterns  []string // 保存着对字符串处理后的结果
 	nType     int
 }
 
@@ -38,14 +38,14 @@ func Parse(pattern string) (string, bool, error) {
 	names := []string{}
 
 	strs := split(pattern)
-	if len(strs) == 1 && (strs[0][0] != regexpStart || strs[0][len(strs[0])-1] != regexpEnd) {
+	if len(strs) == 1 && (strs[0][0] != syntaxStart || strs[0][len(strs[0])-1] != syntaxEnd) {
 		return "", false, ErrIsNotRegexp
 	}
 
 	pattern = pattern[:0]
 	for _, v := range strs {
 		lastIndex := len(v) - 1
-		if v[0] != regexpStart || v[lastIndex] != regexpEnd { // 普通字符串
+		if v[0] != syntaxStart || v[lastIndex] != syntaxEnd { // 普通字符串
 			pattern += v
 			continue
 		}
@@ -85,44 +85,78 @@ func Parse(pattern string) (string, bool, error) {
 
 // 对字符串进行分析，判断其类型，以及是否包含参数
 func parse(pattern string) (*syntax, error) {
-	s := &syntax{}
 	names := []string{} // 缓存各个参数的名称，用于判断是否有重名
 
 	strs := split(pattern)
-	if len(strs) == 1 && (strs[0][0] != regexpStart || strs[0][len(strs[0])-1] != regexpEnd) {
+	s := &syntax{
+		patterns: make([]string, 0, len(strs)),
+	}
+	if len(strs) == 1 && (strs[0][0] != syntaxStart || strs[0][len(strs[0])-1] != syntaxEnd) {
+		s.add(strs[0])
 		s.nType = TypeBasic
 		return s, nil
 	}
 
-	pattern = pattern[:0]
+	// 判断类型
 	for _, v := range strs {
+		s.add(v)
+
 		lastIndex := len(v) - 1
-		if v[0] != regexpStart || v[lastIndex] != regexpEnd { // 普通字符串
-			s.add(v)
+		if v[0] != syntaxStart || v[lastIndex] != syntaxEnd { // 普通字符串
 			continue
 		}
 
-		v = v[1:lastIndex] // 去掉首尾的{}符号
+		// 只存在命名，而不存在正则表达式
+		if index := strings.IndexByte(v, ':'); index < 0 {
+			if s.nType != TypeRegexp {
+				s.nType = TypeNamed
+			}
+		} else {
+			s.nType = TypeRegexp
+		}
+	}
 
-		index := strings.IndexByte(v, ':')
+	// 命名参数
+	if s.nType == TypeNamed {
+		for _, str := range s.patterns {
+			lastIndex := len(str) - 1
+			if str[0] == syntaxStart && str[lastIndex] == syntaxEnd {
+				names = append(names, str[1:lastIndex])
+				s.hasParams = true
+			}
+		}
+
+		goto DUP
+	}
+
+	// nType == TypeRegexp
+	for i, str := range s.patterns {
+		lastIndex := len(str) - 1
+		if str[0] != syntaxStart || str[lastIndex] != syntaxEnd {
+			continue
+		}
+
+		str = str[1:lastIndex] // 去掉首尾的{}符号
+
+		index := strings.IndexByte(str, ':')
 		if index < 0 { // 只存在命名，而不存在正则表达式，默认匹配[^/]
-			pattern += "(?P<" + v + ">[^/]+)"
-			s.add("(?P<", v, ">[^/]+)")
+			s.patterns[i] = "(?P<" + str + ">[^/]+)"
 			s.hasParams = true
-			names = append(names, v)
+			names = append(names, str)
 			continue
 		}
 
 		if index == 0 { // 不存在命名，但有正则表达式
-			s.add(v[1:])
+			s.add(str[1:])
 			continue
 		}
 
-		s.add("(?P<", v[:index], ">", v[index+1:], ")")
+		s.patterns[i] = "(?P<" + str[:index] + ">" + str[index+1:] + ")"
 		s.hasParams = true
-		names = append(names, v[:index])
+		names = append(names, str[:index])
 	}
 
+DUP:
 	if index := duplicateName(names); index >= 0 {
 		return nil, fmt.Errorf("相同的路由参数名：%v", names[index])
 	}
@@ -156,12 +190,12 @@ func split(str string) []string {
 			return ret
 		}
 
-		start = strings.IndexByte(str, regexpStart)
+		start = strings.IndexByte(str, syntaxStart)
 		if start < 0 { // 不存在 start
 			return append(ret, str)
 		}
 
-		end = strings.IndexByte(str[start:], regexpEnd)
+		end = strings.IndexByte(str[start:], syntaxEnd)
 		if end < 0 { // 不存在 end
 			return append(ret, str)
 		}
