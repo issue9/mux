@@ -4,7 +4,10 @@
 
 package entry
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 type name struct {
 	name     string // 名称，或是值
@@ -96,4 +99,22 @@ func (n *named) Params(path string) map[string]string {
 		}
 	}
 	return params
+}
+
+// URL
+func (n *named) URL(params map[string]string) (string, error) {
+	ret := ""
+	for _, name := range n.names {
+		if name.isString {
+			ret += name.name
+		}
+
+		if param, exists := params[name.name]; exists {
+			params[name.name] = param
+		} else {
+			return "", fmt.Errorf("参数 %v 未指定", name.name)
+		}
+	}
+
+	return ret, nil
 }

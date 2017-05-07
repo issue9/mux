@@ -4,11 +4,7 @@
 
 package entry
 
-import (
-	"net/http"
-	"regexp"
-	"strings"
-)
+import "net/http"
 
 // 表示 Entry 接口的类型
 const (
@@ -49,6 +45,9 @@ type Entry interface {
 	// 可以通过指定 http.MethodOptions 的方式，来强制删除 OPTIONS 请求方法的处理。
 	Remove(method ...string) (empty bool)
 
+	// 根据参数生成一条路径
+	URL(params map[string]string) (string, error)
+
 	// 手动设置 OPTIONS 的 Allow 报头。不调用此函数，
 	// 会自动根据当前的 Add 和 Remove 调整 Allow 报头，
 	// 调用 SetAllow() 之后，这些自动设置不再启作用。
@@ -66,16 +65,7 @@ func New(pattern string, h http.Handler) (Entry, error) {
 	}
 
 	if s.nType == TypeRegexp {
-		expr, err := regexp.Compile(strings.Join(s.patterns, ""))
-		if err != nil {
-			return nil, err
-		}
-
-		return &regexpr{
-			items:     newItems(pattern),
-			hasParams: s.hasParams,
-			expr:      expr,
-		}, nil
+		return newRegexp(pattern, s)
 	} else if s.nType == TypeNamed {
 		return newNamed(pattern, s), nil
 	}

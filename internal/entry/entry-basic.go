@@ -23,3 +23,7 @@ func (b *basic) Match(url string) int {
 	}
 	return -1
 }
+
+func (b *basic) URL(params map[string]string) (string, error) {
+	return b.pattern, nil
+}

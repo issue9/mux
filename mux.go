@@ -99,6 +99,7 @@ func (mux *Mux) Options(pattern string, allow string) *Mux {
 	if ety := mux.entries.Entry(pattern); ety != nil {
 		ety.SetAllow(allow)
 	} else {
+		// TODO 自行添加该 Entry ?
 		panic("不存在该路径下的路由")
 	}
 

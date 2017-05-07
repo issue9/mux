@@ -5,10 +5,7 @@
 package mux
 
 import (
-	"fmt"
 	"net/http"
-	stdsyntax "regexp/syntax"
-	"strings"
 
 	"github.com/issue9/mux/internal/entry"
 	"github.com/issue9/mux/internal/method"
@@ -22,7 +19,9 @@ import (
 type Resource struct {
 	mux     *Mux
 	pattern string
-	expr    *stdsyntax.Regexp
+
+	// 仅用于缓存 URL 功能，不实际参与路路
+	ety entry.Entry
 }
 
 // Options 手动指定 OPTIONS 请求方法的值。
@@ -133,24 +132,7 @@ func (r *Resource) Clean() *Resource {
 // URL 根据参数构建一条 URL，
 // 若不是正则或是只有未命名参数的正则表达式，则直接返回原来的内容。
 func (r *Resource) URL(params map[string]string) (string, error) {
-	if r.expr == nil {
-		return r.pattern, nil
-	}
-
-	url := r.expr.String()
-	for _, sub := range r.expr.Sub {
-		if len(sub.Name) == 0 {
-			continue
-		}
-
-		param, exists := params[sub.Name]
-		if !exists {
-			return "", fmt.Errorf("未找到参数 %v 的值", sub.Name)
-		}
-		url = strings.Replace(url, sub.String(), param, -1)
-	}
-
-	return url, nil
+	return r.ety.URL(params)
 }
 
 // Resource 创建一个资源路由项，之后可以为该资源指定各种请求方法。
@@ -175,32 +157,14 @@ func (r *Resource) Mux() *Mux {
 }
 
 func newResource(mux *Mux, pattern string) (*Resource, error) {
-	p, hasParams, err := entry.Parse(pattern)
-	if err != nil {
-		if err != entry.ErrIsNotRegexp {
-			return nil, err
-		}
-
-		return &Resource{
-			mux:     mux,
-			pattern: pattern,
-		}, nil
-	}
-
-	if !hasParams {
-		return &Resource{
-			mux:     mux,
-			pattern: pattern,
-		}, nil
-	}
-
-	expr, err := stdsyntax.Parse(p, stdsyntax.Perl)
+	ety, err := entry.New(pattern, nil)
 	if err != nil {
 		return nil, err
 	}
+
 	return &Resource{
 		mux:     mux,
 		pattern: pattern,
-		expr:    expr,
+		ety:     ety,
 	}, nil
 }

@@ -4,12 +4,38 @@
 
 package entry
 
-import "regexp"
+import (
+	"fmt"
+	"regexp"
+	stdsyntax "regexp/syntax"
+	"strings"
+)
 
 type regexpr struct {
 	*items
-	expr      *regexp.Regexp
-	hasParams bool
+	expr       *regexp.Regexp
+	hasParams  bool
+	syntaxExpr *stdsyntax.Regexp
+}
+
+func newRegexp(pattern string, s *syntax) (Entry, error) {
+	str := strings.Join(s.patterns, "")
+	expr, err := regexp.Compile(str)
+	if err != nil {
+		return nil, err
+	}
+
+	syntaxExpr, err := stdsyntax.Parse(str, stdsyntax.Perl)
+	if err != nil {
+		return nil, err
+	}
+
+	return &regexpr{
+		items:      newItems(pattern),
+		hasParams:  s.hasParams,
+		expr:       expr,
+		syntaxExpr: syntaxExpr,
+	}, nil
 }
 
 // Entry.Type
@@ -45,4 +71,26 @@ func (r *regexpr) Params(url string) map[string]string {
 		}
 	}
 	return mapped
+}
+
+// fun
+func (r *regexpr) URL(params map[string]string) (string, error) {
+	if r.syntaxExpr == nil {
+		return r.pattern, nil
+	}
+
+	url := r.syntaxExpr.String()
+	for _, sub := range r.syntaxExpr.Sub {
+		if len(sub.Name) == 0 {
+			continue
+		}
+
+		param, exists := params[sub.Name]
+		if !exists {
+			return "", fmt.Errorf("未找到参数 %v 的值", sub.Name)
+		}
+		url = strings.Replace(url, sub.String(), param, -1)
+	}
+
+	return url, nil
 }

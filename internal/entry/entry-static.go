@@ -30,3 +30,7 @@ func (s *static) Match(url string) int {
 	}
 	return -1
 }
+
+func (s *static) URL(params map[string]string) (string, error) {
+	return s.pattern, nil
+}

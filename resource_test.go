@@ -36,7 +36,7 @@ func TestResource_URL(t *testing.T) {
 	res, err = srvmux.Resource("/api/{:\\d+}")
 	a.NotError(err).NotNil(res)
 	url, err = res.URL(map[string]string{"id": "1"})
-	a.NotError(err).Equal(url, "/api/{:\\d+}")
+	a.NotError(err).Equal(url, "/api/[0-9]+")
 
 	// 正常的单个参数
 	res, err = srvmux.Resource("/api/{id:\\d+}")
