@@ -27,10 +27,10 @@ type Entries struct {
 }
 
 // NewEntries 声明一个 Entries 实例
-func NewEntries(disableOptions bool) *Entries {
+func NewEntries(disableOptions bool, cap int) *Entries {
 	return &Entries{
 		disableOptions: disableOptions,
-		entries:        make([]Entry, 0, 1000),
+		entries:        make([]Entry, 0, cap),
 	}
 }
 
