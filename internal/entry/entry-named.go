@@ -9,15 +9,19 @@ import (
 	"strings"
 )
 
-type name struct {
-	name     string // 名称，或是值
-	endByte  byte   // 结束后的第一个字符
-	isString bool
+// 表示命名参数中的某个节点
+type node struct {
+	value    string // 当前节点的值。
+	endByte  byte   // 下一个节点的起始字符
+	isString bool   // 当前节点是否为一个字符串
 }
 
+// 命名参数是正则表达式的简化版本，
+// 在一个参数中未指定正则表达式，默认使用此类型，
+// 性能会比用正则好一些。
 type named struct {
 	*base
-	names []*name
+	nodes []*node
 }
 
 // 声明一个新的 named 实例。
@@ -33,21 +37,21 @@ func newNamed(pattern string, s *syntax) *named {
 		}
 	}
 
-	names := make([]*name, 0, len(s.patterns))
+	names := make([]*node, 0, len(s.patterns))
 	for index, str := range s.patterns {
 		if str[0] == syntaxStart {
 			endByte := byte('/')
 			if index < len(s.patterns)-1 {
 				endByte = s.patterns[index+1][0]
 			}
-			names = append(names, &name{
-				name:     str[1 : len(str)-1],
+			names = append(names, &node{
+				value:    str[1 : len(str)-1],
 				isString: false,
 				endByte:  endByte,
 			})
 		} else {
-			names = append(names, &name{
-				name:     str,
+			names = append(names, &node{
+				value:    str,
 				isString: true,
 			})
 		}
@@ -55,7 +59,7 @@ func newNamed(pattern string, s *syntax) *named {
 
 	return &named{
 		base:  newBase(pattern),
-		names: names,
+		nodes: names,
 	}
 }
 
@@ -67,16 +71,16 @@ func (n *named) priority() int {
 	return typeNamed
 }
 
-// Entry.Match
+// Entry.match
 func (n *named) match(path string) bool {
-	for i, name := range n.names {
-		islast := (i == len(n.names)-1)
+	for i, name := range n.nodes {
+		islast := (i == len(n.nodes)-1)
 
 		if name.isString {
-			if !strings.HasPrefix(path, name.name) {
+			if !strings.HasPrefix(path, name.value) {
 				return false
 			}
-			path = path[len(name.name):]
+			path = path[len(name.value):]
 		} else {
 			index := strings.IndexByte(path, name.endByte)
 			if !islast {
@@ -102,30 +106,30 @@ func (n *named) match(path string) bool {
 
 // Entry.Params
 func (n *named) Params(path string) map[string]string {
-	params := make(map[string]string, len(n.names))
+	params := make(map[string]string, len(n.nodes))
 
-	for i, name := range n.names {
-		islast := (i == len(n.names)-1)
+	for i, name := range n.nodes {
+		islast := (i == len(n.nodes)-1)
 
 		if name.isString {
-			if !strings.HasPrefix(path, name.name) {
+			if !strings.HasPrefix(path, name.value) {
 				return nil
 			}
-			path = path[len(name.name):]
+			path = path[len(name.value):]
 		} else {
 			index := strings.IndexByte(path, name.endByte)
 
 			if !islast {
-				params[name.name] = path[:index]
+				params[name.value] = path[:index]
 				path = path[index:]
 			} else {
 				if index < 0 { // 没有 / 符号了
-					params[name.name] = path
+					params[name.value] = path
 					break
 				}
 
 				if n.wildcard {
-					params[name.name] = path[:index]
+					params[name.value] = path[:index]
 					break
 				}
 			}
@@ -137,16 +141,16 @@ func (n *named) Params(path string) map[string]string {
 // URL
 func (n *named) URL(params map[string]string, path string) (string, error) {
 	ret := ""
-	for _, name := range n.names {
+	for _, name := range n.nodes {
 		if name.isString {
-			ret += name.name
+			ret += name.value
 			continue
 		}
 
-		if param, exists := params[name.name]; exists {
+		if param, exists := params[name.value]; exists {
 			ret += param
 		} else {
-			return "", fmt.Errorf("参数 %v 未指定", name.name)
+			return "", fmt.Errorf("参数 %v 未指定", name.value)
 		}
 	}
 
