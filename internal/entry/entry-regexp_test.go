@@ -38,12 +38,6 @@ func TestNewRegexp(t *testing.T) {
 	a.Equal(r.expr.String(), "/posts/(?P<id>[^/]+)/page/(?P<page>\\d+)/size/(\\d+)")
 }
 
-func TestRegexp_Type(t *testing.T) {
-	a := assert.New(t)
-	n := &regexp{}
-	a.Equal(n.Type(), TypeRegexp)
-}
-
 func TestRegexp_match(t *testing.T) {
 	a := assert.New(t)
 

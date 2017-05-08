@@ -52,12 +52,6 @@ func TestNewNammed(t *testing.T) {
 		Equal(n3.endByte, '/')
 }
 
-func TestNamed_Type(t *testing.T) {
-	a := assert.New(t)
-	n := &named{}
-	a.Equal(n.Type(), TypeNamed)
-}
-
 func TestNamed_match(t *testing.T) {
 	a := assert.New(t)
 

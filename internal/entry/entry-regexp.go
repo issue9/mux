@@ -45,11 +45,6 @@ func newRegexp(pattern string, s *syntax) (*regexp, error) {
 	}, nil
 }
 
-// Entry.Type
-func (r *regexp) Type() int {
-	return TypeRegexp
-}
-
 func (r *regexp) priority() int {
 	if r.wildcard {
 		return TypeRegexp + 100

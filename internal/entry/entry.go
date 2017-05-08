@@ -24,9 +24,6 @@ type Entry interface {
 	// 获取路由中的参数，非正则匹配或是无参数返回 nil。
 	Params(url string) map[string]string
 
-	// 接口的实现类型
-	Type() int
-
 	// 优先级
 	priority() int
 
