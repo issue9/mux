@@ -21,11 +21,11 @@ type Entry interface {
 	// 与当前是否匹配
 	match(path string) bool
 
-	// 获取路由中的参数，非正则匹配或是无参数返回 nil。
-	Params(url string) map[string]string
-
 	// 优先级
 	priority() int
+
+	// 获取路由中的参数，非正则匹配或是无参数返回 nil。
+	Params(url string) map[string]string
 
 	// 获取指定请求方法对应的 http.Handler 实例，若不存在，则返回 nil。
 	Handler(method string) http.Handler
