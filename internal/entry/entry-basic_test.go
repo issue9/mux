@@ -31,3 +31,15 @@ func TestBasic_match(t *testing.T) {
 	a.True(b.match("/basic/index.html"))
 	a.True(b.match("/basic/abc/def"))
 }
+
+func TestBasic_URL(t *testing.T) {
+	a := assert.New(t)
+	b := newBasic("/basic")
+
+	url, err := b.URL(map[string]string{"id": "1"}, "/abc")
+	a.Error(err).Equal(url, "")
+
+	b = newBasic("/basic/*")
+	url, err = b.URL(map[string]string{"id": "1"}, "abc")
+	a.NotError(err).Equal(url, "/basic/abc")
+}

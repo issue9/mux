@@ -93,7 +93,7 @@ func (r *regexp) Params(url string) map[string]string {
 }
 
 // fun
-func (r *regexp) URL(params map[string]string) (string, error) {
+func (r *regexp) URL(params map[string]string, path string) (string, error) {
 	if r.syntaxExpr == nil {
 		return r.patternString, nil
 	}
@@ -109,6 +109,10 @@ func (r *regexp) URL(params map[string]string) (string, error) {
 			return "", fmt.Errorf("未找到参数 %v 的值", sub.Name)
 		}
 		url = strings.Replace(url, sub.String(), param, -1)
+	}
+
+	if r.wildcard {
+		url += path
 	}
 
 	return url, nil

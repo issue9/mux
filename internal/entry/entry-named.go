@@ -135,7 +135,7 @@ func (n *named) Params(path string) map[string]string {
 }
 
 // URL
-func (n *named) URL(params map[string]string) (string, error) {
+func (n *named) URL(params map[string]string, path string) (string, error) {
 	ret := ""
 	for _, name := range n.names {
 		if name.isString {
@@ -148,6 +148,10 @@ func (n *named) URL(params map[string]string) (string, error) {
 		} else {
 			return "", fmt.Errorf("参数 %v 未指定", name.name)
 		}
+	}
+
+	if n.wildcard {
+		ret += "/" + path
 	}
 
 	return ret, nil
