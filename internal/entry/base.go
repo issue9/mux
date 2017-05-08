@@ -16,7 +16,7 @@ import (
 
 // 所有 Entry 实现的公用部分。
 type base struct {
-	pattern string
+	patternString string
 
 	// 是否包含通配符
 	wildcard bool
@@ -38,9 +38,9 @@ type base struct {
 
 func newBase(pattern string) *base {
 	ret := &base{
-		pattern:  pattern,
-		handlers: make(map[string]http.Handler, len(method.Supported)),
-		wildcard: strings.HasSuffix(pattern, "/*"),
+		patternString: pattern,
+		handlers:      make(map[string]http.Handler, len(method.Supported)),
+		wildcard:      strings.HasSuffix(pattern, "/*"),
 	}
 
 	// 添加默认的 OPTIONS 请求内容
@@ -50,8 +50,8 @@ func newBase(pattern string) *base {
 	return ret
 }
 
-func (i *base) Pattern() string {
-	return i.pattern
+func (i *base) pattern() string {
+	return i.patternString
 }
 
 // Entry.Add()

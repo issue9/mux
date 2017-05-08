@@ -12,12 +12,6 @@ import (
 
 var _ Entry = &basic{}
 
-func TestBasic_Type(t *testing.T) {
-	a := assert.New(t)
-	b := &basic{}
-	a.Equal(b.Type(), TypeBasic)
-}
-
 func TestBasic_match(t *testing.T) {
 	a := assert.New(t)
 	b := newBasic("/basic")

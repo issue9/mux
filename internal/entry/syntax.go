@@ -35,13 +35,13 @@ func parse(pattern string) (*syntax, error) {
 		patterns: make([]string, 0, len(strs)),
 	}
 	if len(strs) == 0 {
-		s.nType = TypeBasic
+		s.nType = typeBasic
 		return s, nil
 	}
 
 	if len(strs) == 1 && !isSyntax(strs[0]) {
 		s.patterns = append(s.patterns, strs[0])
-		s.nType = TypeBasic
+		s.nType = typeBasic
 		return s, nil
 	}
 
@@ -55,16 +55,16 @@ func parse(pattern string) (*syntax, error) {
 
 		// 只存在命名，而不存在正则表达式
 		if index := strings.IndexByte(v, ':'); index < 0 {
-			if s.nType != TypeRegexp {
-				s.nType = TypeNamed
+			if s.nType != typeRegexp {
+				s.nType = typeNamed
 			}
 		} else {
-			s.nType = TypeRegexp
+			s.nType = typeRegexp
 		}
 	}
 
 	// 命名参数
-	if s.nType == TypeNamed {
+	if s.nType == typeNamed {
 		for _, str := range s.patterns {
 			lastIndex := len(str) - 1
 			if str[0] == syntaxStart && str[lastIndex] == syntaxEnd {
@@ -76,7 +76,7 @@ func parse(pattern string) (*syntax, error) {
 		goto DUP
 	}
 
-	// nType == TypeRegexp
+	// nType == typeRegexp
 	for i, str := range s.patterns {
 		lastIndex := len(str) - 1
 		if !isSyntax(str) {

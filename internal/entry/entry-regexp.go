@@ -45,17 +45,12 @@ func newRegexp(pattern string, s *syntax) (*regexp, error) {
 	}, nil
 }
 
-// Entry.Type
-func (r *regexp) Type() int {
-	return TypeRegexp
-}
-
 func (r *regexp) priority() int {
 	if r.wildcard {
-		return TypeRegexp + 100
+		return typeRegexp + 100
 	}
 
-	return TypeRegexp
+	return typeRegexp
 }
 
 // Entry.Match
@@ -100,7 +95,7 @@ func (r *regexp) Params(url string) map[string]string {
 // fun
 func (r *regexp) URL(params map[string]string) (string, error) {
 	if r.syntaxExpr == nil {
-		return r.pattern, nil
+		return r.patternString, nil
 	}
 
 	url := r.syntaxExpr.String()

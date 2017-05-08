@@ -59,17 +59,12 @@ func newNamed(pattern string, s *syntax) *named {
 	}
 }
 
-// Entry.Type
-func (n *named) Type() int {
-	return TypeNamed
-}
-
 func (n *named) priority() int {
 	if n.wildcard {
-		return TypeNamed + 100
+		return typeNamed + 100
 	}
 
-	return TypeNamed
+	return typeNamed
 }
 
 // Entry.Match
