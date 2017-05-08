@@ -55,12 +55,8 @@ func TestNewNammed(t *testing.T) {
 func TestNamed_match(t *testing.T) {
 	a := assert.New(t)
 
-	n := newNamed("/posts/{id}", &syntax{
-		hasParams: true,
-		nType:     TypeNamed,
-		patterns:  []string{"/posts/", "{id}"},
-	})
-	a.NotNil(n)
+	n, err := New("/posts/{id}", nil)
+	a.NotError(err).NotNil(n)
 
 	a.True(n.match("/posts/1"))
 	a.True(n.match("/posts/2"))
@@ -70,11 +66,8 @@ func TestNamed_match(t *testing.T) {
 	a.False(n.match("/posts/id.html/page"))
 	a.False(n.match("/post/id"))
 
-	n = newNamed("/posts/{id}/page/{page}", &syntax{
-		hasParams: true,
-		nType:     TypeNamed,
-		patterns:  []string{"/posts/", "{id}", "/page/", "{page}"},
-	})
+	n, err = New("/posts/{id}/page/{page}", nil)
+	a.NotError(err).NotNil(n)
 	a.True(n.match("/posts/1/page/1"))
 	a.True(n.match("/posts/1.html/page/1"))
 	a.False(n.match("/posts/id-1/page/1/"))
@@ -84,23 +77,15 @@ func TestNamed_match(t *testing.T) {
 func TestNamed_match_wildcard(t *testing.T) {
 	a := assert.New(t)
 
-	n := newNamed("/posts/{id}/*", &syntax{
-		hasParams: true,
-		nType:     TypeNamed,
-		patterns:  []string{"/posts/", "{id}", "/*"},
-	})
-	a.NotNil(n)
-
+	n, err := New("/posts/{id}/*", nil)
+	a.NotError(err).NotNil(n)
 	a.False(n.match("/posts/1"))
 	a.True(n.match("/posts/2/"))
 	a.True(n.match("/posts/id/index.html"))
 	a.True(n.match("/posts/id.html/index.html"))
 
-	n = newNamed("/posts/{id}/page/{page}/*", &syntax{
-		hasParams: true,
-		nType:     TypeNamed,
-		patterns:  []string{"/posts/", "{id}", "/page/", "{page}", "/*"},
-	})
+	n, err = New("/posts/{id}/page/{page}/*", nil)
+	a.NotError(err).NotNil(n)
 	a.False(n.match("/posts/1/page/1"))
 	a.True(n.match("/posts/1.html/page/1/"))
 	a.True(n.match("/posts/id-1/page/1/index.html"))
@@ -108,21 +93,14 @@ func TestNamed_match_wildcard(t *testing.T) {
 
 func TestNamed_Params(t *testing.T) {
 	a := assert.New(t)
-	n := newNamed("/posts/{id}", &syntax{
-		hasParams: true,
-		nType:     TypeNamed,
-		patterns:  []string{"/posts/", "{id}"},
-	})
-	a.NotNil(n)
+	n, err := New("/posts/{id}", nil)
+	a.NotError(err).NotNil(n)
 	a.Equal(n.Params("/posts/1"), map[string]string{"id": "1"})
 	a.Equal(n.Params("/posts/1.html"), map[string]string{"id": "1.html"})
 	a.Equal(len(n.Params("/posts/1.html/")), 0)
 
-	n = newNamed("/posts/{id}/page/{page}", &syntax{
-		hasParams: true,
-		nType:     TypeNamed,
-		patterns:  []string{"/posts/", "{id}", "/page/", "{page}"},
-	})
+	n, err = New("/posts/{id}/page/{page}", nil)
+	a.NotError(err).NotNil(n)
 	a.Equal(n.Params("/posts/1/page/1"), map[string]string{"id": "1", "page": "1"})
 	a.Equal(n.Params("/posts/1.html/page/1"), map[string]string{"id": "1.html", "page": "1"})
 	a.Nil(n.Params("/posts/1.html/"))
@@ -130,22 +108,15 @@ func TestNamed_Params(t *testing.T) {
 
 func TestNamed_URL(t *testing.T) {
 	a := assert.New(t)
-	n := newNamed("/posts/{id}", &syntax{
-		hasParams: true,
-		nType:     TypeNamed,
-		patterns:  []string{"/posts/", "{id}"},
-	})
-	a.NotNil(n)
+	n, err := New("/posts/{id}", nil)
+	a.NotError(err).NotNil(n)
 	url, err := n.URL(map[string]string{"id": "5.html"})
 	a.NotError(err).Equal(url, "/posts/5.html")
 	url, err = n.URL(map[string]string{"id": "5.html/"})
 	a.NotError(err).Equal(url, "/posts/5.html/")
 
-	n = newNamed("/posts/{id}/page/{page}", &syntax{
-		hasParams: true,
-		nType:     TypeNamed,
-		patterns:  []string{"/posts/", "{id}", "/page/", "{page}"},
-	})
+	n, err = New("/posts/{id}/page/{page}", nil)
+	a.NotError(err).NotNil(n)
 	url, err = n.URL(map[string]string{"id": "5.html", "page": "1"})
 	a.NotError(err).Equal(url, "/posts/5.html/page/1")
 
