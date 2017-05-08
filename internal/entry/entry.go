@@ -18,11 +18,8 @@ type Entry interface {
 	// 返回路由的匹配字符串
 	Pattern() string
 
-	// url 与当前的匹配程度：
-	//  -1 表示完全不匹配；
-	//  0  表示完全匹配；
-	//  >0 表示部分匹配，值越小表示匹配程度越高。
-	Match(url string) int
+	// 与当前是否匹配
+	Match(path string) bool
 
 	// 获取路由中的参数，非正则匹配或是无参数返回 nil。
 	Params(url string) map[string]string

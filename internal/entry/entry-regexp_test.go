@@ -12,6 +12,8 @@ import (
 	"github.com/issue9/assert"
 )
 
+var _ Entry = &regexp{}
+
 func TestNewRegexp(t *testing.T) {
 	a := assert.New(t)
 
@@ -52,34 +54,34 @@ func TestRegexp_Match(t *testing.T) {
 	})
 	a.NotError(err).NotNil(n)
 
-	a.Equal(n.Match("/posts/1"), 0)
-	a.Equal(n.Match("/posts/2"), 0)
-	a.Equal(n.Match("/posts/id"), -1)
-	a.Equal(n.Match("/posts/id.html"), -1)
-	a.Equal(n.Match("/posts/id.html/"), -1)
-	a.Equal(n.Match("/posts/id.html/page"), -1)
-	a.Equal(n.Match("/post/id"), -1)
+	a.True(n.Match("/posts/1"))
+	a.True(n.Match("/posts/2"))
+	a.False(n.Match("/posts/id"))
+	a.False(n.Match("/posts/id.html"))
+	a.False(n.Match("/posts/id.html/"))
+	a.False(n.Match("/posts/id.html/page"))
+	a.False(n.Match("/post/id"))
 
 	n, err = newRegexp("/posts/{id}/page/{page:\\d+}", &syntax{
 		hasParams: true,
 		nType:     TypeRegexp,
 		patterns:  []string{"/posts/", "(?P<id>[^/]+)", "/page/", "(?P<page>\\d+)"},
 	})
-	a.Equal(n.Match("/posts/1/page/1"), 0)
-	a.Equal(n.Match("/posts/1.html/page/1"), 0)
+	a.Treu(n.Match("/posts/1/page/1"))
+	a.Treu(n.Match("/posts/1.html/page/1"))
 
-	a.Equal(n.Match("/posts/1.html/page/x"), -1)
-	a.Equal(n.Match("/posts/id-1/page/1/"), -1)
-	a.Equal(n.Match("/posts/id-1/page/1/size/1"), -1)
+	a.False(n.Match("/posts/1.html/page/x"))
+	a.False(n.Match("/posts/id-1/page/1/"))
+	a.False(n.Match("/posts/id-1/page/1/size/1"))
 
 	n, err = newRegexp("/posts/{id}/page/{page:\\d+}/size/{:\\d+}", &syntax{
 		hasParams: true,
 		nType:     TypeRegexp,
 		patterns:  []string{"/posts/", "(?P<id>[^/]+)", "/page/", "(?P<page>\\d+)", "/size/", "(\\d+)"},
 	})
-	a.Equal(n.Match("/posts/1.html/page/1/size/1"), 0)
-	a.Equal(n.Match("/posts/1.html/page/1/size/11"), 0)
-	a.Equal(n.Match("/posts/1.html/page/x/size/11"), -1)
+	a.True(n.Match("/posts/1.html/page/1/size/1"))
+	a.True(n.Match("/posts/1.html/page/1/size/11"))
+	a.False(n.Match("/posts/1.html/page/x/size/11"))
 }
 
 func TestRegexp_Match_wildcard(t *testing.T) {
@@ -92,28 +94,28 @@ func TestRegexp_Match_wildcard(t *testing.T) {
 	})
 	a.NotError(err).NotNil(n)
 
-	a.Equal(n.Match("/posts/1"), -1)
-	a.Equal(n.Match("/posts/1/"), 0)
-	a.Equal(n.Match("/posts/1/index.html"), 0)
-	a.Equal(n.Match("/posts/id.html/page"), -1)
+	a.False(n.Match("/posts/1"))
+	a.True(n.Match("/posts/1/"))
+	a.True(n.Match("/posts/1/index.html"))
+	a.False(n.Match("/posts/id.html/page"))
 
 	n, err = newRegexp("/posts/{id}/page/{page:\\d+}/*", &syntax{
 		hasParams: true,
 		nType:     TypeRegexp,
 		patterns:  []string{"/posts/", "(?P<id>[^/]+)", "/page/", "(?P<page>\\d+)", "/*"},
 	})
-	a.Equal(n.Match("/posts/1/page/1"), -1)
-	a.Equal(n.Match("/posts/1.html/page/1/"), 0)
-	a.Equal(n.Match("/posts/1.html/page/1/index.html"), 0)
-	a.Equal(n.Match("/posts/1.html/page/x/index.html"), -1)
+	a.False(n.Match("/posts/1/page/1"))
+	a.True(n.Match("/posts/1.html/page/1/"))
+	a.True(n.Match("/posts/1.html/page/1/index.html"))
+	a.False(n.Match("/posts/1.html/page/x/index.html"))
 
 	n, err = newRegexp("/posts/{id}/page/{page:\\d+}/size/{:\\d+}/*", &syntax{
 		hasParams: true,
 		nType:     TypeRegexp,
 		patterns:  []string{"/posts/", "(?P<id>[^/]+)", "/page/", "(?P<page>\\d+)", "/size/", "(\\d+)", "/*"},
 	})
-	a.Equal(n.Match("/posts/1.html/page/1/size/1"), -1)
-	a.Equal(n.Match("/posts/1.html/page/1/size/1/index.html"), 0)
+	a.False(n.Match("/posts/1.html/page/1/size/1"))
+	a.True(n.Match("/posts/1.html/page/1/size/1/index.html"))
 }
 
 func TestRegexp_Params(t *testing.T) {

@@ -65,13 +65,13 @@ func (n *named) Type() int {
 }
 
 // Entry.Match
-func (n *named) Match(path string) int {
+func (n *named) Match(path string) bool {
 	for i, name := range n.names {
 		islast := (i == len(n.names)-1)
 
 		if name.isString {
 			if !strings.HasPrefix(path, name.name) {
-				return -1
+				return false
 			}
 			path = path[len(name.name):]
 		} else {
@@ -81,20 +81,20 @@ func (n *named) Match(path string) int {
 			} else {
 				if index < 0 { // 没有 / 符号了
 					if n.wildcard { // 通配符，但是没有后续内容
-						return -1
+						return false
 					}
-					return 0
+					return true
 				}
 
 				if n.wildcard { // 通配符，但是没有后续内容
-					return 0
+					return true
 				}
 
-				return -1
+				return false
 			}
 		} // end if
 	} // end false
-	return 0
+	return true
 }
 
 // Entry.Params

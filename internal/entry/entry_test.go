@@ -11,10 +11,6 @@ import (
 	"github.com/issue9/assert"
 )
 
-var _ Entry = &basic{}
-var _ Entry = &named{}
-var _ Entry = &regexp{}
-
 func TestEntry_Match(t *testing.T) {
 	a := assert.New(t)
 	hf := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -132,31 +132,16 @@ func (es *Entries) Entry(pattern string) Entry {
 //
 // e 为当前匹配的 Entry 实例。
 func (es *Entries) Match(path string) (e Entry) {
-	size := -1 // 匹配度，0 表示完全匹配，-1 表示完全不匹配，其它值越小匹配度越高
-
 	es.mu.RLock()
 	defer es.mu.RUnlock()
 
 	for _, ety := range es.entries {
-		s := ety.Match(path)
-
-		if s == 0 { // 完全匹配，可以中止匹配过程
+		if ety.Match(path) {
 			return ety
 		}
-
-		if s == -1 || (size > 0 && s >= size) { // 完全不匹配，或是匹配度没有当前的高
-			continue
-		}
-
-		// 匹配度比当前的高，则保存下来
-		size = s
-		e = ety
 	} // end for
 
-	if size < 0 {
-		return nil
-	}
-	return e
+	return nil
 }
 
 func removeEntries(es []Entry, pattern string) []Entry {

@@ -51,24 +51,24 @@ func (r *regexp) Type() int {
 }
 
 // Entry.Match
-func (r *regexp) Match(url string) int {
+func (r *regexp) Match(url string) bool {
 	loc := r.expr.FindStringIndex(url)
 
 	if r.wildcard {
 		if loc != nil &&
 			loc[0] == 0 &&
 			loc[1] < len(url) {
-			return 0
+			return true
 		}
 	}
 
 	if loc != nil &&
 		loc[0] == 0 &&
 		loc[1] == len(url) {
-		return 0
+		return true
 	}
 
-	return -1
+	return false
 }
 
 // Entry.Params

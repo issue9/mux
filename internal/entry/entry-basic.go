@@ -33,18 +33,12 @@ func (b *basic) Params(url string) map[string]string {
 	return nil
 }
 
-func (b *basic) Match(url string) int {
+func (b *basic) Match(url string) bool {
 	if b.wildcard {
-		if strings.HasPrefix(url, b.prefix) {
-			return 0
-		}
-		return -1
+		return strings.HasPrefix(url, b.prefix)
 	}
 
-	if url == b.pattern {
-		return 0
-	}
-	return -1
+	return url == b.pattern
 }
 
 func (b *basic) URL(params map[string]string) (string, error) {
