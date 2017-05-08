@@ -14,8 +14,8 @@ var _ Entry = &basic{}
 
 func TestBasic_match(t *testing.T) {
 	a := assert.New(t)
-	b := newBasic("/basic")
-	a.True(b.match("/basic"))
+	b := newBasic("/basic/str")
+	a.True(b.match("/basic/str"))
 	a.False(b.match("/basic/"))
 
 	// 无效的通配符
@@ -25,11 +25,12 @@ func TestBasic_match(t *testing.T) {
 	a.True(b.match("/basic*"))
 
 	// 通配符
-	b = newBasic("/basic/*")
+	b = newBasic("/basic/str/*")
+	a.False(b.match("/basic/str"))
 	a.False(b.match("/basic"))
-	a.True(b.match("/basic/"))
-	a.True(b.match("/basic/index.html"))
-	a.True(b.match("/basic/abc/def"))
+	a.True(b.match("/basic/str/"))
+	a.True(b.match("/basic/str/index.html"))
+	a.True(b.match("/basic/str/abc/def"))
 }
 
 func TestBasic_URL(t *testing.T) {

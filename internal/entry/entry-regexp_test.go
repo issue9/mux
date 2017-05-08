@@ -45,6 +45,8 @@ func TestRegexp_match(t *testing.T) {
 	a.NotError(err).NotNil(n)
 
 	a.True(n.match("/posts/1"))
+	a.False(n.match("/posts/"))
+	a.False(n.match("/posts"))
 	a.True(n.match("/posts/2"))
 	a.False(n.match("/posts/id"))
 	a.False(n.match("/posts/id.html"))
@@ -73,6 +75,7 @@ func TestRegexp_match_wildcard(t *testing.T) {
 	a.NotError(err).NotNil(n)
 
 	a.False(n.match("/posts/1"))
+	a.False(n.match("/posts"))
 	a.True(n.match("/posts/1/"))
 	a.True(n.match("/posts/1/index.html"))
 	a.False(n.match("/posts/id.html/page"))
