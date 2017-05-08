@@ -12,14 +12,21 @@ import (
 )
 
 type regexp struct {
-	*items
+	*base
 	expr       *stdregexp.Regexp
 	hasParams  bool
 	syntaxExpr *stdsyntax.Regexp
 }
 
 func newRegexp(pattern string, s *syntax) (*regexp, error) {
+	b := newBase(pattern)
+
+	// 合并正则表达式
 	str := strings.Join(s.patterns, "")
+	if b.wildcard {
+		str = str[:len(str)-1] // 去掉最后的星号
+	}
+
 	expr, err := stdregexp.Compile(str)
 	if err != nil {
 		return nil, err
@@ -31,12 +38,11 @@ func newRegexp(pattern string, s *syntax) (*regexp, error) {
 	}
 
 	return &regexp{
-		items:      newItems(pattern),
+		base:       b,
 		hasParams:  s.hasParams,
 		expr:       expr,
 		syntaxExpr: syntaxExpr,
 	}, nil
-
 }
 
 // Entry.Type
@@ -44,16 +50,33 @@ func (r *regexp) Type() int {
 	return TypeRegexp
 }
 
+func (r *regexp) priority() int {
+	if r.wildcard {
+		return TypeRegexp + 100
+	}
+
+	return TypeRegexp
+}
+
 // Entry.Match
-func (r *regexp) Match(url string) int {
+func (r *regexp) Match(url string) bool {
 	loc := r.expr.FindStringIndex(url)
+
+	if r.wildcard {
+		if loc != nil &&
+			loc[0] == 0 &&
+			loc[1] < len(url) {
+			return true
+		}
+	}
 
 	if loc != nil &&
 		loc[0] == 0 &&
 		loc[1] == len(url) {
-		return 0
+		return true
 	}
-	return -1
+
+	return false
 }
 
 // Entry.Params

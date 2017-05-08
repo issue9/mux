@@ -20,16 +20,19 @@ func BenchmarkMux_ServeHTTPBasic(b *testing.B) {
 	a := assert.New(b)
 	srv := New(false, false, nil, nil)
 
-	srv.GetFunc("/blog/post/1", benchHandler)
-	srv.GetFunc("/api/v2/login", benchHandler)
+	srv.GetFunc("/blog/post/1", benchHandler)  // 1
+	srv.GetFunc("/blog/posts/*", benchHandler) // 2
+	srv.GetFunc("/api/v2/login", benchHandler) // 3
 
-	r1, err := http.NewRequest("GET", "/blog/post/1", nil)
+	r1, err := http.NewRequest("GET", "/blog/post/1", nil) // 1
 	a.NotError(err).NotNil(r1)
 	r2, err := http.NewRequest("GET", "/api/v2/login", nil)
 	a.NotError(err).NotNil(r2)
 	r3, err := http.NewRequest("GET", "/api/v2x/login", nil)
 	a.NotError(err).NotNil(r3)
-	reqs := []*http.Request{r1, r2, r3}
+	r4, err := http.NewRequest("GET", "/blog/posts/4", nil) // 2
+	a.NotError(err).NotNil(r4)
+	reqs := []*http.Request{r1, r2, r3, r4}
 
 	w := httptest.NewRecorder()
 
@@ -41,20 +44,23 @@ func BenchmarkMux_ServeHTTPBasic(b *testing.B) {
 	}
 }
 
-func BenchmarkMux_ServeHTTPStatic(b *testing.B) {
+func BenchmarkMux_ServeHTTPNamed(b *testing.B) {
 	a := assert.New(b)
 	srv := New(false, false, nil, nil)
 
-	srv.GetFunc("/blog/post/", benchHandler)
-	srv.GetFunc("/api/v2/", benchHandler)
+	srv.GetFunc("/blog/post/{id}", benchHandler)   // 1
+	srv.GetFunc("/blog/tags/{id}/*", benchHandler) // 2
+	srv.GetFunc("/api/v2/", benchHandler)          // 3
 
-	r1, err := http.NewRequest("GET", "/blog/post/1", nil)
+	r1, err := http.NewRequest("GET", "/blog/post/1", nil) // 1
 	a.NotError(err).NotNil(r1)
 	r2, err := http.NewRequest("GET", "/api/v2/login", nil)
 	a.NotError(err).NotNil(r2)
 	r3, err := http.NewRequest("GET", "/api/v2x/login", nil)
 	a.NotError(err).NotNil(r3)
-	reqs := []*http.Request{r1, r2, r3}
+	r4, err := http.NewRequest("GET", "/blog/tags/5/list", nil) // 2
+	a.NotError(err).NotNil(r4)
+	reqs := []*http.Request{r1, r2, r3, r4}
 
 	w := httptest.NewRecorder()
 
@@ -70,12 +76,12 @@ func BenchmarkMux_ServeHTTPRegexp(b *testing.B) {
 	a := assert.New(b)
 	srv := New(false, false, nil, nil)
 
-	srv.GetFunc("/blog/post/{id}", benchHandler)
-	srv.GetFunc("/api/v{version:\\d+}/login", benchHandler)
+	srv.GetFunc("/blog/post/{id:\\d+}/*", benchHandler)     // 1
+	srv.GetFunc("/api/v{version:\\d+}/login", benchHandler) // 2
 
-	r1, err := http.NewRequest("GET", "/blog/post/1", nil)
+	r1, err := http.NewRequest("GET", "/blog/post/1/list", nil) // 1
 	a.NotError(err).NotNil(r1)
-	r2, err := http.NewRequest("GET", "/api/v2/login", nil)
+	r2, err := http.NewRequest("GET", "/api/v2/login", nil) // 2
 	a.NotError(err).NotNil(r2)
 	r3, err := http.NewRequest("GET", "/api/v2x/login", nil)
 	a.NotError(err).NotNil(r3)
@@ -96,10 +102,10 @@ func BenchmarkMux_ServeHTTPAll(b *testing.B) {
 	srv := New(false, false, nil, nil)
 
 	srv.GetFunc("/blog/basic/1", benchHandler)
-	srv.GetFunc("/blog/static/", benchHandler)
+	srv.GetFunc("/blog/{id}/*", benchHandler)
 	srv.GetFunc("/api/v{version:\\d+}/login", benchHandler)
 
-	r1, err := http.NewRequest("GET", "/blog/static/1", nil)
+	r1, err := http.NewRequest("GET", "/blog/1/list", nil)
 	a.NotError(err).NotNil(r1)
 	r2, err := http.NewRequest("GET", "/blog/basic/1", nil)
 	a.NotError(err).NotNil(r2)

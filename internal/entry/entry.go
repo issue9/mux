@@ -9,7 +9,6 @@ import "net/http"
 // 表示 Entry 接口的类型
 const (
 	TypeBasic = iota + 1
-	TypeStatic
 	TypeRegexp
 	TypeNamed
 )
@@ -19,17 +18,17 @@ type Entry interface {
 	// 返回路由的匹配字符串
 	Pattern() string
 
-	// url 与当前的匹配程度：
-	//  -1 表示完全不匹配；
-	//  0  表示完全匹配；
-	//  >0 表示部分匹配，值越小表示匹配程度越高。
-	Match(url string) int
+	// 与当前是否匹配
+	Match(path string) bool
 
 	// 获取路由中的参数，非正则匹配或是无参数返回 nil。
 	Params(url string) map[string]string
 
 	// 接口的实现类型
 	Type() int
+
+	// 优先级
+	priority() int
 
 	// 获取指定请求方法对应的 http.Handler 实例，若不存在，则返回 nil。
 	Handler(method string) http.Handler
@@ -71,14 +70,5 @@ func New(pattern string, h http.Handler) (Entry, error) {
 		return newNamed(pattern, s), nil
 	}
 
-	pattern = s.patterns[0]
-	if pattern[len(pattern)-1] == '/' {
-		return &static{
-			items: newItems(pattern),
-		}, nil
-	}
-
-	return &basic{
-		items: newItems(pattern),
-	}, nil
+	return newBasic(s.patterns[0]), nil
 }

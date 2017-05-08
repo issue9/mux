@@ -2,17 +2,15 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
-// Package entries 管理 entry.Entry 的添加删除匹配等工作
-package entries
+package entry
 
 import (
-	"container/list"
 	"errors"
 	"net/http"
+	"sort"
 	"strings"
 	"sync"
 
-	"github.com/issue9/mux/internal/entry"
 	"github.com/issue9/mux/internal/method"
 )
 
@@ -25,14 +23,14 @@ type Entries struct {
 	disableOptions bool
 
 	// 路由项，按资源进行分类。
-	entries *list.List
+	entries []Entry
 }
 
-// New 声明一个 Entries 实例
-func New(disableOptions bool) *Entries {
+// NewEntries 声明一个 Entries 实例
+func NewEntries(disableOptions bool) *Entries {
 	return &Entries{
 		disableOptions: disableOptions,
-		entries:        list.New(),
+		entries:        make([]Entry, 0, 1000),
 	}
 }
 
@@ -42,22 +40,21 @@ func (es *Entries) Clean(prefix string) {
 	defer es.mu.Unlock()
 
 	if len(prefix) == 0 {
-		es.entries.Init()
+		es.entries = es.entries[:0]
 		return
 	}
 
-	for item := es.entries.Front(); item != nil; {
-		curr := item
-		item = item.Next() // 提前记录下个元素，因为 item 有可能被删除
-
-		ety := curr.Value.(entry.Entry)
+	dels := []string{}
+	for _, ety := range es.entries {
 		pattern := ety.Pattern()
 		if strings.HasPrefix(pattern, prefix) {
-			if empty := ety.Remove(method.Supported...); empty {
-				es.entries.Remove(curr)
-			}
+			dels = append(dels, pattern)
 		}
 	} // end for
+
+	for _, pattern := range dels {
+		es.entries = removeEntries(es.entries, pattern)
+	}
 }
 
 // Remove 移除指定的路由项。
@@ -72,14 +69,13 @@ func (es *Entries) Remove(pattern string, methods ...string) {
 	es.mu.Lock()
 	defer es.mu.Unlock()
 
-	for item := es.entries.Front(); item != nil; item = item.Next() {
-		e := item.Value.(entry.Entry)
+	for _, e := range es.entries {
 		if e.Pattern() != pattern {
 			continue
 		}
 
 		if empty := e.Remove(methods...); empty { // 该 Entry 下已经没有路由项了
-			es.entries.Remove(item)
+			es.entries = removeEntries(es.entries, e.Pattern())
 		}
 		return // 只可能有一相完全匹配，找到之后，即可返回
 	}
@@ -101,7 +97,7 @@ func (es *Entries) Add(pattern string, h http.Handler, methods ...string) error 
 	ety := es.Entry(pattern)
 	if ety == nil { // 不存在相同的资源项，则声明新的。
 		var err error
-		if ety, err = entry.New(pattern, h); err != nil {
+		if ety, err = New(pattern, h); err != nil {
 			return err
 		}
 
@@ -111,23 +107,19 @@ func (es *Entries) Add(pattern string, h http.Handler, methods ...string) error 
 
 		es.mu.Lock()
 		defer es.mu.Unlock()
-		if ety.Type() == entry.TypeRegexp { // 正则路由，在后端插入
-			es.entries.PushBack(ety)
-		} else {
-			es.entries.PushFront(ety)
-		}
+		es.entries = append(es.entries, ety)
+		sort.SliceStable(es.entries, func(i, j int) bool { return es.entries[i].priority() < es.entries[j].priority() })
 	}
 
 	return ety.Add(h, methods...)
 }
 
 // Entry 查找指定匹配模式下的 Entry
-func (es *Entries) Entry(pattern string) entry.Entry {
+func (es *Entries) Entry(pattern string) Entry {
 	es.mu.RLock()
 	defer es.mu.RUnlock()
 
-	for item := es.entries.Front(); item != nil; item = item.Next() {
-		e := item.Value.(entry.Entry)
+	for _, e := range es.entries {
 		if e.Pattern() == pattern {
 			return e
 		}
@@ -138,32 +130,36 @@ func (es *Entries) Entry(pattern string) entry.Entry {
 
 // Match 查找与 path 最匹配的路由项
 //
-// e 为当前匹配的 entry.Entry 实例。
-func (es *Entries) Match(path string) (e entry.Entry) {
-	size := -1 // 匹配度，0 表示完全匹配，-1 表示完全不匹配，其它值越小匹配度越高
-
+// e 为当前匹配的 Entry 实例。
+func (es *Entries) Match(path string) (e Entry) {
 	es.mu.RLock()
 	defer es.mu.RUnlock()
 
-	for item := es.entries.Front(); item != nil; item = item.Next() {
-		ety := item.Value.(entry.Entry)
-		s := ety.Match(path)
-
-		if s == 0 { // 完全匹配，可以中止匹配过程
+	for _, ety := range es.entries {
+		if ety.Match(path) {
 			return ety
 		}
+	} // end for
 
-		if s == -1 || (size > 0 && s >= size) { // 完全不匹配，或是匹配度没有当前的高
+	return nil
+}
+
+func removeEntries(es []Entry, pattern string) []Entry {
+	lastIndex := len(es) - 1
+	for index, e := range es {
+		if e.Pattern() != pattern {
 			continue
 		}
 
-		// 匹配度比当前的高，则保存下来
-		size = s
-		e = ety
+		switch {
+		case len(es) == 1: // 只有一个元素
+			return es[:0]
+		case index == lastIndex: // 最后一个元素
+			return es[:lastIndex]
+		default:
+			return append(es[:index], es[index+1:]...)
+		}
 	} // end for
 
-	if size < 0 {
-		return nil
-	}
-	return e
+	return es
 }
