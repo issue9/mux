@@ -46,7 +46,7 @@ func (es *Entries) Clean(prefix string) {
 
 	dels := []string{}
 	for _, ety := range es.entries {
-		pattern := ety.Pattern()
+		pattern := ety.pattern()
 		if strings.HasPrefix(pattern, prefix) {
 			dels = append(dels, pattern)
 		}
@@ -70,12 +70,12 @@ func (es *Entries) Remove(pattern string, methods ...string) {
 	defer es.mu.Unlock()
 
 	for _, e := range es.entries {
-		if e.Pattern() != pattern {
+		if e.pattern() != pattern {
 			continue
 		}
 
 		if empty := e.Remove(methods...); empty { // 该 Entry 下已经没有路由项了
-			es.entries = removeEntries(es.entries, e.Pattern())
+			es.entries = removeEntries(es.entries, e.pattern())
 		}
 		return // 只可能有一相完全匹配，找到之后，即可返回
 	}
@@ -120,7 +120,7 @@ func (es *Entries) Entry(pattern string) Entry {
 	defer es.mu.RUnlock()
 
 	for _, e := range es.entries {
-		if e.Pattern() == pattern {
+		if e.pattern() == pattern {
 			return e
 		}
 	}
@@ -147,7 +147,7 @@ func (es *Entries) Match(path string) (e Entry) {
 func removeEntries(es []Entry, pattern string) []Entry {
 	lastIndex := len(es) - 1
 	for index, e := range es {
-		if e.Pattern() != pattern {
+		if e.pattern() != pattern {
 			continue
 		}
 

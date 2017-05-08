@@ -42,9 +42,9 @@ func (b *basic) match(url string) bool {
 		return strings.HasPrefix(url, b.prefix)
 	}
 
-	return url == b.pattern
+	return url == b.patternString
 }
 
 func (b *basic) URL(params map[string]string) (string, error) {
-	return b.pattern, nil
+	return b.patternString, nil
 }

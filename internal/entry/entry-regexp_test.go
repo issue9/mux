@@ -24,7 +24,7 @@ func TestNewRegexp(t *testing.T) {
 		patterns:  []string{"/posts/", "(?P<id>\\d+)"},
 	})
 	a.NotError(err).NotNil(r)
-	a.Equal(r.pattern, pattern)
+	a.Equal(r.patternString, pattern)
 	a.Equal(r.expr.String(), "/posts/(?P<id>\\d+)")
 
 	pattern = "/posts/{id}/page/{page:\\d+}/size/{:\\d+}"
@@ -34,7 +34,7 @@ func TestNewRegexp(t *testing.T) {
 		patterns:  []string{"/posts/", "(?P<id>[^/]+)", "/page/", "(?P<page>\\d+)", "/size/", "(\\d+)"},
 	})
 	a.NotError(err).NotNil(r)
-	a.Equal(r.pattern, pattern)
+	a.Equal(r.patternString, pattern)
 	a.Equal(r.expr.String(), "/posts/(?P<id>[^/]+)/page/(?P<page>\\d+)/size/(\\d+)")
 }
 

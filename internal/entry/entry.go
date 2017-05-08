@@ -16,7 +16,7 @@ const (
 // Entry 表示一类资源的进入点，拥有统一的路由匹配模式。
 type Entry interface {
 	// 返回路由的匹配字符串
-	Pattern() string
+	pattern() string
 
 	// 与当前是否匹配
 	match(path string) bool
