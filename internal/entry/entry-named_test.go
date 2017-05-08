@@ -18,7 +18,7 @@ func TestNewNammed(t *testing.T) {
 	pattern := "/posts/{id}"
 	n := newNamed(pattern, &syntax{
 		hasParams: true,
-		nType:     TypeNamed,
+		nType:     typeNamed,
 		patterns:  []string{"/posts/", "{id}"},
 	})
 	a.NotNil(n)
@@ -34,7 +34,7 @@ func TestNewNammed(t *testing.T) {
 	pattern = "/posts/{id}/page/{page}"
 	n = newNamed(pattern, &syntax{
 		hasParams: true,
-		nType:     TypeNamed,
+		nType:     typeNamed,
 		patterns:  []string{"/posts/", "{id}", "/page/", "{page}"},
 	})
 	a.NotNil(n)

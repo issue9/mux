@@ -20,7 +20,7 @@ func TestNewRegexp(t *testing.T) {
 	pattern := "/posts/{id:\\d+}"
 	r, err := newRegexp(pattern, &syntax{
 		hasParams: true,
-		nType:     TypeRegexp,
+		nType:     typeRegexp,
 		patterns:  []string{"/posts/", "(?P<id>\\d+)"},
 	})
 	a.NotError(err).NotNil(r)
@@ -30,7 +30,7 @@ func TestNewRegexp(t *testing.T) {
 	pattern = "/posts/{id}/page/{page:\\d+}/size/{:\\d+}"
 	r, err = newRegexp(pattern, &syntax{
 		hasParams: true,
-		nType:     TypeRegexp,
+		nType:     typeRegexp,
 		patterns:  []string{"/posts/", "(?P<id>[^/]+)", "/page/", "(?P<page>\\d+)", "/size/", "(\\d+)"},
 	})
 	a.NotError(err).NotNil(r)

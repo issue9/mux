@@ -47,10 +47,10 @@ func newRegexp(pattern string, s *syntax) (*regexp, error) {
 
 func (r *regexp) priority() int {
 	if r.wildcard {
-		return TypeRegexp + 100
+		return typeRegexp + 100
 	}
 
-	return TypeRegexp
+	return typeRegexp
 }
 
 // Entry.Match

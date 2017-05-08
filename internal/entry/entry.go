@@ -8,9 +8,9 @@ import "net/http"
 
 // 表示 Entry 接口的类型
 const (
-	TypeBasic = iota + 1
-	TypeRegexp
-	TypeNamed
+	typeBasic = iota + 1
+	typeRegexp
+	typeNamed
 )
 
 // Entry 表示一类资源的进入点，拥有统一的路由匹配模式。
@@ -61,9 +61,9 @@ func New(pattern string, h http.Handler) (Entry, error) {
 
 	}
 
-	if s.nType == TypeRegexp {
+	if s.nType == typeRegexp {
 		return newRegexp(pattern, s)
-	} else if s.nType == TypeNamed {
+	} else if s.nType == typeNamed {
 		return newNamed(pattern, s), nil
 	}
 

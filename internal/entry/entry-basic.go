@@ -27,10 +27,10 @@ func newBasic(pattern string) *basic {
 
 func (b *basic) priority() int {
 	if b.wildcard {
-		return TypeBasic + 100
+		return typeBasic + 100
 	}
 
-	return TypeBasic
+	return typeBasic
 }
 
 func (b *basic) Params(url string) map[string]string {
