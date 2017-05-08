@@ -42,4 +42,8 @@ func TestBasic_URL(t *testing.T) {
 	b = newBasic("/basic/*")
 	url, err = b.URL(map[string]string{"id": "1"}, "abc")
 	a.NotError(err).Equal(url, "/basic/abc")
+
+	// 指定了空的  path
+	url, err = b.URL(map[string]string{"id": "1"}, "")
+	a.NotError(err).Equal(url, "/basic/")
 }

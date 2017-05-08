@@ -131,6 +131,10 @@ func TestRegexp_URL(t *testing.T) {
 	n, err = New("/posts/{id:[^/]+}/page/{page}/*", nil)
 	url, err = n.URL(map[string]string{"id": "5.html", "page": "1"}, "path")
 	a.NotError(err).Equal(url, "/posts/5.html/page/1/path")
+
+	// 指定了空的 path
+	url, err = n.URL(map[string]string{"id": "5.html", "page": "1"}, "")
+	a.NotError(err).Equal(url, "/posts/5.html/page/1/")
 }
 
 ///////////////////////////////////////////////////////////////
