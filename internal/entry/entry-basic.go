@@ -5,6 +5,7 @@
 package entry
 
 import (
+	"errors"
 	"strings"
 )
 
@@ -45,6 +46,10 @@ func (b *basic) match(url string) bool {
 	return url == b.patternString
 }
 
-func (b *basic) URL(params map[string]string) (string, error) {
-	return b.patternString, nil
+func (b *basic) URL(params map[string]string, path string) (string, error) {
+	if b.wildcard {
+		return b.prefix + path, nil
+	}
+
+	return "", errors.New("不支持方法")
 }

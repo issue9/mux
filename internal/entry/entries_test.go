@@ -30,7 +30,7 @@ var (
 
 func TestEntries_Add_Remove_1(t *testing.T) {
 	a := assert.New(t)
-	es := NewEntries(false)
+	es := NewEntries(false, 10)
 	a.NotNil(es)
 
 	// 添加 delete /api/1
@@ -60,7 +60,7 @@ func TestEntries_Add_Remove_1(t *testing.T) {
 
 func TestEntries_Clean(t *testing.T) {
 	a := assert.New(t)
-	es := NewEntries(false)
+	es := NewEntries(false, 10)
 	a.NotNil(es)
 
 	// 添加 delete /api/1

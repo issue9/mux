@@ -16,12 +16,20 @@ const (
 	syntaxEnd   = '}'
 )
 
+const (
+	typeBasic = iota + 1
+	typeRegexp
+	typeNamed
+)
+
+// 描述指定的字符串所表示的语法结构
 type syntax struct {
-	hasParams bool
+	hasParams bool     // 是否有参数
 	patterns  []string // 保存着对字符串处理后的结果
-	nType     int
+	nType     int      // 该语法应该被解析成的类型
 }
 
+// 判断 str 是一个合法的语法结构还是普通的字符串
 func isSyntax(str string) bool {
 	return str[0] == syntaxStart && str[len(str)-1] == syntaxEnd
 }

@@ -131,8 +131,8 @@ func (r *Resource) Clean() *Resource {
 
 // URL 根据参数构建一条 URL，
 // 若不是正则或是只有未命名参数的正则表达式，则直接返回原来的内容。
-func (r *Resource) URL(params map[string]string) (string, error) {
-	return r.ety.URL(params)
+func (r *Resource) URL(params map[string]string, path string) (string, error) {
+	return r.ety.URL(params, path)
 }
 
 // Resource 创建一个资源路由项，之后可以为该资源指定各种请求方法。

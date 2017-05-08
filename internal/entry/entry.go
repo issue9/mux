@@ -6,13 +6,6 @@ package entry
 
 import "net/http"
 
-// 表示 Entry 接口的类型
-const (
-	typeBasic = iota + 1
-	typeRegexp
-	typeNamed
-)
-
 // Entry 表示一类资源的进入点，拥有统一的路由匹配模式。
 type Entry interface {
 	// 返回路由的匹配字符串
@@ -42,7 +35,7 @@ type Entry interface {
 	Remove(method ...string) (empty bool)
 
 	// 根据参数生成一条路径。
-	URL(params map[string]string) (string, error)
+	URL(params map[string]string, path string) (string, error)
 
 	// 手动设置 OPTIONS 的 Allow 报头。不调用此函数，
 	// 会自动根据当前的 Add 和 Remove 调整 Allow 报头，

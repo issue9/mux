@@ -32,7 +32,7 @@ type base struct {
 	fixedOptionsAllow bool
 
 	// 固定 handlers[http.MethodOptions] 不再修改，
-	// 显示地调用 items.Add(http.MethodOptions,...) 进行赋值之后为 true。
+	// 显示地调用 Add(http.MethodOptions,...) 进行赋值之后为 true。
 	fixedOptionsHandler bool
 }
 

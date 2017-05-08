@@ -26,18 +26,6 @@ func BenchmarkBasic_match(b *testing.B) {
 	}
 }
 
-func BenchmarkStatic_match(b *testing.B) {
-	a := assert.New(b)
-	e, err := New("/blog/post/", benchHandler)
-	a.NotError(err)
-
-	for i := 0; i < b.N; i++ {
-		if !e.match("/blog/post/1") {
-			b.Error("BenchmarkStatic_match:error")
-		}
-	}
-}
-
 func BenchmarkRegexp_match(b *testing.B) {
 	a := assert.New(b)
 	e, err := New("/blog/post/{id:\\d+}", benchHandler)
