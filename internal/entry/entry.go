@@ -27,6 +27,9 @@ type Entry interface {
 	// 接口的实现类型
 	Type() int
 
+	// 优先级
+	priority() int
+
 	// 获取指定请求方法对应的 http.Handler 实例，若不存在，则返回 nil。
 	Handler(method string) http.Handler
 
@@ -67,6 +70,5 @@ func New(pattern string, h http.Handler) (Entry, error) {
 		return newNamed(pattern, s), nil
 	}
 
-	pattern = s.patterns[0]
-	return newBasic(pattern), nil
+	return newBasic(s.patterns[0]), nil
 }

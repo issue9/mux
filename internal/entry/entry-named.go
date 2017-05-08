@@ -64,6 +64,14 @@ func (n *named) Type() int {
 	return TypeNamed
 }
 
+func (n *named) priority() int {
+	if n.wildcard {
+		return TypeNamed + 100
+	}
+
+	return TypeNamed
+}
+
 // Entry.Match
 func (n *named) Match(path string) bool {
 	for i, name := range n.names {

@@ -183,7 +183,7 @@ func TestMux_ServeHTTP_Order(t *testing.T) {
 
 	request(a, serveMux, http.MethodGet, "/post/1", 1)   // f1 静态路由项完全匹配
 	request(a, serveMux, http.MethodGet, "/post/2", 2)   // f2 正则完全匹配
-	request(a, serveMux, http.MethodGet, "/post/abc", 1) // f1 匹配度最高
+	request(a, serveMux, http.MethodGet, "/post/abc", 3) // f3 匹配度最高
 }
 
 func TestClearPath(t *testing.T) {

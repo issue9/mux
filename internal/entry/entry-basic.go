@@ -29,6 +29,14 @@ func (b *basic) Type() int {
 	return TypeBasic
 }
 
+func (b *basic) priority() int {
+	if b.wildcard {
+		return TypeBasic + 100
+	}
+
+	return TypeBasic
+}
+
 func (b *basic) Params(url string) map[string]string {
 	return nil
 }

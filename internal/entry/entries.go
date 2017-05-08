@@ -108,7 +108,7 @@ func (es *Entries) Add(pattern string, h http.Handler, methods ...string) error 
 		es.mu.Lock()
 		defer es.mu.Unlock()
 		es.entries = append(es.entries, ety)
-		sort.SliceStable(es.entries, func(i, j int) bool { return es.entries[i].Type() < es.entries[j].Type() })
+		sort.SliceStable(es.entries, func(i, j int) bool { return es.entries[i].priority() < es.entries[j].priority() })
 	}
 
 	return ety.Add(h, methods...)

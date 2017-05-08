@@ -50,6 +50,14 @@ func (r *regexp) Type() int {
 	return TypeRegexp
 }
 
+func (r *regexp) priority() int {
+	if r.wildcard {
+		return TypeRegexp + 100
+	}
+
+	return TypeRegexp
+}
+
 // Entry.Match
 func (r *regexp) Match(url string) bool {
 	loc := r.expr.FindStringIndex(url)
