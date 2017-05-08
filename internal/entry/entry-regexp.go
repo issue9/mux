@@ -59,7 +59,7 @@ func (r *regexp) priority() int {
 }
 
 // Entry.Match
-func (r *regexp) Match(url string) bool {
+func (r *regexp) match(url string) bool {
 	loc := r.expr.FindStringIndex(url)
 
 	if r.wildcard {

@@ -58,7 +58,7 @@ func TestNamed_Type(t *testing.T) {
 	a.Equal(n.Type(), TypeNamed)
 }
 
-func TestNamed_Match(t *testing.T) {
+func TestNamed_match(t *testing.T) {
 	a := assert.New(t)
 
 	n := newNamed("/posts/{id}", &syntax{
@@ -68,26 +68,26 @@ func TestNamed_Match(t *testing.T) {
 	})
 	a.NotNil(n)
 
-	a.True(n.Match("/posts/1"))
-	a.True(n.Match("/posts/2"))
-	a.True(n.Match("/posts/id"))
-	a.True(n.Match("/posts/id.html"))
-	a.False(n.Match("/posts/id.html/"))
-	a.False(n.Match("/posts/id.html/page"))
-	a.False(n.Match("/post/id"))
+	a.True(n.match("/posts/1"))
+	a.True(n.match("/posts/2"))
+	a.True(n.match("/posts/id"))
+	a.True(n.match("/posts/id.html"))
+	a.False(n.match("/posts/id.html/"))
+	a.False(n.match("/posts/id.html/page"))
+	a.False(n.match("/post/id"))
 
 	n = newNamed("/posts/{id}/page/{page}", &syntax{
 		hasParams: true,
 		nType:     TypeNamed,
 		patterns:  []string{"/posts/", "{id}", "/page/", "{page}"},
 	})
-	a.True(n.Match("/posts/1/page/1"))
-	a.True(n.Match("/posts/1.html/page/1"))
-	a.False(n.Match("/posts/id-1/page/1/"))
-	a.False(n.Match("/posts/id-1/page/1/size/1"))
+	a.True(n.match("/posts/1/page/1"))
+	a.True(n.match("/posts/1.html/page/1"))
+	a.False(n.match("/posts/id-1/page/1/"))
+	a.False(n.match("/posts/id-1/page/1/size/1"))
 }
 
-func TestNamed_Match_wildcard(t *testing.T) {
+func TestNamed_match_wildcard(t *testing.T) {
 	a := assert.New(t)
 
 	n := newNamed("/posts/{id}/*", &syntax{
@@ -97,19 +97,19 @@ func TestNamed_Match_wildcard(t *testing.T) {
 	})
 	a.NotNil(n)
 
-	a.False(n.Match("/posts/1"))
-	a.True(n.Match("/posts/2/"))
-	a.True(n.Match("/posts/id/index.html"))
-	a.True(n.Match("/posts/id.html/index.html"))
+	a.False(n.match("/posts/1"))
+	a.True(n.match("/posts/2/"))
+	a.True(n.match("/posts/id/index.html"))
+	a.True(n.match("/posts/id.html/index.html"))
 
 	n = newNamed("/posts/{id}/page/{page}/*", &syntax{
 		hasParams: true,
 		nType:     TypeNamed,
 		patterns:  []string{"/posts/", "{id}", "/page/", "{page}", "/*"},
 	})
-	a.False(n.Match("/posts/1/page/1"))
-	a.True(n.Match("/posts/1.html/page/1/"))
-	a.True(n.Match("/posts/id-1/page/1/index.html"))
+	a.False(n.match("/posts/1/page/1"))
+	a.True(n.match("/posts/1.html/page/1/"))
+	a.True(n.match("/posts/id-1/page/1/index.html"))
 }
 
 func TestNamed_Params(t *testing.T) {

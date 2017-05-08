@@ -136,7 +136,7 @@ func (es *Entries) Match(path string) (e Entry) {
 	defer es.mu.RUnlock()
 
 	for _, ety := range es.entries {
-		if ety.Match(path) {
+		if ety.match(path) {
 			return ety
 		}
 	} // end for

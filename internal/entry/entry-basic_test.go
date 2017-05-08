@@ -18,22 +18,22 @@ func TestBasic_Type(t *testing.T) {
 	a.Equal(b.Type(), TypeBasic)
 }
 
-func TestBasic_Match(t *testing.T) {
+func TestBasic_match(t *testing.T) {
 	a := assert.New(t)
 	b := newBasic("/basic")
-	a.True(b.Match("/basic"))
-	a.False(b.Match("/basic/"))
+	a.True(b.match("/basic"))
+	a.False(b.match("/basic/"))
 
 	// 无效的通配符
 	b = newBasic("/basic*")
-	a.False(b.Match("/basic"))
-	a.False(b.Match("/basic/"))
-	a.True(b.Match("/basic*"))
+	a.False(b.match("/basic"))
+	a.False(b.match("/basic/"))
+	a.True(b.match("/basic*"))
 
 	// 通配符
 	b = newBasic("/basic/*")
-	a.False(b.Match("/basic"))
-	a.True(b.Match("/basic/"))
-	a.True(b.Match("/basic/index.html"))
-	a.True(b.Match("/basic/abc/def"))
+	a.False(b.match("/basic"))
+	a.True(b.match("/basic/"))
+	a.True(b.match("/basic/index.html"))
+	a.True(b.match("/basic/abc/def"))
 }

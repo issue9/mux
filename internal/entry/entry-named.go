@@ -73,7 +73,7 @@ func (n *named) priority() int {
 }
 
 // Entry.Match
-func (n *named) Match(path string) bool {
+func (n *named) match(path string) bool {
 	for i, name := range n.names {
 		islast := (i == len(n.names)-1)
 

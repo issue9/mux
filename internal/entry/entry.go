@@ -19,7 +19,7 @@ type Entry interface {
 	Pattern() string
 
 	// 与当前是否匹配
-	Match(path string) bool
+	match(path string) bool
 
 	// 获取路由中的参数，非正则匹配或是无参数返回 nil。
 	Params(url string) map[string]string

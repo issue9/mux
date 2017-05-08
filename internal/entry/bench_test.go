@@ -14,50 +14,50 @@ import (
 var benchHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 })
 
-func BenchmarkBasic_Match(b *testing.B) {
+func BenchmarkBasic_match(b *testing.B) {
 	a := assert.New(b)
 	e, err := New("/blog/post/1", benchHandler)
 	a.NotError(err)
 
 	for i := 0; i < b.N; i++ {
-		if 0 != e.Match("/blog/post/1") {
-			b.Error("BenchmarkBasic_Match:error")
+		if !e.match("/blog/post/1") {
+			b.Error("BenchmarkBasic_match:error")
 		}
 	}
 }
 
-func BenchmarkStatic_Match(b *testing.B) {
+func BenchmarkStatic_match(b *testing.B) {
 	a := assert.New(b)
 	e, err := New("/blog/post/", benchHandler)
 	a.NotError(err)
 
 	for i := 0; i < b.N; i++ {
-		if e.Match("/blog/post/1") > 1 {
-			b.Error("BenchmarkStatic_Match:error")
+		if !e.match("/blog/post/1") {
+			b.Error("BenchmarkStatic_match:error")
 		}
 	}
 }
 
-func BenchmarkRegexp_Match(b *testing.B) {
+func BenchmarkRegexp_match(b *testing.B) {
 	a := assert.New(b)
 	e, err := New("/blog/post/{id:\\d+}", benchHandler)
 	a.NotError(err)
 
 	for i := 0; i < b.N; i++ {
-		if 0 != e.Match("/blog/post/1") {
-			b.Error("BenchmarkRegexp_Match:error")
+		if !e.match("/blog/post/1") {
+			b.Error("BenchmarkRegexp_match:error")
 		}
 	}
 }
 
-func BenchmarkNamed_Match(b *testing.B) {
+func BenchmarkNamed_match(b *testing.B) {
 	a := assert.New(b)
 	e, err := New("/blog/post/{id}/{id2}", benchHandler)
 	a.NotError(err)
 
 	for i := 0; i < b.N; i++ {
-		if 0 != e.Match("/blog/post/1/2") {
-			b.Error("BenchmarkNamed_Match:error")
+		if !e.match("/blog/post/1/2") {
+			b.Error("BenchmarkNamed_match:error")
 		}
 	}
 }

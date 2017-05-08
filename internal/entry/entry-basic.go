@@ -41,7 +41,7 @@ func (b *basic) Params(url string) map[string]string {
 	return nil
 }
 
-func (b *basic) Match(url string) bool {
+func (b *basic) match(url string) bool {
 	if b.wildcard {
 		return strings.HasPrefix(url, b.prefix)
 	}
