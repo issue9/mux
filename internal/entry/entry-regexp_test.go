@@ -66,6 +66,9 @@ func TestRegexp_match(t *testing.T) {
 	a.True(n.match("/posts/1.html/page/1/size/1"))
 	a.True(n.match("/posts/1.html/page/1/size/11"))
 	a.False(n.match("/posts/1.html/page/x/size/11"))
+
+	n, err = New("/users/{user:\\w+}/{repos}/pulls", nil)
+	a.False(n.match("/users/user/repos/pulls/number"))
 }
 
 func TestRegexp_match_wildcard(t *testing.T) {

@@ -80,6 +80,11 @@ func (n *named) match(path string) bool {
 			if !strings.HasPrefix(path, name.value) {
 				return false
 			}
+
+			if islast {
+				return (path == name.value)
+			}
+
 			path = path[len(name.value):]
 		} else { // 带命名的节点
 			index := strings.IndexByte(path, name.endByte)
@@ -89,7 +94,7 @@ func (n *named) match(path string) bool {
 				}
 				path = path[index:]
 			} else { // 最后一个节点了
-				if index < 0 {
+				if index == -1 {
 					return !n.wildcard
 				}
 				return n.wildcard
