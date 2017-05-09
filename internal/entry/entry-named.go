@@ -76,28 +76,23 @@ func (n *named) match(path string) bool {
 	for i, name := range n.nodes {
 		islast := (i == len(n.nodes)-1)
 
-		if name.isString {
+		if name.isString { // 普通字符串节点
 			if !strings.HasPrefix(path, name.value) {
 				return false
 			}
 			path = path[len(name.value):]
-		} else {
+		} else { // 带命名的节点
 			index := strings.IndexByte(path, name.endByte)
 			if !islast {
+				if index == -1 {
+					return false
+				}
 				path = path[index:]
-			} else {
-				if index < 0 { // 没有 / 符号了
-					if n.wildcard { // 通配符，但是没有后续内容
-						return false
-					}
-					return true
+			} else { // 最后一个节点了
+				if index < 0 {
+					return !n.wildcard
 				}
-
-				if n.wildcard { // 通配符，但是没有后续内容
-					return true
-				}
-
-				return false
+				return n.wildcard
 			}
 		} // end if
 	} // end false
@@ -120,6 +115,10 @@ func (n *named) Params(path string) map[string]string {
 			index := strings.IndexByte(path, name.endByte)
 
 			if !islast {
+				if index == -1 { // 不匹配
+					return nil
+				}
+
 				params[name.value] = path[:index]
 				path = path[index:]
 			} else {

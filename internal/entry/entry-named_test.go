@@ -70,6 +70,7 @@ func TestNamed_match(t *testing.T) {
 	n, err = New("/posts/{id}/page/{page}", nil)
 	a.NotError(err).NotNil(n)
 	a.True(n.match("/posts/1/page/1"))
+	a.False(n.match("/posts/1"))
 	a.True(n.match("/posts/1.html/page/1"))
 	a.False(n.match("/posts/id-1/page/1/"))
 	a.False(n.match("/posts/id-1/page/1/size/1"))
@@ -80,6 +81,9 @@ func TestNamed_match(t *testing.T) {
 	a.True(n.match("/posts/1.html-1"))
 	a.False(n.match("/posts/id-11/"))
 	a.False(n.match("/posts/id-1/size/1"))
+
+	n, err = New("/users/{user}/repos", nil)
+	a.False(n.match("/users/user"))
 }
 
 func TestNamed_match_wildcard(t *testing.T) {
