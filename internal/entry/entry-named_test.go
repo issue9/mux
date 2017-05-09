@@ -23,12 +23,12 @@ func TestNewNammed(t *testing.T) {
 	})
 	a.NotNil(n)
 	a.Equal(n.patternString, pattern)
-	a.Equal(len(n.names), 2)
-	n0 := n.names[0]
-	a.True(n0.isString).Equal(n0.name, "/posts/")
-	n1 := n.names[1]
+	a.Equal(len(n.nodes), 2)
+	n0 := n.nodes[0]
+	a.True(n0.isString).Equal(n0.value, "/posts/")
+	n1 := n.nodes[1]
 	a.False(n1.isString).
-		Equal(n1.name, "id").
+		Equal(n1.value, "id").
 		Equal(n1.endByte, '/')
 
 	pattern = "/posts/{id}/page/{page}"
@@ -39,16 +39,16 @@ func TestNewNammed(t *testing.T) {
 	})
 	a.NotNil(n)
 	a.Equal(n.patternString, pattern)
-	a.Equal(len(n.names), 4)
-	n0 = n.names[0]
-	a.True(n0.isString).Equal(n0.name, "/posts/")
-	n1 = n.names[1]
+	a.Equal(len(n.nodes), 4)
+	n0 = n.nodes[0]
+	a.True(n0.isString).Equal(n0.value, "/posts/")
+	n1 = n.nodes[1]
 	a.False(n1.isString).
-		Equal(n1.name, "id").
+		Equal(n1.value, "id").
 		Equal(n1.endByte, '/')
-	n3 := n.names[3]
+	n3 := n.nodes[3]
 	a.False(n3.isString).
-		Equal(n3.name, "page").
+		Equal(n3.value, "page").
 		Equal(n3.endByte, '/')
 }
 
@@ -59,6 +59,7 @@ func TestNamed_match(t *testing.T) {
 	a.NotError(err).NotNil(n)
 
 	a.True(n.match("/posts/1"))
+	a.False(n.match("/posts"))
 	a.True(n.match("/posts/2"))
 	a.True(n.match("/posts/id"))
 	a.True(n.match("/posts/id.html"))
@@ -69,9 +70,24 @@ func TestNamed_match(t *testing.T) {
 	n, err = New("/posts/{id}/page/{page}", nil)
 	a.NotError(err).NotNil(n)
 	a.True(n.match("/posts/1/page/1"))
+	a.False(n.match("/posts/1"))
 	a.True(n.match("/posts/1.html/page/1"))
 	a.False(n.match("/posts/id-1/page/1/"))
 	a.False(n.match("/posts/id-1/page/1/size/1"))
+
+	n, err = New("/posts/{id}-{page}", nil)
+	a.NotError(err).NotNil(n)
+	a.True(n.match("/posts/1-1"))
+	a.True(n.match("/posts/1.html-1"))
+	a.False(n.match("/posts/id-11/"))
+	a.False(n.match("/posts/id-1/size/1"))
+
+	n, err = New("/users/{user}/{repos}/pulls", nil)
+	a.False(n.match("/users/user/repos/pulls/number"))
+	a.False(n.match("/users/user/repos/pullsnumber"))
+
+	n, err = New("/users/{user}/repos/{pulls}", nil)
+	a.False(n.match("/users/user/repos/pulls/number"))
 }
 
 func TestNamed_match_wildcard(t *testing.T) {
@@ -80,6 +96,7 @@ func TestNamed_match_wildcard(t *testing.T) {
 	n, err := New("/posts/{id}/*", nil)
 	a.NotError(err).NotNil(n)
 	a.False(n.match("/posts/1"))
+	a.False(n.match("/posts"))
 	a.True(n.match("/posts/2/"))
 	a.True(n.match("/posts/id/index.html"))
 	a.True(n.match("/posts/id.html/index.html"))
@@ -89,6 +106,12 @@ func TestNamed_match_wildcard(t *testing.T) {
 	a.False(n.match("/posts/1/page/1"))
 	a.True(n.match("/posts/1.html/page/1/"))
 	a.True(n.match("/posts/id-1/page/1/index.html"))
+
+	n, err = New("/posts/{id}-{page}/*", nil)
+	a.NotError(err).NotNil(n)
+	a.False(n.match("/posts/1-1"))
+	a.True(n.match("/posts/1.html-1/"))
+	a.True(n.match("/posts/id-1/index.html"))
 }
 
 func TestNamed_Params(t *testing.T) {
@@ -129,4 +152,8 @@ func TestNamed_URL(t *testing.T) {
 	a.NotError(err).NotNil(n)
 	url, err = n.URL(map[string]string{"id": "5.html", "page": "1"}, "path")
 	a.NotError(err).Equal(url, "/posts/5.html/page/1/path")
+
+	// 指定了空的 path 参数
+	url, err = n.URL(map[string]string{"id": "5.html", "page": "1"}, "")
+	a.NotError(err).Equal(url, "/posts/5.html/page/1/")
 }

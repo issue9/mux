@@ -45,6 +45,8 @@ func TestRegexp_match(t *testing.T) {
 	a.NotError(err).NotNil(n)
 
 	a.True(n.match("/posts/1"))
+	a.False(n.match("/posts/"))
+	a.False(n.match("/posts"))
 	a.True(n.match("/posts/2"))
 	a.False(n.match("/posts/id"))
 	a.False(n.match("/posts/id.html"))
@@ -64,6 +66,9 @@ func TestRegexp_match(t *testing.T) {
 	a.True(n.match("/posts/1.html/page/1/size/1"))
 	a.True(n.match("/posts/1.html/page/1/size/11"))
 	a.False(n.match("/posts/1.html/page/x/size/11"))
+
+	n, err = New("/users/{user:\\w+}/{repos}/pulls", nil)
+	a.False(n.match("/users/user/repos/pulls/number"))
 }
 
 func TestRegexp_match_wildcard(t *testing.T) {
@@ -73,6 +78,7 @@ func TestRegexp_match_wildcard(t *testing.T) {
 	a.NotError(err).NotNil(n)
 
 	a.False(n.match("/posts/1"))
+	a.False(n.match("/posts"))
 	a.True(n.match("/posts/1/"))
 	a.True(n.match("/posts/1/index.html"))
 	a.False(n.match("/posts/id.html/page"))
@@ -131,6 +137,10 @@ func TestRegexp_URL(t *testing.T) {
 	n, err = New("/posts/{id:[^/]+}/page/{page}/*", nil)
 	url, err = n.URL(map[string]string{"id": "5.html", "page": "1"}, "path")
 	a.NotError(err).Equal(url, "/posts/5.html/page/1/path")
+
+	// 指定了空的 path
+	url, err = n.URL(map[string]string{"id": "5.html", "page": "1"}, "")
+	a.NotError(err).Equal(url, "/posts/5.html/page/1/")
 }
 
 ///////////////////////////////////////////////////////////////
