@@ -41,7 +41,7 @@ func (m *matcher) False(path string, params map[string]string) *matcher {
 	return m
 }
 
-func TestNew(t *testing.T) {
+func TestNewEntry(t *testing.T) {
 	a := assert.New(t)
 
 	// basic
@@ -57,25 +57,25 @@ func TestNew(t *testing.T) {
 	a.True(ok).True(b.wildcard)
 
 	// named
-	e, err = NewEntry("/basic/{named}", nil)
+	e, err = NewEntry("/named/{named}/path", nil)
 	a.NotError(err).NotNil(e)
 	n, ok := e.(*named)
 	a.True(ok).False(n.wildcard)
 
 	// named with wildcard
-	e, err = NewEntry("/basic/{named}/*", nil)
+	e, err = NewEntry("/named/{named}/path/*", nil)
 	a.NotError(err).NotNil(e)
 	n, ok = e.(*named)
 	a.True(ok).True(n.wildcard)
 
 	// regexp
-	e, err = NewEntry("/basic/{named:\\d+}", nil)
+	e, err = NewEntry("/regexp/{named:\\d+}", nil)
 	a.NotError(err).NotNil(e)
 	r, ok := e.(*regexp)
 	a.True(ok).False(r.wildcard)
 
 	// regexp with wildcard
-	e, err = NewEntry("/basic/{named:\\d+}/*", nil)
+	e, err = NewEntry("/regexp/{named:\\d+}/*", nil)
 	a.NotError(err).NotNil(e)
 	r, ok = e.(*regexp)
 	a.True(ok).True(r.wildcard)
