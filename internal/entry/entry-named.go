@@ -111,7 +111,6 @@ func (n *named) match(path string) (bool, map[string]string) {
 	return true, params
 }
 
-// URL
 func (n *named) URL(params map[string]string, path string) (string, error) {
 	ret := ""
 	for _, name := range n.nodes {

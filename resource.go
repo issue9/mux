@@ -20,7 +20,7 @@ type Resource struct {
 	mux     *Mux
 	pattern string
 
-	// 仅用于缓存 URL 功能，不实际参与路路
+	// 仅用于缓存 URL 功能，不实际与路由
 	ety entry.Entry
 }
 

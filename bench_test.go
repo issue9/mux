@@ -22,7 +22,7 @@ func BenchmarkGithubAPI(b *testing.B) {
 
 	w := httptest.NewRecorder()
 
-	// 按照添加顺序，这应该是比较靠近最后的
+	// 按照添加顺序，这应该是比较靠后的
 	r, _ := http.NewRequest(http.MethodGet, "/repos/issue9/mux/branches/master/protection/enforce_admins", nil)
 
 	b.ReportAllocs()
