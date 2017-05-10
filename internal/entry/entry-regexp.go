@@ -57,18 +57,19 @@ func (r *regexp) priority() int {
 func (r *regexp) match(url string) (bool, map[string]string) {
 	loc := r.expr.FindStringIndex(url)
 
-	if r.wildcard {
-		if loc != nil &&
-			loc[0] == 0 &&
-			loc[1] < len(url) {
-			return true, r.params(url)
-		}
+	if loc == nil || loc[0] != 0 {
+		return false, nil
 	}
 
-	if loc != nil &&
-		loc[0] == 0 &&
-		loc[1] == len(url) {
+	if loc[1] == len(url) {
 		return true, r.params(url)
+	}
+
+	// 通配符的应该比较少，放最后比较
+	if r.wildcard {
+		if loc[1] < len(url) {
+			return true, r.params(url)
+		}
 	}
 
 	return false, nil
