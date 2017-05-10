@@ -19,9 +19,7 @@ import (
 type Resource struct {
 	mux     *Mux
 	pattern string
-
-	// 仅用于缓存 URL 功能，不实际与路由
-	ety entry.Entry
+	ety     entry.Entry
 }
 
 // Options 手动指定 OPTIONS 请求方法的值。
