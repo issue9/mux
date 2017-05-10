@@ -131,17 +131,17 @@ func (es *Entries) Entry(pattern string) Entry {
 // Match 查找与 path 最匹配的路由项
 //
 // e 为当前匹配的 Entry 实例。
-func (es *Entries) Match(path string) (e Entry) {
+func (es *Entries) Match(path string) (Entry, map[string]string) {
 	es.mu.RLock()
 	defer es.mu.RUnlock()
 
 	for _, ety := range es.entries {
-		if ety.match(path) {
-			return ety
+		if matched, params := ety.match(path); matched {
+			return ety, params
 		}
 	} // end for
 
-	return nil
+	return nil, nil
 }
 
 func removeEntries(es []Entry, pattern string) []Entry {

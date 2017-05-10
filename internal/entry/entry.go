@@ -11,14 +11,12 @@ type Entry interface {
 	// 返回路由的匹配字符串
 	pattern() string
 
-	// 与当前是否匹配
-	match(path string) bool
+	// 与当前是否匹配，若匹配的话，也将同时返回参数
+	// params 参数仅在 matched 为 true 时，才会有意义
+	match(path string) (matched bool, params map[string]string)
 
-	// 优先级
+	// 优先级，用于 entries 排定匹配优先级用，越小越靠前
 	priority() int
-
-	// 获取路由中的参数，非正则匹配或是无参数返回 nil。
-	Params(url string) map[string]string
 
 	// 获取指定请求方法对应的 http.Handler 实例，若不存在，则返回 nil。
 	Handler(method string) http.Handler

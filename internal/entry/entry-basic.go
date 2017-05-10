@@ -38,12 +38,12 @@ func (b *basic) Params(url string) map[string]string {
 	return nil
 }
 
-func (b *basic) match(url string) bool {
+func (b *basic) match(url string) (bool, map[string]string) {
 	if b.wildcard {
-		return strings.HasPrefix(url, b.prefix)
+		return strings.HasPrefix(url, b.prefix), nil
 	}
 
-	return url == b.patternString
+	return url == b.patternString, nil
 }
 
 func (b *basic) URL(params map[string]string, path string) (string, error) {

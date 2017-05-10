@@ -20,7 +20,8 @@ func BenchmarkBasic_match(b *testing.B) {
 	a.NotError(err)
 
 	for i := 0; i < b.N; i++ {
-		if !e.match("/blog/post/1") {
+
+		if ok, _ := e.match("/blog/post/1"); !ok {
 			b.Error("BenchmarkBasic_match:error")
 		}
 	}
@@ -32,7 +33,7 @@ func BenchmarkRegexp_match(b *testing.B) {
 	a.NotError(err)
 
 	for i := 0; i < b.N; i++ {
-		if !e.match("/blog/post/1") {
+		if ok, _ := e.match("/blog/post/1"); !ok {
 			b.Error("BenchmarkRegexp_match:error")
 		}
 	}
@@ -44,7 +45,7 @@ func BenchmarkNamed_match(b *testing.B) {
 	a.NotError(err)
 
 	for i := 0; i < b.N; i++ {
-		if !e.match("/blog/post/1/2") {
+		if ok, _ := e.match("/blog/post/1/2"); !ok {
 			b.Error("BenchmarkNamed_match:error")
 		}
 	}

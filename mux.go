@@ -192,7 +192,7 @@ func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		p = cleanPath(p)
 	}
 
-	e := mux.entries.Match(p)
+	e, params := mux.entries.Match(p)
 	if e == nil {
 		mux.notFound(w, r)
 		return
@@ -204,7 +204,7 @@ func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if params := e.Params(p); params != nil {
+	if len(params) > 0 {
 		ctx := context.WithValue(r.Context(), contextKeyParams, Params(params))
 		r = r.WithContext(ctx)
 	}

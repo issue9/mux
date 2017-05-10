@@ -55,78 +55,52 @@ func TestNewNammed(t *testing.T) {
 func TestNamed_match(t *testing.T) {
 	a := assert.New(t)
 
-	n, err := New("/posts/{id}", nil)
-	a.NotError(err).NotNil(n)
+	newMatcher(a, "/posts/{id}").
+		True("/posts/1", map[string]string{"id": "1"}).
+		False("/posts", nil).
+		True("/posts/id.html", map[string]string{"id": "id.html"}).
+		False("/posts/id.html/", nil).
+		False("/posts/id.html/page", nil)
 
-	a.True(n.match("/posts/1"))
-	a.False(n.match("/posts"))
-	a.True(n.match("/posts/2"))
-	a.True(n.match("/posts/id"))
-	a.True(n.match("/posts/id.html"))
-	a.False(n.match("/posts/id.html/"))
-	a.False(n.match("/posts/id.html/page"))
-	a.False(n.match("/post/id"))
+	newMatcher(a, "/posts/{id}/page/{page}").
+		True("/posts/1/page/1", map[string]string{"id": "1", "page": "1"}).
+		False("/posts/1", nil).
+		True("/posts/1.html/page/1", map[string]string{"id": "1.html", "page": "1"}).
+		False("/posts/id-1/page/1/", nil).
+		False("/posts/id-1/page/1/size/1", nil)
 
-	n, err = New("/posts/{id}/page/{page}", nil)
-	a.NotError(err).NotNil(n)
-	a.True(n.match("/posts/1/page/1"))
-	a.False(n.match("/posts/1"))
-	a.True(n.match("/posts/1.html/page/1"))
-	a.False(n.match("/posts/id-1/page/1/"))
-	a.False(n.match("/posts/id-1/page/1/size/1"))
+	newMatcher(a, "/posts/{id}-{page}").
+		True("/posts/1-1", map[string]string{"id": "1", "page": "1"}).
+		True("/posts/1.html-1", map[string]string{"id": "1.html", "page": "1"}).
+		False("/posts/id-11/", nil).
+		False("/posts/id-1/size/1", nil)
 
-	n, err = New("/posts/{id}-{page}", nil)
-	a.NotError(err).NotNil(n)
-	a.True(n.match("/posts/1-1"))
-	a.True(n.match("/posts/1.html-1"))
-	a.False(n.match("/posts/id-11/"))
-	a.False(n.match("/posts/id-1/size/1"))
+	newMatcher(a, "/users/{user}/{repos}/pulls").
+		False("/users/user/repos/pulls/number", nil).
+		False("/users/user/repos/pullsnumber", nil)
 
-	n, err = New("/users/{user}/{repos}/pulls", nil)
-	a.False(n.match("/users/user/repos/pulls/number"))
-	a.False(n.match("/users/user/repos/pullsnumber"))
-
-	n, err = New("/users/{user}/repos/{pulls}", nil)
-	a.False(n.match("/users/user/repos/pulls/number"))
+	newMatcher(a, "/users/{user}/repos/{pulls}").
+		False("/users/user/repos/pulls/number", nil)
 }
 
 func TestNamed_match_wildcard(t *testing.T) {
 	a := assert.New(t)
 
-	n, err := New("/posts/{id}/*", nil)
-	a.NotError(err).NotNil(n)
-	a.False(n.match("/posts/1"))
-	a.False(n.match("/posts"))
-	a.True(n.match("/posts/2/"))
-	a.True(n.match("/posts/id/index.html"))
-	a.True(n.match("/posts/id.html/index.html"))
+	newMatcher(a, "/posts/{id}/*").
+		False("/posts/1", nil).
+		False("/posts", nil).
+		True("/posts/2/", map[string]string{"id": "2"}).
+		True("/posts/id.html/index.html", map[string]string{"id": "id.html"})
 
-	n, err = New("/posts/{id}/page/{page}/*", nil)
-	a.NotError(err).NotNil(n)
-	a.False(n.match("/posts/1/page/1"))
-	a.True(n.match("/posts/1.html/page/1/"))
-	a.True(n.match("/posts/id-1/page/1/index.html"))
+	newMatcher(a, "/posts/{id}/page/{page}/*").
+		False("/posts/1/page/1", nil).
+		True("/posts/1.html/page/1/", map[string]string{"id": "1.html", "page": "1"}).
+		True("/posts/id-1/page/1/index.html", map[string]string{"id": "id-1", "page": "1"})
 
-	n, err = New("/posts/{id}-{page}/*", nil)
-	a.NotError(err).NotNil(n)
-	a.False(n.match("/posts/1-1"))
-	a.True(n.match("/posts/1.html-1/"))
-	a.True(n.match("/posts/id-1/index.html"))
-}
-
-func TestNamed_Params(t *testing.T) {
-	a := assert.New(t)
-	n, err := New("/posts/{id}", nil)
-	a.NotError(err).NotNil(n)
-	a.Equal(n.Params("/posts/1"), map[string]string{"id": "1"})
-	a.Equal(n.Params("/posts/1.html"), map[string]string{"id": "1.html"})
-	a.Equal(len(n.Params("/posts/1.html/")), 0)
-
-	n, err = New("/posts/{id}/page/{page}", nil)
-	a.NotError(err).NotNil(n)
-	a.Equal(n.Params("/posts/1/page/1"), map[string]string{"id": "1", "page": "1"})
-	a.Equal(n.Params("/posts/1.html/page/1"), map[string]string{"id": "1.html", "page": "1"})
-	a.Nil(n.Params("/posts/1.html/"))
+	newMatcher(a, "/posts/{id}-{page}/*").
+		False("/posts/1-1", nil).
+		True("/posts/1.html-1/", map[string]string{"id": "1.html", "page": "1"}).
+		True("/posts/id-1/index.html", map[string]string{"id": "id", "page": "1"})
 }
 
 func TestNamed_URL(t *testing.T) {
