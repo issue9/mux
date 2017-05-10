@@ -50,12 +50,12 @@ func newBase(pattern string) *base {
 	return ret
 }
 
-func (i *base) pattern() string {
-	return i.patternString
+func (b *base) pattern() string {
+	return b.patternString
 }
 
-// Entry.Add()
-func (i *base) Add(h http.Handler, methods ...string) error {
+// Entry.add()
+func (b *base) add(h http.Handler, methods ...string) error {
 	if len(methods) == 0 {
 		methods = method.Default
 	}
@@ -65,7 +65,7 @@ func (i *base) Add(h http.Handler, methods ...string) error {
 			return fmt.Errorf("不支持的请求方法 %v", m)
 		}
 
-		if err := i.add(h, m); err != nil {
+		if err := b.addSingle(h, m); err != nil {
 			return err
 		}
 	}
@@ -73,37 +73,37 @@ func (i *base) Add(h http.Handler, methods ...string) error {
 	return nil
 }
 
-func (i *base) add(h http.Handler, method string) error {
+func (b *base) addSingle(h http.Handler, method string) error {
 	if method == http.MethodOptions { // 强制修改 OPTIONS 方法的处理方式
-		if i.fixedOptionsHandler { // 被强制修改过，不能再受理。
+		if b.fixedOptionsHandler { // 被强制修改过，不能再受理。
 			return errors.New("该请求方法 OPTIONS 已经存在") // 与以下的错误提示相同
 		}
 
-		i.handlers[http.MethodOptions] = h
-		i.fixedOptionsHandler = true
+		b.handlers[http.MethodOptions] = h
+		b.fixedOptionsHandler = true
 		return nil
 	}
 
 	// 非 OPTIONS 请求
-	if _, found := i.handlers[method]; found {
+	if _, found := b.handlers[method]; found {
 		return fmt.Errorf("该请求方法 %v 已经存在", method)
 	}
-	i.handlers[method] = h
+	b.handlers[method] = h
 
 	// 重新生成 optionsAllow 字符串
-	if !i.fixedOptionsAllow {
-		i.optionsAllow = i.getOptionsAllow()
+	if !b.fixedOptionsAllow {
+		b.optionsAllow = b.getOptionsAllow()
 	}
 	return nil
 }
 
-func (i *base) optionsServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Allow", i.optionsAllow)
+func (b *base) optionsServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Allow", b.optionsAllow)
 }
 
-func (i *base) getOptionsAllow() string {
-	methods := make([]string, 0, len(i.handlers))
-	for method := range i.handlers {
+func (b *base) getOptionsAllow() string {
+	methods := make([]string, 0, len(b.handlers))
+	for method := range b.handlers {
 		methods = append(methods, method)
 	}
 
@@ -112,42 +112,42 @@ func (i *base) getOptionsAllow() string {
 }
 
 // Entry.Remove()
-func (i *base) Remove(methods ...string) bool {
+func (b *base) Remove(methods ...string) bool {
 	for _, method := range methods {
-		delete(i.handlers, method)
+		delete(b.handlers, method)
 		if method == http.MethodOptions { // 不恢复方法，只恢复了 fixedOptionsHandler
-			i.fixedOptionsHandler = false
+			b.fixedOptionsHandler = false
 		}
 	}
 
 	// 删完了
-	if len(i.handlers) == 0 {
-		i.optionsAllow = ""
+	if len(b.handlers) == 0 {
+		b.optionsAllow = ""
 		return true
 	}
 
 	// 只有一个 OPTIONS 了，且未经外界强制修改，则将其也一并删除。
-	if len(i.handlers) == 1 && i.handlers[http.MethodOptions] != nil {
-		if !i.fixedOptionsAllow && !i.fixedOptionsHandler {
-			delete(i.handlers, http.MethodOptions)
-			i.optionsAllow = ""
+	if len(b.handlers) == 1 && b.handlers[http.MethodOptions] != nil {
+		if !b.fixedOptionsAllow && !b.fixedOptionsHandler {
+			delete(b.handlers, http.MethodOptions)
+			b.optionsAllow = ""
 			return true
 		}
 	}
 
-	if !i.fixedOptionsAllow {
-		i.optionsAllow = i.getOptionsAllow()
+	if !b.fixedOptionsAllow {
+		b.optionsAllow = b.getOptionsAllow()
 	}
 	return false
 }
 
 // Entry.SetAllow()
-func (i *base) SetAllow(optionsAllow string) {
-	i.optionsAllow = optionsAllow
-	i.fixedOptionsAllow = true
+func (b *base) SetAllow(optionsAllow string) {
+	b.optionsAllow = optionsAllow
+	b.fixedOptionsAllow = true
 }
 
 // Entry.Handler()
-func (i *base) Handler(method string) http.Handler {
-	return i.handlers[method]
+func (b *base) Handler(method string) http.Handler {
+	return b.handlers[method]
 }
