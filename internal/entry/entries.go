@@ -16,14 +16,9 @@ import (
 
 // Entries 列表
 type Entries struct {
-	mu sync.RWMutex
-
-	// 是否禁用自动产生 OPTIONS 请求方法。
-	// 该值不能中途修改，否则会出现部分有 OPTIONS，部分没有的情况。
-	disableOptions bool
-
-	// 路由项，按资源进行分类。
-	entries []Entry
+	mu             sync.RWMutex
+	entries        []Entry // 路由项，按资源进行分类。
+	disableOptions bool    // 是否禁用自动产生 OPTIONS 请求方法。
 }
 
 // NewEntries 声明一个 Entries 实例
