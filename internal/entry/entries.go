@@ -111,7 +111,7 @@ func (es *Entries) Add(pattern string, h http.Handler, methods ...string) error 
 		sort.SliceStable(es.entries, func(i, j int) bool { return es.entries[i].priority() < es.entries[j].priority() })
 	}
 
-	return ety.Add(h, methods...)
+	return ety.add(h, methods...)
 }
 
 // Entry 查找指定匹配模式下的 Entry

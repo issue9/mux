@@ -18,14 +18,11 @@ type Entry interface {
 	// 优先级，用于 entries 排定匹配优先级用，越小越靠前
 	priority() int
 
-	// 获取指定请求方法对应的 http.Handler 实例，若不存在，则返回 nil。
-	Handler(method string) http.Handler
-
 	// 添加请求方法及其对应的处理函数。
 	//
 	// 若已经存在，则返回错误。
 	// 若 method == http.MethodOptions，则可以去覆盖默认的处理方式。
-	Add(handler http.Handler, methods ...string) error
+	add(handler http.Handler, methods ...string) error
 
 	// 移除指定方法的处理函数。若 Entry 中已经没有任何 http.Handler，则返回 true
 	//
@@ -34,6 +31,9 @@ type Entry interface {
 
 	// 根据参数生成一条路径。
 	URL(params map[string]string, path string) (string, error)
+
+	// 获取指定请求方法对应的 http.Handler 实例，若不存在，则返回 nil。
+	Handler(method string) http.Handler
 
 	// 手动设置 OPTIONS 的 Allow 报头。不调用此函数，
 	// 会自动根据当前的 Add 和 Remove 调整 Allow 报头，

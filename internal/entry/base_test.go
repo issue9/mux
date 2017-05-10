@@ -28,59 +28,59 @@ var put = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(203)
 })
 
-func TestItems_Add_Remove(t *testing.T) {
+func TestItems_add_Remove(t *testing.T) {
 	a := assert.New(t)
 
-	i := newBase("/")
-	a.NotNil(i)
+	b := newBase("/")
+	a.NotNil(b)
 
-	a.NotError(i.Add(get, http.MethodGet, http.MethodPost))
-	a.Error(i.Add(get, http.MethodPost)) // 存在相同的
-	a.False(i.Remove(http.MethodPost))
-	a.True(i.Remove(http.MethodGet))
-	a.True(i.Remove(http.MethodGet))
+	a.NotError(b.add(get, http.MethodGet, http.MethodPost))
+	a.Error(b.add(get, http.MethodPost)) // 存在相同的
+	a.False(b.Remove(http.MethodPost))
+	a.True(b.Remove(http.MethodGet))
+	a.True(b.Remove(http.MethodGet))
 
 	// OPTIONS
-	a.NotError(i.Add(get, http.MethodOptions))
-	a.Error(i.Add(get, http.MethodOptions))
-	i.Remove(http.MethodOptions)
-	a.NotError(i.Add(get, http.MethodOptions))
+	a.NotError(b.add(get, http.MethodOptions))
+	a.Error(b.add(get, http.MethodOptions))
+	b.Remove(http.MethodOptions)
+	a.NotError(b.add(get, http.MethodOptions))
 
 	// 删除不存在的内容
-	i.Remove("not exists")
+	b.Remove("not exists")
 }
 
 func TestItems_OptionsAllow(t *testing.T) {
 	a := assert.New(t)
 
-	i := newBase("/")
-	a.NotNil(i)
+	b := newBase("/")
+	a.NotNil(b)
 
 	test := func(allow string) {
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest("OPTIONS", "/empty", nil)
-		i.Handler(http.MethodOptions).ServeHTTP(w, r)
+		b.Handler(http.MethodOptions).ServeHTTP(w, r)
 		a.Equal(w.Header().Get("Allow"), allow)
 	}
 
 	// 默认
-	a.Equal(i.optionsAllow, "OPTIONS")
+	a.Equal(b.optionsAllow, "OPTIONS")
 
-	a.NotError(i.Add(get, http.MethodGet))
+	a.NotError(b.add(get, http.MethodGet))
 	test("GET, OPTIONS")
 
-	a.NotError(i.Add(get, http.MethodPost))
+	a.NotError(b.add(get, http.MethodPost))
 	test("GET, OPTIONS, POST")
 
 	// 显式调用 SetAllow() 之后，不再改变 optionsallow
-	i.SetAllow("TEST,TEST1")
+	b.SetAllow("TEST,TEST1")
 	test("TEST,TEST1")
-	a.NotError(i.Add(get, http.MethodDelete))
+	a.NotError(b.add(get, http.MethodDelete))
 	test("TEST,TEST1")
 
 	// 显式使用 http.MehtodOptions 之后，所有输出都以 options 为主。
-	a.NotError(i.Add(options, http.MethodOptions))
+	a.NotError(b.add(options, http.MethodOptions))
 	test("options")
-	a.NotError(i.Add(get, http.MethodPatch))
+	a.NotError(b.add(get, http.MethodPatch))
 	test("options")
 }
