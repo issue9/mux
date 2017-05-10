@@ -17,7 +17,8 @@ const (
 )
 
 const (
-	typeBasic = iota + 1
+	typeUnknown = iota
+	typeBasic
 	typeRegexp
 	typeNamed
 )

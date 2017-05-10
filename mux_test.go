@@ -204,3 +204,23 @@ func TestClearPath(t *testing.T) {
 	a.Equal(cleanPath("/api/../../"), "/")
 	a.Equal(cleanPath("/api../"), "/api../")
 }
+
+func BenchmarkCleanPath(b *testing.B) {
+	a := assert.New(b)
+
+	paths := []string{
+		"/api//",
+		"api//",
+		"/api/",
+		"/api/./",
+		"/api/..",
+		"/api/../",
+		"/api/../../",
+		"/api../",
+	}
+
+	for i := 0; i < b.N; i++ {
+		ret := cleanPath(paths[i%len(paths)])
+		a.True(len(ret) > 0)
+	}
+}
