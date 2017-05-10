@@ -30,6 +30,8 @@ type Entry interface {
 	remove(method ...string) (empty bool)
 
 	// 根据参数生成一条路径。
+	// params 为替换匹配字符串的参数，
+	// path 在有通配符的情况下，会替代通配符所代码的内容。
 	URL(params map[string]string, path string) (string, error)
 
 	// 获取指定请求方法对应的 http.Handler 实例，若不存在，则返回 nil。
