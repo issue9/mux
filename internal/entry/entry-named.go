@@ -72,17 +72,19 @@ func (n *named) priority() int {
 }
 
 // Entry.match
-func (n *named) match(path string) bool {
+func (n *named) match(path string) (bool, map[string]string) {
+	params := make(map[string]string, len(n.nodes))
+
 	for i, name := range n.nodes {
 		islast := (i == len(n.nodes)-1)
 
 		if name.isString { // 普通字符串节点
 			if !strings.HasPrefix(path, name.value) {
-				return false
+				return false, nil
 			}
 
 			if islast {
-				return (path == name.value)
+				return (path == name.value), params
 			}
 
 			path = path[len(name.value):]
@@ -90,56 +92,23 @@ func (n *named) match(path string) bool {
 			index := strings.IndexByte(path, name.endByte)
 			if !islast {
 				if index == -1 {
-					return false
-				}
-				path = path[index:]
-			} else { // 最后一个节点了
-				if index == -1 {
-					return !n.wildcard
-				}
-				return n.wildcard
-			}
-		} // end if
-	} // end false
-	return true
-}
-
-// Entry.Params
-func (n *named) Params(path string) map[string]string {
-	params := make(map[string]string, len(n.nodes))
-
-	for i, name := range n.nodes {
-		islast := (i == len(n.nodes)-1)
-
-		if name.isString {
-			if !strings.HasPrefix(path, name.value) {
-				return nil
-			}
-			path = path[len(name.value):]
-		} else {
-			index := strings.IndexByte(path, name.endByte)
-
-			if !islast {
-				if index == -1 { // 不匹配
-					return nil
+					return false, nil
 				}
 
 				params[name.value] = path[:index]
 				path = path[index:]
-			} else {
-				if index < 0 { // 没有 / 符号了
+			} else { // 最后一个节点了
+				if index == -1 {
 					params[name.value] = path
-					break
+					return !n.wildcard, params
 				}
 
-				if n.wildcard {
-					params[name.value] = path[:index]
-					break
-				}
+				params[name.value] = path[:index]
+				return n.wildcard, params
 			}
-		}
-	} // end for
-	return params
+		} // end if
+	} // end false
+	return true, params
 }
 
 // URL

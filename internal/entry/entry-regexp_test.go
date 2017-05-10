@@ -41,74 +41,51 @@ func TestNewRegexp(t *testing.T) {
 func TestRegexp_match(t *testing.T) {
 	a := assert.New(t)
 
-	n, err := New("/posts/{id:\\d+}", nil)
-	a.NotError(err).NotNil(n)
+	newMatcher(a, "/posts/{id:\\d+}").
+		True("/posts/1", map[string]string{"id": "1"}).
+		False("/posts/", nil).
+		False("/posts", nil).
+		False("/posts/id", nil).
+		False("/posts/id.html/", nil).
+		False("/posts/id.html/page", nil).
+		False("/post/id", nil)
 
-	a.True(n.match("/posts/1"))
-	a.False(n.match("/posts/"))
-	a.False(n.match("/posts"))
-	a.True(n.match("/posts/2"))
-	a.False(n.match("/posts/id"))
-	a.False(n.match("/posts/id.html"))
-	a.False(n.match("/posts/id.html/"))
-	a.False(n.match("/posts/id.html/page"))
-	a.False(n.match("/post/id"))
+	newMatcher(a, "/posts/{id}/page/{page:\\d+}").
+		True("/posts/1/page/1", map[string]string{"id": "1", "page": "1"}).
+		True("/posts/1.html/page/1", map[string]string{"id": "1.html", "page": "1"}).
+		False("/posts/1.html/page/x", nil).
+		False("/posts/id-1/page/1/", nil).
+		False("/posts/id-1/page/1/size/1", nil)
 
-	n, err = New("/posts/{id}/page/{page:\\d+}", nil)
-	a.True(n.match("/posts/1/page/1"))
-	a.True(n.match("/posts/1.html/page/1"))
+	// size 为未命名参数
+	newMatcher(a, "/posts/{id}/page/{page:\\d+}/size/{:\\d+}").
+		True("/posts/1.html/page/1/size/11", map[string]string{"id": "1.html", "page": "1"}).
+		False("/posts/1.html/page/x/size/11", nil)
 
-	a.False(n.match("/posts/1.html/page/x"))
-	a.False(n.match("/posts/id-1/page/1/"))
-	a.False(n.match("/posts/id-1/page/1/size/1"))
-
-	n, err = New("/posts/{id}/page/{page:\\d+}/size/{:\\d+}", nil)
-	a.True(n.match("/posts/1.html/page/1/size/1"))
-	a.True(n.match("/posts/1.html/page/1/size/11"))
-	a.False(n.match("/posts/1.html/page/x/size/11"))
-
-	n, err = New("/users/{user:\\w+}/{repos}/pulls", nil)
-	a.False(n.match("/users/user/repos/pulls/number"))
+	newMatcher(a, "/users/{user:\\w+}/{repos}/pulls").
+		False("/users/user/repos/pulls/number", nil)
 }
 
 func TestRegexp_match_wildcard(t *testing.T) {
 	a := assert.New(t)
 
-	n, err := New("/posts/{id:\\d+}/*", nil)
-	a.NotError(err).NotNil(n)
+	newMatcher(a, "/posts/{id:\\d+}/*").
+		False("/posts/1", nil).
+		False("/posts", nil).
+		True("/posts/1/", map[string]string{"id": "1"}).
+		True("/posts/1/index.html", map[string]string{"id": "1"}).
+		False("/posts/id.html/page", nil)
 
-	a.False(n.match("/posts/1"))
-	a.False(n.match("/posts"))
-	a.True(n.match("/posts/1/"))
-	a.True(n.match("/posts/1/index.html"))
-	a.False(n.match("/posts/id.html/page"))
+	newMatcher(a, "/posts/{id}/page/{page:\\d+}/*").
+		False("/posts/1/page/1", nil).
+		True("/posts/1.html/page/1/", map[string]string{"id": "1.html", "page": "1"}).
+		True("/posts/1.html/page/1/index.html", map[string]string{"id": "1.html", "page": "1"}).
+		False("/posts/1.html/page/x/index.html", nil)
 
-	n, err = New("/posts/{id}/page/{page:\\d+}/*", nil)
-	a.False(n.match("/posts/1/page/1"))
-	a.True(n.match("/posts/1.html/page/1/"))
-	a.True(n.match("/posts/1.html/page/1/index.html"))
-	a.False(n.match("/posts/1.html/page/x/index.html"))
-
-	n, err = New("/posts/{id}/page/{page:\\d+}/size/{:\\d+}/*", nil)
-	a.False(n.match("/posts/1.html/page/1/size/1"))
-	a.True(n.match("/posts/1.html/page/1/size/1/index.html"))
-}
-
-func TestRegexp_Params(t *testing.T) {
-	a := assert.New(t)
-	n, err := New("/posts/{id:[^/]+}", nil)
-	a.NotError(err).NotNil(n)
-	a.Equal(n.Params("/posts/1"), map[string]string{"id": "1"})
-	a.Equal(n.Params("/posts/1.html"), map[string]string{"id": "1.html"})
-	a.Equal(n.Params("/posts/1.html/"), map[string]string{"id": "1.html"})
-
-	n, err = New("/posts/{id}/page/{page:\\d+}", nil)
-	a.Equal(n.Params("/posts/1/page/1"), map[string]string{"id": "1", "page": "1"})
-	a.Equal(n.Params("/posts/1.html/page/1"), map[string]string{"id": "1.html", "page": "1"})
-
-	// 带有未命名参数
-	n, err = New("/posts/{id}/page/{page:\\d+}/size/{:\\d+}", nil)
-	a.Equal(n.Params("/posts/1.html/page/1/size/1"), map[string]string{"id": "1.html", "page": "1"})
+	// size 为未命名参数
+	newMatcher(a, "/posts/{id}/page/{page:\\d+}/size/{:\\d+}/*").
+		False("/posts/1.html/page/1/size/1", nil).
+		True("/posts/1.html/page/1/size/1/index.html", map[string]string{"id": "1.html", "page": "1"})
 }
 
 func TestRegexp_URL(t *testing.T) {

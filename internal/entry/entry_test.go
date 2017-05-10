@@ -5,76 +5,42 @@
 package entry
 
 import (
-	"net/http"
 	"testing"
 
 	"github.com/issue9/assert"
 )
 
-func TestEntry_match(t *testing.T) {
-	a := assert.New(t)
-	hf := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	})
-
-	// 静态路由-1
-	e, err := New("/blog/post/1", hf)
-	a.NotError(err)
-	a.True(e.match("/blog/post/1"))
-	a.False(e.match("/blog/post/1/"))
-	a.False(e.match("/blog/post/1/page/2")) // 非 / 结尾的，只能全路径匹配。
-	a.False(e.match("/blog"))               // 不匹配，长度太短
-
-	// basic with wildcard
-	e, err = New("/blog/post/*", hf)
-	a.NotError(err)
-	a.True(e.match("/blog/post/1"))
-	a.True(e.match("/blog/post/"))
-	a.True(e.match("/blog/post/1/page/2"))
-	a.False(e.match("/blog")) // 不匹配，长度太短
-
-	// 命名路由
-	e, err = New("/blog/post/{id}", hf)
-	a.NotError(err)
-	a.True(e.match("/blog/post/1"))
-	a.False(e.match("/blog/post/2/page/1")) // 不匹配
-	a.False(e.match("/plog/post/2"))        // 不匹配
-
-	// 多个命名正则表达式
-	e, err = New("/blog/{action:\\w+}-{id:\\d+}/", hf)
-	a.NotError(err)
-	a.True(e.match("/blog/post-1/"))
-	a.False(e.match("/blog/post-1/page-2")) // 正则没有部分匹配功能
-	a.False(e.match("/blog/post-1d/"))      // 正则，不匹配
-
-	// 多个命名正则表达式，带可选参数
-	e, err = New("/blog/{action:\\w+}-{id:\\d*}/", hf)
-	a.NotError(err)
-	a.True(e.match("/blog/post-/"))
-	a.True(e.match("/blog/post-1/"))
+type matcher struct {
+	a *assert.Assertion
+	e Entry
 }
 
-func TestEntry_Params(t *testing.T) {
-	a := assert.New(t)
-	h := func(w http.ResponseWriter, r *http.Request) {
+func newMatcher(a *assert.Assertion, pattern string) *matcher {
+	e, err := New(pattern, nil)
+	a.NotError(err).NotNil(e)
+
+	return &matcher{
+		a: a,
+		e: e,
 	}
-	hf := http.HandlerFunc(h)
+}
 
-	// 静态路由
-	e, err := New("/blog/post/1", hf)
-	a.NotError(err)
-	a.Nil(e.Params("/blog/post/1"))
-	a.Nil(e.Params("/blog/post/1/page/2"))
-	a.Nil(e.Params("/blog"))
+func (m *matcher) True(path string, params map[string]string) *matcher {
+	ok, ps := m.e.match(path)
+	m.a.True(ok).
+		Equal(ps, params)
 
-	// 命名路由
-	e, err = New("/blog/post/{id}", hf)
-	a.NotError(err)
-	a.Equal(0, len(e.Params("/plog/post/2"))) // 不匹配
-	a.Equal(e.Params("/blog/post/1"), map[string]string{"id": "1"})
+	return m
+}
 
-	// 多个命名正则表达式
-	e, err = New("/blog/{action:\\w+}-{id:\\d+}/", hf)
-	a.NotError(err)
-	a.Equal(e.Params("/blog/post-1/page-2"), map[string]string{"action": "post", "id": "1"})
-	a.Equal(0, len(e.Params("/blog/post-1d/"))) // 不匹配
+func (m *matcher) False(path string, params map[string]string) *matcher {
+	ok, _ := m.e.match(path) // 为 false 则返回值没意义
+	m.a.False(ok)
+
+	return m
+}
+
+func TestNew(t *testing.T) {
+	//a := assert.New(t)
+	//  TODO
 }

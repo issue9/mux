@@ -54,35 +54,35 @@ func (r *regexp) priority() int {
 }
 
 // Entry.Match
-func (r *regexp) match(url string) bool {
+func (r *regexp) match(url string) (bool, map[string]string) {
 	loc := r.expr.FindStringIndex(url)
 
 	if r.wildcard {
 		if loc != nil &&
 			loc[0] == 0 &&
 			loc[1] < len(url) {
-			return true
+			return true, r.params(url)
 		}
 	}
 
 	if loc != nil &&
 		loc[0] == 0 &&
 		loc[1] == len(url) {
-		return true
+		return true, r.params(url)
 	}
 
-	return false
+	return false, nil
 }
 
 // Entry.Params
-func (r *regexp) Params(url string) map[string]string {
+func (r *regexp) params(url string) map[string]string {
 	if !r.hasParams {
 		return nil
 	}
 
 	// 正确匹配正则表达式，则获相关的正则表达式命名变量。
-	mapped := make(map[string]string, 3)
 	subexps := r.expr.SubexpNames()
+	mapped := make(map[string]string, len(subexps))
 	args := r.expr.FindStringSubmatch(url)
 	for index, name := range subexps {
 		if len(name) > 0 && index < len(args) {
