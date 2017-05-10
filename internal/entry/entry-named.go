@@ -107,7 +107,7 @@ func (n *named) match(path string) (bool, map[string]string) {
 				return n.wildcard, params
 			}
 		} // end if
-	} // end false
+	} // end for
 	return true, params
 }
 

@@ -11,7 +11,7 @@ type Entry interface {
 	// 返回路由的匹配字符串
 	pattern() string
 
-	// 与当前是否匹配，若匹配的话，也将同时返回参数
+	// 与当前是否匹配，若匹配的话，也将同时返回参数。
 	// params 参数仅在 matched 为 true 时，才会有意义
 	match(path string) (matched bool, params map[string]string)
 

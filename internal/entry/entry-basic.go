@@ -4,10 +4,7 @@
 
 package entry
 
-import (
-	"errors"
-	"strings"
-)
+import "strings"
 
 // 最基本的字符串匹配，只能全字符串匹配。
 type basic struct {
@@ -47,5 +44,5 @@ func (b *basic) URL(params map[string]string, path string) (string, error) {
 		return b.prefix + path, nil
 	}
 
-	return "", errors.New("不支持方法")
+	return b.pattern(), nil
 }

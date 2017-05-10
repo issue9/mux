@@ -133,7 +133,7 @@ func (es *Entries) findEntry(pattern string) Entry {
 	return nil
 }
 
-// Match 查找与 path 最匹配的路由项
+// Match 查找与 path 最匹配的路由项以及对应的参数
 func (es *Entries) Match(path string) (Entry, map[string]string) {
 	es.mu.RLock()
 	defer es.mu.RUnlock()

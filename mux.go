@@ -37,16 +37,10 @@ var (
 //    Add("/api/{version:\\d+}",h3, http.MethodGet, http.MethodPost) // 只匹配 GET 和 POST
 //  http.ListenAndServe(m)
 type Mux struct {
-	entries *entry.Entries
-
-	// 是否不对提交的路径作处理。
-	skipCleanPath bool
-
-	// 404 的处理方式
-	notFound http.HandlerFunc
-
-	// 405 的处理方式
-	methodNotAllowed http.HandlerFunc
+	entries          *entry.Entries
+	skipCleanPath    bool             // 是否不对提交的路径作处理。
+	notFound         http.HandlerFunc // 404 的处理方式
+	methodNotAllowed http.HandlerFunc // 405 的处理方式
 }
 
 // New 声明一个新的 Mux。
