@@ -100,12 +100,11 @@ func (mux *Mux) Add(pattern string, h http.Handler, methods ...string) error {
 // 如果想实现对处理方法的自定义，可以显示地调用 Add 方法:
 //  Mux.Add("/api/1", handle, http.MethodOptions)
 func (mux *Mux) Options(pattern string, allow string) *Mux {
-	if ety := mux.entries.Entry(pattern); ety != nil {
-		ety.SetAllow(allow)
-	} else {
-		// TODO 自行添加该 Entry ?
-		panic("不存在该路径下的路由")
+	ety, err := mux.entries.Entry(pattern)
+	if err != nil {
+		panic(err)
 	}
+	ety.SetAllow(allow)
 
 	return mux
 }

@@ -94,11 +94,22 @@ func (es *Entries) Add(pattern string, h http.Handler, methods ...string) error 
 		return errors.New("参数 h 不能为空")
 	}
 
-	ety := es.Entry(pattern)
+	ety, err := es.Entry(pattern)
+	if err != nil {
+		return err
+	}
+
+	return ety.add(h, methods...)
+}
+
+// Entry 查找指定匹配模式下的 Entry，不存在，则声明新的
+func (es *Entries) Entry(pattern string) (Entry, error) {
+	ety := es.findEntry(pattern)
+
 	if ety == nil { // 不存在相同的资源项，则声明新的。
 		var err error
-		if ety, err = NewEntry(pattern); err != nil {
-			return err
+		if ety, err = newEntry(pattern); err != nil {
+			return nil, err
 		}
 
 		if es.disableOptions { // 禁用 OPTIONS
@@ -111,11 +122,10 @@ func (es *Entries) Add(pattern string, h http.Handler, methods ...string) error 
 		sort.SliceStable(es.entries, func(i, j int) bool { return es.entries[i].priority() < es.entries[j].priority() })
 	}
 
-	return ety.add(h, methods...)
+	return ety, nil
 }
 
-// Entry 查找指定匹配模式下的 Entry
-func (es *Entries) Entry(pattern string) Entry {
+func (es *Entries) findEntry(pattern string) Entry {
 	es.mu.RLock()
 	defer es.mu.RUnlock()
 

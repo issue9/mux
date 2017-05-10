@@ -41,10 +41,10 @@ type Entry interface {
 	SetAllow(string)
 }
 
-// NewEntry 根据内容，生成相应的 Entry 接口实例。
+// newEntry 根据内容，生成相应的 Entry 接口实例。
 //
 // pattern 匹配内容。
-func NewEntry(pattern string) (Entry, error) {
+func newEntry(pattern string) (Entry, error) {
 	s, err := parse(pattern)
 	if err != nil {
 		return nil, err
