@@ -14,26 +14,22 @@ import (
 	"github.com/issue9/mux/internal/method"
 )
 
+type optionsState int8
+
+const (
+	optionsStateDefault      optionsState = iota // 默认情况
+	optionsStateFixedString                      // 设置为固定的字符串
+	optionsStateFixedHandler                     // 设置为固定的 http.Handler
+	optionsStateDisable                          // 禁用
+)
+
 // 所有 Entry 实现的公用部分。
 type base struct {
-	patternString string
-
-	// 是否包含通配符
-	wildcard bool
-
-	// 请求方法及其对应的 Handler
-	handlers map[string]http.Handler
-
-	// 缓存的 OPTIONS 请求头的 allow 报头内容，每次更新 handlers 时更新。
-	optionsAllow string
-
-	// 固定 optionsAllow 不再修改，
-	// 调用 SetAllow() 进行强制修改之后为 true。
-	fixedOptionsAllow bool
-
-	// 固定 handlers[http.MethodOptions] 不再修改，
-	// 显示地调用 Add(http.MethodOptions,...) 进行赋值之后为 true。
-	fixedOptionsHandler bool
+	patternString string                  // 匹配模式字符串
+	wildcard      bool                    // 是否包含通配符
+	handlers      map[string]http.Handler // 请求方法及其对应的 Handler
+	optionsAllow  string                  // 缓存的 OPTIONS 请求头的 allow 报头内容。
+	optionsState  optionsState            // OPTIONS 报头的处理方式
 }
 
 func newBase(pattern string) *base {
@@ -41,6 +37,7 @@ func newBase(pattern string) *base {
 		patternString: pattern,
 		handlers:      make(map[string]http.Handler, len(method.Supported)),
 		wildcard:      strings.HasSuffix(pattern, "/*"),
+		optionsState:  optionsStateDefault,
 	}
 
 	// 添加默认的 OPTIONS 请求内容
@@ -75,12 +72,12 @@ func (b *base) add(h http.Handler, methods ...string) error {
 
 func (b *base) addSingle(h http.Handler, method string) error {
 	if method == http.MethodOptions { // 强制修改 OPTIONS 方法的处理方式
-		if b.fixedOptionsHandler { // 被强制修改过，不能再受理。
+		if b.optionsState == optionsStateFixedHandler { // 被强制修改过，不能再受理。
 			return errors.New("该请求方法 OPTIONS 已经存在") // 与以下的错误提示相同
 		}
 
 		b.handlers[http.MethodOptions] = h
-		b.fixedOptionsHandler = true
+		b.optionsState = optionsStateFixedHandler
 		return nil
 	}
 
@@ -91,7 +88,7 @@ func (b *base) addSingle(h http.Handler, method string) error {
 	b.handlers[method] = h
 
 	// 重新生成 optionsAllow 字符串
-	if !b.fixedOptionsAllow {
+	if b.optionsState == optionsStateDefault {
 		b.optionsAllow = b.getOptionsAllow()
 	}
 	return nil
@@ -115,8 +112,8 @@ func (b *base) getOptionsAllow() string {
 func (b *base) remove(methods ...string) bool {
 	for _, method := range methods {
 		delete(b.handlers, method)
-		if method == http.MethodOptions { // 不恢复方法，只恢复了 fixedOptionsHandler
-			b.fixedOptionsHandler = false
+		if method == http.MethodOptions { // 明确指出要删除该路由项的 OPTIONS 时，表示禁止
+			b.optionsState = optionsStateDisable
 		}
 	}
 
@@ -128,14 +125,14 @@ func (b *base) remove(methods ...string) bool {
 
 	// 只有一个 OPTIONS 了，且未经外界强制修改，则将其也一并删除。
 	if len(b.handlers) == 1 && b.handlers[http.MethodOptions] != nil {
-		if !b.fixedOptionsAllow && !b.fixedOptionsHandler {
+		if b.optionsState == optionsStateDefault {
 			delete(b.handlers, http.MethodOptions)
 			b.optionsAllow = ""
 			return true
 		}
 	}
 
-	if !b.fixedOptionsAllow {
+	if b.optionsState == optionsStateDefault {
 		b.optionsAllow = b.getOptionsAllow()
 	}
 	return false
@@ -144,7 +141,7 @@ func (b *base) remove(methods ...string) bool {
 // Entry.SetAllow()
 func (b *base) SetAllow(optionsAllow string) {
 	b.optionsAllow = optionsAllow
-	b.fixedOptionsAllow = true
+	b.optionsState = optionsStateFixedString
 }
 
 // Entry.Handler()

@@ -71,4 +71,5 @@
 // 系统会自动实现。当然用户也可以使用 *.Options() 函数指定特定的数据；
 // 或是直接使用 *.Add() 指定一个自定义的实现方式。
 // 如果不需要的话，也可以在 New() 中将 disableOptions 设置为 true。
+// 通过 *.Add 和 *.Remove 来显示的指定或是删除 OPTIONS，不受是否禁用的影响。
 package mux

@@ -16,16 +16,8 @@ var get = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
 })
 
-var post = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(201)
-})
-
 var options = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Allow", "options")
-})
-
-var put = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(203)
 })
 
 func TestItems_add_remove(t *testing.T) {
@@ -78,9 +70,19 @@ func TestItems_OptionsAllow(t *testing.T) {
 	a.NotError(b.add(get, http.MethodDelete))
 	test("TEST,TEST1")
 
-	// 显式使用 http.MehtodOptions 之后，所有输出都以 options 为主。
+	// 显式使用 http.MehtodOptions 之后，所有输出都从 options 函数来获取。
 	a.NotError(b.add(options, http.MethodOptions))
 	test("options")
 	a.NotError(b.add(get, http.MethodPatch))
+	test("options")
+	b.SetAllow("set allow") // SetAllow 无法改变其值
+	test("options")
+	// 强制删除
+	a.False(b.remove(http.MethodOptions))
+	a.Nil(b.handlers[http.MethodOptions])
+	b.SetAllow("set allow") // SetAllow 无法设置值
+	a.Nil(b.handlers[http.MethodOptions])
+	// 只能通过 add() 再次显示指定
+	a.NotError(b.add(options, http.MethodOptions))
 	test("options")
 }
