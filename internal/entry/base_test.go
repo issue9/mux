@@ -28,7 +28,7 @@ var put = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(203)
 })
 
-func TestItems_add_Remove(t *testing.T) {
+func TestItems_add_remove(t *testing.T) {
 	a := assert.New(t)
 
 	b := newBase("/")
@@ -36,18 +36,18 @@ func TestItems_add_Remove(t *testing.T) {
 
 	a.NotError(b.add(get, http.MethodGet, http.MethodPost))
 	a.Error(b.add(get, http.MethodPost)) // 存在相同的
-	a.False(b.Remove(http.MethodPost))
-	a.True(b.Remove(http.MethodGet))
-	a.True(b.Remove(http.MethodGet))
+	a.False(b.remove(http.MethodPost))
+	a.True(b.remove(http.MethodGet))
+	a.True(b.remove(http.MethodGet))
 
 	// OPTIONS
 	a.NotError(b.add(get, http.MethodOptions))
 	a.Error(b.add(get, http.MethodOptions))
-	b.Remove(http.MethodOptions)
+	a.NotError(b.remove(http.MethodOptions))
 	a.NotError(b.add(get, http.MethodOptions))
 
 	// 删除不存在的内容
-	b.Remove("not exists")
+	b.remove("not exists")
 }
 
 func TestItems_OptionsAllow(t *testing.T) {

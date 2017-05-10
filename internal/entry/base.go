@@ -111,8 +111,8 @@ func (b *base) getOptionsAllow() string {
 	return strings.Join(methods, ", ")
 }
 
-// Entry.Remove()
-func (b *base) Remove(methods ...string) bool {
+// Entry.remove()
+func (b *base) remove(methods ...string) bool {
 	for _, method := range methods {
 		delete(b.handlers, method)
 		if method == http.MethodOptions { // 不恢复方法，只恢复了 fixedOptionsHandler

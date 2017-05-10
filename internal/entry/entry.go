@@ -27,7 +27,7 @@ type Entry interface {
 	// 移除指定方法的处理函数。若 Entry 中已经没有任何 http.Handler，则返回 true
 	//
 	// 可以通过指定 http.MethodOptions 的方式，来强制删除 OPTIONS 请求方法的处理。
-	Remove(method ...string) (empty bool)
+	remove(method ...string) (empty bool)
 
 	// 根据参数生成一条路径。
 	URL(params map[string]string, path string) (string, error)

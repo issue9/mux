@@ -74,7 +74,7 @@ func (es *Entries) Remove(pattern string, methods ...string) {
 			continue
 		}
 
-		if empty := e.Remove(methods...); empty { // 该 Entry 下已经没有路由项了
+		if empty := e.remove(methods...); empty { // 该 Entry 下已经没有路由项了
 			es.entries = removeEntries(es.entries, e.pattern())
 		}
 		return // 只可能有一相完全匹配，找到之后，即可返回
@@ -102,7 +102,7 @@ func (es *Entries) Add(pattern string, h http.Handler, methods ...string) error 
 		}
 
 		if es.disableOptions { // 禁用 OPTIONS
-			ety.Remove(http.MethodOptions)
+			ety.remove(http.MethodOptions)
 		}
 
 		es.mu.Lock()
