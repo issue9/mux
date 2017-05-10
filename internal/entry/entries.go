@@ -104,23 +104,23 @@ func (es *Entries) Add(pattern string, h http.Handler, methods ...string) error 
 
 // Entry 查找指定匹配模式下的 Entry，不存在，则声明新的
 func (es *Entries) Entry(pattern string) (Entry, error) {
-	ety := es.findEntry(pattern)
-
-	if ety == nil { // 不存在相同的资源项，则声明新的。
-		var err error
-		if ety, err = newEntry(pattern); err != nil {
-			return nil, err
-		}
-
-		if es.disableOptions { // 禁用 OPTIONS
-			ety.remove(http.MethodOptions)
-		}
-
-		es.mu.Lock()
-		defer es.mu.Unlock()
-		es.entries = append(es.entries, ety)
-		sort.SliceStable(es.entries, func(i, j int) bool { return es.entries[i].priority() < es.entries[j].priority() })
+	if ety := es.findEntry(pattern); ety != nil {
+		return ety, nil
 	}
+
+	ety, err := newEntry(pattern)
+	if err != nil {
+		return nil, err
+	}
+
+	if es.disableOptions { // 禁用 OPTIONS
+		ety.remove(http.MethodOptions)
+	}
+
+	es.mu.Lock()
+	defer es.mu.Unlock()
+	es.entries = append(es.entries, ety)
+	sort.SliceStable(es.entries, func(i, j int) bool { return es.entries[i].priority() < es.entries[j].priority() })
 
 	return ety, nil
 }
@@ -139,8 +139,6 @@ func (es *Entries) findEntry(pattern string) Entry {
 }
 
 // Match 查找与 path 最匹配的路由项
-//
-// e 为当前匹配的 Entry 实例。
 func (es *Entries) Match(path string) (Entry, map[string]string) {
 	es.mu.RLock()
 	defer es.mu.RUnlock()
@@ -149,7 +147,7 @@ func (es *Entries) Match(path string) (Entry, map[string]string) {
 		if matched, params := ety.match(path); matched {
 			return ety, params
 		}
-	} // end for
+	}
 
 	return nil, nil
 }
