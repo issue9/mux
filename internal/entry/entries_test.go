@@ -16,16 +16,7 @@ var (
 	f1 = func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(1)
 	}
-	f2 = func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(2)
-	}
-	f3 = func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(3)
-	}
-
 	h1 = http.HandlerFunc(f1)
-	h2 = http.HandlerFunc(f2)
-	h3 = http.HandlerFunc(f3)
 )
 
 func TestEntries_Add_Remove_1(t *testing.T) {

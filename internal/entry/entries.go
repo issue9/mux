@@ -17,8 +17,8 @@ import (
 // Entries 列表
 type Entries struct {
 	mu             sync.RWMutex
-	entries        []Entry // 路由项，按资源进行分类。
-	disableOptions bool    // 是否禁用自动产生 OPTIONS 请求方法。
+	entries        []Entry
+	disableOptions bool
 }
 
 // NewEntries 声明一个 Entries 实例
@@ -29,7 +29,8 @@ func NewEntries(disableOptions bool, cap int) *Entries {
 	}
 }
 
-// Clean 清除所有的路由项
+// Clean 清除所有的路由项，在 prefix 不为空的情况下，
+// 则为删除所有路径前缀为 prefix 的匹配项。
 func (es *Entries) Clean(prefix string) {
 	es.mu.Lock()
 	defer es.mu.Unlock()
@@ -87,6 +88,10 @@ func (es *Entries) Add(pattern string, h http.Handler, methods ...string) error 
 	}
 	if h == nil {
 		return errors.New("参数 h 不能为空")
+	}
+
+	if len(methods) == 0 {
+		methods = method.Default
 	}
 
 	ety, err := es.Entry(pattern)

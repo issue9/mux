@@ -53,10 +53,6 @@ func (b *base) pattern() string {
 
 // Entry.add()
 func (b *base) add(h http.Handler, methods ...string) error {
-	if len(methods) == 0 {
-		methods = method.Default
-	}
-
 	for _, m := range methods {
 		if !method.IsSupported(m) {
 			return fmt.Errorf("不支持的请求方法 %v", m)
