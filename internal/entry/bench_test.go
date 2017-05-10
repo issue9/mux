@@ -5,18 +5,14 @@
 package entry
 
 import (
-	"net/http"
 	"testing"
 
 	"github.com/issue9/assert"
 )
 
-var benchHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-})
-
 func BenchmarkBasic_match(b *testing.B) {
 	a := assert.New(b)
-	e, err := NewEntry("/blog/post/1", benchHandler)
+	e, err := NewEntry("/blog/post/1")
 	a.NotError(err)
 
 	for i := 0; i < b.N; i++ {
@@ -29,7 +25,7 @@ func BenchmarkBasic_match(b *testing.B) {
 
 func BenchmarkRegexp_match(b *testing.B) {
 	a := assert.New(b)
-	e, err := NewEntry("/blog/post/{id:\\d+}", benchHandler)
+	e, err := NewEntry("/blog/post/{id:\\d+}")
 	a.NotError(err)
 
 	for i := 0; i < b.N; i++ {
@@ -41,7 +37,7 @@ func BenchmarkRegexp_match(b *testing.B) {
 
 func BenchmarkNamed_match(b *testing.B) {
 	a := assert.New(b)
-	e, err := NewEntry("/blog/post/{id}/{id2}", benchHandler)
+	e, err := NewEntry("/blog/post/{id}/{id2}")
 	a.NotError(err)
 
 	for i := 0; i < b.N; i++ {

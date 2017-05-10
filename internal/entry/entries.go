@@ -97,7 +97,7 @@ func (es *Entries) Add(pattern string, h http.Handler, methods ...string) error 
 	ety := es.Entry(pattern)
 	if ety == nil { // 不存在相同的资源项，则声明新的。
 		var err error
-		if ety, err = NewEntry(pattern, h); err != nil {
+		if ety, err = NewEntry(pattern); err != nil {
 			return err
 		}
 

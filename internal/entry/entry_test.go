@@ -17,7 +17,7 @@ type matcher struct {
 }
 
 func newMatcher(a *assert.Assertion, pattern string) *matcher {
-	e, err := NewEntry(pattern, nil)
+	e, err := NewEntry(pattern)
 	a.NotError(err).NotNil(e)
 
 	return &matcher{
@@ -45,37 +45,37 @@ func TestNewEntry(t *testing.T) {
 	a := assert.New(t)
 
 	// basic
-	e, err := NewEntry("/basic/basic", nil)
+	e, err := NewEntry("/basic/basic")
 	a.NotError(err).NotNil(e)
 	b, ok := e.(*basic)
 	a.True(ok).False(b.wildcard)
 
 	// basic with wildcard
-	e, err = NewEntry("/basic/basic/*", nil)
+	e, err = NewEntry("/basic/basic/*")
 	a.NotError(err).NotNil(e)
 	b, ok = e.(*basic)
 	a.True(ok).True(b.wildcard)
 
 	// named
-	e, err = NewEntry("/named/{named}/path", nil)
+	e, err = NewEntry("/named/{named}/path")
 	a.NotError(err).NotNil(e)
 	n, ok := e.(*named)
 	a.True(ok).False(n.wildcard)
 
 	// named with wildcard
-	e, err = NewEntry("/named/{named}/path/*", nil)
+	e, err = NewEntry("/named/{named}/path/*")
 	a.NotError(err).NotNil(e)
 	n, ok = e.(*named)
 	a.True(ok).True(n.wildcard)
 
 	// regexp
-	e, err = NewEntry("/regexp/{named:\\d+}", nil)
+	e, err = NewEntry("/regexp/{named:\\d+}")
 	a.NotError(err).NotNil(e)
 	r, ok := e.(*regexp)
 	a.True(ok).False(r.wildcard)
 
 	// regexp with wildcard
-	e, err = NewEntry("/regexp/{named:\\d+}/*", nil)
+	e, err = NewEntry("/regexp/{named:\\d+}/*")
 	a.NotError(err).NotNil(e)
 	r, ok = e.(*regexp)
 	a.True(ok).True(r.wildcard)
@@ -84,22 +84,22 @@ func TestNewEntry(t *testing.T) {
 func TestEntry_priority(t *testing.T) {
 	a := assert.New(t)
 
-	b, err := NewEntry("/basic/basic", nil)
+	b, err := NewEntry("/basic/basic")
 	a.NotError(err).NotNil(b)
 
-	bw, err := NewEntry("/basic/basic/*", nil)
+	bw, err := NewEntry("/basic/basic/*")
 	a.NotError(err).NotNil(bw)
 
-	n, err := NewEntry("/basic/{named}", nil)
+	n, err := NewEntry("/basic/{named}")
 	a.NotError(err).NotNil(n)
 
-	nw, err := NewEntry("/basic/{named}/*", nil)
+	nw, err := NewEntry("/basic/{named}/*")
 	a.NotError(err).NotNil(nw)
 
-	r, err := NewEntry("/basic/{named:\\d+}", nil)
+	r, err := NewEntry("/basic/{named:\\d+}")
 	a.NotError(err).NotNil(r)
 
-	rw, err := NewEntry("/basic/{named:\\d+}/*", nil)
+	rw, err := NewEntry("/basic/{named:\\d+}/*")
 	a.NotError(err).NotNil(rw)
 
 	a.True(bw.priority() > b.priority()).

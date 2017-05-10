@@ -44,8 +44,7 @@ type Entry interface {
 // NewEntry 根据内容，生成相应的 Entry 接口实例。
 //
 // pattern 匹配内容。
-// h 对应的 http.Handler，外层调用者确保该值不能为 nil.
-func NewEntry(pattern string, h http.Handler) (Entry, error) {
+func NewEntry(pattern string) (Entry, error) {
 	s, err := parse(pattern)
 	if err != nil {
 		return nil, err
