@@ -90,10 +90,10 @@ func TestEntries_Clean(t *testing.T) {
 func TestRemoveEntries(t *testing.T) {
 	a := assert.New(t)
 
-	n1, err := New("1", nil)
-	n2, err := New("2", nil)
-	n3, err := New("3", nil)
-	n4, err := New("4", nil)
+	n1, err := NewEntry("1", nil)
+	n2, err := NewEntry("2", nil)
+	n3, err := NewEntry("3", nil)
+	n4, err := NewEntry("4", nil)
 	a.NotError(err)
 	es := []Entry{n1, n2, n3, n4}
 

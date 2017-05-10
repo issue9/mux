@@ -157,7 +157,7 @@ func (r *Resource) Mux() *Mux {
 }
 
 func newResource(mux *Mux, pattern string) (*Resource, error) {
-	ety, err := entry.New(pattern, nil)
+	ety, err := entry.NewEntry(pattern, nil)
 	if err != nil {
 		return nil, err
 	}
