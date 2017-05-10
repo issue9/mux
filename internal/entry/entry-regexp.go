@@ -53,7 +53,7 @@ func (r *regexp) priority() int {
 	return typeRegexp
 }
 
-// Entry.Match
+// Entry.match
 func (r *regexp) match(url string) (bool, map[string]string) {
 	loc := r.expr.FindStringIndex(url)
 
@@ -75,7 +75,6 @@ func (r *regexp) match(url string) (bool, map[string]string) {
 	return false, nil
 }
 
-// Entry.Params
 func (r *regexp) params(url string) map[string]string {
 	if !r.hasParams {
 		return nil
@@ -93,7 +92,6 @@ func (r *regexp) params(url string) map[string]string {
 	return mapped
 }
 
-// fun
 func (r *regexp) URL(params map[string]string, path string) (string, error) {
 	if r.syntaxExpr == nil {
 		return r.patternString, nil
