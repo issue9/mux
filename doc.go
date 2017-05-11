@@ -15,7 +15,7 @@
 //  p.Get("/logout", h) // 相当于 m.Get("/api/logout", h)
 //  p.Post("/login", h) // 相当于 m.Get("/api/login", h)
 //
-//  对同一资源的不同操作
+//  // 对同一资源的不同操作
 //  res := p.Resource("/users/{id\\d+}")
 //  res.Get(h)   // 相当于 m.Get("/api/users/{id}", h)
 //  res.Post(h)  // 相当于 m.Post("/api/users/{id}", h)
@@ -23,7 +23,7 @@
 //  http.ListenAndServe(":8080", m)
 //
 //
-// 正则表达式：
+// 正则表达式
 //
 // 路由中支持以正则表达式的方式进行匹配，表达式以大括号包含，内部以冒号分隔，
 // 前半部分为变量的名称，后半部分为变量可匹配类型的正则表达式。比如：

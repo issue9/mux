@@ -6,9 +6,8 @@ package mux
 
 import (
 	"context"
-	"testing"
-
 	"net/http"
+	"testing"
 
 	"github.com/issue9/assert"
 )
