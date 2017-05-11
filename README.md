@@ -2,11 +2,12 @@ mux [![Build Status](https://travis-ci.org/issue9/mux.svg?branch=master)](https:
 ======
 
 mux 是一个实现了 [http.Handler](https://godoc.org/net/http#Handler) 的中间件，
-为用户提供了正则路由等实用功能：
+为用户提供了以下功能：
 
 1. 正则路由；
 1. 路由参数；
 1. 自动生成 OPTIONS；
+1. 根据路由生成地址。
 
 
 ##### 中间件
@@ -32,6 +33,7 @@ p.Post("/login", h) // 相当于 m.Get("/api/login", h)
 res := p.Resource("/users/{id\\d+}")
 res.Get(h)   // 相当于 m.Get("/api/users/{id}", h)
 res.Post(h)  // 相当于 m.Post("/api/users/{id}", h)
+res.URL(map[string]string{"id": "5"}) // 构建一条基于此路由项的路径：/users/5
 
 http.ListenAndServe(":8080", m)
 ```

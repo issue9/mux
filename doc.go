@@ -2,13 +2,13 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
-// Package mux 是一个实现了 http.Handler 的中间件，为用户提供了正则路由等实用功能。
+// Package mux 是一个实现了 http.Handler 的中间件，为用户提供了路由匹配等功能。
 //
 //  m := mux.New(false, false, nil, nil).
 //          Get("/user/1", h).
 //          Post("/api/login", h).
 //          Get("/blog/post/{id:\\d+}", h). // 正则路由
-//          Options("/user/1", "GET") // 手动指定 OPTIONS 请求的返回内容。
+//          Options("/user/1", "GET")       // 手动指定 OPTIONS 请求的返回内容。
 //
 //  // 统一前缀路径的路由
 //  p := m.Prefix("/api")
@@ -19,6 +19,7 @@
 //  res := p.Resource("/users/{id\\d+}")
 //  res.Get(h)   // 相当于 m.Get("/api/users/{id}", h)
 //  res.Post(h)  // 相当于 m.Post("/api/users/{id}", h)
+//  res.URL(map[string]string{"id": "5"}) // /users/5
 //
 //  http.ListenAndServe(":8080", m)
 //
@@ -30,13 +31,14 @@
 //  /post/{id:\d+} // 同上，但 id 的值只能为 \d+，\d+ 为正则表达式；
 //  /post/{:\d+}   // 同上，但是没有命名；
 //
+//
 // 命名参数
 //
-// 命名参数是正则表达式的一个变种，在指定一个正则表达式时，
-// 如果未指定后面的匹配模式，则该条路由项不会真正被转换成 *regexp.Regexp 对象，
-// 在一定程度上，可以提升性能。
+// 若正则表达式中，缺少冒号及后半部分的内容，则会被转换成命名参数，不作正则验证，
+// 性能会比较正则稍微好上一些。
 //  /posts/{id}                // 命名参数
 //  /blog/{action}/{page:\\d+} // 正则
+//
 //
 // 通配符
 //
@@ -44,12 +46,15 @@
 //  /blog/assets/*
 //  /blog/{posts}/*
 //  /blog/{tags:\\w+}/*
+//  /blog/*/assets      // 不正确
+//  /blog/assets*       // 不正确
 //
 //
 // 路由参数：
 //
-// 通过正则表达式匹配的路由，其中带命名的参数可通过 r.Context() 获取：
+// 通过正则表达式匹配的路由，其中带命名的参数可通过 GetParams() 获取：
 //  params := GetParams(r)
+//
 //  id, err := params.Int("id")
 //  // 或是
 //  id := params.MustInt("id", 0) // 0 表示在无法获取 id 参数的默认值
@@ -59,10 +64,9 @@
 //
 // 可能会出现多条记录与同一请求都匹配的情况，这种情况下，
 // 系统会找到一条认为最匹配的路由来处理，判断规则如下：
-//  1. 静态路由优先于正则路由判断；
-//  2. 完全匹配的路由项优先于部分匹配的路由项；
-//  3. 只有以 / 结尾的静态路由才有部分匹配功能；
-//  4. 同类的后插入先匹配。
+//  1. 普通路由优先于正则路由判断；
+//  3. 正则路由优先于命名路由；
+//  2. 完全匹配的路由项优先于有通配符的路由；
 //
 //
 // OPTIONS:
@@ -72,4 +76,12 @@
 // 或是直接使用 *.Add() 指定一个自定义的实现方式。
 // 如果不需要的话，也可以在 New() 中将 disableOptions 设置为 true。
 // 通过 *.Add 和 *.Remove 来显示的指定或是删除 OPTIONS，不受是否禁用的影响。
+//
+//
+// 适用范围
+//
+// 由于路由项采用了切片(slice) 的形式保存路由项，
+// 如果在运行过程中需要大量的增删路由操作，性能上会比较差，
+// 建议使用其它的库的代替。其它情况下，性能还是不错的，
+// 具体的可运行 `go test -bench=.` 查看。
 package mux

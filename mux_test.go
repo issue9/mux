@@ -177,13 +177,24 @@ func TestMux_ServeHTTP_Order(t *testing.T) {
 	serveMux := New(false, false, nil, nil)
 	a.NotNil(serveMux)
 
+	a.NotError(serveMux.GetFunc("/post/{id}", f3))      // f3
+	a.NotError(serveMux.GetFunc("/post/{id:\\d+}", f2)) // f2
+	a.NotError(serveMux.GetFunc("/post/1", f1))         // f1
+
+	request(a, serveMux, http.MethodGet, "/post/1", 1)   // f1 普通路由项完全匹配
+	request(a, serveMux, http.MethodGet, "/post/2", 2)   // f2 正则完全匹配
+	request(a, serveMux, http.MethodGet, "/post/abc", 3) // f3 命名路由
+
+	serveMux = New(false, false, nil, nil)
+	a.NotNil(serveMux)
+
 	a.NotError(serveMux.GetFunc("/post/*", f3))         // f3
 	a.NotError(serveMux.GetFunc("/post/{id:\\d+}", f2)) // f2
 	a.NotError(serveMux.GetFunc("/post/1", f1))         // f1
 
-	request(a, serveMux, http.MethodGet, "/post/1", 1)   // f1 静态路由项完全匹配
+	request(a, serveMux, http.MethodGet, "/post/1", 1)   // f1 普通路由项完全匹配
 	request(a, serveMux, http.MethodGet, "/post/2", 2)   // f2 正则完全匹配
-	request(a, serveMux, http.MethodGet, "/post/abc", 3) // f3 匹配度最高
+	request(a, serveMux, http.MethodGet, "/post/abc", 3) // f3 通配符完全匹配
 }
 
 func TestClearPath(t *testing.T) {
