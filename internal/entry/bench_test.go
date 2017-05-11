@@ -5,53 +5,44 @@
 package entry
 
 import (
-	"net/http"
 	"testing"
 
 	"github.com/issue9/assert"
 )
 
-// BenchmarkBasic_Match-4    	200000000	         6.75 ns/op		go1.8
-func BenchmarkBasic_Match(b *testing.B) {
+func BenchmarkBasic_match(b *testing.B) {
 	a := assert.New(b)
-	hf := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	})
-	e, err := New("/blog/post/1", hf)
+	e, err := newEntry("/blog/post/1")
 	a.NotError(err)
 
 	for i := 0; i < b.N; i++ {
-		if 0 != e.Match("/blog/post/1") {
-			b.Error("BenchmarkBasic_Match:error")
+
+		if ok, _ := e.match("/blog/post/1"); !ok {
+			b.Error("BenchmarkBasic_match:error")
 		}
 	}
 }
 
-// BenchmarkStatic_Match-4    	200000000	         7.85 ns/op     go1.8
-func BenchmarkStatic_Match(b *testing.B) {
+func BenchmarkRegexp_match(b *testing.B) {
 	a := assert.New(b)
-	hf := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	})
-	e, err := New("/blog/post/", hf)
+	e, err := newEntry("/blog/post/{id:\\d+}")
 	a.NotError(err)
 
 	for i := 0; i < b.N; i++ {
-		if e.Match("/blog/post/1") > 1 {
-			b.Error("BenchmarkStatic_Match:error")
+		if ok, _ := e.match("/blog/post/1"); !ok {
+			b.Error("BenchmarkRegexp_match:error")
 		}
 	}
 }
 
-// BenchmarkRegexpr_Match-4   	 5000000	       337 ns/op		go1.8
-func BenchmarkRegexpr_Match(b *testing.B) {
+func BenchmarkNamed_match(b *testing.B) {
 	a := assert.New(b)
-	hf := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	})
-	e, err := New("/blog/post/{id:\\d+}", hf)
+	e, err := newEntry("/blog/post/{id}/{id2}")
 	a.NotError(err)
 
 	for i := 0; i < b.N; i++ {
-		if 0 != e.Match("/blog/post/1") {
-			b.Error("BenchmarkRegexp_Match:error")
+		if ok, _ := e.match("/blog/post/1/2"); !ok {
+			b.Error("BenchmarkNamed_match:error")
 		}
 	}
 }

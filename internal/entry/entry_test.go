@@ -5,82 +5,112 @@
 package entry
 
 import (
-	"net/http"
 	"testing"
 
 	"github.com/issue9/assert"
 )
 
-var _ Entry = &basic{}
-var _ Entry = &static{}
-var _ Entry = &regexpr{}
-
-func TestEntry_Match(t *testing.T) {
-	a := assert.New(t)
-	hf := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	})
-
-	// 静态路由-1
-	e, err := New("/blog/post/1", hf)
-	a.NotError(err)
-	a.Equal(e.Match("/blog/post/1"), 0)
-	a.Equal(e.Match("/blog/post/1/"), -1)
-	a.Equal(e.Match("/blog/post/1/page/2"), -1) // 非 / 结尾的，只能全路径匹配。
-	a.Equal(e.Match("/blog"), -1)               // 不匹配，长度太短
-
-	// 静态路由-2
-	e, err = New("/blog/post/", hf)
-	a.NotError(err)
-	a.Equal(e.Match("/blog/post/1"), 1)
-	a.Equal(e.Match("/blog/post/"), 0)
-	a.Equal(e.Match("/blog/post/1/page/2"), 8)
-	a.Equal(e.Match("/blog"), -1) // 不匹配，长度太短
-
-	// 正则路由
-	e, err = New("/blog/post/{id}", hf)
-	a.NotError(err)
-	a.Equal(e.Match("/blog/post/1"), 0)
-	a.Equal(e.Match("/blog/post/2/page/1"), -1) // 正则没有部分匹配
-	a.Equal(e.Match("/plog/post/2"), -1)        // 不匹配
-
-	// 多个命名正则表达式
-	e, err = New("/blog/{action:\\w+}-{id:\\d+}/", hf)
-	a.NotError(err)
-	a.Equal(e.Match("/blog/post-1/"), 0)
-	a.Equal(e.Match("/blog/post-1/page-2"), -1) // 正则没有部分匹配功能
-	a.Equal(e.Match("/blog/post-1d/"), -1)      // 正则，不匹配
-
-	// 多个命名正则表达式，带可选参数
-	e, err = New("/blog/{action:\\w+}-{id:\\d*}/", hf)
-	a.NotError(err)
-	a.Equal(e.Match("/blog/post-/"), 0)
-	a.Equal(e.Match("/blog/post-1/"), 0)
+// 用于测试 Entry.match 的对象
+type matcher struct {
+	a *assert.Assertion
+	e Entry
 }
 
-func TestEntry_Params(t *testing.T) {
-	a := assert.New(t)
-	h := func(w http.ResponseWriter, r *http.Request) {
+func newMatcher(a *assert.Assertion, pattern string) *matcher {
+	e, err := newEntry(pattern)
+	a.NotError(err).NotNil(e)
+
+	return &matcher{
+		a: a,
+		e: e,
 	}
-	hf := http.HandlerFunc(h)
+}
 
-	// 静态路由
-	e, err := New("/blog/post/1", hf)
-	a.NotError(err)
-	a.Nil(e.Params("/blog/post/1"))
-	a.Nil(e.Params("/blog/post/1/page/2"))
-	a.Nil(e.Params("/blog"))
+func (m *matcher) True(path string, params map[string]string) *matcher {
+	ok, ps := m.e.match(path)
+	m.a.True(ok).
+		Equal(ps, params)
 
-	// 正则路由
-	e, err = New("/blog/post/{id}", hf)
-	a.NotError(err)
-	a.Equal(0, len(e.Params("/plog/post/2")))             // 不匹配
-	a.Equal(e.Params("/blog/post/"), map[string]string{}) // 匹配，但未指定参数，默认为空
-	a.Equal(e.Params("/blog/post/1"), map[string]string{"id": "1"})
-	a.Equal(e.Params("/blog/post/2/page/1"), map[string]string{"id": "2"})
+	return m
+}
 
-	// 多个命名正则表达式
-	e, err = New("/blog/{action:\\w+}-{id:\\d+}/", hf)
-	a.NotError(err)
-	a.Equal(e.Params("/blog/post-1/page-2"), map[string]string{"action": "post", "id": "1"})
-	a.Equal(0, len(e.Params("/blog/post-1d/"))) // 不匹配
+func (m *matcher) False(path string, params map[string]string) *matcher {
+	ok, _ := m.e.match(path) // 为 false 则返回值没意义
+	m.a.False(ok)
+
+	return m
+}
+
+func TestNewEntry(t *testing.T) {
+	a := assert.New(t)
+
+	// basic
+	e, err := newEntry("/basic/basic")
+	a.NotError(err).NotNil(e)
+	b, ok := e.(*basic)
+	a.True(ok).False(b.wildcard)
+
+	// basic with wildcard
+	e, err = newEntry("/basic/basic/*")
+	a.NotError(err).NotNil(e)
+	b, ok = e.(*basic)
+	a.True(ok).True(b.wildcard)
+
+	// named
+	e, err = newEntry("/named/{named}/path")
+	a.NotError(err).NotNil(e)
+	n, ok := e.(*named)
+	a.True(ok).False(n.wildcard)
+
+	// named with wildcard
+	e, err = newEntry("/named/{named}/path/*")
+	a.NotError(err).NotNil(e)
+	n, ok = e.(*named)
+	a.True(ok).True(n.wildcard)
+
+	// regexp
+	e, err = newEntry("/regexp/{named:\\d+}")
+	a.NotError(err).NotNil(e)
+	r, ok := e.(*regexp)
+	a.True(ok).False(r.wildcard)
+
+	// regexp with wildcard
+	e, err = newEntry("/regexp/{named:\\d+}/*")
+	a.NotError(err).NotNil(e)
+	r, ok = e.(*regexp)
+	a.True(ok).True(r.wildcard)
+}
+
+func TestEntry_priority(t *testing.T) {
+	a := assert.New(t)
+
+	b, err := newEntry("/basic/basic")
+	a.NotError(err).NotNil(b)
+
+	bw, err := newEntry("/basic/basic/*")
+	a.NotError(err).NotNil(bw)
+
+	n, err := newEntry("/basic/{named}")
+	a.NotError(err).NotNil(n)
+
+	nw, err := newEntry("/basic/{named}/*")
+	a.NotError(err).NotNil(nw)
+
+	r, err := newEntry("/basic/{named:\\d+}")
+	a.NotError(err).NotNil(r)
+
+	rw, err := newEntry("/basic/{named:\\d+}/*")
+	a.NotError(err).NotNil(rw)
+
+	a.True(bw.priority() > b.priority()).
+		True(nw.priority() > n.priority()).
+		True(rw.priority() > r.priority())
+
+	a.True(n.priority() > r.priority()).
+		True(r.priority() > b.priority())
+
+	a.True(nw.priority() > rw.priority()).
+		True(rw.priority() > bw.priority())
+
+	a.True(bw.priority() > n.priority())
 }
