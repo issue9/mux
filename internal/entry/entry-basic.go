@@ -25,7 +25,7 @@ func newBasic(pattern string) *basic {
 
 func (b *basic) priority() int {
 	if b.wildcard {
-		return typeBasic + 100
+		return typeBasicWithWildcard
 	}
 
 	return typeBasic

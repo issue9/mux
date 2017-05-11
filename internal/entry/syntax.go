@@ -16,11 +16,17 @@ const (
 	syntaxEnd   = '}'
 )
 
+// 表示当前路由项的类型，同时会被用于 Entry.priority()
 const (
 	typeUnknown = iota
 	typeBasic
 	typeRegexp
 	typeNamed
+
+	// 通配符版本的，优先级比没有通配符的都要低。
+	typeBasicWithWildcard
+	typeRegexpWithWildcard
+	typeNamedWithWildcard
 )
 
 // 描述指定的字符串所表示的语法结构

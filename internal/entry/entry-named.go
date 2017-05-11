@@ -65,7 +65,7 @@ func newNamed(pattern string, s *syntax) *named {
 
 func (n *named) priority() int {
 	if n.wildcard {
-		return typeNamed + 100
+		return typeNamedWithWildcard
 	}
 
 	return typeNamed
