@@ -45,10 +45,10 @@ type Mux struct {
 
 // New 声明一个新的 Mux。
 //
-// disableOptions 是否禁用自动生成 OPTIONS 功能。
-// skipCleanPath 是否忽略对访问路径作处理，比如 "//api" ==> "/api"
-// notFound 404 页面的处理方式，为 nil 时会调用 http.Error 进行处理
-// methodNotAllowed 405 页面的处理方式，为 nil 时会调用 http.Error 进行处理
+// disableOptions 是否禁用自动生成 OPTIONS 功能；
+// skipCleanPath 是否忽略对访问路径作处理，比如 "//api" ==> "/api"；
+// notFound 404 页面的处理方式，为 nil 时会调用 http.Error 进行处理；
+// methodNotAllowed 405 页面的处理方式，为 nil 时会调用 http.Error 进行处理。
 func New(disableOptions, skipCleanPath bool, notFound, methodNotAllowed http.HandlerFunc) *Mux {
 	if notFound == nil {
 		notFound = defaultNotFound
@@ -81,14 +81,14 @@ func (mux *Mux) Remove(pattern string, methods ...string) {
 
 // Add 添加一条路由数据。
 //
-// pattern 为路由匹配模式，可以是正则匹配也可以是字符串匹配，
-// methods 参数应该只能为 method.Default 中的字符串，若不指定，默认为所有，
+// pattern 为路由匹配模式，可以是正则匹配也可以是字符串匹配；
+// methods 参数应该只能为 method.Default 中的字符串，若不指定，默认为所有。
 // 当 h 或是 pattern 为空时，将触发 panic。
 func (mux *Mux) Add(pattern string, h http.Handler, methods ...string) error {
 	return mux.entries.Add(pattern, h, methods...)
 }
 
-// Options 手动指定 OPTIONS 请求方法的报头 allow 的值。
+// Options 将 OPTIONS 请求方法的报头 allow 值固定为指定的值。
 //
 // 若无特殊需求，不用调用此方法，系统会自动计算符合当前路由的请求方法列表。
 // 如果想实现对处理方法的自定义，可以显示地调用 Add 方法:
@@ -140,7 +140,7 @@ func (mux *Mux) Any(pattern string, h http.Handler) *Mux {
 	return mux.add(pattern, h, method.Default...)
 }
 
-// AddFunc 功能同 Mux.Add()，但是将第二个参数从 http.Handler 换成了 func(http.ResponseWriter, *http.Request)
+// AddFunc 功能同 Mux.Add()，但是将第二个参数从 http.Handler 换成了 http.HandlerFunc
 func (mux *Mux) AddFunc(pattern string, fun http.HandlerFunc, methods ...string) error {
 	return mux.Add(pattern, http.HandlerFunc(fun), methods...)
 }

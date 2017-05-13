@@ -22,9 +22,7 @@ type Resource struct {
 	ety     entry.Entry
 }
 
-// Options 手动指定 OPTIONS 请求方法的值。
-//
-// 若无特殊需求，不用调用些方法，系统会自动计算符合当前路由的请求方法列表。
+// Options 手动指定 OPTIONS 请求方法的值。具体说明可参考 Mux.Options 方法。
 func (r *Resource) Options(allow string) *Resource {
 	r.mux.Options(r.pattern, allow)
 	return r
@@ -133,18 +131,12 @@ func (r *Resource) URL(params map[string]string, path string) (string, error) {
 	return r.ety.URL(params, path)
 }
 
-// Resource 创建一个资源路由项，之后可以为该资源指定各种请求方法。
-//  p, _ := srv.Resource("/api")
-//  p.Get("/users")  // 相当于 srv.Get("/api/users")
-//  p.Get("/user/1") // 相当于 srv.Get("/api/user/1")
+// Resource 创建一个资源路由项。
 func (mux *Mux) Resource(pattern string) (*Resource, error) {
 	return newResource(mux, pattern)
 }
 
-// Resource 创建一个资源路由项，之后可以为该资源指定各种请求方法。
-//  p, err := srv.Resource("/api")
-//  p.Get("/users")  // 相当于 srv.Get("/api/users")
-//  p.Get("/user/1") // 相当于 srv.Get("/api/user/1")
+// Resource 创建一个资源路由项。
 func (p *Prefix) Resource(pattern string) (*Resource, error) {
 	return newResource(p.mux, p.prefix+pattern)
 }

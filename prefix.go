@@ -14,19 +14,12 @@ import (
 //  p := srv.Prefix("/api")
 //  p.Get("/users")  // 相当于 srv.Get("/api/users")
 //  p.Get("/user/1") // 相当于 srv.Get("/api/user/1")
-//
-// 当指定多个相同的 Prefix 时，调用其中的一个 Clean 也将会清除其它的：
-//  p1 := srv.Prefix("prefix")
-//  p2 := srv.Prefix("prefix")
-//  p2.Clean() 将同时清除 p1 的内容，因为有相同的前缀
 type Prefix struct {
 	mux    *Mux
 	prefix string
 }
 
-// Options 手动指定 OPTIONS 请求方法的值。
-//
-// 若无特殊需求，不用调用些方法，系统会自动计算符合当前路由的请求方法列表。
+// Options 手动指定 OPTIONS 请求方法的值。具体说明可参考 Mux.Options 方法。
 func (p *Prefix) Options(pattern string, allow string) *Prefix {
 	p.mux.Options(p.prefix+pattern, allow)
 	return p
@@ -125,17 +118,20 @@ func (p *Prefix) Remove(pattern string, methods ...string) *Prefix {
 
 // Clean 清除所有以 Prefix.prefix 开头的 Entry。
 //
-// NOTE: 若 mux 中也有同样开头的 Entry，也照样会被删除。
+// 当指定多个相同的 Prefix 时，调用其中的一个 Clean 也将会清除其它的：
+//  p1 := mux.Prefix("prefix")
+//  p2 := mux.Prefix("prefix")
+//  p2.Clean() 将同时清除 p1 的内容，因为有相同的前缀。
 func (p *Prefix) Clean() *Prefix {
 	p.mux.entries.Clean(p.prefix)
 	return p
 }
 
-// Prefix 创建一个路由组，该组中添加的路由项，都会带上前缀 prefix
-// prefix 前缀字符串，所有从 Prefix 中声明的路由都将包含此前缀。
-//  p := g.Prefix("/api")
-//  p.Get("/users")  // 相当于 g.Get("/api/users")
-//  p.Get("/user/1") // 相当于 g.Get("/api/user/1")
+// Prefix 在现在有 Prefix 的基础上声明一个新的 Prefix 实例。
+//  p := mux.Prefix("/api")
+//  v := p.Prefix("/v2")
+//  v.Get("/users")  // 相当于 g.Get("/api/v2/users")
+//  v.Get("/user/1") // 相当于 g.Get("/api/v2/user/1")
 func (p *Prefix) Prefix(prefix string) *Prefix {
 	return &Prefix{
 		mux:    p.mux,
@@ -143,11 +139,7 @@ func (p *Prefix) Prefix(prefix string) *Prefix {
 	}
 }
 
-// Prefix 创建一个路由组，该组中添加的路由项，都会带上前缀 prefix
-// prefix 前缀字符串，所有从 Prefix 中声明的路由都将包含此前缀。
-//  p := srv.Prefix("/api")
-//  p.Get("/users")  // 相当于 srv.Get("/api/users")
-//  p.Get("/user/1") // 相当于 srv.Get("/api/user/1")
+// Prefix 声明一个 Prefix 实例。
 func (mux *Mux) Prefix(prefix string) *Prefix {
 	return &Prefix{
 		mux:    mux,

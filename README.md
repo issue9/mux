@@ -6,8 +6,8 @@ mux 是一个实现了 [http.Handler](https://godoc.org/net/http#Handler) 的中
 
 1. 正则路由；
 1. 路由参数；
-1. 自动生成 OPTIONS；
-1. 根据路由生成地址。
+1. 丰富的 OPTIONS 请求处理方式；
+1. 根据路由重新构建地址。
 
 
 ##### 中间件
