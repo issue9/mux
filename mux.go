@@ -141,11 +141,11 @@ func (mux *Mux) Any(pattern string, h http.Handler) *Mux {
 
 // AddFunc 功能同 Mux.Add()，但是将第二个参数从 http.Handler 换成了 http.HandlerFunc
 func (mux *Mux) AddFunc(pattern string, fun http.HandlerFunc, methods ...string) error {
-	return mux.Add(pattern, http.HandlerFunc(fun), methods...)
+	return mux.Add(pattern, fun, methods...)
 }
 
 func (mux *Mux) addFunc(pattern string, fun http.HandlerFunc, methods ...string) *Mux {
-	return mux.add(pattern, http.HandlerFunc(fun), methods...)
+	return mux.add(pattern, fun, methods...)
 }
 
 // GetFunc 相当于 Mux.AddFunc(pattern, func, "GET") 的简易写法
