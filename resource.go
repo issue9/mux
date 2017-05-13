@@ -28,7 +28,7 @@ func (r *Resource) Options(allow string) *Resource {
 	return r
 }
 
-// Add 相当于 Mux.Add(pattern, h, "POST"...) 的简易写法
+// Add 相当于 Mux.Add(pattern, h, methods...) 的简易写法
 func (r *Resource) Add(h http.Handler, methods ...string) error {
 	return r.mux.Add(r.pattern, h, methods...)
 }

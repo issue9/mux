@@ -25,7 +25,7 @@ func (p *Prefix) Options(pattern string, allow string) *Prefix {
 	return p
 }
 
-// Add 相当于 Mux.Add(prefix+pattern, h, "POST"...) 的简易写法
+// Add 相当于 Mux.Add(prefix+pattern, h, methods...) 的简易写法
 func (p *Prefix) Add(pattern string, h http.Handler, methods ...string) error {
 	return p.mux.Add(p.prefix+pattern, h, methods...)
 }

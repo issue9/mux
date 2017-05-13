@@ -82,8 +82,8 @@ func (mux *Mux) Remove(pattern string, methods ...string) *Mux {
 // Add 添加一条路由数据。
 //
 // pattern 为路由匹配模式，可以是正则匹配也可以是字符串匹配；
-// methods 参数应该只能为 method.Default 中的字符串，若不指定，默认为所有。
-// 当 h 或是 pattern 为空时，将触发 panic。
+// methods 该路由项对应的请求方法，可通过 SupportedMethods() 获得当前支持的请求方法。
+// 当 pattern 或是 h 为空时，将触发 panic。
 func (mux *Mux) Add(pattern string, h http.Handler, methods ...string) error {
 	return mux.entries.Add(pattern, h, methods...)
 }
@@ -110,27 +110,27 @@ func (mux *Mux) add(pattern string, h http.Handler, methods ...string) *Mux {
 	return mux
 }
 
-// Get 相当于 Mux.Add(pattern, h, "GET") 的简易写法
+// Get 相当于 Mux.Add(pattern, h, http.MethodGet) 的简易写法
 func (mux *Mux) Get(pattern string, h http.Handler) *Mux {
 	return mux.add(pattern, h, http.MethodGet)
 }
 
-// Post 相当于 Mux.Add(pattern, h, "POST") 的简易写法
+// Post 相当于 Mux.Add(pattern, h, http.MethodPost) 的简易写法
 func (mux *Mux) Post(pattern string, h http.Handler) *Mux {
 	return mux.add(pattern, h, http.MethodPost)
 }
 
-// Delete 相当于 Mux.Add(pattern, h, "DELETE") 的简易写法
+// Delete 相当于 Mux.Add(pattern, h, http.MethodDelete) 的简易写法
 func (mux *Mux) Delete(pattern string, h http.Handler) *Mux {
 	return mux.add(pattern, h, http.MethodDelete)
 }
 
-// Put 相当于 Mux.Add(pattern, h, "PUT") 的简易写法
+// Put 相当于 Mux.Add(pattern, h, http.MethodPut) 的简易写法
 func (mux *Mux) Put(pattern string, h http.Handler) *Mux {
 	return mux.add(pattern, h, http.MethodPut)
 }
 
-// Patch 相当于 Mux.Add(pattern, h, "PATCH") 的简易写法
+// Patch 相当于 Mux.Add(pattern, h, http.MethodPatch) 的简易写法
 func (mux *Mux) Patch(pattern string, h http.Handler) *Mux {
 	return mux.add(pattern, h, http.MethodPatch)
 }
@@ -149,27 +149,27 @@ func (mux *Mux) addFunc(pattern string, fun http.HandlerFunc, methods ...string)
 	return mux.add(pattern, fun, methods...)
 }
 
-// GetFunc 相当于 Mux.AddFunc(pattern, func, "GET") 的简易写法
+// GetFunc 相当于 Mux.AddFunc(pattern, func, http.MethodGet) 的简易写法
 func (mux *Mux) GetFunc(pattern string, fun http.HandlerFunc) *Mux {
 	return mux.addFunc(pattern, fun, http.MethodGet)
 }
 
-// PutFunc 相当于 Mux.AddFunc(pattern, func, "PUT") 的简易写法
+// PutFunc 相当于 Mux.AddFunc(pattern, func, http.MethodPut) 的简易写法
 func (mux *Mux) PutFunc(pattern string, fun http.HandlerFunc) *Mux {
 	return mux.addFunc(pattern, fun, http.MethodPut)
 }
 
-// PostFunc 相当于 Mux.AddFunc(pattern, func, "POST") 的简易写法
+// PostFunc 相当于 Mux.AddFunc(pattern, func, http.MethodPost) 的简易写法
 func (mux *Mux) PostFunc(pattern string, fun http.HandlerFunc) *Mux {
 	return mux.addFunc(pattern, fun, http.MethodPost)
 }
 
-// DeleteFunc 相当于 Mux.AddFunc(pattern, func, "DELETE") 的简易写法
+// DeleteFunc 相当于 Mux.AddFunc(pattern, func, http.MethodDelete) 的简易写法
 func (mux *Mux) DeleteFunc(pattern string, fun http.HandlerFunc) *Mux {
 	return mux.addFunc(pattern, fun, http.MethodDelete)
 }
 
-// PatchFunc 相当于 Mux.AddFunc(pattern, func, "PATCH") 的简易写法
+// PatchFunc 相当于 Mux.AddFunc(pattern, func, http.MethodPatch) 的简易写法
 func (mux *Mux) PatchFunc(pattern string, fun http.HandlerFunc) *Mux {
 	return mux.addFunc(pattern, fun, http.MethodPatch)
 }
