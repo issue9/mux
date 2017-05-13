@@ -71,7 +71,6 @@ func (n *named) priority() int {
 	return typeNamed
 }
 
-// Entry.match
 func (n *named) match(path string) (bool, map[string]string) {
 	params := make(map[string]string, len(n.nodes))
 

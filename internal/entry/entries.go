@@ -14,7 +14,7 @@ import (
 	"github.com/issue9/mux/internal/method"
 )
 
-// Entries 列表
+// Entries Entry 的存放列表
 type Entries struct {
 	mu             sync.RWMutex
 	entries        []Entry

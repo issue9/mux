@@ -10,7 +10,6 @@ import (
 	"strings"
 )
 
-// 表示正则路由中，表达式的起止字符
 const (
 	syntaxStart = '{'
 	syntaxEnd   = '}'
@@ -126,7 +125,6 @@ DUP:
 }
 
 func duplicateName(names []string) int {
-	// 检测是否存在同名参数：
 	// 先按名称排序，之后只要检测相邻两个名称是否相同即可。
 	if len(names) > 1 {
 		sort.Strings(names)

@@ -24,7 +24,7 @@ var (
 	}
 
 	// Default 调用 *.Any 时添加所使用的请求方法列表，
-	// 默认为添加除 http.MethodOptions 之外的所有 Supported 中的元素
+	// 默认为除 http.MethodOptions 之外的所有 Supported 中的元素
 	Default = []string{
 		http.MethodGet,
 		http.MethodPost,
