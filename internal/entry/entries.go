@@ -58,7 +58,7 @@ func (es *Entries) Clean(prefix string) {
 // 当未指定 methods 时，将删除所有 method 匹配的项。
 // 指定错误的 methods 值，将自动忽略该值。
 func (es *Entries) Remove(pattern string, methods ...string) {
-	if len(methods) == 0 { // 删除所有 method 下匹配的项
+	if len(methods) == 0 {
 		methods = method.Supported
 	}
 
@@ -70,7 +70,7 @@ func (es *Entries) Remove(pattern string, methods ...string) {
 			continue
 		}
 
-		if empty := e.remove(methods...); empty { // 该 Entry 下已经没有路由项了
+		if empty := e.remove(methods...); empty { // 空了，则当整个路由项移除
 			es.entries = removeEntries(es.entries, e.pattern())
 		}
 		return // 只可能有一相完全匹配，找到之后，即可返回
@@ -79,8 +79,9 @@ func (es *Entries) Remove(pattern string, methods ...string) {
 
 // Add 添加一条路由数据。
 //
-// pattern 为路由匹配模式，可以是正则匹配也可以是字符串匹配，
-// methods 参数应该只能为 method.Default 中的字符串，若不指定，默认为所有，
+// pattern 为路由匹配模式，可以是正则匹配也可以是字符串匹配；
+// methods 为可以匹配的请求方法，默认为 method.Default 中的所有元素，
+// 可以为 method.Supported 中的所有元素。
 // 当 h 或是 pattern 为空时，将触发 panic。
 func (es *Entries) Add(pattern string, h http.Handler, methods ...string) error {
 	if len(pattern) == 0 {
