@@ -19,7 +19,7 @@
 //  res := p.Resource("/users/{id\\d+}")
 //  res.Get(h)   // 相当于 m.Get("/api/users/{id}", h)
 //  res.Post(h)  // 相当于 m.Post("/api/users/{id}", h)
-//  res.URL(map[string]string{"id": "5"}) // /users/5
+//  res.URL(map[string]string{"id": "5"}, "") // /users/5
 //
 //  http.ListenAndServe(":8080", m)
 //

@@ -33,7 +33,7 @@ p.Post("/login", h) // 相当于 m.Get("/api/login", h)
 res := p.Resource("/users/{id\\d+}")
 res.Get(h)   // 相当于 m.Get("/api/users/{id}", h)
 res.Post(h)  // 相当于 m.Post("/api/users/{id}", h)
-res.URL(map[string]string{"id": "5"}) // 构建一条基于此路由项的路径：/users/5
+res.URL(map[string]string{"id": "5"}, "") // 构建一条基于此路由项的路径：/users/5
 
 http.ListenAndServe(":8080", m)
 ```

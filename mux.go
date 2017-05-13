@@ -14,7 +14,6 @@ import (
 )
 
 // 初始化时，默认的路由项数量大小，在一定的情况下，可以减少后期的内存多次分配操作
-// TODO 添加到 New 参数中?
 const defaultEntriesSize = 1000
 
 // 两个默认处理函数
