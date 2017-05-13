@@ -74,8 +74,9 @@ func (mux *Mux) Clean() *Mux {
 //
 // 当未指定 methods 时，将删除所有 method 匹配的项。
 // 指定错误的 methods 值，将自动忽略该值。
-func (mux *Mux) Remove(pattern string, methods ...string) {
+func (mux *Mux) Remove(pattern string, methods ...string) *Mux {
 	mux.entries.Remove(pattern, methods...)
+	return mux
 }
 
 // Add 添加一条路由数据。
