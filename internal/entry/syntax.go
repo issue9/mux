@@ -10,6 +10,8 @@ import (
 	"strings"
 )
 
+const maxParamsSize = 255
+
 const (
 	syntaxStart = '{'
 	syntaxEnd   = '}'
@@ -121,6 +123,11 @@ DUP:
 	if index := duplicateName(names); index >= 0 {
 		return nil, fmt.Errorf("相同的路由参数名：%v", names[index])
 	}
+
+	if len(names) >= maxParamsSize {
+		return nil, fmt.Errorf("路径参数最多只能：%d 个，当前数量：%d", maxParamsSize, len(names))
+	}
+
 	return s, nil
 }
 
