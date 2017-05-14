@@ -5,15 +5,16 @@
 package list
 
 import (
-	"errors"
 	"net/http"
 	"sort"
 	"strings"
 	"sync"
 
 	"github.com/issue9/mux/internal/entry"
-	"github.com/issue9/mux/internal/method"
 )
+
+// 初始化时，默认的路由项数量大小，在一定的情况下，可以减少后期的内存多次分配操作
+const defaultEntriesSize = 1000
 
 // Entries entry.Entry 的存放列表
 type Entries struct {
@@ -23,10 +24,10 @@ type Entries struct {
 }
 
 // NewEntries 声明一个 Entries 实例
-func NewEntries(disableOptions bool, cap int) *Entries {
+func NewEntries(disableOptions bool) *Entries {
 	return &Entries{
 		disableOptions: disableOptions,
-		entries:        make([]entry.Entry, 0, cap),
+		entries:        make([]entry.Entry, 0, defaultEntriesSize),
 	}
 }
 
@@ -59,10 +60,6 @@ func (es *Entries) Clean(prefix string) {
 // 当未指定 methods 时，将删除所有 method 匹配的项。
 // 指定错误的 methods 值，将自动忽略该值。
 func (es *Entries) Remove(pattern string, methods ...string) {
-	if len(methods) == 0 {
-		methods = method.Supported
-	}
-
 	es.mu.Lock()
 	defer es.mu.Unlock()
 
@@ -85,17 +82,6 @@ func (es *Entries) Remove(pattern string, methods ...string) {
 // 可以为 method.Supported 中的所有元素。
 // 当 h 或是 pattern 为空时，将触发 panic。
 func (es *Entries) Add(pattern string, h http.Handler, methods ...string) error {
-	if len(pattern) == 0 {
-		return errors.New("参数 pattern 不能为空")
-	}
-	if h == nil {
-		return errors.New("参数 h 不能为空")
-	}
-
-	if len(methods) == 0 {
-		methods = method.Default
-	}
-
 	ety, err := es.Entry(pattern)
 	if err != nil {
 		return err

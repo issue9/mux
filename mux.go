@@ -7,7 +7,6 @@ package mux
 import (
 	"context"
 	"net/http"
-
 	"strings"
 
 	"github.com/issue9/mux/internal/list"
@@ -37,7 +36,7 @@ var (
 //    Add("/api/{version:\\d+}",h3, http.MethodGet, http.MethodPost) // 只匹配 GET 和 POST
 //  http.ListenAndServe(m)
 type Mux struct {
-	entries          *list.Entries
+	list             *list.List
 	skipCleanPath    bool             // 是否不对提交的路径作处理。
 	notFound         http.HandlerFunc // 404 的处理方式
 	methodNotAllowed http.HandlerFunc // 405 的处理方式
@@ -58,7 +57,7 @@ func New(disableOptions, skipCleanPath bool, notFound, methodNotAllowed http.Han
 	}
 
 	return &Mux{
-		entries:          list.NewEntries(disableOptions, defaultEntriesSize),
+		list:             list.New(disableOptions),
 		skipCleanPath:    skipCleanPath,
 		notFound:         notFound,
 		methodNotAllowed: methodNotAllowed,
@@ -67,7 +66,7 @@ func New(disableOptions, skipCleanPath bool, notFound, methodNotAllowed http.Han
 
 // Clean 清除所有的路由项
 func (mux *Mux) Clean() *Mux {
-	mux.entries.Clean("")
+	mux.list.Clean("")
 	return mux
 }
 
@@ -76,7 +75,7 @@ func (mux *Mux) Clean() *Mux {
 // 当未指定 methods 时，将删除所有 method 匹配的项。
 // 指定错误的 methods 值，将自动忽略该值。
 func (mux *Mux) Remove(pattern string, methods ...string) *Mux {
-	mux.entries.Remove(pattern, methods...)
+	mux.list.Remove(pattern, methods...)
 	return mux
 }
 
@@ -86,7 +85,7 @@ func (mux *Mux) Remove(pattern string, methods ...string) *Mux {
 // methods 该路由项对应的请求方法，可通过 SupportedMethods() 获得当前支持的请求方法。
 // 当 pattern 或是 h 为空时，将触发 panic。
 func (mux *Mux) Add(pattern string, h http.Handler, methods ...string) error {
-	return mux.entries.Add(pattern, h, methods...)
+	return mux.list.Add(pattern, h, methods...)
 }
 
 // Options 将 OPTIONS 请求方法的报头 allow 值固定为指定的值。
@@ -95,7 +94,7 @@ func (mux *Mux) Add(pattern string, h http.Handler, methods ...string) error {
 // 如果想实现对处理方法的自定义，可以显示地调用 Add 方法:
 //  Mux.Add("/api/1", handle, http.MethodOptions)
 func (mux *Mux) Options(pattern string, allow string) *Mux {
-	ety, err := mux.entries.Entry(pattern)
+	ety, err := mux.list.Entry(pattern)
 	if err != nil {
 		panic(err)
 	}
@@ -186,7 +185,7 @@ func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		p = cleanPath(p)
 	}
 
-	e, params := mux.entries.Match(p)
+	e, params := mux.list.Match(p)
 	if e == nil {
 		mux.notFound(w, r)
 		return
