@@ -207,13 +207,11 @@ func TestClearPath(t *testing.T) {
 	a.Equal(cleanPath("//api//"), "/api/")
 
 	a.Equal(cleanPath("/api/"), "/api/")
-	a.Equal(cleanPath("/api/./"), "/api/")
+	a.Equal(cleanPath("/api/./"), "/api/./")
 
-	a.Equal(cleanPath("/api/.."), "/")
-	a.Equal(cleanPath("/api/../"), "/")
-
-	a.Equal(cleanPath("/api/../../"), "/")
-	a.Equal(cleanPath("/api../"), "/api../")
+	a.Equal(cleanPath("/api/.."), "/api/..")
+	a.Equal(cleanPath("/api/../"), "/api/../")
+	a.Equal(cleanPath("/api/../../"), "/api/../../")
 }
 
 func BenchmarkCleanPath(b *testing.B) {
@@ -221,6 +219,9 @@ func BenchmarkCleanPath(b *testing.B) {
 
 	paths := []string{
 		"/api//",
+		"/api////users/1",
+		"//api/users/1",
+		"/api///users////1",
 		"api//",
 		"/api/",
 		"/api/./",
