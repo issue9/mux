@@ -7,7 +7,8 @@ package mux
 import (
 	"context"
 	"net/http"
-	"path"
+
+	"strings"
 
 	"github.com/issue9/mux/internal/entry"
 	"github.com/issue9/mux/internal/method"
@@ -225,14 +226,27 @@ func cleanPath(p string) string {
 		p = "/" + p
 	}
 
-	pp := path.Clean(p)
-	if pp == "/" {
-		return pp
+	index := strings.Index(p, "//")
+	if index == -1 {
+		return p
 	}
 
-	// path.Clean 会去掉最后的 / 符号，所以原来有 / 的，需要加回去
-	if p[len(p)-1] == '/' {
-		pp += "/"
+	pp := make([]byte, 0, len(p))
+	pp = append(pp, p[:index+1]...)
+	slash := true
+
+	p = p[index+2:]
+	for i := 0; i < len(p); i++ {
+		if p[i] == '/' {
+			if slash {
+				continue
+			}
+			slash = true
+		} else {
+			slash = false
+		}
+		pp = append(pp, p[i])
 	}
-	return pp
+
+	return string(pp)
 }
