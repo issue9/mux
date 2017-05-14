@@ -4,7 +4,11 @@
 
 package entry
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/issue9/mux/internal/syntax"
+)
 
 // 最基本的字符串匹配，只能全字符串匹配。
 type basic struct {
@@ -12,19 +16,19 @@ type basic struct {
 	prefix string
 }
 
-func newBasic(pattern string) *basic {
+func newBasic(s *syntax.Syntax) *basic {
 	ret := &basic{
-		base: newBase(pattern),
+		base: newBase(s),
 	}
 	if ret.wildcard {
-		ret.prefix = pattern[:len(pattern)-1]
+		ret.prefix = s.Pattern[:len(s.Pattern)-1]
 	}
 
 	return ret
 }
 
 func (b *basic) Priority() int {
-	return typeBasic
+	return syntax.TypeBasic
 }
 
 func (b *basic) Match(url string) (bool, map[string]string) {

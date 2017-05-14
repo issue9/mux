@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/issue9/assert"
+	"github.com/issue9/mux/internal/syntax"
 )
 
 var get = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -23,7 +24,7 @@ var options = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 func TestItems_Add_Remove(t *testing.T) {
 	a := assert.New(t)
 
-	b := newBase("/")
+	b := newBase(&syntax.Syntax{Pattern: "/", Wildcard: false})
 	a.NotNil(b)
 
 	a.NotError(b.Add(get, http.MethodGet, http.MethodPost))
@@ -45,7 +46,7 @@ func TestItems_Add_Remove(t *testing.T) {
 func TestItems_OptionsAllow(t *testing.T) {
 	a := assert.New(t)
 
-	b := newBase("/")
+	b := newBase(&syntax.Syntax{Pattern: "/", Wildcard: false})
 	a.NotNil(b)
 
 	test := func(allow string) {

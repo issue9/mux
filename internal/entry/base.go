@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/issue9/mux/internal/method"
+	"github.com/issue9/mux/internal/syntax"
 )
 
 type optionsState int8
@@ -32,11 +33,11 @@ type base struct {
 	optionsState optionsState            // OPTIONS 报头的处理方式
 }
 
-func newBase(pattern string) *base {
+func newBase(s *syntax.Syntax) *base {
 	ret := &base{
-		pattern:      pattern,
+		pattern:      s.Pattern,
 		handlers:     make(map[string]http.Handler, len(method.Supported)),
-		wildcard:     IsWildcard(pattern),
+		wildcard:     s.Wildcard,
 		optionsState: optionsStateDefault,
 	}
 

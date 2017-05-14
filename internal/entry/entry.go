@@ -5,7 +5,12 @@
 // Package entry 路由项的相关操作。
 package entry
 
-import "net/http"
+import (
+	"fmt"
+	"net/http"
+
+	"github.com/issue9/mux/internal/syntax"
+)
 
 // Entry 表示一类资源的进入点，拥有统一的路由匹配模式。
 type Entry interface {
@@ -43,19 +48,16 @@ type Entry interface {
 	SetAllow(string)
 }
 
-// 声明一个 Entry 实例。
-func New(pattern string) (Entry, error) {
-	s, err := parse(pattern)
-	if err != nil {
-		return nil, err
-
+// New 声明一个 Entry 实例。
+func New(s *syntax.Syntax) (Entry, error) {
+	switch s.Type {
+	case syntax.TypeRegexp:
+		return newRegexp(s)
+	case syntax.TypeNamed:
+		return newNamed(s), nil
+	case syntax.TypeBasic:
+		return newBasic(s), nil
+	default:
+		return nil, fmt.Errorf("未知的类型：%v", s.Type)
 	}
-
-	if s.nType == typeRegexp {
-		return newRegexp(pattern, s)
-	} else if s.nType == typeNamed {
-		return newNamed(pattern, s), nil
-	}
-
-	return newBasic(s.patterns[0]), nil
 }

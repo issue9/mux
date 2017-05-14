@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/issue9/assert"
+	"github.com/issue9/mux/internal/syntax"
 )
 
 var _ Entry = &basic{}
@@ -37,12 +38,12 @@ func TestBasic_match(t *testing.T) {
 
 func TestBasic_URL(t *testing.T) {
 	a := assert.New(t)
-	b := newBasic("/basic")
+	b := newBasic(&syntax.Syntax{Pattern: "/basic"})
 
 	url, err := b.URL(map[string]string{"id": "1"}, "/abc")
 	a.NotError(err).Equal(url, "/basic")
 
-	b = newBasic("/basic/*")
+	b = newBasic(&syntax.Syntax{Pattern: "/basic/*", Wildcard: true})
 	url, err = b.URL(map[string]string{"id": "1"}, "abc")
 	a.NotError(err).Equal(url, "/basic/abc")
 
