@@ -13,9 +13,6 @@ import (
 	"github.com/issue9/mux/internal/entry"
 )
 
-// 初始化时，entries.entries 元素的大小，在一定的情况下，可以减少后期的内存多次分配操作
-const defaultEntriesSize = 100
-
 type entries struct {
 	mu             sync.RWMutex
 	entries        []entry.Entry
@@ -25,7 +22,7 @@ type entries struct {
 func newEntries(disableOptions bool) *entries {
 	return &entries{
 		disableOptions: disableOptions,
-		entries:        make([]entry.Entry, 0, defaultEntriesSize),
+		entries:        make([]entry.Entry, 0, 100),
 	}
 }
 
