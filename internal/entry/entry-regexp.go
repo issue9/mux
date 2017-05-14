@@ -45,7 +45,7 @@ func newRegexp(pattern string, s *syntax) (*regexp, error) {
 	}, nil
 }
 
-func (r *regexp) priority() int {
+func (r *regexp) Priority() int {
 	if r.wildcard {
 		return typeRegexpWithWildcard
 	}
@@ -54,7 +54,7 @@ func (r *regexp) priority() int {
 }
 
 // Entry.match
-func (r *regexp) match(url string) (bool, map[string]string) {
+func (r *regexp) Match(url string) (bool, map[string]string) {
 	loc := r.expr.FindStringIndex(url)
 
 	if loc == nil || loc[0] != 0 {

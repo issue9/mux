@@ -63,7 +63,7 @@ func newNamed(pattern string, s *syntax) *named {
 	}
 }
 
-func (n *named) priority() int {
+func (n *named) Priority() int {
 	if n.wildcard {
 		return typeNamedWithWildcard
 	}
@@ -71,7 +71,7 @@ func (n *named) priority() int {
 	return typeNamed
 }
 
-func (n *named) match(path string) (bool, map[string]string) {
+func (n *named) Match(path string) (bool, map[string]string) {
 	rawPath := path
 	for i, name := range n.nodes {
 		islast := (i == len(n.nodes)-1)

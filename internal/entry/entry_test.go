@@ -17,7 +17,7 @@ type matcher struct {
 }
 
 func newMatcher(a *assert.Assertion, pattern string) *matcher {
-	e, err := newEntry(pattern)
+	e, err := New(pattern)
 	a.NotError(err).NotNil(e)
 
 	return &matcher{
@@ -27,7 +27,7 @@ func newMatcher(a *assert.Assertion, pattern string) *matcher {
 }
 
 func (m *matcher) True(path string, params map[string]string) *matcher {
-	ok, ps := m.e.match(path)
+	ok, ps := m.e.Match(path)
 	m.a.True(ok).
 		Equal(ps, params)
 
@@ -35,82 +35,82 @@ func (m *matcher) True(path string, params map[string]string) *matcher {
 }
 
 func (m *matcher) False(path string, params map[string]string) *matcher {
-	ok, _ := m.e.match(path) // 为 false 则返回值没意义
+	ok, _ := m.e.Match(path) // 为 false 则返回值没意义
 	m.a.False(ok)
 
 	return m
 }
 
-func TestNewEntry(t *testing.T) {
+func TestNew(t *testing.T) {
 	a := assert.New(t)
 
 	// basic
-	e, err := newEntry("/basic/basic")
+	e, err := New("/basic/basic")
 	a.NotError(err).NotNil(e)
 	b, ok := e.(*basic)
 	a.True(ok).False(b.wildcard)
 
 	// basic with wildcard
-	e, err = newEntry("/basic/basic/*")
+	e, err = New("/basic/basic/*")
 	a.NotError(err).NotNil(e)
 	b, ok = e.(*basic)
 	a.True(ok).True(b.wildcard)
 
 	// named
-	e, err = newEntry("/named/{named}/path")
+	e, err = New("/named/{named}/path")
 	a.NotError(err).NotNil(e)
 	n, ok := e.(*named)
 	a.True(ok).False(n.wildcard)
 
 	// named with wildcard
-	e, err = newEntry("/named/{named}/path/*")
+	e, err = New("/named/{named}/path/*")
 	a.NotError(err).NotNil(e)
 	n, ok = e.(*named)
 	a.True(ok).True(n.wildcard)
 
 	// regexp
-	e, err = newEntry("/regexp/{named:\\d+}")
+	e, err = New("/regexp/{named:\\d+}")
 	a.NotError(err).NotNil(e)
 	r, ok := e.(*regexp)
 	a.True(ok).False(r.wildcard)
 
 	// regexp with wildcard
-	e, err = newEntry("/regexp/{named:\\d+}/*")
+	e, err = New("/regexp/{named:\\d+}/*")
 	a.NotError(err).NotNil(e)
 	r, ok = e.(*regexp)
 	a.True(ok).True(r.wildcard)
 }
 
-func TestEntry_priority(t *testing.T) {
+func TestEntry_Priority(t *testing.T) {
 	a := assert.New(t)
 
-	b, err := newEntry("/basic/basic")
+	b, err := New("/basic/basic")
 	a.NotError(err).NotNil(b)
 
-	bw, err := newEntry("/basic/basic/*")
+	bw, err := New("/basic/basic/*")
 	a.NotError(err).NotNil(bw)
 
-	n, err := newEntry("/basic/{named}")
+	n, err := New("/basic/{named}")
 	a.NotError(err).NotNil(n)
 
-	nw, err := newEntry("/basic/{named}/*")
+	nw, err := New("/basic/{named}/*")
 	a.NotError(err).NotNil(nw)
 
-	r, err := newEntry("/basic/{named:\\d+}")
+	r, err := New("/basic/{named:\\d+}")
 	a.NotError(err).NotNil(r)
 
-	rw, err := newEntry("/basic/{named:\\d+}/*")
+	rw, err := New("/basic/{named:\\d+}/*")
 	a.NotError(err).NotNil(rw)
 
-	a.True(bw.priority() > b.priority()).
-		True(nw.priority() > n.priority()).
-		True(rw.priority() > r.priority())
+	a.True(bw.Priority() > b.Priority()).
+		True(nw.Priority() > n.Priority()).
+		True(rw.Priority() > r.Priority())
 
-	a.True(n.priority() > r.priority()).
-		True(r.priority() > b.priority())
+	a.True(n.Priority() > r.Priority()).
+		True(r.Priority() > b.Priority())
 
-	a.True(nw.priority() > rw.priority()).
-		True(rw.priority() > bw.priority())
+	a.True(nw.Priority() > rw.Priority()).
+		True(rw.Priority() > bw.Priority())
 
-	a.True(bw.priority() > n.priority())
+	a.True(bw.Priority() > n.Priority())
 }

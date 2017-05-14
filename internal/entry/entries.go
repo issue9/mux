@@ -42,7 +42,7 @@ func (es *Entries) Clean(prefix string) {
 
 	dels := []string{}
 	for _, ety := range es.entries {
-		pattern := ety.pattern()
+		pattern := ety.Pattern()
 		if strings.HasPrefix(pattern, prefix) {
 			dels = append(dels, pattern)
 		}
@@ -66,12 +66,12 @@ func (es *Entries) Remove(pattern string, methods ...string) {
 	defer es.mu.Unlock()
 
 	for _, e := range es.entries {
-		if e.pattern() != pattern {
+		if e.Pattern() != pattern {
 			continue
 		}
 
-		if empty := e.remove(methods...); empty { // 空了，则当整个路由项移除
-			es.entries = removeEntries(es.entries, e.pattern())
+		if empty := e.Remove(methods...); empty { // 空了，则当整个路由项移除
+			es.entries = removeEntries(es.entries, e.Pattern())
 		}
 		return // 只可能有一相完全匹配，找到之后，即可返回
 	}
@@ -100,7 +100,7 @@ func (es *Entries) Add(pattern string, h http.Handler, methods ...string) error 
 		return err
 	}
 
-	return ety.add(h, methods...)
+	return ety.Add(h, methods...)
 }
 
 // Entry 查找指定匹配模式下的 Entry，不存在，则声明新的
@@ -109,19 +109,19 @@ func (es *Entries) Entry(pattern string) (Entry, error) {
 		return ety, nil
 	}
 
-	ety, err := newEntry(pattern)
+	ety, err := New(pattern)
 	if err != nil {
 		return nil, err
 	}
 
 	if es.disableOptions { // 禁用 OPTIONS
-		ety.remove(http.MethodOptions)
+		ety.Remove(http.MethodOptions)
 	}
 
 	es.mu.Lock()
 	defer es.mu.Unlock()
 	es.entries = append(es.entries, ety)
-	sort.SliceStable(es.entries, func(i, j int) bool { return es.entries[i].priority() < es.entries[j].priority() })
+	sort.SliceStable(es.entries, func(i, j int) bool { return es.entries[i].Priority() < es.entries[j].Priority() })
 
 	return ety, nil
 }
@@ -131,7 +131,7 @@ func (es *Entries) findEntry(pattern string) Entry {
 	defer es.mu.RUnlock()
 
 	for _, e := range es.entries {
-		if e.pattern() == pattern {
+		if e.Pattern() == pattern {
 			return e
 		}
 	}
@@ -145,7 +145,7 @@ func (es *Entries) Match(path string) (Entry, map[string]string) {
 	defer es.mu.RUnlock()
 
 	for _, ety := range es.entries {
-		if matched, params := ety.match(path); matched {
+		if matched, params := ety.Match(path); matched {
 			return ety, params
 		}
 	}
@@ -156,7 +156,7 @@ func (es *Entries) Match(path string) (Entry, map[string]string) {
 func removeEntries(es []Entry, pattern string) []Entry {
 	lastIndex := len(es) - 1
 	for index, e := range es {
-		if e.pattern() != pattern {
+		if e.Pattern() != pattern {
 			continue
 		}
 

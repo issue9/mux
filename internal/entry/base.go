@@ -47,12 +47,12 @@ func newBase(pattern string) *base {
 	return ret
 }
 
-func (b *base) pattern() string {
+func (b *base) Pattern() string {
 	return b.patternString
 }
 
 // Entry.add()
-func (b *base) add(h http.Handler, methods ...string) error {
+func (b *base) Add(h http.Handler, methods ...string) error {
 	for _, m := range methods {
 		if !method.IsSupported(m) {
 			return fmt.Errorf("不支持的请求方法 %v", m)
@@ -104,8 +104,8 @@ func (b *base) getOptionsAllow() string {
 	return strings.Join(methods, ", ")
 }
 
-// Entry.remove()
-func (b *base) remove(methods ...string) bool {
+// Entry.Remove()
+func (b *base) Remove(methods ...string) bool {
 	for _, method := range methods {
 		delete(b.handlers, method)
 		if method == http.MethodOptions { // 明确指出要删除该路由项的 OPTIONS 时，表示禁止
