@@ -41,29 +41,29 @@ func TestParse(t *testing.T) {
 	fn(" ", true, &syntax{})
 	fn("/", false, &syntax{
 		hasParams: false,
-		nType:     typeBasic,
+		nType:     TypeBasic,
 		patterns:  []string{"/"},
 	})
 	fn("/posts/1", false, &syntax{
 		hasParams: false,
-		nType:     typeBasic,
+		nType:     TypeBasic,
 		patterns:  []string{"/posts/1"},
 	})
 	fn("/posts/{id", false, &syntax{
 		hasParams: false,
-		nType:     typeBasic,
+		nType:     TypeBasic,
 		patterns:  []string{"/posts/{id"},
 	})
 
 	// Named
 	fn("/posts/{id}", false, &syntax{
 		hasParams: true,
-		nType:     typeNamed,
+		nType:     TypeNamed,
 		patterns:  []string{"/posts/", "{id}"},
 	})
 	fn("/posts/{id}/page/{page}", false, &syntax{
 		hasParams: true,
-		nType:     typeNamed,
+		nType:     TypeNamed,
 		patterns:  []string{"/posts/", "{id}", "/page/", "{page}"},
 	})
 
@@ -72,7 +72,7 @@ func TestParse(t *testing.T) {
 	// regexp
 	fn("/posts/{id:\\d+}", false, &syntax{
 		hasParams: true,
-		nType:     typeRegexp,
+		nType:     TypeRegexp,
 		patterns:  []string{"/posts/", "(?P<id>\\d+)"},
 	})
 
@@ -80,46 +80,46 @@ func TestParse(t *testing.T) {
 
 	fn("/posts/{id:\\d+}/page/{page:\\d+}", false, &syntax{
 		hasParams: true,
-		nType:     typeRegexp,
+		nType:     TypeRegexp,
 		patterns:  []string{"/posts/", "(?P<id>\\d+)", "/page/", "(?P<page>\\d+)"},
 	})
 	// 未命名参数
 	fn("/posts/{:\\d+}", false, &syntax{
 		hasParams: false,
-		nType:     typeRegexp,
+		nType:     TypeRegexp,
 		patterns:  []string{"/posts/", "\\d+"},
 	})
 	// 有一个未命名参数
 	fn("/posts/{:\\d+}/page/{page:\\d+}", false, &syntax{
 		hasParams: true,
-		nType:     typeRegexp,
+		nType:     TypeRegexp,
 		patterns:  []string{"/posts/", "\\d+", "/page/", "(?P<page>\\d+)"},
 	})
 	// 多个未命名参数
 	fn("/posts/{:\\d+}/page/{:\\d+}", false, &syntax{
 		hasParams: false,
-		nType:     typeRegexp,
+		nType:     TypeRegexp,
 		patterns:  []string{"/posts/", "\\d+", "/page/", "\\d+"},
 	})
 
 	// 命名与未命名混合
 	fn("/posts/{id}/page/{:\\d+}", false, &syntax{
 		hasParams: true,
-		nType:     typeRegexp,
+		nType:     TypeRegexp,
 		patterns:  []string{"/posts/", "(?P<id>[^/]+)", "/page/", "\\d+"},
 	})
 
 	// 命名与正则名混合
 	fn("/posts/{id}/page/{page:\\d+}", false, &syntax{
 		hasParams: true,
-		nType:     typeRegexp,
+		nType:     TypeRegexp,
 		patterns:  []string{"/posts/", "(?P<id>[^/]+)", "/page/", "(?P<page>\\d+)"},
 	})
 
 	// 命名与正则、未命名名混合
 	fn("/posts/{id}/page/{page:\\d+}/size/{:\\d+}", false, &syntax{
 		hasParams: true,
-		nType:     typeRegexp,
+		nType:     TypeRegexp,
 		patterns:  []string{"/posts/", "(?P<id>[^/]+)", "/page/", "(?P<page>\\d+)", "/size/", "\\d+"},
 	})
 }

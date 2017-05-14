@@ -46,7 +46,7 @@ func newRegexp(pattern string, s *syntax) (*regexp, error) {
 }
 
 func (r *regexp) Priority() int {
-	return typeRegexp
+	return TypeRegexp
 }
 
 // Entry.match

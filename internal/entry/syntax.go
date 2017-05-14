@@ -21,10 +21,10 @@ const (
 
 // 表示当前路由项的类型，同时会被用于 Entry.priority()
 const (
-	typeUnknown = iota
-	typeBasic
-	typeRegexp
-	typeNamed
+	TypeUnknown = iota
+	TypeBasic
+	TypeRegexp
+	TypeNamed
 )
 
 // 描述指定的字符串所表示的语法结构
@@ -57,13 +57,13 @@ func parse(pattern string) (*syntax, error) {
 		patterns: make([]string, 0, len(strs)),
 	}
 	if len(strs) == 0 {
-		s.nType = typeBasic
+		s.nType = TypeBasic
 		return s, nil
 	}
 
 	if len(strs) == 1 && !isSyntax(strs[0]) {
 		s.patterns = append(s.patterns, strs[0])
-		s.nType = typeBasic
+		s.nType = TypeBasic
 		return s, nil
 	}
 
@@ -77,16 +77,16 @@ func parse(pattern string) (*syntax, error) {
 
 		// 只存在命名，而不存在正则表达式
 		if index := strings.IndexByte(v, ':'); index < 0 {
-			if s.nType != typeRegexp {
-				s.nType = typeNamed
+			if s.nType != TypeRegexp {
+				s.nType = TypeNamed
 			}
 		} else {
-			s.nType = typeRegexp
+			s.nType = TypeRegexp
 		}
 	}
 
 	// 命名参数
-	if s.nType == typeNamed {
+	if s.nType == TypeNamed {
 		for _, str := range s.patterns {
 			lastIndex := len(str) - 1
 			if str[0] == syntaxStart && str[lastIndex] == syntaxEnd {

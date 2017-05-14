@@ -51,9 +51,9 @@ func New(pattern string) (Entry, error) {
 
 	}
 
-	if s.nType == typeRegexp {
+	if s.nType == TypeRegexp {
 		return newRegexp(pattern, s)
-	} else if s.nType == typeNamed {
+	} else if s.nType == TypeNamed {
 		return newNamed(pattern, s), nil
 	}
 

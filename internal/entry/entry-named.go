@@ -64,7 +64,7 @@ func newNamed(pattern string, s *syntax) *named {
 }
 
 func (n *named) Priority() int {
-	return typeNamed
+	return TypeNamed
 }
 
 func (n *named) Match(path string) (bool, map[string]string) {

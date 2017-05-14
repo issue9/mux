@@ -24,7 +24,7 @@ func newBasic(pattern string) *basic {
 }
 
 func (b *basic) Priority() int {
-	return typeBasic
+	return TypeBasic
 }
 
 func (b *basic) Match(url string) (bool, map[string]string) {
