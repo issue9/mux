@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/issue9/mux/internal/entry"
+	"github.com/issue9/mux/internal/syntax"
 )
 
 type entries struct {
@@ -83,7 +84,12 @@ func (es *entries) entry(pattern string) (entry.Entry, error) {
 		return ety, nil
 	}
 
-	ety, err := entry.New(pattern)
+	s, err := syntax.New(pattern)
+	if err != nil {
+		return nil, err
+	}
+
+	ety, err := entry.New(s)
 	if err != nil {
 		return nil, err
 	}

@@ -93,14 +93,18 @@ func TestRegexp_match_wildcard(t *testing.T) {
 
 func TestRegexp_URL(t *testing.T) {
 	a := assert.New(t)
-	n, err := New("/posts/{id:[^/]+}")
+	s, err := syntax.New("/posts/{id:[^/]+}")
+	a.NotError(err).NotNil(s)
+	n, err := New(s)
 	a.NotError(err).NotNil(n)
 	url, err := n.URL(map[string]string{"id": "5.html"}, "path")
 	a.NotError(err).Equal(url, "/posts/5.html")
 	url, err = n.URL(map[string]string{"id": "5.html/"}, "path")
 	a.NotError(err).Equal(url, "/posts/5.html/")
 
-	n, err = New("/posts/{id:[^/]+}/page/{page}")
+	s, err = syntax.New("/posts/{id:[^/]+}/page/{page}")
+	a.NotError(err).NotNil(s)
+	n, err = New(s)
 	url, err = n.URL(map[string]string{"id": "5.html", "page": "1"}, "path")
 	a.NotError(err).Equal(url, "/posts/5.html/page/1")
 
@@ -109,12 +113,16 @@ func TestRegexp_URL(t *testing.T) {
 	a.Error(err).Equal(url, "")
 
 	// 带有未命名参数
-	n, err = New("/posts/{id}/page/{page:\\d+}/size/{:\\d+}")
+	s, err = syntax.New("/posts/{id}/page/{page:\\d+}/size/{:\\d+}")
+	a.NotError(err).NotNil(s)
+	n, err = New(s)
 	url, err = n.URL(map[string]string{"id": "5.html", "page": "1"}, "path")
 	a.NotError(err).Equal(url, "/posts/5.html/page/1/size/[0-9]+")
 
 	// 带通配符
-	n, err = New("/posts/{id:[^/]+}/page/{page}/*")
+	s, err = syntax.New("/posts/{id:[^/]+}/page/{page}/*")
+	a.NotError(err).NotNil(s)
+	n, err = New(s)
 	url, err = n.URL(map[string]string{"id": "5.html", "page": "1"}, "path")
 	a.NotError(err).Equal(url, "/posts/5.html/page/1/path")
 

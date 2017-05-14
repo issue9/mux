@@ -49,13 +49,7 @@ type Entry interface {
 }
 
 // New 声明一个 Entry 实例。
-func New(pattern string) (Entry, error) {
-	s, err := syntax.New(pattern)
-	if err != nil {
-		return nil, err
-
-	}
-
+func New(s *syntax.Syntax) (Entry, error) {
 	switch s.Type {
 	case syntax.TypeRegexp:
 		return newRegexp(s)

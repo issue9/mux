@@ -8,11 +8,12 @@ import (
 	"testing"
 
 	"github.com/issue9/assert"
+	"github.com/issue9/mux/internal/syntax"
 )
 
 func BenchmarkBasic_Match(b *testing.B) {
 	a := assert.New(b)
-	e, err := New("/blog/post/1")
+	e, err := New(&syntax.Syntax{Pattern: "/blog/post/1", Type: syntax.TypeBasic})
 	a.NotError(err)
 
 	for i := 0; i < b.N; i++ {
@@ -25,7 +26,7 @@ func BenchmarkBasic_Match(b *testing.B) {
 
 func BenchmarkRegexp_Match(b *testing.B) {
 	a := assert.New(b)
-	e, err := New("/blog/post/{id:\\d+}")
+	e, err := New(&syntax.Syntax{Pattern: "/blog/post/{id:\\d+}", Type: syntax.TypeRegexp})
 	a.NotError(err)
 
 	for i := 0; i < b.N; i++ {
@@ -37,7 +38,7 @@ func BenchmarkRegexp_Match(b *testing.B) {
 
 func BenchmarkNamed_Match(b *testing.B) {
 	a := assert.New(b)
-	e, err := New("/blog/post/{id}/{id2}")
+	e, err := New(&syntax.Syntax{Pattern: "/blog/post/{id}/{id2}", Type: syntax.TypeNamed})
 	a.NotError(err)
 
 	for i := 0; i < b.N; i++ {
