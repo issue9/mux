@@ -103,7 +103,7 @@ func (l *List) Entry(pattern string) (entry.Entry, error) {
 
 // Match 查找与 path 最匹配的路由项以及对应的参数
 func (l *List) Match(path string) (entry.Entry, map[string]string) {
-	cnt := slashCount(path)
+	cnt := syntax.SlashCount(path)
 	es, found := l.entries[cnt]
 	if !found {
 		return nil, nil
@@ -125,17 +125,5 @@ func (l *List) entriesIndex(str string) int {
 		return wildcardEntriesIndex
 	}
 
-	return slashCount(str)
-}
-
-// 统计字符串包含的 / 字符数量
-func slashCount(str string) int {
-	ret := 0
-	for _, c := range str {
-		if c == '/' {
-			ret++
-		}
-	}
-
-	return ret
+	return syntax.SlashCount(str)
 }

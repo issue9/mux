@@ -5,6 +5,7 @@
 package syntax
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/issue9/assert"
@@ -161,4 +162,27 @@ func TestSplit(t *testing.T) {
 	// 无法解析的内容
 	a.Equal(split("{/blog/post/{id}"), []string{"{/blog/post/{id}"})
 	a.Equal(split("}/blog/post/{id}"), []string{"}/blog/post/", "{id}"})
+}
+
+const countTestString = "/adfada/adfa/dd//adfadasd/ada/dfad/"
+
+func TestSlashCount(t *testing.T) {
+	a := assert.New(t)
+	a.Equal(SlashCount(countTestString), 8)
+}
+
+func BenchmarkStringsCount(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		if strings.Count(countTestString, "/") != 8 {
+			b.Error("strings.count.error")
+		}
+	}
+}
+
+func BenchmarkSlashCount(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		if SlashCount(countTestString) != 8 {
+			b.Error("count:error")
+		}
+	}
 }

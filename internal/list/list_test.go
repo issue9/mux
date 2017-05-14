@@ -5,7 +5,6 @@
 package list
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/issue9/assert"
@@ -17,26 +16,5 @@ func TestList_entriesIndex(t *testing.T) {
 	a := assert.New(t)
 	l := &List{}
 	a.Equal(l.entriesIndex(countTestString), 8)
-	a.Equal(l.entriesIndex(countTestString+"*"), maxSlashSize)
-}
-
-func TestSlashCount(t *testing.T) {
-	a := assert.New(t)
-	a.Equal(slashCount(countTestString), 8)
-}
-
-func BenchmarkStringsCount(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		if strings.Count(countTestString, "/") != 8 {
-			b.Error("strings.count.error")
-		}
-	}
-}
-
-func BenchmarkSlashCount(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		if slashCount(countTestString) != 8 {
-			b.Error("count:error")
-		}
-	}
+	a.Equal(l.entriesIndex(countTestString+"*"), wildcardEntriesIndex)
 }

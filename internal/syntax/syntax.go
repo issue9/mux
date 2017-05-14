@@ -197,3 +197,15 @@ func split(str string) []string {
 		str = str[end:]
 	}
 }
+
+// 统计字符串包含的 / 字符数量
+func SlashCount(str string) int {
+	ret := 0
+	for _, c := range str {
+		if c == '/' {
+			ret++
+		}
+	}
+
+	return ret
+}
