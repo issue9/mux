@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
-package entry
+package list
 
 import (
 	"errors"
@@ -11,13 +11,14 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/issue9/mux/internal/entry"
 	"github.com/issue9/mux/internal/method"
 )
 
-// Entries Entry 的存放列表
+// Entries entry.Entry 的存放列表
 type Entries struct {
 	mu             sync.RWMutex
-	entries        []Entry
+	entries        []entry.Entry
 	disableOptions bool
 }
 
@@ -25,7 +26,7 @@ type Entries struct {
 func NewEntries(disableOptions bool, cap int) *Entries {
 	return &Entries{
 		disableOptions: disableOptions,
-		entries:        make([]Entry, 0, cap),
+		entries:        make([]entry.Entry, 0, cap),
 	}
 }
 
@@ -104,12 +105,12 @@ func (es *Entries) Add(pattern string, h http.Handler, methods ...string) error 
 }
 
 // Entry 查找指定匹配模式下的 Entry，不存在，则声明新的
-func (es *Entries) Entry(pattern string) (Entry, error) {
+func (es *Entries) Entry(pattern string) (entry.Entry, error) {
 	if ety := es.findEntry(pattern); ety != nil {
 		return ety, nil
 	}
 
-	ety, err := New(pattern)
+	ety, err := entry.New(pattern)
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +127,7 @@ func (es *Entries) Entry(pattern string) (Entry, error) {
 	return ety, nil
 }
 
-func (es *Entries) findEntry(pattern string) Entry {
+func (es *Entries) findEntry(pattern string) entry.Entry {
 	es.mu.RLock()
 	defer es.mu.RUnlock()
 
@@ -140,7 +141,7 @@ func (es *Entries) findEntry(pattern string) Entry {
 }
 
 // Match 查找与 path 最匹配的路由项以及对应的参数
-func (es *Entries) Match(path string) (Entry, map[string]string) {
+func (es *Entries) Match(path string) (entry.Entry, map[string]string) {
 	es.mu.RLock()
 	defer es.mu.RUnlock()
 
@@ -153,7 +154,7 @@ func (es *Entries) Match(path string) (Entry, map[string]string) {
 	return nil, nil
 }
 
-func removeEntries(es []Entry, pattern string) []Entry {
+func removeEntries(es []entry.Entry, pattern string) []entry.Entry {
 	lastIndex := len(es) - 1
 	for index, e := range es {
 		if e.Pattern() != pattern {

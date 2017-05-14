@@ -22,7 +22,7 @@ func TestNewNammed(t *testing.T) {
 		patterns:  []string{"/posts/", "{id}"},
 	})
 	a.NotNil(n)
-	a.Equal(n.patternString, pattern)
+	a.Equal(n.pattern, pattern)
 	a.Equal(len(n.nodes), 2)
 	n0 := n.nodes[0]
 	a.True(n0.isString).Equal(n0.value, "/posts/")
@@ -38,7 +38,7 @@ func TestNewNammed(t *testing.T) {
 		patterns:  []string{"/posts/", "{id}", "/page/", "{page}"},
 	})
 	a.NotNil(n)
-	a.Equal(n.patternString, pattern)
+	a.Equal(n.pattern, pattern)
 	a.Equal(len(n.nodes), 4)
 	n0 = n.nodes[0]
 	a.True(n0.isString).Equal(n0.value, "/posts/")

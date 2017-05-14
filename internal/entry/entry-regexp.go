@@ -94,7 +94,7 @@ func (r *regexp) params(url string) map[string]string {
 
 func (r *regexp) URL(params map[string]string, path string) (string, error) {
 	if r.syntaxExpr == nil {
-		return r.patternString, nil
+		return r.pattern, nil
 	}
 
 	url := r.syntaxExpr.String()

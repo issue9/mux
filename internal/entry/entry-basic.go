@@ -36,7 +36,7 @@ func (b *basic) Match(url string) (bool, map[string]string) {
 		return strings.HasPrefix(url, b.prefix), nil
 	}
 
-	return url == b.patternString, nil
+	return url == b.pattern, nil
 }
 
 func (b *basic) URL(params map[string]string, path string) (string, error) {

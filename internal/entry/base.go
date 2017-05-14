@@ -25,19 +25,19 @@ const (
 
 // 所有 Entry 实现的公用部分。
 type base struct {
-	patternString string                  // 匹配模式字符串
-	wildcard      bool                    // 是否包含通配符
-	handlers      map[string]http.Handler // 请求方法及其对应的 Handler
-	optionsAllow  string                  // 缓存的 OPTIONS 请求头的 allow 报头内容。
-	optionsState  optionsState            // OPTIONS 报头的处理方式
+	pattern      string                  // 匹配模式字符串
+	wildcard     bool                    // 是否包含通配符
+	handlers     map[string]http.Handler // 请求方法及其对应的 Handler
+	optionsAllow string                  // 缓存的 OPTIONS 请求头的 allow 报头内容。
+	optionsState optionsState            // OPTIONS 报头的处理方式
 }
 
 func newBase(pattern string) *base {
 	ret := &base{
-		patternString: pattern,
-		handlers:      make(map[string]http.Handler, len(method.Supported)),
-		wildcard:      strings.HasSuffix(pattern, "/*"),
-		optionsState:  optionsStateDefault,
+		pattern:      pattern,
+		handlers:     make(map[string]http.Handler, len(method.Supported)),
+		wildcard:     strings.HasSuffix(pattern, "/*"),
+		optionsState: optionsStateDefault,
 	}
 
 	// 添加默认的 OPTIONS 请求内容
@@ -48,7 +48,7 @@ func newBase(pattern string) *base {
 }
 
 func (b *base) Pattern() string {
-	return b.patternString
+	return b.pattern
 }
 
 // Entry.add()

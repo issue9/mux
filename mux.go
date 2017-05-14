@@ -10,7 +10,7 @@ import (
 
 	"strings"
 
-	"github.com/issue9/mux/internal/entry"
+	"github.com/issue9/mux/internal/list"
 	"github.com/issue9/mux/internal/method"
 )
 
@@ -37,7 +37,7 @@ var (
 //    Add("/api/{version:\\d+}",h3, http.MethodGet, http.MethodPost) // 只匹配 GET 和 POST
 //  http.ListenAndServe(m)
 type Mux struct {
-	entries          *entry.Entries
+	entries          *list.Entries
 	skipCleanPath    bool             // 是否不对提交的路径作处理。
 	notFound         http.HandlerFunc // 404 的处理方式
 	methodNotAllowed http.HandlerFunc // 405 的处理方式
@@ -58,7 +58,7 @@ func New(disableOptions, skipCleanPath bool, notFound, methodNotAllowed http.Han
 	}
 
 	return &Mux{
-		entries:          entry.NewEntries(disableOptions, defaultEntriesSize),
+		entries:          list.NewEntries(disableOptions, defaultEntriesSize),
 		skipCleanPath:    skipCleanPath,
 		notFound:         notFound,
 		methodNotAllowed: methodNotAllowed,
