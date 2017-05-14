@@ -11,7 +11,6 @@ import (
 	"github.com/issue9/assert"
 	"github.com/issue9/mux/internal/entry"
 	"github.com/issue9/mux/internal/method"
-	"github.com/issue9/mux/internal/syntax"
 )
 
 var (
@@ -83,17 +82,10 @@ func TestEntries_clean(t *testing.T) {
 func TestRemoveEntries(t *testing.T) {
 	a := assert.New(t)
 
-	newSyntax := func(pattern string) *syntax.Syntax {
-		s, err := syntax.New(pattern)
-		a.NotError(err).NotNil(s)
-
-		return s
-	}
-
-	n1, err := entry.New(newSyntax("/1"))
-	n2, err := entry.New(newSyntax("/2"))
-	n3, err := entry.New(newSyntax("/3"))
-	n4, err := entry.New(newSyntax("/4"))
+	n1, err := entry.New("/1")
+	n2, err := entry.New("/2")
+	n3, err := entry.New("/3")
+	n4, err := entry.New("/4")
 	a.NotError(err)
 	es := []entry.Entry{n1, n2, n3, n4}
 

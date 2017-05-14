@@ -11,9 +11,9 @@ import (
 	"sync"
 
 	"github.com/issue9/mux/internal/entry"
-	"github.com/issue9/mux/internal/syntax"
 )
 
+// 保存着按 Entry.Priority() 顺序保存的列表。
 type entries struct {
 	mu             sync.RWMutex
 	entries        []entry.Entry
@@ -32,11 +32,6 @@ func newEntries(disableOptions bool) *entries {
 func (es *entries) clean(prefix string) {
 	es.mu.Lock()
 	defer es.mu.Unlock()
-
-	if len(prefix) == 0 {
-		es.entries = es.entries[:0]
-		return
-	}
 
 	dels := []string{}
 	for _, ety := range es.entries {
@@ -84,12 +79,7 @@ func (es *entries) entry(pattern string) (entry.Entry, error) {
 		return ety, nil
 	}
 
-	s, err := syntax.New(pattern)
-	if err != nil {
-		return nil, err
-	}
-
-	ety, err := entry.New(s)
+	ety, err := entry.New(pattern)
 	if err != nil {
 		return nil, err
 	}

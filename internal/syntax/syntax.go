@@ -24,7 +24,7 @@ const (
 	End   = '}'
 )
 
-// 表示当前路由项的类型，同时会被用于 Entry.priority()
+// 表示当前路由项的类型，同时会被用于 Entry.Priority()
 const (
 	TypeUnknown = iota
 	TypeBasic
