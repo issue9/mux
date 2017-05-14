@@ -13,8 +13,10 @@ import (
 
 func BenchmarkBasic_Match(b *testing.B) {
 	a := assert.New(b)
-	e, err := New(&syntax.Syntax{Pattern: "/blog/post/1", Type: syntax.TypeBasic})
-	a.NotError(err)
+	s, err := syntax.New("/blog/post/1")
+	a.NotError(err).NotNil(s)
+	e, err := New(s)
+	a.NotError(err).NotNil(e)
 
 	for i := 0; i < b.N; i++ {
 
@@ -26,8 +28,10 @@ func BenchmarkBasic_Match(b *testing.B) {
 
 func BenchmarkRegexp_Match(b *testing.B) {
 	a := assert.New(b)
-	e, err := New(&syntax.Syntax{Pattern: "/blog/post/{id:\\d+}", Type: syntax.TypeRegexp})
-	a.NotError(err)
+	s, err := syntax.New("/blog/post/{id:\\d+}")
+	a.NotError(err).NotNil(s)
+	e, err := New(s)
+	a.NotError(err).NotNil(e)
 
 	for i := 0; i < b.N; i++ {
 		if ok, _ := e.Match("/blog/post/1"); !ok {
@@ -38,8 +42,10 @@ func BenchmarkRegexp_Match(b *testing.B) {
 
 func BenchmarkNamed_Match(b *testing.B) {
 	a := assert.New(b)
-	e, err := New(&syntax.Syntax{Pattern: "/blog/post/{id}/{id2}", Type: syntax.TypeNamed})
-	a.NotError(err)
+	s, err := syntax.New("/blog/post/{id}/{id2}")
+	a.NotError(err).NotNil(s)
+	e, err := New(s)
+	a.NotError(err).NotNil(e)
 
 	for i := 0; i < b.N; i++ {
 		if ok, _ := e.Match("/blog/post/1/2"); !ok {
