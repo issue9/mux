@@ -17,7 +17,7 @@ const defaultEntrySlashSize = 100
 
 // List entry.Entry 列表
 type List struct {
-	entries        map[int]*Entries
+	entries        map[int]*entries
 	disableOptions bool
 }
 
@@ -25,7 +25,7 @@ type List struct {
 func New(disableOptions bool) *List {
 	return &List{
 		disableOptions: disableOptions,
-		entries:        make(map[int]*Entries, defaultEntrySlashSize),
+		entries:        make(map[int]*entries, defaultEntrySlashSize),
 	}
 }
 
@@ -33,12 +33,12 @@ func New(disableOptions bool) *List {
 // 则为删除所有路径前缀为 prefix 的匹配项。
 func (l *List) Clean(prefix string) {
 	if len(prefix) == 0 {
-		l.entries = make(map[int]*Entries, defaultEntrySlashSize)
+		l.entries = make(map[int]*entries, defaultEntrySlashSize)
 		return
 	}
 
 	for _, es := range l.entries {
-		es.Clean(prefix)
+		es.clean(prefix)
 	}
 }
 
@@ -58,7 +58,7 @@ func (l *List) Remove(pattern string, methods ...string) {
 	}
 
 	// TODO wildcard
-	es.Remove(pattern, methods...)
+	es.remove(pattern, methods...)
 }
 
 // Add 添加一条路由数据。
@@ -82,11 +82,11 @@ func (l *List) Add(pattern string, h http.Handler, methods ...string) error {
 	cnt := strings.Count(pattern, "/")
 	es, found := l.entries[cnt]
 	if !found {
-		es = NewEntries(l.disableOptions)
+		es = newEntries(l.disableOptions)
 		l.entries[cnt] = es
 	}
 
-	return es.Add(pattern, h, methods...)
+	return es.add(pattern, h, methods...)
 }
 
 // Entry 查找指定匹配模式下的 Entry，不存在，则声明新的
@@ -94,11 +94,11 @@ func (l *List) Entry(pattern string) (entry.Entry, error) {
 	cnt := strings.Count(pattern, "/")
 	es, found := l.entries[cnt]
 	if !found {
-		es = NewEntries(l.disableOptions)
+		es = newEntries(l.disableOptions)
 		l.entries[cnt] = es
 	}
 
-	return es.Entry(pattern)
+	return es.entry(pattern)
 }
 
 // Match 查找与 path 最匹配的路由项以及对应的参数
@@ -109,5 +109,5 @@ func (l *List) Match(path string) (entry.Entry, map[string]string) {
 		return nil, nil
 	}
 
-	return es.Match(path)
+	return es.match(path)
 }
