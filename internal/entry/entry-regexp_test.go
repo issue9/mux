@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/issue9/assert"
+	"github.com/issue9/mux/internal/syntax"
 )
 
 var _ Entry = &regexp{}
@@ -18,27 +19,29 @@ func TestNewRegexp(t *testing.T) {
 	a := assert.New(t)
 
 	pattern := "/posts/{id:\\d+}"
-	r, err := newRegexp(pattern, &syntax{
-		hasParams: true,
-		nType:     typeRegexp,
-		patterns:  []string{"/posts/", "(?P<id>\\d+)"},
+	r, err := newRegexp(&syntax.Syntax{
+		Pattern:   pattern,
+		HasParams: true,
+		Type:      syntax.TypeRegexp,
+		Patterns:  []string{"/posts/", "(?P<id>\\d+)"},
 	})
 	a.NotError(err).NotNil(r)
-	a.Equal(r.patternString, pattern)
+	a.Equal(r.pattern, pattern)
 	a.Equal(r.expr.String(), "/posts/(?P<id>\\d+)")
 
 	pattern = "/posts/{id}/page/{page:\\d+}/size/{:\\d+}"
-	r, err = newRegexp(pattern, &syntax{
-		hasParams: true,
-		nType:     typeRegexp,
-		patterns:  []string{"/posts/", "(?P<id>[^/]+)", "/page/", "(?P<page>\\d+)", "/size/", "(\\d+)"},
+	r, err = newRegexp(&syntax.Syntax{
+		Pattern:   pattern,
+		HasParams: true,
+		Type:      syntax.TypeRegexp,
+		Patterns:  []string{"/posts/", "(?P<id>[^/]+)", "/page/", "(?P<page>\\d+)", "/size/", "(\\d+)"},
 	})
 	a.NotError(err).NotNil(r)
-	a.Equal(r.patternString, pattern)
+	a.Equal(r.pattern, pattern)
 	a.Equal(r.expr.String(), "/posts/(?P<id>[^/]+)/page/(?P<page>\\d+)/size/(\\d+)")
 }
 
-func TestRegexp_match(t *testing.T) {
+func TestRegexp_Match(t *testing.T) {
 	a := assert.New(t)
 
 	newMatcher(a, "/posts/{id:\\d+}").
@@ -90,14 +93,14 @@ func TestRegexp_match_wildcard(t *testing.T) {
 
 func TestRegexp_URL(t *testing.T) {
 	a := assert.New(t)
-	n, err := newEntry("/posts/{id:[^/]+}")
+	n, err := New("/posts/{id:[^/]+}")
 	a.NotError(err).NotNil(n)
 	url, err := n.URL(map[string]string{"id": "5.html"}, "path")
 	a.NotError(err).Equal(url, "/posts/5.html")
 	url, err = n.URL(map[string]string{"id": "5.html/"}, "path")
 	a.NotError(err).Equal(url, "/posts/5.html/")
 
-	n, err = newEntry("/posts/{id:[^/]+}/page/{page}")
+	n, err = New("/posts/{id:[^/]+}/page/{page}")
 	url, err = n.URL(map[string]string{"id": "5.html", "page": "1"}, "path")
 	a.NotError(err).Equal(url, "/posts/5.html/page/1")
 
@@ -106,12 +109,12 @@ func TestRegexp_URL(t *testing.T) {
 	a.Error(err).Equal(url, "")
 
 	// 带有未命名参数
-	n, err = newEntry("/posts/{id}/page/{page:\\d+}/size/{:\\d+}")
+	n, err = New("/posts/{id}/page/{page:\\d+}/size/{:\\d+}")
 	url, err = n.URL(map[string]string{"id": "5.html", "page": "1"}, "path")
 	a.NotError(err).Equal(url, "/posts/5.html/page/1/size/[0-9]+")
 
 	// 带通配符
-	n, err = newEntry("/posts/{id:[^/]+}/page/{page}/*")
+	n, err = New("/posts/{id:[^/]+}/page/{page}/*")
 	url, err = n.URL(map[string]string{"id": "5.html", "page": "1"}, "path")
 	a.NotError(err).Equal(url, "/posts/5.html/page/1/path")
 

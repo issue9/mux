@@ -9,6 +9,8 @@ import (
 	stdregexp "regexp"
 	stdsyntax "regexp/syntax"
 	"strings"
+
+	"github.com/issue9/mux/internal/syntax"
 )
 
 type regexp struct {
@@ -18,11 +20,11 @@ type regexp struct {
 	syntaxExpr *stdsyntax.Regexp
 }
 
-func newRegexp(pattern string, s *syntax) (*regexp, error) {
-	b := newBase(pattern)
+func newRegexp(s *syntax.Syntax) (*regexp, error) {
+	b := newBase(s)
 
 	// 合并正则表达式
-	str := strings.Join(s.patterns, "")
+	str := strings.Join(s.Patterns, "")
 	if b.wildcard {
 		str = str[:len(str)-1] // 去掉最后的星号
 	}
@@ -39,22 +41,18 @@ func newRegexp(pattern string, s *syntax) (*regexp, error) {
 
 	return &regexp{
 		base:       b,
-		hasParams:  s.hasParams,
+		hasParams:  s.HasParams,
 		expr:       expr,
 		syntaxExpr: syntaxExpr,
 	}, nil
 }
 
-func (r *regexp) priority() int {
-	if r.wildcard {
-		return typeRegexpWithWildcard
-	}
-
-	return typeRegexp
+func (r *regexp) Priority() int {
+	return syntax.TypeRegexp
 }
 
 // Entry.match
-func (r *regexp) match(url string) (bool, map[string]string) {
+func (r *regexp) Match(url string) (bool, map[string]string) {
 	loc := r.expr.FindStringIndex(url)
 
 	if loc == nil || loc[0] != 0 {
@@ -94,7 +92,7 @@ func (r *regexp) params(url string) map[string]string {
 
 func (r *regexp) URL(params map[string]string, path string) (string, error) {
 	if r.syntaxExpr == nil {
-		return r.patternString, nil
+		return r.pattern, nil
 	}
 
 	url := r.syntaxExpr.String()

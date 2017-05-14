@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/issue9/assert"
+	"github.com/issue9/mux/internal/syntax"
 )
 
 var _ Entry = &named{}
@@ -16,13 +17,14 @@ func TestNewNammed(t *testing.T) {
 	a := assert.New(t)
 
 	pattern := "/posts/{id}"
-	n := newNamed(pattern, &syntax{
-		hasParams: true,
-		nType:     typeNamed,
-		patterns:  []string{"/posts/", "{id}"},
+	n := newNamed(&syntax.Syntax{
+		Pattern:   pattern,
+		HasParams: true,
+		Type:      syntax.TypeNamed,
+		Patterns:  []string{"/posts/", "{id}"},
 	})
 	a.NotNil(n)
-	a.Equal(n.patternString, pattern)
+	a.Equal(n.pattern, pattern)
 	a.Equal(len(n.nodes), 2)
 	n0 := n.nodes[0]
 	a.True(n0.isString).Equal(n0.value, "/posts/")
@@ -32,13 +34,14 @@ func TestNewNammed(t *testing.T) {
 		Equal(n1.endByte, '/')
 
 	pattern = "/posts/{id}/page/{page}"
-	n = newNamed(pattern, &syntax{
-		hasParams: true,
-		nType:     typeNamed,
-		patterns:  []string{"/posts/", "{id}", "/page/", "{page}"},
+	n = newNamed(&syntax.Syntax{
+		Pattern:   pattern,
+		HasParams: true,
+		Type:      syntax.TypeNamed,
+		Patterns:  []string{"/posts/", "{id}", "/page/", "{page}"},
 	})
 	a.NotNil(n)
-	a.Equal(n.patternString, pattern)
+	a.Equal(n.pattern, pattern)
 	a.Equal(len(n.nodes), 4)
 	n0 = n.nodes[0]
 	a.True(n0.isString).Equal(n0.value, "/posts/")
@@ -105,14 +108,15 @@ func TestNamed_match_wildcard(t *testing.T) {
 
 func TestNamed_URL(t *testing.T) {
 	a := assert.New(t)
-	n, err := newEntry("/posts/{id}")
+
+	n, err := New("/posts/{id}")
 	a.NotError(err).NotNil(n)
 	url, err := n.URL(map[string]string{"id": "5.html"}, "path")
 	a.NotError(err).Equal(url, "/posts/5.html")
 	url, err = n.URL(map[string]string{"id": "5.html/"}, "path")
 	a.NotError(err).Equal(url, "/posts/5.html/")
 
-	n, err = newEntry("/posts/{id}/page/{page}")
+	n, err = New("/posts/{id}/page/{page}")
 	a.NotError(err).NotNil(n)
 	url, err = n.URL(map[string]string{"id": "5.html", "page": "1"}, "path")
 	a.NotError(err).Equal(url, "/posts/5.html/page/1")
@@ -122,7 +126,7 @@ func TestNamed_URL(t *testing.T) {
 	a.Error(err).Equal(url, "")
 
 	// 带通配符
-	n, err = newEntry("/posts/{id}/page/{page}/*")
+	n, err = New("/posts/{id}/page/{page}/*")
 	a.NotError(err).NotNil(n)
 	url, err = n.URL(map[string]string{"id": "5.html", "page": "1"}, "path")
 	a.NotError(err).Equal(url, "/posts/5.html/page/1/path")

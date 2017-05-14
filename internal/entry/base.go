@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/issue9/mux/internal/method"
+	"github.com/issue9/mux/internal/syntax"
 )
 
 type optionsState int8
@@ -25,19 +26,19 @@ const (
 
 // 所有 Entry 实现的公用部分。
 type base struct {
-	patternString string                  // 匹配模式字符串
-	wildcard      bool                    // 是否包含通配符
-	handlers      map[string]http.Handler // 请求方法及其对应的 Handler
-	optionsAllow  string                  // 缓存的 OPTIONS 请求头的 allow 报头内容。
-	optionsState  optionsState            // OPTIONS 报头的处理方式
+	pattern      string                  // 匹配模式字符串
+	wildcard     bool                    // 是否包含通配符
+	handlers     map[string]http.Handler // 请求方法及其对应的 Handler
+	optionsAllow string                  // 缓存的 OPTIONS 请求头的 allow 报头内容。
+	optionsState optionsState            // OPTIONS 报头的处理方式
 }
 
-func newBase(pattern string) *base {
+func newBase(s *syntax.Syntax) *base {
 	ret := &base{
-		patternString: pattern,
-		handlers:      make(map[string]http.Handler, len(method.Supported)),
-		wildcard:      strings.HasSuffix(pattern, "/*"),
-		optionsState:  optionsStateDefault,
+		pattern:      s.Pattern,
+		handlers:     make(map[string]http.Handler, len(method.Supported)),
+		wildcard:     s.Wildcard,
+		optionsState: optionsStateDefault,
 	}
 
 	// 添加默认的 OPTIONS 请求内容
@@ -47,12 +48,13 @@ func newBase(pattern string) *base {
 	return ret
 }
 
-func (b *base) pattern() string {
-	return b.patternString
+// Entry.Pattern()
+func (b *base) Pattern() string {
+	return b.pattern
 }
 
-// Entry.add()
-func (b *base) add(h http.Handler, methods ...string) error {
+// Entry.Add()
+func (b *base) Add(h http.Handler, methods ...string) error {
 	for _, m := range methods {
 		if !method.IsSupported(m) {
 			return fmt.Errorf("不支持的请求方法 %v", m)
@@ -104,8 +106,8 @@ func (b *base) getOptionsAllow() string {
 	return strings.Join(methods, ", ")
 }
 
-// Entry.remove()
-func (b *base) remove(methods ...string) bool {
+// Entry.Remove()
+func (b *base) Remove(methods ...string) bool {
 	for _, method := range methods {
 		delete(b.handlers, method)
 		if method == http.MethodOptions { // 明确指出要删除该路由项的 OPTIONS 时，表示禁止

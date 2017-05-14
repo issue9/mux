@@ -123,7 +123,7 @@ func (p *Prefix) Remove(pattern string, methods ...string) *Prefix {
 //  p2 := mux.Prefix("prefix")
 //  p2.Clean() 将同时清除 p1 的内容，因为有相同的前缀。
 func (p *Prefix) Clean() *Prefix {
-	p.mux.entries.Clean(p.prefix)
+	p.mux.list.Clean(p.prefix)
 	return p
 }
 
