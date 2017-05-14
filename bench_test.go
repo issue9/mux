@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-// go1.8.1 BenchmarkGithubAPI-4   	  200000	      6787 ns/op	    2011 B/op	      14 allocs/op
+// go1.8.1 BenchmarkGithubAPI-4   	 1000000	      1324 ns/op	     674 B/op	       6 allocs/op
 func BenchmarkGithubAPI(b *testing.B) {
 	h := func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("hello"))
