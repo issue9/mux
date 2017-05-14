@@ -57,7 +57,6 @@ func New(pattern string) (*Syntax, error) {
 		return nil, errors.New("参数 pattern 必须以 / 开头")
 	}
 
-	// TODO 使用 list.slashCount 代替？
 	if strings.Count(pattern, "/") > MaxPatternDepth {
 		return nil, fmt.Errorf("匹配字符串最多只能包含 %d 个 / 字符", MaxPatternDepth)
 	}
@@ -198,7 +197,7 @@ func split(str string) []string {
 	}
 }
 
-// 统计字符串包含的 / 字符数量
+// SlashCount 统计字符串包含的 / 字符数量
 func SlashCount(str string) int {
 	ret := 0
 	for _, c := range str {
