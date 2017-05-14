@@ -28,9 +28,11 @@ type named struct {
 
 // 声明一个新的 named 实例。
 // pattern 并不实际参与 synatax 的计算。
-func newNamed(pattern string, s *syntax.Syntax) *named {
+func newNamed(s *syntax.Syntax) *named {
+	b := newBase(s.Pattern)
+
 	str := s.Patterns[len(s.Patterns)-1]
-	if syntax.IsWildcard(str) {
+	if b.wildcard {
 		str = str[:len(str)-2]
 		if len(str) == 0 {
 			s.Patterns = s.Patterns[:len(s.Patterns)-1]
@@ -60,7 +62,7 @@ func newNamed(pattern string, s *syntax.Syntax) *named {
 	}
 
 	return &named{
-		base:  newBase(pattern),
+		base:  b,
 		nodes: names,
 	}
 }

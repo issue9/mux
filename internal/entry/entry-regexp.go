@@ -20,8 +20,8 @@ type regexp struct {
 	syntaxExpr *stdsyntax.Regexp
 }
 
-func newRegexp(pattern string, s *syntax.Syntax) (*regexp, error) {
-	b := newBase(pattern)
+func newRegexp(s *syntax.Syntax) (*regexp, error) {
+	b := newBase(s.Pattern)
 
 	// 合并正则表达式
 	str := strings.Join(s.Patterns, "")

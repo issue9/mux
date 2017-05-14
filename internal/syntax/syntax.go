@@ -30,6 +30,7 @@ const (
 
 // Syntax 描述指定的字符串所表示的语法结构
 type Syntax struct {
+	Pattern   string   // 原始的字符串
 	HasParams bool     // 是否有参数
 	Patterns  []string // 保存着对字符串处理后的结果
 	Type      int      // 该语法应该被解析成的类型
@@ -55,6 +56,7 @@ func New(pattern string) (*Syntax, error) {
 
 	strs := split(pattern)
 	s := &Syntax{
+		Pattern:  pattern,
 		Patterns: make([]string, 0, len(strs)),
 	}
 	if len(strs) == 0 {

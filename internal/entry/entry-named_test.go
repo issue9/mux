@@ -17,7 +17,8 @@ func TestNewNammed(t *testing.T) {
 	a := assert.New(t)
 
 	pattern := "/posts/{id}"
-	n := newNamed(pattern, &syntax.Syntax{
+	n := newNamed(&syntax.Syntax{
+		Pattern:   pattern,
 		HasParams: true,
 		Type:      syntax.TypeNamed,
 		Patterns:  []string{"/posts/", "{id}"},
@@ -33,7 +34,8 @@ func TestNewNammed(t *testing.T) {
 		Equal(n1.endByte, '/')
 
 	pattern = "/posts/{id}/page/{page}"
-	n = newNamed(pattern, &syntax.Syntax{
+	n = newNamed(&syntax.Syntax{
+		Pattern:   pattern,
 		HasParams: true,
 		Type:      syntax.TypeNamed,
 		Patterns:  []string{"/posts/", "{id}", "/page/", "{page}"},

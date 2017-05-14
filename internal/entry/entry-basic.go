@@ -16,12 +16,12 @@ type basic struct {
 	prefix string
 }
 
-func newBasic(pattern string) *basic {
+func newBasic(s *syntax.Syntax) *basic {
 	ret := &basic{
-		base: newBase(pattern),
+		base: newBase(s.Pattern),
 	}
 	if ret.wildcard {
-		ret.prefix = pattern[:len(pattern)-1]
+		ret.prefix = s.Pattern[:len(s.Pattern)-1]
 	}
 
 	return ret

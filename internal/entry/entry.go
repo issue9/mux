@@ -56,10 +56,10 @@ func New(pattern string) (Entry, error) {
 	}
 
 	if s.Type == syntax.TypeRegexp {
-		return newRegexp(pattern, s)
+		return newRegexp(s)
 	} else if s.Type == syntax.TypeNamed {
-		return newNamed(pattern, s), nil
+		return newNamed(s), nil
 	}
 
-	return newBasic(s.Patterns[0]), nil
+	return newBasic(s), nil
 }

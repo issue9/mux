@@ -19,7 +19,8 @@ func TestNewRegexp(t *testing.T) {
 	a := assert.New(t)
 
 	pattern := "/posts/{id:\\d+}"
-	r, err := newRegexp(pattern, &syntax.Syntax{
+	r, err := newRegexp(&syntax.Syntax{
+		Pattern:   pattern,
 		HasParams: true,
 		Type:      syntax.TypeRegexp,
 		Patterns:  []string{"/posts/", "(?P<id>\\d+)"},
@@ -29,7 +30,8 @@ func TestNewRegexp(t *testing.T) {
 	a.Equal(r.expr.String(), "/posts/(?P<id>\\d+)")
 
 	pattern = "/posts/{id}/page/{page:\\d+}/size/{:\\d+}"
-	r, err = newRegexp(pattern, &syntax.Syntax{
+	r, err = newRegexp(&syntax.Syntax{
+		Pattern:   pattern,
 		HasParams: true,
 		Type:      syntax.TypeRegexp,
 		Patterns:  []string{"/posts/", "(?P<id>[^/]+)", "/page/", "(?P<page>\\d+)", "/size/", "(\\d+)"},
