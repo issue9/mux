@@ -14,10 +14,7 @@ import (
 	"github.com/issue9/mux/internal/syntax"
 )
 
-const (
-	maxSlashSize         = 255
-	wildcardEntriesIndex = maxSlashSize
-)
+const wildcardEntriesIndex = syntax.MaxPatternDepth
 
 // List entry.Entry 列表，按 / 字符的多少来对 entry.Entry 实例进行分组，
 // 以减少每次查询时的循环次数。
@@ -30,7 +27,7 @@ type List struct {
 func New(disableOptions bool) *List {
 	return &List{
 		disableOptions: disableOptions,
-		entries:        make(map[int]*entries, maxSlashSize),
+		entries:        make(map[int]*entries, syntax.MaxPatternDepth),
 	}
 }
 
@@ -38,7 +35,7 @@ func New(disableOptions bool) *List {
 // 则为删除所有路径前缀为 prefix 的匹配项。
 func (l *List) Clean(prefix string) {
 	if len(prefix) == 0 {
-		l.entries = make(map[int]*entries, maxSlashSize)
+		l.entries = make(map[int]*entries, syntax.MaxPatternDepth)
 		return
 	}
 
