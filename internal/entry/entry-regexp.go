@@ -21,7 +21,7 @@ type regexp struct {
 }
 
 func newRegexp(s *syntax.Syntax) (*regexp, error) {
-	b := newBase(s.Pattern)
+	b := newBase(s)
 
 	// 合并正则表达式
 	str := strings.Join(s.Patterns, "")

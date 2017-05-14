@@ -2,6 +2,7 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
+// Package syntax 提供对路由字符串语法的分析功能。
 package syntax
 
 import (
@@ -32,6 +33,7 @@ const (
 type Syntax struct {
 	Pattern   string   // 原始的字符串
 	HasParams bool     // 是否有参数
+	Wildcard  bool     // 是否为通配符模式
 	Patterns  []string // 保存着对字符串处理后的结果
 	Type      int      // 该语法应该被解析成的类型
 }
@@ -58,6 +60,7 @@ func New(pattern string) (*Syntax, error) {
 	s := &Syntax{
 		Pattern:  pattern,
 		Patterns: make([]string, 0, len(strs)),
+		Wildcard: strings.HasSuffix(pattern, "/*"),
 	}
 	if len(strs) == 0 {
 		s.Type = TypeBasic

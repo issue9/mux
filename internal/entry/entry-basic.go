@@ -18,7 +18,7 @@ type basic struct {
 
 func newBasic(s *syntax.Syntax) *basic {
 	ret := &basic{
-		base: newBase(s.Pattern),
+		base: newBase(s),
 	}
 	if ret.wildcard {
 		ret.prefix = s.Pattern[:len(s.Pattern)-1]

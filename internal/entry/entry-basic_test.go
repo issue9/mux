@@ -43,7 +43,7 @@ func TestBasic_URL(t *testing.T) {
 	url, err := b.URL(map[string]string{"id": "1"}, "/abc")
 	a.NotError(err).Equal(url, "/basic")
 
-	b = newBasic(&syntax.Syntax{Pattern: "/basic/*"})
+	b = newBasic(&syntax.Syntax{Pattern: "/basic/*", Wildcard: true})
 	url, err = b.URL(map[string]string{"id": "1"}, "abc")
 	a.NotError(err).Equal(url, "/basic/abc")
 
