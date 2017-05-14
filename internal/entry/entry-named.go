@@ -72,8 +72,7 @@ func (n *named) priority() int {
 }
 
 func (n *named) match(path string) (bool, map[string]string) {
-	params := make(map[string]string, len(n.nodes))
-
+	rawPath := path
 	for i, name := range n.nodes {
 		islast := (i == len(n.nodes)-1)
 
@@ -83,7 +82,7 @@ func (n *named) match(path string) (bool, map[string]string) {
 			}
 
 			if islast {
-				return (path == name.value), params
+				return (path == name.value), n.params(rawPath)
 			}
 
 			path = path[len(name.value):]
@@ -94,20 +93,50 @@ func (n *named) match(path string) (bool, map[string]string) {
 					return false, nil
 				}
 
+				path = path[index:]
+			} else { // 最后一个节点了
+				if index == -1 {
+					return !n.wildcard, n.params(rawPath)
+				}
+
+				return n.wildcard, n.params(rawPath)
+			}
+		} // end if
+	} // end for
+	return true, n.params(rawPath)
+}
+
+func (n *named) params(path string) map[string]string {
+	// 由调用者 n.match() 保证 path 参数始终是与当前路由项匹配的。
+	// 所以以下代码不再作是否匹配的检测工作。
+
+	params := make(map[string]string, len(n.nodes))
+	for i, name := range n.nodes {
+		islast := (i == len(n.nodes)-1)
+
+		if name.isString { // 普通字符串节点
+			if islast {
+				return params
+			}
+
+			path = path[len(name.value):]
+		} else { // 带命名的节点
+			index := strings.IndexByte(path, name.endByte)
+			if !islast {
 				params[name.value] = path[:index]
 				path = path[index:]
 			} else { // 最后一个节点了
 				if index == -1 {
 					params[name.value] = path
-					return !n.wildcard, params
+					return params
 				}
 
 				params[name.value] = path[:index]
-				return n.wildcard, params
+				return params
 			}
 		} // end if
 	} // end for
-	return true, params
+	return params
 }
 
 func (n *named) URL(params map[string]string, path string) (string, error) {
