@@ -11,6 +11,7 @@ import (
 
 	"github.com/issue9/mux/internal/entry"
 	"github.com/issue9/mux/internal/method"
+	"github.com/issue9/mux/internal/syntax"
 )
 
 const (
@@ -123,7 +124,7 @@ func (l *List) Match(path string) (entry.Entry, map[string]string) {
 
 func getSlashSize(str string) int {
 	cnt := slashCount(str)
-	if entry.IsWildcard(str) {
+	if syntax.IsWildcard(str) {
 		cnt = wildcardEntriesIndex
 	}
 

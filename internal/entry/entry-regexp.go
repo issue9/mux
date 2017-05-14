@@ -9,6 +9,8 @@ import (
 	stdregexp "regexp"
 	stdsyntax "regexp/syntax"
 	"strings"
+
+	"github.com/issue9/mux/internal/syntax"
 )
 
 type regexp struct {
@@ -18,11 +20,11 @@ type regexp struct {
 	syntaxExpr *stdsyntax.Regexp
 }
 
-func newRegexp(pattern string, s *syntax) (*regexp, error) {
+func newRegexp(pattern string, s *syntax.Syntax) (*regexp, error) {
 	b := newBase(pattern)
 
 	// 合并正则表达式
-	str := strings.Join(s.patterns, "")
+	str := strings.Join(s.Patterns, "")
 	if b.wildcard {
 		str = str[:len(str)-1] // 去掉最后的星号
 	}
@@ -39,14 +41,14 @@ func newRegexp(pattern string, s *syntax) (*regexp, error) {
 
 	return &regexp{
 		base:       b,
-		hasParams:  s.hasParams,
+		hasParams:  s.HasParams,
 		expr:       expr,
 		syntaxExpr: syntaxExpr,
 	}, nil
 }
 
 func (r *regexp) Priority() int {
-	return TypeRegexp
+	return syntax.TypeRegexp
 }
 
 // Entry.match

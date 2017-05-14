@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/issue9/assert"
+	"github.com/issue9/mux/internal/syntax"
 )
 
 var _ Entry = &regexp{}
@@ -18,20 +19,20 @@ func TestNewRegexp(t *testing.T) {
 	a := assert.New(t)
 
 	pattern := "/posts/{id:\\d+}"
-	r, err := newRegexp(pattern, &syntax{
-		hasParams: true,
-		nType:     TypeRegexp,
-		patterns:  []string{"/posts/", "(?P<id>\\d+)"},
+	r, err := newRegexp(pattern, &syntax.Syntax{
+		HasParams: true,
+		Type:      syntax.TypeRegexp,
+		Patterns:  []string{"/posts/", "(?P<id>\\d+)"},
 	})
 	a.NotError(err).NotNil(r)
 	a.Equal(r.pattern, pattern)
 	a.Equal(r.expr.String(), "/posts/(?P<id>\\d+)")
 
 	pattern = "/posts/{id}/page/{page:\\d+}/size/{:\\d+}"
-	r, err = newRegexp(pattern, &syntax{
-		hasParams: true,
-		nType:     TypeRegexp,
-		patterns:  []string{"/posts/", "(?P<id>[^/]+)", "/page/", "(?P<page>\\d+)", "/size/", "(\\d+)"},
+	r, err = newRegexp(pattern, &syntax.Syntax{
+		HasParams: true,
+		Type:      syntax.TypeRegexp,
+		Patterns:  []string{"/posts/", "(?P<id>[^/]+)", "/page/", "(?P<page>\\d+)", "/size/", "(\\d+)"},
 	})
 	a.NotError(err).NotNil(r)
 	a.Equal(r.pattern, pattern)

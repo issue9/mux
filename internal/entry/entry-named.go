@@ -7,6 +7,8 @@ package entry
 import (
 	"fmt"
 	"strings"
+
+	"github.com/issue9/mux/internal/syntax"
 )
 
 // 表示命名参数中的某个节点
@@ -26,23 +28,23 @@ type named struct {
 
 // 声明一个新的 named 实例。
 // pattern 并不实际参与 synatax 的计算。
-func newNamed(pattern string, s *syntax) *named {
-	str := s.patterns[len(s.patterns)-1]
-	if IsWildcard(str) {
+func newNamed(pattern string, s *syntax.Syntax) *named {
+	str := s.Patterns[len(s.Patterns)-1]
+	if syntax.IsWildcard(str) {
 		str = str[:len(str)-2]
 		if len(str) == 0 {
-			s.patterns = s.patterns[:len(s.patterns)-1]
+			s.Patterns = s.Patterns[:len(s.Patterns)-1]
 		} else {
-			s.patterns[len(s.patterns)-1] = str
+			s.Patterns[len(s.Patterns)-1] = str
 		}
 	}
 
-	names := make([]*node, 0, len(s.patterns))
-	for index, str := range s.patterns {
-		if str[0] == syntaxStart {
+	names := make([]*node, 0, len(s.Patterns))
+	for index, str := range s.Patterns {
+		if str[0] == syntax.Start {
 			endByte := byte('/')
-			if index < len(s.patterns)-1 {
-				endByte = s.patterns[index+1][0]
+			if index < len(s.Patterns)-1 {
+				endByte = s.Patterns[index+1][0]
 			}
 			names = append(names, &node{
 				value:    str[1 : len(str)-1],
@@ -64,7 +66,7 @@ func newNamed(pattern string, s *syntax) *named {
 }
 
 func (n *named) Priority() int {
-	return TypeNamed
+	return syntax.TypeNamed
 }
 
 func (n *named) Match(path string) (bool, map[string]string) {

@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/issue9/mux/internal/method"
+	"github.com/issue9/mux/internal/syntax"
 )
 
 type optionsState int8
@@ -36,7 +37,7 @@ func newBase(pattern string) *base {
 	ret := &base{
 		pattern:      pattern,
 		handlers:     make(map[string]http.Handler, len(method.Supported)),
-		wildcard:     IsWildcard(pattern),
+		wildcard:     syntax.IsWildcard(pattern),
 		optionsState: optionsStateDefault,
 	}
 

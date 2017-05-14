@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/issue9/assert"
+	"github.com/issue9/mux/internal/syntax"
 )
 
 var _ Entry = &named{}
@@ -16,10 +17,10 @@ func TestNewNammed(t *testing.T) {
 	a := assert.New(t)
 
 	pattern := "/posts/{id}"
-	n := newNamed(pattern, &syntax{
-		hasParams: true,
-		nType:     TypeNamed,
-		patterns:  []string{"/posts/", "{id}"},
+	n := newNamed(pattern, &syntax.Syntax{
+		HasParams: true,
+		Type:      syntax.TypeNamed,
+		Patterns:  []string{"/posts/", "{id}"},
 	})
 	a.NotNil(n)
 	a.Equal(n.pattern, pattern)
@@ -32,10 +33,10 @@ func TestNewNammed(t *testing.T) {
 		Equal(n1.endByte, '/')
 
 	pattern = "/posts/{id}/page/{page}"
-	n = newNamed(pattern, &syntax{
-		hasParams: true,
-		nType:     TypeNamed,
-		patterns:  []string{"/posts/", "{id}", "/page/", "{page}"},
+	n = newNamed(pattern, &syntax.Syntax{
+		HasParams: true,
+		Type:      syntax.TypeNamed,
+		Patterns:  []string{"/posts/", "{id}", "/page/", "{page}"},
 	})
 	a.NotNil(n)
 	a.Equal(n.pattern, pattern)
