@@ -8,7 +8,6 @@ package list
 import (
 	"errors"
 	"net/http"
-	"strings"
 
 	"github.com/issue9/mux/internal/entry"
 	"github.com/issue9/mux/internal/method"
@@ -106,7 +105,7 @@ func (l *List) Entry(pattern string) (entry.Entry, error) {
 
 // Match 查找与 path 最匹配的路由项以及对应的参数
 func (l *List) Match(path string) (entry.Entry, map[string]string) {
-	cnt := strings.Count(path, "/")
+	cnt := slashCount(path)
 	es, found := l.entries[cnt]
 	if !found {
 		return nil, nil
@@ -123,10 +122,21 @@ func (l *List) Match(path string) (entry.Entry, map[string]string) {
 }
 
 func getSlashSize(str string) int {
-	cnt := strings.Count(str, "/")
+	cnt := slashCount(str)
 	if entry.IsWildcard(str) {
 		cnt = wildcardEntriesIndex
 	}
 
 	return cnt
+}
+
+func slashCount(str string) int {
+	ret := 0
+	for _, c := range str {
+		if c == '/' {
+			ret++
+		}
+	}
+
+	return ret
 }
