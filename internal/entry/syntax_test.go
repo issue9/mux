@@ -37,15 +37,12 @@ func TestParse(t *testing.T) {
 			Equal(ret.patterns, s.patterns)
 	}
 
-	fn("", false, &syntax{
+	fn("", true, &syntax{})
+	fn(" ", true, &syntax{})
+	fn("/", false, &syntax{
 		hasParams: false,
 		nType:     typeBasic,
-		patterns:  []string{},
-	})
-	fn(" ", false, &syntax{
-		hasParams: false,
-		nType:     typeBasic,
-		patterns:  []string{" "},
+		patterns:  []string{"/"},
 	})
 	fn("/posts/1", false, &syntax{
 		hasParams: false,

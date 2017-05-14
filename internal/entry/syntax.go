@@ -5,6 +5,7 @@
 package entry
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -45,6 +46,10 @@ func isSyntax(str string) bool {
 
 // 对字符串进行分析，判断其类型，以及是否包含参数
 func parse(pattern string) (*syntax, error) {
+	if len(pattern) == 0 || pattern[0] != '/' {
+		return nil, errors.New("参数 pattern 必须以 / 开头")
+	}
+
 	names := []string{} // 缓存各个参数的名称，用于判断是否有重名
 
 	strs := split(pattern)
