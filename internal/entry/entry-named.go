@@ -28,7 +28,7 @@ type named struct {
 // pattern 并不实际参与 synatax 的计算。
 func newNamed(pattern string, s *syntax) *named {
 	str := s.patterns[len(s.patterns)-1]
-	if strings.HasSuffix(str, "/*") {
+	if IsWildcard(str) {
 		str = str[:len(str)-2]
 		if len(str) == 0 {
 			s.patterns = s.patterns[:len(s.patterns)-1]
@@ -63,15 +63,11 @@ func newNamed(pattern string, s *syntax) *named {
 	}
 }
 
-func (n *named) priority() int {
-	if n.wildcard {
-		return typeNamedWithWildcard
-	}
-
+func (n *named) Priority() int {
 	return typeNamed
 }
 
-func (n *named) match(path string) (bool, map[string]string) {
+func (n *named) Match(path string) (bool, map[string]string) {
 	rawPath := path
 	for i, name := range n.nodes {
 		islast := (i == len(n.nodes)-1)

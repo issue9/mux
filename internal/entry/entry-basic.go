@@ -23,20 +23,16 @@ func newBasic(pattern string) *basic {
 	return ret
 }
 
-func (b *basic) priority() int {
-	if b.wildcard {
-		return typeBasicWithWildcard
-	}
-
+func (b *basic) Priority() int {
 	return typeBasic
 }
 
-func (b *basic) match(url string) (bool, map[string]string) {
+func (b *basic) Match(url string) (bool, map[string]string) {
 	if b.wildcard {
 		return strings.HasPrefix(url, b.prefix), nil
 	}
 
-	return url == b.patternString, nil
+	return url == b.pattern, nil
 }
 
 func (b *basic) URL(params map[string]string, path string) (string, error) {
@@ -44,5 +40,5 @@ func (b *basic) URL(params map[string]string, path string) (string, error) {
 		return b.prefix + path, nil
 	}
 
-	return b.pattern(), nil
+	return b.Pattern(), nil
 }

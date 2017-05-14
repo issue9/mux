@@ -10,38 +10,38 @@ import (
 	"github.com/issue9/assert"
 )
 
-func BenchmarkBasic_match(b *testing.B) {
+func BenchmarkBasic_Match(b *testing.B) {
 	a := assert.New(b)
-	e, err := newEntry("/blog/post/1")
+	e, err := New("/blog/post/1")
 	a.NotError(err)
 
 	for i := 0; i < b.N; i++ {
 
-		if ok, _ := e.match("/blog/post/1"); !ok {
+		if ok, _ := e.Match("/blog/post/1"); !ok {
 			b.Error("BenchmarkBasic_match:error")
 		}
 	}
 }
 
-func BenchmarkRegexp_match(b *testing.B) {
+func BenchmarkRegexp_Match(b *testing.B) {
 	a := assert.New(b)
-	e, err := newEntry("/blog/post/{id:\\d+}")
+	e, err := New("/blog/post/{id:\\d+}")
 	a.NotError(err)
 
 	for i := 0; i < b.N; i++ {
-		if ok, _ := e.match("/blog/post/1"); !ok {
+		if ok, _ := e.Match("/blog/post/1"); !ok {
 			b.Error("BenchmarkRegexp_match:error")
 		}
 	}
 }
 
-func BenchmarkNamed_match(b *testing.B) {
+func BenchmarkNamed_Match(b *testing.B) {
 	a := assert.New(b)
-	e, err := newEntry("/blog/post/{id}/{id2}")
+	e, err := New("/blog/post/{id}/{id2}")
 	a.NotError(err)
 
 	for i := 0; i < b.N; i++ {
-		if ok, _ := e.match("/blog/post/1/2"); !ok {
+		if ok, _ := e.Match("/blog/post/1/2"); !ok {
 			b.Error("BenchmarkNamed_match:error")
 		}
 	}
