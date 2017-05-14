@@ -2,6 +2,7 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
+// Package list 提供了对 entry.Entry 元素的存储、匹配等功能。
 package list
 
 import (
@@ -13,11 +14,13 @@ import (
 	"github.com/issue9/mux/internal/method"
 )
 
-const defaultEntrySlashSize = 100
+const (
+	maxSlashSize         = 255
+	wildcardEntriesIndex = maxSlashSize
+)
 
-const wildcardEntriesIndex = defaultEntrySlashSize
-
-// List entry.Entry 列表
+// List entry.Entry 列表，按 / 字符的多少来对 entry.Entry 实例进行分组，
+// 以减少每次查询时的循环次数。
 type List struct {
 	entries        map[int]*entries
 	disableOptions bool
@@ -27,7 +30,7 @@ type List struct {
 func New(disableOptions bool) *List {
 	return &List{
 		disableOptions: disableOptions,
-		entries:        make(map[int]*entries, defaultEntrySlashSize),
+		entries:        make(map[int]*entries, maxSlashSize),
 	}
 }
 
@@ -35,7 +38,7 @@ func New(disableOptions bool) *List {
 // 则为删除所有路径前缀为 prefix 的匹配项。
 func (l *List) Clean(prefix string) {
 	if len(prefix) == 0 {
-		l.entries = make(map[int]*entries, defaultEntrySlashSize)
+		l.entries = make(map[int]*entries, maxSlashSize)
 		return
 	}
 
@@ -53,12 +56,7 @@ func (l *List) Remove(pattern string, methods ...string) {
 		methods = method.Supported
 	}
 
-	cnt := strings.Count(pattern, "/")
-	if entry.IsWildcard(pattern) {
-		cnt = wildcardEntriesIndex
-	}
-
-	es, found := l.entries[cnt]
+	es, found := l.entries[getSlashSize(pattern)]
 	if !found {
 		return
 	}
@@ -84,11 +82,7 @@ func (l *List) Add(pattern string, h http.Handler, methods ...string) error {
 		methods = method.Default
 	}
 
-	cnt := strings.Count(pattern, "/")
-	if entry.IsWildcard(pattern) {
-		cnt = wildcardEntriesIndex
-	}
-
+	cnt := getSlashSize(pattern)
 	es, found := l.entries[cnt]
 	if !found {
 		es = newEntries(l.disableOptions)
@@ -100,11 +94,7 @@ func (l *List) Add(pattern string, h http.Handler, methods ...string) error {
 
 // Entry 查找指定匹配模式下的 Entry，不存在，则声明新的
 func (l *List) Entry(pattern string) (entry.Entry, error) {
-	cnt := strings.Count(pattern, "/")
-	if entry.IsWildcard(pattern) {
-		cnt = wildcardEntriesIndex
-	}
-
+	cnt := getSlashSize(pattern)
 	es, found := l.entries[cnt]
 	if !found {
 		es = newEntries(l.disableOptions)
@@ -130,4 +120,13 @@ func (l *List) Match(path string) (entry.Entry, map[string]string) {
 	}
 
 	return ety, ps
+}
+
+func getSlashSize(str string) int {
+	cnt := strings.Count(str, "/")
+	if entry.IsWildcard(str) {
+		cnt = wildcardEntriesIndex
+	}
+
+	return cnt
 }

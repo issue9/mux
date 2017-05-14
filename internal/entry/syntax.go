@@ -34,6 +34,7 @@ type syntax struct {
 	nType     int      // 该语法应该被解析成的类型
 }
 
+// IsWildcard 当前字符串是否为通配符模式
 func IsWildcard(pattern string) bool {
 	return strings.HasSuffix(pattern, "/*")
 }
