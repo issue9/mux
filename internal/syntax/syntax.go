@@ -69,13 +69,8 @@ func New(pattern string) (*Syntax, error) {
 		Patterns: make([]string, 0, len(strs)),
 		Wildcard: strings.HasSuffix(pattern, "/*"),
 	}
-	if len(strs) == 0 {
-		s.Type = TypeBasic
-		return s, nil
-	}
-
-	if len(strs) == 1 && !isSyntax(strs[0]) {
-		s.Patterns = append(s.Patterns, strs[0])
+	if len(strs) == 0 ||
+		len(strs) == 1 && !isSyntax(strs[0]) {
 		s.Type = TypeBasic
 		return s, nil
 	}

@@ -35,7 +35,9 @@ func TestNew(t *testing.T) {
 
 		a.Equal(ret.Type, s.Type).
 			Equal(ret.HasParams, s.HasParams).
-			Equal(ret.Patterns, s.Patterns)
+			Equal(ret.Patterns, s.Patterns).
+			Equal(ret.Pattern, s.Pattern).
+			Equal(ret.Wildcard, s.Wildcard)
 	}
 
 	fn("", true, &Syntax{})
@@ -43,17 +45,30 @@ func TestNew(t *testing.T) {
 	fn("/", false, &Syntax{
 		HasParams: false,
 		Type:      TypeBasic,
-		Patterns:  []string{"/"},
+		Patterns:  nil,
+		Pattern:   "/",
+		Wildcard:  false,
 	})
 	fn("/posts/1", false, &Syntax{
 		HasParams: false,
 		Type:      TypeBasic,
-		Patterns:  []string{"/posts/1"},
+		Patterns:  nil,
+		Pattern:   "/posts/1",
+		Wildcard:  false,
 	})
 	fn("/posts/{id", false, &Syntax{
 		HasParams: false,
 		Type:      TypeBasic,
-		Patterns:  []string{"/posts/{id"},
+		Patterns:  nil,
+		Pattern:   "/posts/{id",
+		Wildcard:  false,
+	})
+	fn("/posts/1/*", false, &Syntax{
+		HasParams: false,
+		Type:      TypeBasic,
+		Patterns:  nil,
+		Pattern:   "/posts/1/*",
+		Wildcard:  true,
 	})
 
 	// Named
@@ -61,11 +76,22 @@ func TestNew(t *testing.T) {
 		HasParams: true,
 		Type:      TypeNamed,
 		Patterns:  []string{"/posts/", "{id}"},
+		Pattern:   "/posts/{id}",
+		Wildcard:  false,
 	})
 	fn("/posts/{id}/page/{page}", false, &Syntax{
 		HasParams: true,
 		Type:      TypeNamed,
 		Patterns:  []string{"/posts/", "{id}", "/page/", "{page}"},
+		Pattern:   "/posts/{id}/page/{page}",
+		Wildcard:  false,
+	})
+	fn("/posts/{id}/page/{page}/*", false, &Syntax{
+		HasParams: true,
+		Type:      TypeNamed,
+		Patterns:  []string{"/posts/", "{id}", "/page/", "{page}", "/*"},
+		Pattern:   "/posts/{id}/page/{page}/*",
+		Wildcard:  true,
 	})
 
 	fn("/posts/{id}-{id}", true, nil) // 相同参数名
@@ -75,6 +101,8 @@ func TestNew(t *testing.T) {
 		HasParams: true,
 		Type:      TypeRegexp,
 		Patterns:  []string{"/posts/", "(?P<id>\\d+)"},
+		Pattern:   "/posts/{id:\\d+}",
+		Wildcard:  false,
 	})
 
 	fn("/posts/{id:\\d+}-{id}", true, nil) // 相同参数名
@@ -83,24 +111,32 @@ func TestNew(t *testing.T) {
 		HasParams: true,
 		Type:      TypeRegexp,
 		Patterns:  []string{"/posts/", "(?P<id>\\d+)", "/page/", "(?P<page>\\d+)"},
+		Pattern:   "/posts/{id:\\d+}/page/{page:\\d+}",
+		Wildcard:  false,
 	})
-	// 未命名参数
+	// 未命名正则
 	fn("/posts/{:\\d+}", false, &Syntax{
 		HasParams: false,
 		Type:      TypeRegexp,
 		Patterns:  []string{"/posts/", "\\d+"},
+		Pattern:   "/posts/{:\\d+}",
+		Wildcard:  false,
 	})
 	// 有一个未命名参数
 	fn("/posts/{:\\d+}/page/{page:\\d+}", false, &Syntax{
 		HasParams: true,
 		Type:      TypeRegexp,
 		Patterns:  []string{"/posts/", "\\d+", "/page/", "(?P<page>\\d+)"},
+		Pattern:   "/posts/{:\\d+}/page/{page:\\d+}",
+		Wildcard:  false,
 	})
 	// 多个未命名参数
 	fn("/posts/{:\\d+}/page/{:\\d+}", false, &Syntax{
 		HasParams: false,
 		Type:      TypeRegexp,
 		Patterns:  []string{"/posts/", "\\d+", "/page/", "\\d+"},
+		Pattern:   "/posts/{:\\d+}/page/{:\\d+}",
+		Wildcard:  false,
 	})
 
 	// 命名与未命名混合
@@ -108,6 +144,8 @@ func TestNew(t *testing.T) {
 		HasParams: true,
 		Type:      TypeRegexp,
 		Patterns:  []string{"/posts/", "(?P<id>[^/]+)", "/page/", "\\d+"},
+		Pattern:   "/posts/{id}/page/{:\\d+}",
+		Wildcard:  false,
 	})
 
 	// 命名与正则名混合
@@ -115,6 +153,8 @@ func TestNew(t *testing.T) {
 		HasParams: true,
 		Type:      TypeRegexp,
 		Patterns:  []string{"/posts/", "(?P<id>[^/]+)", "/page/", "(?P<page>\\d+)"},
+		Pattern:   "/posts/{id}/page/{page:\\d+}",
+		Wildcard:  false,
 	})
 
 	// 命名与正则、未命名名混合
@@ -122,6 +162,15 @@ func TestNew(t *testing.T) {
 		HasParams: true,
 		Type:      TypeRegexp,
 		Patterns:  []string{"/posts/", "(?P<id>[^/]+)", "/page/", "(?P<page>\\d+)", "/size/", "\\d+"},
+		Pattern:   "/posts/{id}/page/{page:\\d+}/size/{:\\d+}",
+		Wildcard:  false,
+	})
+	fn("/posts/{id}/page/{page:\\d+}/size/{:\\d+}/*", false, &Syntax{
+		HasParams: true,
+		Type:      TypeRegexp,
+		Patterns:  []string{"/posts/", "(?P<id>[^/]+)", "/page/", "(?P<page>\\d+)", "/size/", "\\d+", "/*"},
+		Pattern:   "/posts/{id}/page/{page:\\d+}/size/{:\\d+}/*",
+		Wildcard:  true,
 	})
 }
 
