@@ -56,7 +56,7 @@ func (l *List) Remove(pattern string, methods ...string) {
 		methods = method.Supported
 	}
 
-	es, found := l.entries[getSlashSize(pattern)]
+	es, found := l.entries[l.entriesIndex(pattern)]
 	if !found {
 		return
 	}
@@ -82,11 +82,11 @@ func (l *List) Add(pattern string, h http.Handler, methods ...string) error {
 		methods = method.Default
 	}
 
-	cnt := getSlashSize(pattern)
-	es, found := l.entries[cnt]
+	index := l.entriesIndex(pattern)
+	es, found := l.entries[index]
 	if !found {
 		es = newEntries(l.disableOptions)
-		l.entries[cnt] = es
+		l.entries[index] = es
 	}
 
 	return es.add(pattern, h, methods...)
@@ -94,11 +94,11 @@ func (l *List) Add(pattern string, h http.Handler, methods ...string) error {
 
 // Entry 查找指定匹配模式下的 Entry，不存在，则声明新的
 func (l *List) Entry(pattern string) (entry.Entry, error) {
-	cnt := getSlashSize(pattern)
-	es, found := l.entries[cnt]
+	index := l.entriesIndex(pattern)
+	es, found := l.entries[index]
 	if !found {
 		es = newEntries(l.disableOptions)
-		l.entries[cnt] = es
+		l.entries[index] = es
 	}
 
 	return es.entry(pattern)
@@ -122,15 +122,16 @@ func (l *List) Match(path string) (entry.Entry, map[string]string) {
 	return ety, ps
 }
 
-func getSlashSize(str string) int {
-	cnt := slashCount(str)
+// 计算 str 应该属于哪个 entries。
+func (l *List) entriesIndex(str string) int {
 	if syntax.IsWildcard(str) {
-		cnt = wildcardEntriesIndex
+		return wildcardEntriesIndex
 	}
 
-	return cnt
+	return slashCount(str)
 }
 
+// 统计字符串包含的 / 字符数量
 func slashCount(str string) int {
 	ret := 0
 	for _, c := range str {

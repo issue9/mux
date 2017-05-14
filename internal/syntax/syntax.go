@@ -48,7 +48,7 @@ func isSyntax(str string) bool {
 	return str[0] == Start && str[len(str)-1] == End
 }
 
-// New 对字符串进行分析，判断其类型，以及是否包含参数
+// New 根据 pattern 生成一个 *Syntax 对象
 func New(pattern string) (*Syntax, error) {
 	if len(pattern) == 0 || pattern[0] != '/' {
 		return nil, errors.New("参数 pattern 必须以 / 开头")

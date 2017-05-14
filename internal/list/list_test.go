@@ -13,10 +13,11 @@ import (
 
 const countTestString = "/adfada/adfa/dd//adfadasd/ada/dfad/"
 
-func TestGetSlashSize(t *testing.T) {
+func TestList_entriesIndex(t *testing.T) {
 	a := assert.New(t)
-	a.Equal(getSlashSize(countTestString), 8)
-	a.Equal(getSlashSize(countTestString+"*"), maxSlashSize)
+	l := &List{}
+	a.Equal(l.entriesIndex(countTestString), 8)
+	a.Equal(l.entriesIndex(countTestString+"*"), maxSlashSize)
 }
 
 func TestSlashCount(t *testing.T) {
