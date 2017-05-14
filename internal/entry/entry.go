@@ -6,6 +6,7 @@
 package entry
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/issue9/mux/internal/syntax"
@@ -55,11 +56,14 @@ func New(pattern string) (Entry, error) {
 
 	}
 
-	if s.Type == syntax.TypeRegexp {
+	switch s.Type {
+	case syntax.TypeRegexp:
 		return newRegexp(s)
-	} else if s.Type == syntax.TypeNamed {
+	case syntax.TypeNamed:
 		return newNamed(s), nil
+	case syntax.TypeBasic:
+		return newBasic(s), nil
+	default:
+		return nil, fmt.Errorf("未知的类型：%v", s.Type)
 	}
-
-	return newBasic(s), nil
 }
