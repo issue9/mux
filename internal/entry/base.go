@@ -47,11 +47,17 @@ func newBase(pattern string) *base {
 	return ret
 }
 
+// Entry.Pattern()
 func (b *base) Pattern() string {
 	return b.pattern
 }
 
-// Entry.add()
+// Entry.Wildcard()
+func (b *base) Wildcard() bool {
+	return b.wildcard
+}
+
+// Entry.Add()
 func (b *base) Add(h http.Handler, methods ...string) error {
 	for _, m := range methods {
 		if !method.IsSupported(m) {
