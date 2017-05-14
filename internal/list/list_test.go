@@ -7,13 +7,26 @@ package list
 import (
 	"strings"
 	"testing"
+
+	"github.com/issue9/assert"
 )
 
-const tt = "/adfada/adfa/dd//adfadasd/ada/dfad/"
+const countTestString = "/adfada/adfa/dd//adfadasd/ada/dfad/"
+
+func TestGetSlashSize(t *testing.T) {
+	a := assert.New(t)
+	a.Equal(getSlashSize(countTestString), 8)
+	a.Equal(getSlashSize(countTestString+"*"), maxSlashSize)
+}
+
+func TestSlashCount(t *testing.T) {
+	a := assert.New(t)
+	a.Equal(slashCount(countTestString), 8)
+}
 
 func BenchmarkStringsCount(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		if strings.Count(tt, "/") != 8 {
+		if strings.Count(countTestString, "/") != 8 {
 			b.Error("strings.count.error")
 		}
 	}
@@ -21,7 +34,7 @@ func BenchmarkStringsCount(b *testing.B) {
 
 func BenchmarkSlashCount(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		if slashCount(tt) != 8 {
+		if slashCount(countTestString) != 8 {
 			b.Error("count:error")
 		}
 	}
