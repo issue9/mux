@@ -19,10 +19,10 @@ mux 本身就是一个实现了 [http.Handler](https://godoc.org/net/http#Handle
 
 ```go
 m := mux.New(false, false, nil, nil).
-    Get("/user/1", h).              // GET /user/1
-    Post("/api/login", h).          // POST /api/login
-    Get("/blog/post/{id:\\d+}", h). // GET /blog/post/{id:\d+} 正则路由
-    Options("/user/1", "GET")       // OPTIONS /user/1 手动指定该路由项的 OPTIONS 请求方法返回内容
+    Get("/users/1", h).             // GET /user/1
+    Post("/login", h).              // POST /api/login
+    Get("/posts/{id:\\d+}", h).     // GET /blog/post/{id:\d+} 正则路由
+    Options("/users/1", "GET")      // OPTIONS /user/1 手动指定该路由项的 OPTIONS 请求方法返回内容
 
 // 统一前缀路径的路由
 p := m.Prefix("/api")

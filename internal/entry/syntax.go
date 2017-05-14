@@ -10,6 +10,7 @@ import (
 	"strings"
 )
 
+// 路径参数最大数量
 const maxParamsSize = 255
 
 const (
@@ -125,7 +126,7 @@ DUP:
 	}
 
 	if len(names) >= maxParamsSize {
-		return nil, fmt.Errorf("路径参数最多只能：%d 个，当前数量：%d", maxParamsSize, len(names))
+		return nil, fmt.Errorf("路径参数最多只能 %d 个，当前数量 %d", maxParamsSize, len(names))
 	}
 
 	return s, nil

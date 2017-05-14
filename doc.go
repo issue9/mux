@@ -5,10 +5,10 @@
 // Package mux 是一个实现了 http.Handler 的中间件，为用户提供了路由匹配等功能。
 //
 //  m := mux.New(false, false, nil, nil).
-//          Get("/user/1", h).
-//          Post("/api/login", h).
-//          Get("/blog/post/{id:\\d+}", h). // 正则路由
-//          Options("/user/1", "GET")       // 手动指定 OPTIONS 请求的返回内容。
+//          Get("/users/1", h).
+//          Post("/login", h).
+//          Get("/posts/{id:\\d+}", h).  // 正则路由
+//          Options("/users/1", "GET")   // 手动指定 OPTIONS 请求的返回内容。
 //
 //  // 统一前缀路径的路由
 //  p := m.Prefix("/api")
