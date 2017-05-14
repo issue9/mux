@@ -46,10 +46,6 @@ func newRegexp(pattern string, s *syntax) (*regexp, error) {
 }
 
 func (r *regexp) Priority() int {
-	if r.wildcard {
-		return typeRegexpWithWildcard
-	}
-
 	return typeRegexp
 }
 

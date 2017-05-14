@@ -36,7 +36,7 @@ func newBase(pattern string) *base {
 	ret := &base{
 		pattern:      pattern,
 		handlers:     make(map[string]http.Handler, len(method.Supported)),
-		wildcard:     strings.HasSuffix(pattern, "/*"),
+		wildcard:     IsWildcard(pattern),
 		optionsState: optionsStateDefault,
 	}
 
@@ -50,11 +50,6 @@ func newBase(pattern string) *base {
 // Entry.Pattern()
 func (b *base) Pattern() string {
 	return b.pattern
-}
-
-// Entry.Wildcard()
-func (b *base) Wildcard() bool {
-	return b.wildcard
 }
 
 // Entry.Add()

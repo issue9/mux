@@ -102,15 +102,6 @@ func TestEntry_Priority(t *testing.T) {
 	rw, err := New("/basic/{named:\\d+}/*")
 	a.NotError(err).NotNil(rw)
 
-	a.True(bw.Priority() > b.Priority()).
-		True(nw.Priority() > n.Priority()).
-		True(rw.Priority() > r.Priority())
-
 	a.True(n.Priority() > r.Priority()).
 		True(r.Priority() > b.Priority())
-
-	a.True(nw.Priority() > rw.Priority()).
-		True(rw.Priority() > bw.Priority())
-
-	a.True(bw.Priority() > n.Priority())
 }

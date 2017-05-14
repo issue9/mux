@@ -24,10 +24,6 @@ func newBasic(pattern string) *basic {
 }
 
 func (b *basic) Priority() int {
-	if b.wildcard {
-		return typeBasicWithWildcard
-	}
-
 	return typeBasic
 }
 

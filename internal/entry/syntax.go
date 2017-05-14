@@ -25,11 +25,6 @@ const (
 	typeBasic
 	typeRegexp
 	typeNamed
-
-	// 通配符版本的，优先级比没有通配符的都要低。
-	typeBasicWithWildcard
-	typeRegexpWithWildcard
-	typeNamedWithWildcard
 )
 
 // 描述指定的字符串所表示的语法结构
@@ -37,6 +32,10 @@ type syntax struct {
 	hasParams bool     // 是否有参数
 	patterns  []string // 保存着对字符串处理后的结果
 	nType     int      // 该语法应该被解析成的类型
+}
+
+func IsWildcard(pattern string) bool {
+	return strings.HasSuffix(pattern, "/*")
 }
 
 // 判断 str 是一个合法的语法结构还是普通的字符串

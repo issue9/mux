@@ -15,6 +15,8 @@ import (
 
 const defaultEntrySlashSize = 100
 
+const wildcardEntriesIndex = defaultEntrySlashSize
+
 // List entry.Entry 列表
 type List struct {
 	entries        map[int]*entries
@@ -52,12 +54,15 @@ func (l *List) Remove(pattern string, methods ...string) {
 	}
 
 	cnt := strings.Count(pattern, "/")
+	if entry.IsWildcard(pattern) {
+		cnt = wildcardEntriesIndex
+	}
+
 	es, found := l.entries[cnt]
 	if !found {
 		return
 	}
 
-	// TODO wildcard
 	es.remove(pattern, methods...)
 }
 
@@ -80,6 +85,10 @@ func (l *List) Add(pattern string, h http.Handler, methods ...string) error {
 	}
 
 	cnt := strings.Count(pattern, "/")
+	if entry.IsWildcard(pattern) {
+		cnt = wildcardEntriesIndex
+	}
+
 	es, found := l.entries[cnt]
 	if !found {
 		es = newEntries(l.disableOptions)
@@ -92,6 +101,10 @@ func (l *List) Add(pattern string, h http.Handler, methods ...string) error {
 // Entry 查找指定匹配模式下的 Entry，不存在，则声明新的
 func (l *List) Entry(pattern string) (entry.Entry, error) {
 	cnt := strings.Count(pattern, "/")
+	if entry.IsWildcard(pattern) {
+		cnt = wildcardEntriesIndex
+	}
+
 	es, found := l.entries[cnt]
 	if !found {
 		es = newEntries(l.disableOptions)
@@ -109,5 +122,12 @@ func (l *List) Match(path string) (entry.Entry, map[string]string) {
 		return nil, nil
 	}
 
-	return es.match(path)
+	ety, ps := es.match(path)
+	if ety == nil {
+		if es, found = l.entries[wildcardEntriesIndex]; found {
+			ety, ps = es.match(path)
+		}
+	}
+
+	return ety, ps
 }
