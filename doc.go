@@ -84,4 +84,4 @@
 // 如果在运行过程中需要大量的增删路由操作，性能上会比较差，
 // 建议使用其它的库的代替。其它情况下，性能还是不错的，
 // 具体的可运行 `go test -bench=.` 查看。
-package mux
+package mux // import "github.com/issue9/mux"
