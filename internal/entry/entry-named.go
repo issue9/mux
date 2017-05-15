@@ -27,7 +27,6 @@ type named struct {
 }
 
 // 声明一个新的 named 实例。
-// pattern 并不实际参与 synatax 的计算。
 func newNamed(s *syntax.Syntax) *named {
 	b := newBase(s)
 

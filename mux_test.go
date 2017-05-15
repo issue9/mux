@@ -174,27 +174,38 @@ func TestMux_Params(t *testing.T) {
 // 测试匹配顺序是否正确
 func TestMux_ServeHTTP_Order(t *testing.T) {
 	a := assert.New(t)
+
 	serveMux := New(false, false, nil, nil)
 	a.NotNil(serveMux)
 
-	a.NotError(serveMux.GetFunc("/post/{id}", f3))      // f3
-	a.NotError(serveMux.GetFunc("/post/{id:\\d+}", f2)) // f2
-	a.NotError(serveMux.GetFunc("/post/1", f1))         // f1
+	a.NotError(serveMux.GetFunc("/posts/{id}", f3))      // f3
+	a.NotError(serveMux.GetFunc("/posts/{id:\\d+}", f2)) // f2
+	a.NotError(serveMux.GetFunc("/posts/1", f1))         // f1
 
-	request(a, serveMux, http.MethodGet, "/post/1", 1)   // f1 普通路由项完全匹配
-	request(a, serveMux, http.MethodGet, "/post/2", 2)   // f2 正则完全匹配
-	request(a, serveMux, http.MethodGet, "/post/abc", 3) // f3 命名路由
+	request(a, serveMux, http.MethodGet, "/posts/1", 1)   // f1 普通路由项完全匹配
+	request(a, serveMux, http.MethodGet, "/posts/2", 2)   // f2 正则完全匹配
+	request(a, serveMux, http.MethodGet, "/posts/abc", 3) // f3 命名路由
 
 	serveMux = New(false, false, nil, nil)
 	a.NotNil(serveMux)
 
-	a.NotError(serveMux.GetFunc("/post/*", f3))         // f3
-	a.NotError(serveMux.GetFunc("/post/{id:\\d+}", f2)) // f2
-	a.NotError(serveMux.GetFunc("/post/1", f1))         // f1
+	a.NotError(serveMux.GetFunc("/posts/*", f3))         // f3
+	a.NotError(serveMux.GetFunc("/posts/{id:\\d+}", f2)) // f2
+	a.NotError(serveMux.GetFunc("/posts/1", f1))         // f1
 
-	request(a, serveMux, http.MethodGet, "/post/1", 1)   // f1 普通路由项完全匹配
-	request(a, serveMux, http.MethodGet, "/post/2", 2)   // f2 正则完全匹配
-	request(a, serveMux, http.MethodGet, "/post/abc", 3) // f3 通配符完全匹配
+	request(a, serveMux, http.MethodGet, "/posts/1", 1)   // f1 普通路由项完全匹配
+	request(a, serveMux, http.MethodGet, "/posts/2", 2)   // f2 正则完全匹配
+	request(a, serveMux, http.MethodGet, "/posts/abc", 3) // f3 通配符完全匹配
+
+	serveMux = New(false, false, nil, nil)
+	a.NotNil(serveMux)
+
+	a.NotError(serveMux.GetFunc("/p1/{p1}/p2/{p2:\\d+}", f1)) // f1
+	a.NotError(serveMux.GetFunc("/p1/{p1}/p2/{p2:\\w+}", f2)) // f2
+
+	request(a, serveMux, http.MethodGet, "/p1/1/p2/1", 1) // f1
+	request(a, serveMux, http.MethodGet, "/p1/2/p2/s", 2) // f2
+
 }
 
 func TestClearPath(t *testing.T) {

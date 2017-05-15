@@ -13,12 +13,9 @@ import (
 	"github.com/issue9/mux/internal/method"
 )
 
-var (
-	f1 = func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(1)
-	}
-	h1 = http.HandlerFunc(f1)
-)
+func (es *entries) len() int {
+	return len(es.entries)
+}
 
 func TestEntries_add_remove(t *testing.T) {
 	a := assert.New(t)
