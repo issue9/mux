@@ -15,7 +15,7 @@ type contextKey int
 const contextKeyParams contextKey = 0
 
 // ErrParamNotExists 表示地址参数中并不存在该名称的值。
-var ErrParamNotExists = errors.New("不存在该值")
+var ErrParamNotExists = errors.New("不存在该参数")
 
 // Params 用以保存请求地址中的参数内容
 type Params map[string]string
