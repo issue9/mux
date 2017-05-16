@@ -106,7 +106,6 @@ func (l *List) Entry(pattern string) (entry.Entry, error) {
 
 	l.mu.RLock()
 	defer l.mu.RUnlock()
-
 	es, found := l.entries[index]
 	if !found {
 		es = newEntries(l.disableOptions)
@@ -119,23 +118,23 @@ func (l *List) Entry(pattern string) (entry.Entry, error) {
 // Match 查找与 path 最匹配的路由项以及对应的参数
 func (l *List) Match(path string) (entry.Entry, map[string]string) {
 	cnt := syntax.SlashCount(path)
-
 	l.mu.RLock()
-	es, found := l.entries[cnt]
+	es := l.entries[cnt]
 	l.mu.RUnlock()
-
-	if !found {
-		return nil, nil
-	}
-
-	ety, ps := es.match(path)
-	if ety == nil {
-		if es, found = l.entries[wildcardEntriesIndex]; found {
-			ety, ps = es.match(path)
+	if es != nil {
+		if ety, ps := es.match(path); ety != nil {
+			return ety, ps
 		}
 	}
 
-	return ety, ps
+	l.mu.RLock()
+	es = l.entries[wildcardEntriesIndex]
+	l.mu.RUnlock()
+	if es != nil {
+		return es.match(path)
+	}
+
+	return nil, nil
 }
 
 // 计算 str 应该属于哪个 entries。

@@ -82,14 +82,18 @@ func TestList_Match(t *testing.T) {
 	l := New(false)
 	a.NotNil(l)
 
-	l.Add("/posts/{id}/*", h1)
-	l.Add("/posts/{id}/", h1)
+	l.Add("/posts/{id}/*", h1) // 1
+	l.Add("/posts/{id}/", h1)  // 2
 
 	ety, err := l.Match("/posts/1/")
 	a.NotError(err).NotNil(ety)
 	a.Equal(ety.Pattern(), "/posts/{id}/")
 
 	ety, err = l.Match("/posts/1/author")
+	a.NotError(err).NotNil(ety)
+	a.Equal(ety.Pattern(), "/posts/{id}/*")
+
+	ety, err = l.Match("/posts/1/author/profile")
 	a.NotError(err).NotNil(ety)
 	a.Equal(ety.Pattern(), "/posts/{id}/*")
 }
