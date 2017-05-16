@@ -8,6 +8,7 @@ import (
 	"context"
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/issue9/mux/internal/list"
 	"github.com/issue9/mux/internal/method"
@@ -37,6 +38,9 @@ type Mux struct {
 	skipCleanPath    bool             // 是否不对提交的路径作处理。
 	notFound         http.HandlerFunc // 404 的处理方式
 	methodNotAllowed http.HandlerFunc // 405 的处理方式
+
+	resources   map[string]*Resource
+	resourcesMu sync.RWMutex
 }
 
 // New 声明一个新的 Mux。
@@ -55,6 +59,7 @@ func New(disableOptions, skipCleanPath bool, notFound, methodNotAllowed http.Han
 
 	return &Mux{
 		list:             list.New(disableOptions),
+		resources:        make(map[string]*Resource, 100),
 		skipCleanPath:    skipCleanPath,
 		notFound:         notFound,
 		methodNotAllowed: methodNotAllowed,
