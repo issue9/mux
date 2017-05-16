@@ -8,6 +8,7 @@ package list
 import (
 	"errors"
 	"net/http"
+	"sync"
 
 	"github.com/issue9/mux/internal/entry"
 	"github.com/issue9/mux/internal/method"
@@ -19,7 +20,8 @@ const wildcardEntriesIndex = syntax.MaxPatternDepth
 // List entry.Entry 列表，按 / 字符的多少来对 entry.Entry 实例进行分组，
 // 以减少每次查询时的循环次数。
 type List struct {
-	entries        map[int]*entries
+	mu             sync.RWMutex
+	entries        map[int]*entries // TODO go1.9 改为 sync.Map
 	disableOptions bool
 }
 
@@ -35,7 +37,10 @@ func New(disableOptions bool) *List {
 // 则为删除所有路径前缀为 prefix 的匹配项。
 func (l *List) Clean(prefix string) {
 	if len(prefix) == 0 {
+		l.mu.Lock()
 		l.entries = make(map[int]*entries, syntax.MaxPatternDepth)
+		l.mu.Unlock()
+
 		return
 	}
 
@@ -53,7 +58,10 @@ func (l *List) Remove(pattern string, methods ...string) {
 		methods = method.Supported
 	}
 
+	l.mu.RLock()
 	es, found := l.entries[l.entriesIndex(pattern)]
+	l.mu.RUnlock()
+
 	if !found {
 		return
 	}
@@ -80,7 +88,9 @@ func (l *List) Add(pattern string, h http.Handler, methods ...string) error {
 	}
 
 	index := l.entriesIndex(pattern)
+	l.mu.RLock()
 	es, found := l.entries[index]
+	l.mu.RUnlock()
 	if !found {
 		es = newEntries(l.disableOptions)
 		l.entries[index] = es
@@ -92,6 +102,10 @@ func (l *List) Add(pattern string, h http.Handler, methods ...string) error {
 // Entry 查找指定匹配模式下的 Entry，不存在，则声明新的
 func (l *List) Entry(pattern string) (entry.Entry, error) {
 	index := l.entriesIndex(pattern)
+
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+
 	es, found := l.entries[index]
 	if !found {
 		es = newEntries(l.disableOptions)
@@ -104,7 +118,11 @@ func (l *List) Entry(pattern string) (entry.Entry, error) {
 // Match 查找与 path 最匹配的路由项以及对应的参数
 func (l *List) Match(path string) (entry.Entry, map[string]string) {
 	cnt := syntax.SlashCount(path)
+
+	l.mu.RLock()
 	es, found := l.entries[cnt]
+	l.mu.RUnlock()
+
 	if !found {
 		return nil, nil
 	}
