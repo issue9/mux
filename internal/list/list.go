@@ -36,11 +36,11 @@ func New(disableOptions bool) *List {
 // Clean 清除所有的路由项，在 prefix 不为空的情况下，
 // 则为删除所有路径前缀为 prefix 的匹配项。
 func (l *List) Clean(prefix string) {
-	if len(prefix) == 0 {
-		l.mu.Lock()
-		l.entries = make(map[int]*entries, syntax.MaxPatternDepth)
-		l.mu.Unlock()
+	l.mu.Lock()
+	defer l.mu.Unlock()
 
+	if len(prefix) == 0 {
+		l.entries = make(map[int]*entries, syntax.MaxPatternDepth)
 		return
 	}
 
@@ -88,9 +88,10 @@ func (l *List) Add(pattern string, h http.Handler, methods ...string) error {
 	}
 
 	index := l.entriesIndex(pattern)
-	l.mu.RLock()
+
+	l.mu.Lock()
+	defer l.mu.Unlock()
 	es, found := l.entries[index]
-	l.mu.RUnlock()
 	if !found {
 		es = newEntries(l.disableOptions)
 		l.entries[index] = es
