@@ -1,20 +1,20 @@
-mux [![Build Status](https://travis-ci.org/issue9/mux.svg?branch=master)](https://travis-ci.org/issue9/mux)
+mux [![Build Status](https://travis-ci.org/issue9/mux.svg?branch=master)](https://travis-ci.org/issue9/mux) [![Go version](https://img.shields.io/badge/Go-1.8-brightgreen.svg?style=flat)](https://golang.org)
 ======
 
-mux 是一个实现了 [http.Handler](https://godoc.org/net/http#Handler) 的中间件，
-为用户提供了以下功能：
+mux 是一个实现了 [http.Handler](https://godoc.org/net/http#Handler) 的中间件，为用户提供了以下功能：
 
 1. 正则路由；
 1. 路由参数；
 1. 丰富的 OPTIONS 请求处理方式；
-1. 根据路由重新构建地址。
+1. 根据路由生成地址。
 
 
 ##### 中间件
 
 mux 本身就是一个实现了 [http.Handler](https://godoc.org/net/http#Handler) 接口的中间件，
 所有实现官方接口 `http.Handler` 的都可以附加到 mux 上作为中间件使用。
-[handlers](https://github.com/issue9/handlers) 实现了诸如按域名过滤等常用的中间件功能。
+
+[handlers](https://github.com/issue9/handlers) 提供了诸如按域名过滤等常用的中间件功能。
 
 
 ```go
