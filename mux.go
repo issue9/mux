@@ -14,7 +14,6 @@ import (
 	"github.com/issue9/mux/internal/method"
 )
 
-// 两个默认处理函数
 var (
 	defaultNotFound = func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
@@ -35,9 +34,9 @@ var (
 //  http.ListenAndServe(m)
 type Mux struct {
 	list             *list.List
-	skipCleanPath    bool             // 是否不对提交的路径作处理。
-	notFound         http.HandlerFunc // 404 的处理方式
-	methodNotAllowed http.HandlerFunc // 405 的处理方式
+	skipCleanPath    bool
+	notFound         http.HandlerFunc
+	methodNotAllowed http.HandlerFunc
 
 	resources   map[string]*Resource
 	resourcesMu sync.RWMutex
@@ -46,7 +45,7 @@ type Mux struct {
 // New 声明一个新的 Mux。
 //
 // disableOptions 是否禁用自动生成 OPTIONS 功能；
-// skipCleanPath 是否忽略对访问路径作处理，比如 "//api" ==> "/api"；
+// skipCleanPath 是否不对对访问路径作处理，比如 "//api" ==> "/api"；
 // notFound 404 页面的处理方式，为 nil 时会调用 http.Error 进行处理；
 // methodNotAllowed 405 页面的处理方式，为 nil 时会调用 http.Error 进行处理。
 func New(disableOptions, skipCleanPath bool, notFound, methodNotAllowed http.HandlerFunc) *Mux {

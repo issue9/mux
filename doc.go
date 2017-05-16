@@ -19,7 +19,7 @@
 //  res := p.Resource("/users/{id\\d+}")
 //  res.Get(h)   // 相当于 m.Get("/api/users/{id}", h)
 //  res.Post(h)  // 相当于 m.Post("/api/users/{id}", h)
-//  res.URL(map[string]string{"id": "5"}, "") // /users/5
+//  res.URL(map[string]string{"id": "5"}, "") // 生成 /users/5
 //
 //  http.ListenAndServe(":8080", m)
 //
@@ -29,8 +29,8 @@
 //
 // 路由中支持以正则表达式的方式进行匹配，表达式以大括号包含，内部以冒号分隔，
 // 前半部分为变量的名称，后半部分为变量可匹配类型的正则表达式。比如：
-//  /post/{id:\\d+} // id 的值只能为 \d+，\d+ 为正则表达式；
-//  /post/{:\\d+}   // 同上，但是没有命名；
+//  /posts/{id:\\d+} // 将被转换成 /posts/(?P<id>\\d+)
+//  /posts/{:\\d+}   // 将被转换成 /posts/\\d+
 //
 //
 //
@@ -38,8 +38,11 @@
 //
 // 若路由字符串中，所有的正则表达式都只有名称部分（没有冒号及之后的内容），
 // 则会被转换成命名参数，因为不需要作正则验证，性能会比较正则稍微好上一些。
-//  /posts/{id}                // 命名参数
-//  /blog/{action}/{page:\\d+} // 正则，page 使用了正则匹配
+//  /posts/{id}                  // 命名参数
+//  /posts/{id}/{action}         // 多个命名参数
+//
+// 正则和命名参数混用时，最终会将整个字符串转换成正则：
+//  /blog/{action}/{page:\\d+}   // 转换成正则 /blog/[^/]+/(?P<page>\\d+)
 //
 //
 //
