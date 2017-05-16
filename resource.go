@@ -5,11 +5,16 @@
 package mux
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/issue9/mux/internal/entry"
 	"github.com/issue9/mux/internal/method"
 )
+
+// ErrResourceNameExists 当为一个资源命名时，若存在相同名称的，
+// 则返回此错误信息。
+var ErrResourceNameExists = errors.New("存在相同名称的资源名")
 
 // Resource 以资源地址为对象的路由配置。
 //  r, _ := srv.Resource("/api/users/{id}")
@@ -125,10 +130,37 @@ func (r *Resource) Clean() *Resource {
 	return r
 }
 
+// Name 给当前资源一个名称，不能与已有名称相同。
+// 只有命名的资源，之后才能通过 Mux.Name() 找到该资源。
+func (r *Resource) Name(name string) error {
+	r.mux.resourcesMu.RLock()
+	_, exists := r.mux.resources[name]
+	r.mux.resourcesMu.RUnlock()
+
+	if exists {
+		return ErrResourceNameExists
+	}
+
+	r.mux.resourcesMu.Lock()
+	r.mux.resources[name] = r
+	r.mux.resourcesMu.Unlock()
+
+	return nil
+}
+
 // URL 根据参数构建一条 URL，
 // 若不是正则或是只有未命名参数的正则表达式，则直接返回原来的内容。
 func (r *Resource) URL(params map[string]string, path string) (string, error) {
 	return r.ety.URL(params, path)
+}
+
+// Name 返回指定名称的 *Resource 实例。
+func (mux *Mux) Name(name string) *Resource {
+	mux.resourcesMu.RLock()
+	r := mux.resources[name]
+	mux.resourcesMu.RUnlock()
+
+	return r
 }
 
 // Resource 创建一个资源路由项。
