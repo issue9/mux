@@ -40,20 +40,20 @@ func newNamed(s *syntax.Syntax) *named {
 		}
 	}
 
-	names := make([]*node, 0, len(s.Patterns))
+	nodes := make([]*node, 0, len(s.Patterns))
 	for index, str := range s.Patterns {
 		if str[0] == syntax.Start {
 			endByte := byte('/')
 			if index < len(s.Patterns)-1 {
 				endByte = s.Patterns[index+1][0]
 			}
-			names = append(names, &node{
+			nodes = append(nodes, &node{
 				value:    str[1 : len(str)-1],
 				isString: false,
 				endByte:  endByte,
 			})
 		} else {
-			names = append(names, &node{
+			nodes = append(nodes, &node{
 				value:    str,
 				isString: true,
 			})
@@ -62,7 +62,7 @@ func newNamed(s *syntax.Syntax) *named {
 
 	return &named{
 		base:  b,
-		nodes: names,
+		nodes: nodes,
 	}
 }
 
@@ -95,10 +95,16 @@ func (n *named) Match(path string) (bool, map[string]string) {
 				path = path[index:]
 			} else { // 最后一个节点了
 				if index == -1 {
-					return !n.wildcard, n.params(rawPath)
+					if n.wildcard {
+						return false, nil
+					}
+					return true, n.params(rawPath)
 				}
 
-				return n.wildcard, n.params(rawPath)
+				if !n.wildcard {
+					return false, nil
+				}
+				return true, n.params(rawPath)
 			}
 		} // end if
 	} // end for
