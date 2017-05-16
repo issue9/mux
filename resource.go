@@ -14,7 +14,7 @@ import (
 
 // ErrResourceNameExists 当为一个资源命名时，若存在相同名称的，
 // 则返回此错误信息。
-var ErrResourceNameExists = errors.New("存在相同名称的资源名")
+var ErrResourceNameExists = errors.New("存在相同名称的资源")
 
 // Resource 以资源地址为对象的路由配置。
 //  r, _ := srv.Resource("/api/users/{id}")
@@ -127,11 +127,12 @@ func (r *Resource) Remove(methods ...string) *Resource {
 // Clean 清除当前资源的所有路由项
 func (r *Resource) Clean() *Resource {
 	r.mux.Remove(r.pattern, method.Supported...)
+	r.ety = nil
 	return r
 }
 
 // Name 给当前资源一个名称，不能与已有名称相同。
-// 只有命名的资源，之后才能通过 Mux.Name() 找到该资源。
+// 命名的资源会保存在 Mux 中，之后可以通过过 Mux.Name() 找到该资源。
 func (r *Resource) Name(name string) error {
 	r.mux.resourcesMu.RLock()
 	_, exists := r.mux.resources[name]

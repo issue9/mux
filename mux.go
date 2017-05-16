@@ -8,7 +8,6 @@ import (
 	"context"
 	"net/http"
 	"strings"
-
 	"sync"
 
 	"github.com/issue9/mux/internal/list"
