@@ -15,10 +15,35 @@ func TestMux_Resource(t *testing.T) {
 	srvmux := New(false, false, nil, nil)
 	a.NotNil(srvmux)
 
-	res, err := srvmux.Resource("/abc/1")
+	r1, err := srvmux.Resource("/abc/1")
+	a.NotError(err).NotNil(r1)
+	a.Equal(r1.Mux(), srvmux)
+	a.Equal(r1.pattern, "/abc/1")
+
+	r2, err := srvmux.Resource("/abc/1")
+	a.NotError(err).NotNil(r2)
+	a.False(r1 == r2)        // 不是同一个 *Resource
+	a.True(r1.ety == r2.ety) // 但应该指向同一个 entry.Entry 实例
+}
+
+func TestResource_Name(t *testing.T) {
+	a := assert.New(t)
+	srvmux := New(false, false, nil, nil)
+	a.NotNil(srvmux)
+
+	res, err := srvmux.Resource("/posts/{id}")
 	a.NotError(err).NotNil(res)
-	a.Equal(res.Mux(), srvmux)
-	a.Equal(res.pattern, "/abc/1")
+	a.NotError(res.Name("post"))
+	// 应该是同一个
+	a.Equal(srvmux.Name("post"), res)
+
+	// 未指定名称，不存在
+	a.Nil(srvmux.Name("author"))
+
+	res, err = srvmux.Resource("/posts/{id}/author")
+	a.NotError(err).NotNil(res)
+	// 同名
+	a.Error(res.Name("post"))
 }
 
 func TestResource_URL(t *testing.T) {
