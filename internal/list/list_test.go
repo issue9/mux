@@ -85,17 +85,23 @@ func TestList_Match(t *testing.T) {
 	l.Add("/posts/{id}/*", h1) // 1
 	l.Add("/posts/{id}/", h1)  // 2
 
-	ety, err := l.Match("/posts/1/")
-	a.NotError(err).NotNil(ety)
-	a.Equal(ety.Pattern(), "/posts/{id}/")
+	ety, ps := l.Match("/posts/1/")
+	a.NotNil(ps).NotNil(ety)
+	a.Equal(ety.Pattern(), "/posts/{id}/").
+		Equal(ps, map[string]string{"id": "1"})
 
-	ety, err = l.Match("/posts/1/author")
-	a.NotError(err).NotNil(ety)
-	a.Equal(ety.Pattern(), "/posts/{id}/*")
+	ety, ps = l.Match("/posts/1/author")
+	a.NotNil(ps).NotNil(ety)
+	a.Equal(ety.Pattern(), "/posts/{id}/*").
+		Equal(ps, map[string]string{"id": "1"})
 
-	ety, err = l.Match("/posts/1/author/profile")
-	a.NotError(err).NotNil(ety)
-	a.Equal(ety.Pattern(), "/posts/{id}/*")
+	ety, ps = l.Match("/posts/1/author/profile")
+	a.NotNil(ps).NotNil(ety)
+	a.Equal(ety.Pattern(), "/posts/{id}/*").
+		Equal(ps, map[string]string{"id": "1"})
+
+	ety, ps = l.Match("/not-exists")
+	a.Nil(ps).Nil(ety)
 }
 
 func TestList_entriesIndex(t *testing.T) {
