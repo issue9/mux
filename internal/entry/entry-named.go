@@ -108,6 +108,7 @@ func (n *named) Match(path string) (bool, map[string]string) {
 			}
 		} // end if
 	} // end for
+
 	return true, n.params(rawPath)
 }
 
@@ -141,6 +142,7 @@ func (n *named) params(path string) map[string]string {
 			}
 		} // end if
 	} // end for
+
 	return params
 }
 
