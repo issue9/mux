@@ -81,7 +81,10 @@ func (n *named) Match(path string) (bool, map[string]string) {
 			}
 
 			if islast {
-				return (path == name.value), n.params(rawPath)
+				if path == name.value {
+					return true, n.params(rawPath)
+				}
+				return false, nil
 			}
 
 			path = path[len(name.value):]
