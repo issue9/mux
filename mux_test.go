@@ -229,19 +229,23 @@ func BenchmarkCleanPath(b *testing.B) {
 	a := assert.New(b)
 
 	paths := []string{
+		"",
 		"/api//",
 		"/api////users/1",
 		"//api/users/1",
-		"/api///users////1",
+		"api///users////1",
 		"api//",
 		"/api/",
 		"/api/./",
 		"/api/..",
-		"/api/../",
-		"/api/../../",
+		"/api//../",
+		"/api/..//../",
 		"/api../",
+		"api../",
 	}
 
+	b.ReportAllocs()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		ret := cleanPath(paths[i%len(paths)])
 		a.True(len(ret) > 0)
