@@ -22,8 +22,8 @@ func TestMux_Resource(t *testing.T) {
 
 	r2, err := srvmux.Resource("/abc/1")
 	a.NotError(err).NotNil(r2)
-	a.False(r1 == r2)        // 不是同一个 *Resource
-	a.True(r1.ety == r2.ety) // 但应该指向同一个 entry.Entry 实例
+	a.False(r1 == r2)            // 不是同一个 *Resource
+	a.True(r1.entry == r2.entry) // 但应该指向同一个 entry.Entry 实例
 }
 
 func TestResource_Name(t *testing.T) {
