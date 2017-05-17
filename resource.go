@@ -152,8 +152,15 @@ func (r *Resource) Name(name string) error {
 	return nil
 }
 
-// URL 根据参数构建一条 URL，
-// 若不是正则或是只有未命名参数的正则表达式，则直接返回原来的内容。
+// URL 根据参数构建一条 URL。
+//
+// params 匹配路由参数中的同名参数，或是不存在路由参数，比如普通的字符串路由项，
+// 该参数不启作用；path 仅对通配符路由项启作用。
+//  res, := m.Resource("/posts/{id}")
+//  res.URL(map[string]string{"id": "1"}, "") // /posts/1
+//
+//  res, := m.Resource("/posts/{id}/*")
+//  res.URL(map[string]string{"id": "1"}, "author/profile") // /posts/1/author/profile
 func (r *Resource) URL(params map[string]string, path string) (string, error) {
 	return r.ety.URL(params, path)
 }

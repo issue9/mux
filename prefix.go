@@ -10,7 +10,7 @@ import (
 	"github.com/issue9/mux/internal/method"
 )
 
-// Prefix 封装了 Mux，使所有添加的路由项的匹配模式都带上指定的路径前缀。
+// Prefix 可以将具有统一前缀的路由项集中在一起操作。
 //  p := srv.Prefix("/api")
 //  p.Get("/users")  // 相当于 srv.Get("/api/users")
 //  p.Get("/user/1") // 相当于 srv.Get("/api/user/1")

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
-// Package method 指定当前包允许使用的请求方法。
+// Package method 指定当 mux 包允许使用的请求方法。
 package method
 
 import (

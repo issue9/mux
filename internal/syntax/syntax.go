@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-// 路径参数最大数量
+// 路由中允许的最大参数数量
 const maxParamsSize = 255
 
 // MaxPatternDepth 最大的路径深度
