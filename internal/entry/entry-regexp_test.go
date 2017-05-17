@@ -151,6 +151,8 @@ func BenchmarkRegexp_One(b *testing.B) {
 	expr, err := stdregexp.Compile(regstr)
 	a.NotError(err).NotNil(expr)
 
+	b.ReportAllocs()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		loc := expr.FindStringIndex(match)
 		if loc == nil || loc[0] != 0 {
@@ -199,6 +201,8 @@ func BenchmarkRegexp_Mult(b *testing.B) {
 		return true
 	}
 
+	b.ReportAllocs()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		if !test(match) {
 			b.Error("er")

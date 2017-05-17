@@ -221,14 +221,18 @@ func TestSlashCount(t *testing.T) {
 }
 
 func BenchmarkStringsCount(b *testing.B) {
+	b.ReportAllocs()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		if strings.Count(countTestString, "/") != 8 {
-			b.Error("strings.count.error")
+			b.Error("strings.Count:error")
 		}
 	}
 }
 
 func BenchmarkSlashCount(b *testing.B) {
+	b.ReportAllocs()
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		if SlashCount(countTestString) != 8 {
 			b.Error("count:error")
