@@ -57,7 +57,7 @@ func New(pattern string) (*Syntax, error) {
 		return nil, errors.New("参数 pattern 必须以 / 开头")
 	}
 
-	if strings.Count(pattern, "/") > MaxPatternDepth {
+	if SlashCount(pattern) > MaxPatternDepth {
 		return nil, fmt.Errorf("匹配字符串最多只能包含 %d 个 / 字符", MaxPatternDepth)
 	}
 
@@ -67,7 +67,7 @@ func New(pattern string) (*Syntax, error) {
 	s := &Syntax{
 		Pattern:  pattern,
 		Patterns: make([]string, 0, len(strs)),
-		Wildcard: strings.HasSuffix(pattern, "/*"),
+		Wildcard: IsWildcard(pattern),
 	}
 	if len(strs) == 0 ||
 		len(strs) == 1 && !isSyntax(strs[0]) {
