@@ -206,8 +206,8 @@ func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.ServeHTTP(w, r)
 }
 
-// MethodIsSuppotred 检测请求方法当前包是否支持
-func MethodIsSuppotred(m string) bool {
+// MethodIsSupported 检测请求方法当前包是否支持
+func MethodIsSupported(m string) bool {
 	return method.IsSupported(m)
 }
 
