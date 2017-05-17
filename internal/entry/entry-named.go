@@ -5,7 +5,6 @@
 package entry
 
 import (
-	"bytes"
 	"fmt"
 	"strings"
 
@@ -151,25 +150,25 @@ func (n *named) params(path string) map[string]string {
 }
 
 func (n *named) URL(params map[string]string, path string) (string, error) {
-	ret := new(bytes.Buffer)
+	ret := make([]byte, 0, 500)
 
 	for _, name := range n.nodes {
 		if name.isString {
-			ret.WriteString(name.value)
+			ret = append(ret, name.value...)
 			continue
 		}
 
 		if param, exists := params[name.value]; exists {
-			ret.WriteString(param)
+			ret = append(ret, param...)
 		} else {
 			return "", fmt.Errorf("参数 %v 未指定", name.value)
 		}
 	}
 
 	if n.wildcard {
-		ret.WriteByte('/')
-		ret.WriteString(path)
+		ret = append(ret, '/')
+		ret = append(ret, path...)
 	}
 
-	return ret.String(), nil
+	return string(ret), nil
 }
