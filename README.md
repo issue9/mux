@@ -21,7 +21,7 @@ mux 本身就是一个实现了 [http.Handler](https://godoc.org/net/http#Handle
 m := mux.New(false, false, nil, nil).
     Get("/users/1", h).             // GET /user/1
     Post("/login", h).              // POST /api/login
-    Get("/posts/{id:\\d+}", h).     // GET /blog/post/{id:\d+} 正则路由
+    Get("/posts/{id:\\d+}", h).     // GET /blog/post/{id:\\d+} 正则路由
     Options("/users/1", "GET")      // OPTIONS /user/1 手动指定该路由项的 OPTIONS 请求方法返回内容
 
 // 统一前缀路径的路由
@@ -30,9 +30,9 @@ p.Get("/logout", h) // 相当于 m.Get("/api/logout", h)
 p.Post("/login", h) // 相当于 m.Get("/api/login", h)
 
 // 对同一资源的不同操作
-res := p.Resource("/users/{id\\d+}")
-res.Get(h)   // 相当于 m.Get("/api/users/{id}", h)
-res.Post(h)  // 相当于 m.Post("/api/users/{id}", h)
+res := p.Resource("/users/{id:\\d+}")
+res.Get(h)   // 相当于 m.Get("/api/users/{id:\\d+}", h)
+res.Post(h)  // 相当于 m.Post("/api/users/{id:\\d+}", h)
 res.URL(map[string]string{"id": "5"}, "") // 构建一条基于此路由项的路径：/users/5
 
 http.ListenAndServe(":8080", m)

@@ -17,12 +17,22 @@ import (
 
 const wildcardEntriesIndex = syntax.MaxPatternDepth
 
-// List entry.Entry 列表，按 / 字符的多少来对 entry.Entry 实例进行分组，
-// 以减少每次查询时的循环次数。
+// List entry.Entry 列表。
 type List struct {
-	mu             sync.RWMutex
-	entries        map[int]*entries // TODO go1.9 改为 sync.Map
 	disableOptions bool
+	mu             sync.RWMutex
+
+	// entries 是按路由项中 / 字符的多少进行分类的，
+	// 如果是通配符的，则统一放在一个指定的分组中，
+	// 这样在进行路由匹配时，可以减少大量的时间：
+	//  /posts/{id}              // 1
+	//  /tags/{name}             // 1
+	//  /posts/{id}/author       // 2
+	//  /posts/{id}/author/*     // 3
+	// 比如以上路由项，如果要查找 /posts/1 只需要比较 1 和 3
+	// 中的数据就行，如果需要匹配 /posts/1/author 则只需要比较
+	// 1 和 3 中的数据。
+	entries map[int]*entries // TODO go1.9 改为 sync.Map
 }
 
 // New 声明一个 List 实例

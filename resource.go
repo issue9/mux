@@ -165,7 +165,7 @@ func (r *Resource) URL(params map[string]string, path string) (string, error) {
 	return r.entry.URL(params, path)
 }
 
-// Name 返回指定名称的 *Resource 实例。
+// Name 返回指定名称的 *Resource 实例，如果不存在返回 nil。
 func (mux *Mux) Name(name string) *Resource {
 	mux.resourcesMu.RLock()
 	r := mux.resources[name]

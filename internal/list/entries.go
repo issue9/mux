@@ -13,7 +13,7 @@ import (
 	"github.com/issue9/mux/internal/entry"
 )
 
-// 保存着按 Entry.Priority() 顺序保存的列表。
+// 按 Entry.Priority() 为优先级保存的 entry.Entry 实例列表。
 type entries struct {
 	mu             sync.RWMutex
 	entries        []entry.Entry
@@ -56,7 +56,7 @@ func (es *entries) remove(pattern string, methods ...string) {
 			continue
 		}
 
-		if empty := e.Remove(methods...); empty { // 空了，则当整个路由项移除
+		if empty := e.Remove(methods...); empty { // 空了，则整个路由项都移除
 			es.entries = removeEntries(es.entries, e.Pattern())
 		}
 		return // 只可能有一相完全匹配，找到之后，即可返回

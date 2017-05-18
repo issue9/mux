@@ -58,7 +58,7 @@ func New(disableOptions, skipCleanPath bool, notFound, methodNotAllowed http.Han
 
 	return &Mux{
 		list:             list.New(disableOptions),
-		resources:        make(map[string]*Resource, 100),
+		resources:        make(map[string]*Resource, 500),
 		skipCleanPath:    skipCleanPath,
 		notFound:         notFound,
 		methodNotAllowed: methodNotAllowed,
