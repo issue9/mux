@@ -10,10 +10,10 @@ import (
 	"testing"
 )
 
-// go1.8.1 BenchmarkGithubAPI-4   	 1000000	      1324 ns/op	     674 B/op	       6 allocs/op
+// go1.8.1 BenchmarkGithubAPI-4   	 1000000	      1433 ns/op	     776 B/op	       7 allocs/op
 func BenchmarkGithubAPI(b *testing.B) {
 	h := func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("hello"))
+		w.Write([]byte(r.URL.Path))
 	}
 
 	srv := New(false, false, nil, nil)
@@ -24,12 +24,20 @@ func BenchmarkGithubAPI(b *testing.B) {
 	w := httptest.NewRecorder()
 
 	// 按照添加顺序，这应该是比较靠后的
-	r, _ := http.NewRequest(http.MethodGet, "/repos/issue9/mux/branches/master/protection/enforce_admins", nil)
+	r, err := http.NewRequest(http.MethodGet, "/repos/issue9/mux/branches/master/protection/enforce_admins", nil)
+	if err != nil {
+		b.Error(err)
+	}
 
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		srv.ServeHTTP(w, r)
+
+		if w.Body.String() != r.URL.Path {
+			b.Errorf("BenchmarkGithubAPI: %v:%v", w.Body.String(), r.URL.Path)
+		}
+		w.Body.Reset()
 	}
 }
 
