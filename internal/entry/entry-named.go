@@ -87,13 +87,21 @@ func (n *named) Match(path string) (bool, map[string]string) {
 			}
 		} else { // 带命名的节点
 			if !node.isLast {
-				// 不可能存在两个相邻的命名节点，所以下一个肯定是字符串节点
-				index := strings.Index(path, n.nodes[i+1].value)
+				i++
+				next := n.nodes[i] // 不可能存在两个相邻的命名节点，所以 next 肯定是字符串节点
+
+				index := strings.Index(path, next.value)
 				if index == -1 {
 					return false, nil
 				}
 
-				path = path[index:]
+				path = path[index+len(next.value):]
+				if next.isLast {
+					if len(path) == 0 {
+						return true, n.params(rawPath)
+					}
+					return false, nil
+				}
 			} else { // 最后一个节点
 				if strings.IndexByte(path, '/') == -1 {
 					if n.wildcard {
@@ -118,7 +126,8 @@ func (n *named) params(path string) map[string]string {
 	// 所以以下代码不再作是否匹配的检测工作。
 
 	params := make(map[string]string, len(n.nodes))
-	for i, node := range n.nodes {
+	for i := 0; i < len(n.nodes); i++ {
+		node := n.nodes[i]
 		if node.isString { // 普通字符串节点
 			if node.isLast {
 				return params
@@ -127,10 +136,16 @@ func (n *named) params(path string) map[string]string {
 			path = path[len(node.value):]
 		} else { // 带命名的节点
 			if !node.isLast {
-				// 不可能存在两个相邻的命名节点，所以下一个肯定是字符串节点
-				index := strings.Index(path, n.nodes[i+1].value)
+				i++
+				next := n.nodes[i] // 不可能存在两个相邻的命名节点，所以 next 肯定是字符串节点
+
+				index := strings.Index(path, next.value)
 				params[node.value] = path[:index]
-				path = path[index:]
+				path = path[index+len(next.value):]
+
+				if next.isLast && len(path) == 0 { // 最后节点，且正好匹配完
+					return params
+				}
 			} else { // 最后一个节点
 				index := strings.IndexByte(path, '/')
 				if index == -1 {

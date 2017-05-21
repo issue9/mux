@@ -40,13 +40,13 @@ func BenchmarkRegexp_Match(b *testing.B) {
 
 func BenchmarkNamed_Match(b *testing.B) {
 	a := assert.New(b)
-	e, err := New("/blog/post/{id}/{id2}")
+	e, err := New("/blog/post/{id}.html/{id2}")
 	a.NotError(err).NotNil(e)
 
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		if ok, _ := e.Match("/blog/post/1/2"); !ok {
+		if ok, _ := e.Match("/blog/post/1.html/2"); !ok {
 			b.Error("BenchmarkNamed_Match:error")
 		}
 	}
