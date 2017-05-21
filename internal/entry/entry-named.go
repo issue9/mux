@@ -70,7 +70,9 @@ func (n *named) Priority() int {
 
 func (n *named) Match(path string) (bool, map[string]string) {
 	rawPath := path
-	for i, node := range n.nodes {
+	for i := 0; i < len(n.nodes); i++ {
+		node := n.nodes[i]
+
 		if node.isString { // 普通字符串节点
 			if !strings.HasPrefix(path, node.value) {
 				return false, nil
@@ -85,7 +87,8 @@ func (n *named) Match(path string) (bool, map[string]string) {
 			}
 		} else { // 带命名的节点
 			if !node.isLast {
-				index := strings.Index(path, n.nodes[i+1].value) // 下一个必定是字符串节点
+				// 不可能存在两个相邻的命名节点，所以下一个肯定是字符串节点
+				index := strings.Index(path, n.nodes[i+1].value)
 				if index == -1 {
 					return false, nil
 				}
@@ -124,7 +127,8 @@ func (n *named) params(path string) map[string]string {
 			path = path[len(node.value):]
 		} else { // 带命名的节点
 			if !node.isLast {
-				index := strings.Index(path, n.nodes[i+1].value) // 下一个必定是字符串节点
+				// 不可能存在两个相邻的命名节点，所以下一个肯定是字符串节点
+				index := strings.Index(path, n.nodes[i+1].value)
 				params[node.value] = path[:index]
 				path = path[index:]
 			} else { // 最后一个节点
