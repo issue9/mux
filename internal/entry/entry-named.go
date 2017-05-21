@@ -16,6 +16,7 @@ type node struct {
 	value    string // 当前节点的值。
 	endByte  byte   // 下一个节点的起始字符
 	isString bool   // 当前节点是否为一个字符串
+	isLast   bool   // 是否为最后的节点
 }
 
 // 命名参数是正则表达式的简化版本，
@@ -42,20 +43,23 @@ func newNamed(s *syntax.Syntax) *named {
 
 	nodes := make([]*node, 0, len(s.Patterns))
 	for index, str := range s.Patterns {
+		last := index >= len(s.Patterns)-1
 		if str[0] == syntax.Start {
 			endByte := byte('/')
-			if index < len(s.Patterns)-1 {
+			if !last {
 				endByte = s.Patterns[index+1][0]
 			}
 			nodes = append(nodes, &node{
 				value:    str[1 : len(str)-1],
 				isString: false,
 				endByte:  endByte,
+				isLast:   last,
 			})
 		} else {
 			nodes = append(nodes, &node{
 				value:    str,
 				isString: true,
+				isLast:   last,
 			})
 		}
 	}
@@ -72,22 +76,20 @@ func (n *named) Priority() int {
 
 func (n *named) Match(path string) (bool, map[string]string) {
 	rawPath := path
-	for i, name := range n.nodes {
-		islast := (i == len(n.nodes)-1)
-
-		if name.isString { // 普通字符串节点
-			if !strings.HasPrefix(path, name.value) {
+	for _, node := range n.nodes {
+		if node.isString { // 普通字符串节点
+			if !strings.HasPrefix(path, node.value) {
 				return false, nil
 			}
 
-			if islast {
-				return (path == name.value), n.params(rawPath)
+			if node.isLast {
+				return (path == node.value), n.params(rawPath)
 			}
 
-			path = path[len(name.value):]
+			path = path[len(node.value):]
 		} else { // 带命名的节点
-			index := strings.IndexByte(path, name.endByte)
-			if !islast {
+			index := strings.IndexByte(path, node.endByte)
+			if !node.isLast {
 				if index == -1 {
 					return false, nil
 				}
