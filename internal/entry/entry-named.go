@@ -146,16 +146,16 @@ func (n *named) params(path string) map[string]string {
 
 func (n *named) URL(params map[string]string, path string) (string, error) {
 	ret := ""
-	for _, name := range n.nodes {
-		if name.isString {
-			ret += name.value
+	for _, node := range n.nodes {
+		if node.isString {
+			ret += node.value
 			continue
 		}
 
-		if param, exists := params[name.value]; exists {
+		if param, exists := params[node.value]; exists {
 			ret += param
 		} else {
-			return "", fmt.Errorf("参数 %v 未指定", name.value)
+			return "", fmt.Errorf("参数 %v 未指定", node.value)
 		}
 	}
 
