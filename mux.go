@@ -213,7 +213,9 @@ func MethodIsSupported(m string) bool {
 
 // SupportedMethods 返回所有支持的请求方法
 func SupportedMethods() []string {
-	return method.Supported
+	ret := make([]string, len(method.Supported), len(method.Supported))
+	copy(ret, method.Supported)
+	return ret
 }
 
 // 清除路径中的重复的 / 字符
