@@ -16,6 +16,7 @@ type node struct {
 	value    string // 当前节点的值。
 	endByte  byte   // 下一个节点的起始字符
 	isString bool   // 当前节点是否为一个字符串
+	isLast   bool   // 是否为最后的节点
 }
 
 // 命名参数是正则表达式的简化版本，
@@ -42,20 +43,23 @@ func newNamed(s *syntax.Syntax) *named {
 
 	nodes := make([]*node, 0, len(s.Patterns))
 	for index, str := range s.Patterns {
+		last := index >= len(s.Patterns)-1
 		if str[0] == syntax.Start {
 			endByte := byte('/')
-			if index < len(s.Patterns)-1 {
+			if !last {
 				endByte = s.Patterns[index+1][0]
 			}
 			nodes = append(nodes, &node{
 				value:    str[1 : len(str)-1],
 				isString: false,
 				endByte:  endByte,
+				isLast:   last,
 			})
 		} else {
 			nodes = append(nodes, &node{
 				value:    str,
 				isString: true,
+				isLast:   last,
 			})
 		}
 	}
@@ -72,25 +76,20 @@ func (n *named) Priority() int {
 
 func (n *named) Match(path string) (bool, map[string]string) {
 	rawPath := path
-	for i, name := range n.nodes {
-		islast := (i == len(n.nodes)-1)
-
-		if name.isString { // 普通字符串节点
-			if !strings.HasPrefix(path, name.value) {
+	for _, node := range n.nodes {
+		if node.isString { // 普通字符串节点
+			if !strings.HasPrefix(path, node.value) {
 				return false, nil
 			}
 
-			if islast {
-				if path == name.value {
-					return true, n.params(rawPath)
-				}
-				return false, nil
+			if node.isLast {
+				return (path == node.value), n.params(rawPath)
 			}
 
-			path = path[len(name.value):]
+			path = path[len(node.value):]
 		} else { // 带命名的节点
-			index := strings.IndexByte(path, name.endByte)
-			if !islast {
+			index := strings.IndexByte(path, node.endByte)
+			if !node.isLast {
 				if index == -1 {
 					return false, nil
 				}
@@ -120,27 +119,25 @@ func (n *named) params(path string) map[string]string {
 	// 所以以下代码不再作是否匹配的检测工作。
 
 	params := make(map[string]string, len(n.nodes))
-	for i, name := range n.nodes {
-		islast := (i == len(n.nodes)-1)
-
-		if name.isString { // 普通字符串节点
-			if islast {
+	for _, node := range n.nodes {
+		if node.isString { // 普通字符串节点
+			if node.isLast {
 				return params
 			}
 
-			path = path[len(name.value):]
+			path = path[len(node.value):]
 		} else { // 带命名的节点
-			index := strings.IndexByte(path, name.endByte)
-			if !islast {
-				params[name.value] = path[:index]
+			index := strings.IndexByte(path, node.endByte)
+			if !node.isLast {
+				params[node.value] = path[:index]
 				path = path[index:]
 			} else { // 最后一个节点了
 				if index == -1 {
-					params[name.value] = path
+					params[node.value] = path
 					return params
 				}
 
-				params[name.value] = path[:index]
+				params[node.value] = path[:index]
 				return params
 			}
 		} // end if
@@ -152,16 +149,16 @@ func (n *named) params(path string) map[string]string {
 func (n *named) URL(params map[string]string, path string) (string, error) {
 	ret := make([]byte, 0, 500)
 
-	for _, name := range n.nodes {
-		if name.isString {
-			ret = append(ret, name.value...)
+	for _, node := range n.nodes {
+		if node.isString {
+			ret = append(ret, node.value...)
 			continue
 		}
 
-		if param, exists := params[name.value]; exists {
+		if param, exists := params[node.value]; exists {
 			ret = append(ret, param...)
 		} else {
-			return "", fmt.Errorf("参数 %v 未指定", name.value)
+			return "", fmt.Errorf("参数 %v 未指定", node.value)
 		}
 	}
 

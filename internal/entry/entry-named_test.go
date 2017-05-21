@@ -27,11 +27,11 @@ func TestNewNammed(t *testing.T) {
 	a.Equal(n.pattern, pattern)
 	a.Equal(len(n.nodes), 2)
 	n0 := n.nodes[0]
-	a.True(n0.isString).Equal(n0.value, "/posts/")
+	a.True(n0.isString).Equal(n0.value, "/posts/").False(n0.isLast)
 	n1 := n.nodes[1]
 	a.False(n1.isString).
 		Equal(n1.value, "id").
-		Equal(n1.endByte, '/')
+		True(n1.isLast)
 
 	pattern = "/posts/{id}/page/{page}"
 	n = newNamed(&syntax.Syntax{
@@ -48,11 +48,12 @@ func TestNewNammed(t *testing.T) {
 	n1 = n.nodes[1]
 	a.False(n1.isString).
 		Equal(n1.value, "id").
-		Equal(n1.endByte, '/')
+		Equal(n1.endByte, '/').
+		False(n1.isLast)
 	n3 := n.nodes[3]
 	a.False(n3.isString).
 		Equal(n3.value, "page").
-		Equal(n3.endByte, '/')
+		True(n3.isLast)
 }
 
 func TestNamed_match(t *testing.T) {
