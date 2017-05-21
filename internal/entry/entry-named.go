@@ -14,7 +14,6 @@ import (
 // 表示命名参数中的某个节点
 type node struct {
 	value    string // 当前节点的值。
-	endByte  byte   // 下一个节点的起始字符
 	isString bool   // 当前节点是否为一个字符串
 	isLast   bool   // 是否为最后的节点
 }
@@ -45,14 +44,9 @@ func newNamed(s *syntax.Syntax) *named {
 	for index, str := range s.Patterns {
 		last := index >= len(s.Patterns)-1
 		if str[0] == syntax.Start {
-			endByte := byte('/')
-			if !last {
-				endByte = s.Patterns[index+1][0]
-			}
 			nodes = append(nodes, &node{
 				value:    str[1 : len(str)-1],
 				isString: false,
-				endByte:  endByte,
 				isLast:   last,
 			})
 		} else {
@@ -97,9 +91,8 @@ func (n *named) Match(path string) (bool, map[string]string) {
 				}
 
 				path = path[index:]
-			} else { // 最后一个节点了
-				index := strings.IndexByte(path, node.endByte)
-				if index == -1 {
+			} else { // 最后一个节点
+				if strings.IndexByte(path, '/') == -1 {
 					if n.wildcard {
 						return false, nil
 					}
@@ -134,8 +127,8 @@ func (n *named) params(path string) map[string]string {
 				index := strings.Index(path, n.nodes[i+1].value) // 下一个必定是字符串节点
 				params[node.value] = path[:index]
 				path = path[index:]
-			} else { // 最后一个节点了
-				index := strings.IndexByte(path, node.endByte)
+			} else { // 最后一个节点
+				index := strings.IndexByte(path, '/')
 				if index == -1 {
 					params[node.value] = path
 					return params

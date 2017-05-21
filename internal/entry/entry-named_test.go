@@ -48,7 +48,6 @@ func TestNewNammed(t *testing.T) {
 	n1 = n.nodes[1]
 	a.False(n1.isString).
 		Equal(n1.value, "id").
-		Equal(n1.endByte, '/').
 		False(n1.isLast)
 	n3 := n.nodes[3]
 	a.False(n3.isString).
