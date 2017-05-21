@@ -81,12 +81,14 @@ func (n *named) Match(path string) (bool, map[string]string) {
 			if !strings.HasPrefix(path, node.value) {
 				return false, nil
 			}
+			path = path[len(node.value):]
 
 			if node.isLast {
-				return (path == node.value), n.params(rawPath)
+				if len(path) == 0 {
+					return true, n.params(rawPath)
+				}
+				return false, nil
 			}
-
-			path = path[len(node.value):]
 		} else { // 带命名的节点
 			index := strings.IndexByte(path, node.endByte)
 			if !node.isLast {
