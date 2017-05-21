@@ -48,7 +48,6 @@ func TestNewNammed(t *testing.T) {
 	n1 = n.nodes[1]
 	a.False(n1.isString).
 		Equal(n1.value, "id").
-		Equal(n1.endByte, '/').
 		False(n1.isLast)
 	n3 := n.nodes[3]
 	a.False(n3.isString).
@@ -68,6 +67,13 @@ func TestNamed_match(t *testing.T) {
 
 	newMatcher(a, "/posts/{id}.html").
 		True("/posts/1.html", map[string]string{"id": "1"}).
+		False("/posts", nil).
+		True("/posts/id.html", map[string]string{"id": "id"}).
+		False("/posts/id.html/", nil).
+		False("/posts/id.html/page", nil)
+
+	newMatcher(a, "/posts/{id}.html").
+		True("/posts/1.h.html", map[string]string{"id": "1.h"}).
 		False("/posts", nil).
 		True("/posts/id.html", map[string]string{"id": "id"}).
 		False("/posts/id.html/", nil).

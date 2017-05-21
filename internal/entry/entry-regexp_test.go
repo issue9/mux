@@ -62,12 +62,18 @@ func TestRegexp_Match(t *testing.T) {
 		False("/posts/id.html/page", nil).
 		False("/post/id", nil)
 
+	newMatcher(a, "/posts/{id:[^/]+}.html").
+		True("/posts/a.b.html", map[string]string{"id": "a.b"})
+
 	newMatcher(a, "/posts/{id}/page/{page:\\d+}").
 		True("/posts/1/page/1", map[string]string{"id": "1", "page": "1"}).
 		True("/posts/1.html/page/1", map[string]string{"id": "1.html", "page": "1"}).
 		False("/posts/1.html/page/x", nil).
 		False("/posts/id-1/page/1/", nil).
 		False("/posts/id-1/page/1/size/1", nil)
+
+	newMatcher(a, "/posts/{id:\\w+}{page:\\d+}").
+		True("/posts/aa1", map[string]string{"id": "aa", "page": "1"})
 
 	// size 为未命名参数
 	newMatcher(a, "/posts/{id}/page/{page:\\d+}/size/{:\\d+}").

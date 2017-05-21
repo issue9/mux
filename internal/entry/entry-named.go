@@ -14,7 +14,6 @@ import (
 // 表示命名参数中的某个节点
 type node struct {
 	value    string // 当前节点的值。
-	endByte  byte   // 下一个节点的起始字符
 	isString bool   // 当前节点是否为一个字符串
 	isLast   bool   // 是否为最后的节点
 }
@@ -45,14 +44,9 @@ func newNamed(s *syntax.Syntax) *named {
 	for index, str := range s.Patterns {
 		last := index >= len(s.Patterns)-1
 		if str[0] == syntax.Start {
-			endByte := byte('/')
-			if !last {
-				endByte = s.Patterns[index+1][0]
-			}
 			nodes = append(nodes, &node{
 				value:    str[1 : len(str)-1],
 				isString: false,
-				endByte:  endByte,
 				isLast:   last,
 			})
 		} else {
@@ -76,7 +70,9 @@ func (n *named) Priority() int {
 
 func (n *named) Match(path string) (bool, map[string]string) {
 	rawPath := path
-	for _, node := range n.nodes {
+	for i := 0; i < len(n.nodes); i++ {
+		node := n.nodes[i]
+
 		if node.isString { // 普通字符串节点
 			if !strings.HasPrefix(path, node.value) {
 				return false, nil
@@ -90,15 +86,16 @@ func (n *named) Match(path string) (bool, map[string]string) {
 				return false, nil
 			}
 		} else { // 带命名的节点
-			index := strings.IndexByte(path, node.endByte)
 			if !node.isLast {
+				// 不可能存在两个相邻的命名节点，所以下一个肯定是字符串节点
+				index := strings.Index(path, n.nodes[i+1].value)
 				if index == -1 {
 					return false, nil
 				}
 
 				path = path[index:]
-			} else { // 最后一个节点了
-				if index == -1 {
+			} else { // 最后一个节点
+				if strings.IndexByte(path, '/') == -1 {
 					if n.wildcard {
 						return false, nil
 					}
@@ -121,7 +118,7 @@ func (n *named) params(path string) map[string]string {
 	// 所以以下代码不再作是否匹配的检测工作。
 
 	params := make(map[string]string, len(n.nodes))
-	for _, node := range n.nodes {
+	for i, node := range n.nodes {
 		if node.isString { // 普通字符串节点
 			if node.isLast {
 				return params
@@ -129,11 +126,13 @@ func (n *named) params(path string) map[string]string {
 
 			path = path[len(node.value):]
 		} else { // 带命名的节点
-			index := strings.IndexByte(path, node.endByte)
 			if !node.isLast {
+				// 不可能存在两个相邻的命名节点，所以下一个肯定是字符串节点
+				index := strings.Index(path, n.nodes[i+1].value)
 				params[node.value] = path[:index]
 				path = path[index:]
-			} else { // 最后一个节点了
+			} else { // 最后一个节点
+				index := strings.IndexByte(path, '/')
 				if index == -1 {
 					params[node.value] = path
 					return params
