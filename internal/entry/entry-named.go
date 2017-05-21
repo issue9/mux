@@ -76,7 +76,7 @@ func (n *named) Priority() int {
 
 func (n *named) Match(path string) (bool, map[string]string) {
 	rawPath := path
-	for _, node := range n.nodes {
+	for i, node := range n.nodes {
 		if node.isString { // 普通字符串节点
 			if !strings.HasPrefix(path, node.value) {
 				return false, nil
@@ -90,14 +90,15 @@ func (n *named) Match(path string) (bool, map[string]string) {
 				return false, nil
 			}
 		} else { // 带命名的节点
-			index := strings.IndexByte(path, node.endByte)
 			if !node.isLast {
+				index := strings.Index(path, n.nodes[i+1].value) // 下一个必定是字符串节点
 				if index == -1 {
 					return false, nil
 				}
 
 				path = path[index:]
 			} else { // 最后一个节点了
+				index := strings.IndexByte(path, node.endByte)
 				if index == -1 {
 					if n.wildcard {
 						return false, nil
@@ -121,7 +122,7 @@ func (n *named) params(path string) map[string]string {
 	// 所以以下代码不再作是否匹配的检测工作。
 
 	params := make(map[string]string, len(n.nodes))
-	for _, node := range n.nodes {
+	for i, node := range n.nodes {
 		if node.isString { // 普通字符串节点
 			if node.isLast {
 				return params
@@ -129,11 +130,12 @@ func (n *named) params(path string) map[string]string {
 
 			path = path[len(node.value):]
 		} else { // 带命名的节点
-			index := strings.IndexByte(path, node.endByte)
 			if !node.isLast {
+				index := strings.Index(path, n.nodes[i+1].value) // 下一个必定是字符串节点
 				params[node.value] = path[:index]
 				path = path[index:]
 			} else { // 最后一个节点了
+				index := strings.IndexByte(path, node.endByte)
 				if index == -1 {
 					params[node.value] = path
 					return params
