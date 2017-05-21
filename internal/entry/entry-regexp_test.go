@@ -53,6 +53,15 @@ func TestRegexp_Match(t *testing.T) {
 		False("/posts/id.html/page", nil).
 		False("/post/id", nil)
 
+	newMatcher(a, "/posts/{id:\\d+}.html").
+		True("/posts/1.html", map[string]string{"id": "1"}).
+		False("/posts/", nil).
+		False("/posts", nil).
+		False("/posts/id", nil).
+		False("/posts/id.html", nil).
+		False("/posts/id.html/page", nil).
+		False("/post/id", nil)
+
 	newMatcher(a, "/posts/{id}/page/{page:\\d+}").
 		True("/posts/1/page/1", map[string]string{"id": "1", "page": "1"}).
 		True("/posts/1.html/page/1", map[string]string{"id": "1.html", "page": "1"}).
