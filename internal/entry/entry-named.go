@@ -118,27 +118,25 @@ func (n *named) params(path string) map[string]string {
 	// 所以以下代码不再作是否匹配的检测工作。
 
 	params := make(map[string]string, len(n.nodes))
-	for i, name := range n.nodes {
-		islast := (i == len(n.nodes)-1)
-
-		if name.isString { // 普通字符串节点
-			if islast {
+	for _, node := range n.nodes {
+		if node.isString { // 普通字符串节点
+			if node.isLast {
 				return params
 			}
 
-			path = path[len(name.value):]
+			path = path[len(node.value):]
 		} else { // 带命名的节点
-			index := strings.IndexByte(path, name.endByte)
-			if !islast {
-				params[name.value] = path[:index]
+			index := strings.IndexByte(path, node.endByte)
+			if !node.isLast {
+				params[node.value] = path[:index]
 				path = path[index:]
 			} else { // 最后一个节点了
 				if index == -1 {
-					params[name.value] = path
+					params[node.value] = path
 					return params
 				}
 
-				params[name.value] = path[:index]
+				params[node.value] = path[:index]
 				return params
 			}
 		} // end if
