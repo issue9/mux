@@ -73,6 +73,13 @@ func TestNamed_match(t *testing.T) {
 		False("/posts/id.html/", nil).
 		False("/posts/id.html/page", nil)
 
+	newMatcher(a, "/posts/{id}.html").
+		True("/posts/1.h.html", map[string]string{"id": "1.h"}).
+		False("/posts", nil).
+		True("/posts/id.html", map[string]string{"id": "id"}).
+		False("/posts/id.html/", nil).
+		False("/posts/id.html/page", nil)
+
 	newMatcher(a, "/posts/{id}/page/{page}").
 		True("/posts/1/page/1", map[string]string{"id": "1", "page": "1"}).
 		False("/posts/1", nil).
