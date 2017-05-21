@@ -216,7 +216,7 @@ func SupportedMethods() []string {
 	return method.Supported
 }
 
-// 清除路径中的怪异符号
+// 清除路径中的重复的 / 字符
 func cleanPath(p string) string {
 	if p == "" {
 		return "/"
