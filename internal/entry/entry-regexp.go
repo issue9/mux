@@ -48,6 +48,9 @@ func newRegexp(s *syntax.Syntax) (*regexp, error) {
 }
 
 func (r *regexp) Priority() int {
+	if r.wildcard {
+		return syntax.TypeRegexp + 100
+	}
 	return syntax.TypeRegexp
 }
 

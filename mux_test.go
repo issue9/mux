@@ -53,7 +53,7 @@ func requestOptions(a *assert.Assertion, srvmux *Mux, url string, status int, al
 	a.Equal(w.Header().Get("Allow"), allow)
 }
 
-func TestMux_Add_Remove_2(t *testing.T) {
+func TestMux_Add_Remove(t *testing.T) {
 	a := assert.New(t)
 	srvmux := New(false, false, nil, nil)
 	a.NotNil(srvmux)
@@ -170,6 +170,15 @@ func TestMux_Params(t *testing.T) {
 	a.NotError(srvmux.Patch("/api/v2/{version:\\d*}/test", buildParamsHandler()))
 	requestParams(a, srvmux, http.MethodPatch, "/api/v2/2/test", http.StatusOK, map[string]string{"version": "2"})
 	requestParams(a, srvmux, http.MethodPatch, "/api/v2//test", http.StatusNotFound, nil) // 可选参数不能在路由中间
+}
+
+func TestMux_ServeHTTP(t *testing.T) {
+	a := assert.New(t)
+	srvmux := New(false, false, nil, nil)
+	a.NotNil(srvmux)
+
+	srvmux.Add("/posts/{id}.html", h1)
+	request(a, srvmux, http.MethodGet, "/posts/2017/1.html", 1)
 }
 
 // 测试匹配顺序是否正确

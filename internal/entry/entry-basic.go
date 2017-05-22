@@ -31,6 +31,9 @@ func newBasic(s *syntax.Syntax) *basic {
 }
 
 func (b *basic) Priority() int {
+	if b.wildcard {
+		return syntax.TypeBasic + 100
+	}
 	return syntax.TypeBasic
 }
 

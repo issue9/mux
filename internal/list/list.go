@@ -12,34 +12,29 @@ import (
 
 	"github.com/issue9/mux/internal/entry"
 	"github.com/issue9/mux/internal/method"
-	"github.com/issue9/mux/internal/syntax"
 )
-
-const wildcardEntriesIndex = syntax.MaxPatternDepth
 
 // List entry.Entry 列表。
 type List struct {
 	disableOptions bool
 	mu             sync.RWMutex
 
-	// entries 是按路由项中 / 字符的多少进行分类的，
-	// 如果是通配符的，则统一放在一个指定的分组中，
+	// entries 是按路由项首字母进行第一次分类，
 	// 这样在进行路由匹配时，可以减少大量的时间：
-	//  /posts/{id}              // 1
-	//  /tags/{name}             // 1
-	//  /posts/{id}/author       // 2
-	//  /posts/{id}/author/*     // 3
-	// 比如以上路由项，如果要查找 /posts/1 只需要比较 1 和 3
-	// 中的数据就行，如果需要匹配 /posts/1/author 则只需要比较
-	// 1 和 3 中的数据。
-	entries map[int]*entries // TODO go1.9 改为 sync.Map
+	//  /posts/{id}              // p
+	//  /tags/{name}             // t
+	//  /posts/{id}/author       // p
+	//  /posts/{id}/author/*     // p
+	// 比如以上路由项，如果要查找 /posts/1 只需要比较 p
+	// 中的数据就行，如果需要匹配 /tags/abc.html 则只需要比较 t。
+	entries map[byte]*entries // TODO go1.9 改为 sync.Map
 }
 
 // New 声明一个 List 实例
 func New(disableOptions bool) *List {
 	return &List{
 		disableOptions: disableOptions,
-		entries:        make(map[int]*entries, syntax.MaxPatternDepth),
+		entries:        make(map[byte]*entries, 27),
 	}
 }
 
@@ -50,7 +45,7 @@ func (l *List) Clean(prefix string) {
 	defer l.mu.Unlock()
 
 	if len(prefix) == 0 {
-		l.entries = make(map[int]*entries, syntax.MaxPatternDepth)
+		l.entries = make(map[byte]*entries, 27)
 		return
 	}
 
@@ -127,7 +122,7 @@ func (l *List) Entry(pattern string) (entry.Entry, error) {
 
 // Match 查找与 path 最匹配的路由项以及对应的参数
 func (l *List) Match(path string) (entry.Entry, map[string]string) {
-	cnt := syntax.SlashCount(path)
+	cnt := l.entriesIndex(path)
 	l.mu.RLock()
 	es := l.entries[cnt]
 	l.mu.RUnlock()
@@ -138,7 +133,7 @@ func (l *List) Match(path string) (entry.Entry, map[string]string) {
 	}
 
 	l.mu.RLock()
-	es = l.entries[wildcardEntriesIndex]
+	es = l.entries['{']
 	l.mu.RUnlock()
 	if es != nil {
 		return es.match(path)
@@ -148,10 +143,10 @@ func (l *List) Match(path string) (entry.Entry, map[string]string) {
 }
 
 // 计算 str 应该属于哪个 entries。
-func (l *List) entriesIndex(str string) int {
-	if syntax.IsWildcard(str) {
-		return wildcardEntriesIndex
+func (l *List) entriesIndex(str string) byte {
+	if len(str) < 2 {
+		return 0
 	}
 
-	return syntax.SlashCount(str)
+	return str[1]
 }

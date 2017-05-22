@@ -65,6 +65,9 @@ func newNamed(s *syntax.Syntax) *named {
 }
 
 func (n *named) Priority() int {
+	if n.wildcard {
+		return syntax.TypeNamed + 100
+	}
 	return syntax.TypeNamed
 }
 
