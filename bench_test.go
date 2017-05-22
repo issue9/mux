@@ -10,11 +10,12 @@ import (
 	"strings"
 	"testing"
 
+	beego "github.com/beego/mux"
+	"github.com/dimfeld/httptreemux"
 	"github.com/issue9/assert"
 )
 
-// go1.8.1 BenchmarkGithubAPI-4   	  200000	      7001 ns/op	    6444 B/op	      22 allocs/op
-func BenchmarkGithubAPI(b *testing.B) {
+func BenchmarkGithubAPI_mux(b *testing.B) {
 	a := assert.New(b)
 
 	h := func(w http.ResponseWriter, r *http.Request) {
@@ -36,7 +37,57 @@ func BenchmarkGithubAPI(b *testing.B) {
 		mux.ServeHTTP(w, r)
 
 		if w.Body.String() != r.URL.Path {
-			b.Errorf("BenchmarkGithubAPI: %v:%v", w.Body.String(), r.URL.Path)
+			b.Errorf("BenchmarkGithubAPI_mux: %v:%v", w.Body.String(), r.URL.Path)
+		}
+	}
+}
+
+func BenchmarkGithubAPI_httptreemux(b *testing.B) {
+	h := func(w http.ResponseWriter, r *http.Request, _ map[string]string) {
+		w.Write([]byte(r.URL.Path))
+	}
+
+	mux := httptreemux.New()
+	for _, api := range apis {
+		mux.Handle(api.method, api.colonPattern, h)
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		api := apis[i%len(apis)]
+
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(api.method, api.test, nil)
+		mux.ServeHTTP(w, r)
+
+		if w.Body.String() != r.URL.Path {
+			b.Errorf("BenchmarkGithubAPI_httptreemux: %v:%v", w.Body.String(), r.URL.Path)
+		}
+	}
+}
+
+func BenchmarkGithubAPI_beego(b *testing.B) {
+	h := func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(r.URL.Path))
+	}
+
+	mux := beego.New()
+	for _, api := range apis {
+		mux.Handle(api.method, api.colonPattern, h)
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		api := apis[i%len(apis)]
+
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(api.method, api.test, nil)
+		mux.ServeHTTP(w, r)
+
+		if w.Body.String() != r.URL.Path {
+			b.Errorf("BenchmarkGithubAPI_beego: %v:%v", w.Body.String(), r.URL.Path)
 		}
 	}
 }
