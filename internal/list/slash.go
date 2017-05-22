@@ -6,7 +6,6 @@
 package list
 
 import (
-	"errors"
 	"net/http"
 	"sync"
 
@@ -17,8 +16,8 @@ import (
 
 const wildcardIndex = -1
 
-// List entry.Entry 列表。
-type List struct {
+// slash entry.Entry 列表。
+type slash struct {
 	disableOptions bool
 	mu             sync.RWMutex
 
@@ -33,9 +32,9 @@ type List struct {
 	entries map[int]*entries // TODO go1.9 改为 sync.Map
 }
 
-// New 声明一个 List 实例
-func New(disableOptions bool) *List {
-	return &List{
+// New 声明一个 slash 实例
+func newSlash(disableOptions bool) *slash {
+	return &slash{
 		disableOptions: disableOptions,
 		entries:        make(map[int]*entries, 20),
 	}
@@ -43,7 +42,7 @@ func New(disableOptions bool) *List {
 
 // Clean 清除所有的路由项，在 prefix 不为空的情况下，
 // 则为删除所有路径前缀为 prefix 的匹配项。
-func (l *List) Clean(prefix string) {
+func (l *slash) Clean(prefix string) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
@@ -61,7 +60,7 @@ func (l *List) Clean(prefix string) {
 //
 // 当未指定 methods 时，将删除所有 method 匹配的项。
 // 指定错误的 methods 值，将自动忽略该值。
-func (l *List) Remove(pattern string, methods ...string) {
+func (l *slash) Remove(pattern string, methods ...string) {
 	s, err := syntax.New(pattern)
 	if err != nil { // 错误的语法，肯定不存在于现有路由项，可以直接返回
 		return
@@ -87,19 +86,7 @@ func (l *List) Remove(pattern string, methods ...string) {
 // pattern 为路由匹配模式，可以是正则匹配也可以是字符串匹配；
 // methods 为可以匹配的请求方法，默认为 method.Default 中的所有元素，
 // 可以为 method.Supported 中的所有元素。
-// 当 h 或是 pattern 为空时，将触发 panic。
-func (l *List) Add(pattern string, h http.Handler, methods ...string) error {
-	if len(pattern) == 0 {
-		return errors.New("参数 pattern 不能为空")
-	}
-	if h == nil {
-		return errors.New("参数 h 不能为空")
-	}
-
-	if len(methods) == 0 {
-		methods = method.Default
-	}
-
+func (l *slash) Add(pattern string, h http.Handler, methods ...string) error {
 	s, err := syntax.New(pattern)
 	if err != nil {
 		return err
@@ -119,7 +106,7 @@ func (l *List) Add(pattern string, h http.Handler, methods ...string) error {
 }
 
 // Entry 查找指定匹配模式下的 Entry，不存在，则声明新的
-func (l *List) Entry(pattern string) (entry.Entry, error) {
+func (l *slash) Entry(pattern string) (entry.Entry, error) {
 	s, err := syntax.New(pattern)
 	if err != nil {
 		return nil, err
@@ -139,7 +126,7 @@ func (l *List) Entry(pattern string) (entry.Entry, error) {
 }
 
 // Match 查找与 path 最匹配的路由项以及对应的参数
-func (l *List) Match(path string) (entry.Entry, map[string]string) {
+func (l *slash) Match(path string) (entry.Entry, map[string]string) {
 	cnt := byteCount('/', path)
 	l.mu.RLock()
 	es := l.entries[cnt]
@@ -161,7 +148,7 @@ func (l *List) Match(path string) (entry.Entry, map[string]string) {
 }
 
 // 计算 str 应该属于哪个 entries。
-func (l *List) entriesIndex(s *syntax.Syntax) int {
+func (l *slash) entriesIndex(s *syntax.Syntax) int {
 	if s.Wildcard || s.Type == syntax.TypeRegexp {
 		return wildcardIndex
 	}
@@ -176,6 +163,15 @@ func byteCount(b byte, str string) int {
 		if str[i] == b {
 			ret++
 		}
+	}
+
+	return ret
+}
+
+func (l *slash) len() int {
+	ret := 0
+	for _, es := range l.entries {
+		ret += es.len()
 	}
 
 	return ret

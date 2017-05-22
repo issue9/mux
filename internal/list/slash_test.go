@@ -21,9 +21,9 @@ var (
 	h1 = http.HandlerFunc(f1)
 )
 
-func TestList_Add_Remove(t *testing.T) {
+func TestSlash_Add_Remove(t *testing.T) {
 	a := assert.New(t)
-	l := New(false)
+	l := newSlash(false)
 
 	a.NotError(l.Add("/posts/1/detail", h1))
 	a.NotError(l.Add("/posts/1/author", h1))
@@ -37,9 +37,9 @@ func TestList_Add_Remove(t *testing.T) {
 	a.Equal(l.entries[wildcardIndex].len(), 0)
 }
 
-func TestList_Clean(t *testing.T) {
+func TestSlash_Clean(t *testing.T) {
 	a := assert.New(t)
-	l := New(false)
+	l := newSlash(false)
 
 	a.NotError(l.Add("/posts/1", h1))
 	a.NotError(l.Add("/posts/1/author", h1))
@@ -54,9 +54,9 @@ func TestList_Clean(t *testing.T) {
 	a.Equal(len(l.entries), 0)
 }
 
-func TestList_Entry(t *testing.T) {
+func TestSlash_Entry(t *testing.T) {
 	a := assert.New(t)
-	l := New(false)
+	l := newSlash(false)
 
 	a.NotError(l.Add("/posts/1", h1))
 	a.NotError(l.Add("/posts/tags/*", h1))
@@ -74,9 +74,9 @@ func TestList_Entry(t *testing.T) {
 	a.Equal(l.entries[3].len(), 1)
 }
 
-func TestList_Match(t *testing.T) {
+func TestSlash_Match(t *testing.T) {
 	a := assert.New(t)
-	l := New(false)
+	l := newSlash(false)
 	a.NotNil(l)
 
 	l.Add("/posts/{id}/*", h1) // 1
@@ -101,9 +101,9 @@ func TestList_Match(t *testing.T) {
 	a.Nil(ps).Nil(ety)
 }
 
-func TestList_entriesIndex(t *testing.T) {
+func TestSlash_entriesIndex(t *testing.T) {
 	a := assert.New(t)
-	l := &List{}
+	l := &slash{}
 
 	a.Equal(l.entriesIndex(newSyntax(a, countTestString)), 8)
 	a.Equal(l.entriesIndex(newSyntax(a, "/{action}/1")), 2)

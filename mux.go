@@ -33,7 +33,7 @@ var (
 //    Add("/api/{version:\\d+}",h3, http.MethodGet, http.MethodPost) // 只匹配 GET 和 POST
 //  http.ListenAndServe(m)
 type Mux struct {
-	list             *list.List
+	list             *list.Byte
 	skipCleanPath    bool
 	notFound         http.HandlerFunc
 	methodNotAllowed http.HandlerFunc
@@ -57,7 +57,7 @@ func New(disableOptions, skipCleanPath bool, notFound, methodNotAllowed http.Han
 	}
 
 	return &Mux{
-		list:             list.New(disableOptions),
+		list:             list.NewByte(disableOptions),
 		resources:        make(map[string]*Resource, 500),
 		skipCleanPath:    skipCleanPath,
 		notFound:         notFound,

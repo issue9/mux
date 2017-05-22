@@ -68,7 +68,7 @@ func BenchmarkGithubAPI_httptreemux(b *testing.B) {
 	}
 }
 
-func BenchmarkGithubAPI_lars(b *testing.B) {
+func benchmarkGithubAPI_lars(b *testing.B) {
 	h := func(c lars.Context) {
 		c.Response().Write([]byte(c.Request().URL.Path))
 	}
@@ -93,7 +93,7 @@ func BenchmarkGithubAPI_lars(b *testing.B) {
 	}
 }
 
-func BenchmarkGithubAPI_beego(b *testing.B) {
+func benchmarkGithubAPI_beego(b *testing.B) {
 	h := func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(r.URL.Path))
 	}
