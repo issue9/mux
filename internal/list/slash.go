@@ -29,14 +29,14 @@ type slash struct {
 	//  /posts/{id}/author/*     // -1
 	// 比如以上路由项，如果要查找 /posts/1 只需要比较 2
 	// 中的数据就行，如果需要匹配 /tags/abc/1.html 则只需要比较 3。
-	entries map[int]*entries // TODO go1.9 改为 sync.Map
+	entries map[int]*priority // TODO go1.9 改为 sync.Map
 }
 
 // New 声明一个 slash 实例
 func newSlash(disableOptions bool) *slash {
 	return &slash{
 		disableOptions: disableOptions,
-		entries:        make(map[int]*entries, 20),
+		entries:        make(map[int]*priority, 20),
 	}
 }
 
@@ -47,7 +47,7 @@ func (l *slash) Clean(prefix string) {
 	defer l.mu.Unlock()
 
 	if len(prefix) == 0 {
-		l.entries = make(map[int]*entries, 20)
+		l.entries = make(map[int]*priority, 20)
 		return
 	}
 

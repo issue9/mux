@@ -14,7 +14,7 @@ import (
 	"github.com/issue9/mux/internal/syntax"
 )
 
-func (es *entries) len() int {
+func (es *priority) len() int {
 	return len(es.entries)
 }
 
