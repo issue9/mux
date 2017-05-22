@@ -81,17 +81,12 @@ func (l *slash) Remove(pattern string, methods ...string) {
 	es.remove(pattern, methods...)
 }
 
-// Add 添加一条路由数据。
+// 添加一条路由数据。
 //
 // pattern 为路由匹配模式，可以是正则匹配也可以是字符串匹配；
 // methods 为可以匹配的请求方法，默认为 method.Default 中的所有元素，
 // 可以为 method.Supported 中的所有元素。
-func (l *slash) Add(pattern string, h http.Handler, methods ...string) error {
-	s, err := syntax.New(pattern)
-	if err != nil {
-		return err
-	}
-
+func (l *slash) add(s *syntax.Syntax, h http.Handler, methods ...string) error {
 	index := l.entriesIndex(s)
 
 	l.mu.Lock()

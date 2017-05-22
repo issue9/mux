@@ -21,13 +21,13 @@ var (
 	h1 = http.HandlerFunc(f1)
 )
 
-func TestSlash_Add_Remove(t *testing.T) {
+func TestSlash_add_Remove(t *testing.T) {
 	a := assert.New(t)
 	l := newSlash(false)
 
-	a.NotError(l.Add("/posts/1/detail", h1))
-	a.NotError(l.Add("/posts/1/author", h1))
-	a.NotError(l.Add("/{posts}/1/*", h1))
+	a.NotError(l.add(newSyntax(a, "/posts/1/detail"), h1))
+	a.NotError(l.add(newSyntax(a, "/posts/1/author"), h1))
+	a.NotError(l.add(newSyntax(a, "/{posts}/1/*"), h1))
 	a.Equal(l.entries[3].len(), 2)
 	a.Equal(l.entries[wildcardIndex].len(), 1)
 
@@ -41,11 +41,11 @@ func TestSlash_Clean(t *testing.T) {
 	a := assert.New(t)
 	l := newSlash(false)
 
-	a.NotError(l.Add("/posts/1", h1))
-	a.NotError(l.Add("/posts/1/author", h1))
-	a.NotError(l.Add("/posts/1/*", h1))
-	a.NotError(l.Add("/posts/tags/*", h1))
-	a.NotError(l.Add("/posts/author", h1))
+	a.NotError(l.add(newSyntax(a, "/posts/1"), h1))
+	a.NotError(l.add(newSyntax(a, "/posts/1/author"), h1))
+	a.NotError(l.add(newSyntax(a, "/posts/1/*"), h1))
+	a.NotError(l.add(newSyntax(a, "/posts/tags/*"), h1))
+	a.NotError(l.add(newSyntax(a, "/posts/author"), h1))
 
 	l.Clean("/posts/1")
 	a.Equal(l.entries[2].len(), 1)
@@ -58,8 +58,8 @@ func TestSlash_Entry(t *testing.T) {
 	a := assert.New(t)
 	l := newSlash(false)
 
-	a.NotError(l.Add("/posts/1", h1))
-	a.NotError(l.Add("/posts/tags/*", h1))
+	a.NotError(l.add(newSyntax(a, "/posts/1"), h1))
+	a.NotError(l.add(newSyntax(a, "/posts/tags/*"), h1))
 
 	a.Equal(l.entries[2].len(), 1)
 	a.Equal(l.entries[wildcardIndex].len(), 1)
@@ -79,8 +79,8 @@ func TestSlash_Match(t *testing.T) {
 	l := newSlash(false)
 	a.NotNil(l)
 
-	l.Add("/posts/{id}/*", h1) // 1
-	l.Add("/posts/{id}/", h1)  // 2
+	a.NotError(l.add(newSyntax(a, "/posts/{id}/*"), h1)) // 1
+	a.NotError(l.add(newSyntax(a, "/posts/{id}/"), h1))  // 2
 
 	ety, ps := l.Match("/posts/1/")
 	a.NotNil(ps).NotNil(ety)

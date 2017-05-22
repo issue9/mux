@@ -11,6 +11,7 @@ import (
 
 	"github.com/issue9/mux/internal/entry"
 	"github.com/issue9/mux/internal/method"
+	"github.com/issue9/mux/internal/syntax"
 )
 
 // Byte entry.Entry 列表。
@@ -101,7 +102,11 @@ func (l *Byte) Add(pattern string, h http.Handler, methods ...string) error {
 		l.entries[index] = es
 	}
 
-	return es.Add(pattern, h, methods...)
+	s, err := syntax.New(pattern)
+	if err != nil {
+		return err
+	}
+	return es.add(s, h, methods...)
 }
 
 // Entry 查找指定匹配模式下的 Entry，不存在，则声明新的
