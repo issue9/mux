@@ -30,7 +30,7 @@ func (l *slash) len() int {
 	return ret
 }
 
-func TestSlash_add_Remove(t *testing.T) {
+func TestSlash_add_remove(t *testing.T) {
 	a := assert.New(t)
 	l := newSlash(false)
 
@@ -40,9 +40,9 @@ func TestSlash_add_Remove(t *testing.T) {
 	a.Equal(l.entries[3].len(), 2)
 	a.Equal(l.entries[wildcardIndex].len(), 1)
 
-	l.Remove("/posts/1/detail")
+	l.remove("/posts/1/detail")
 	a.Equal(l.entries[3].len(), 1)
-	l.Remove("/{posts}/1/*")
+	l.remove("/{posts}/1/*")
 	a.Equal(l.entries[wildcardIndex].len(), 0)
 }
 
@@ -56,10 +56,10 @@ func TestSlash_Clean(t *testing.T) {
 	a.NotError(l.add(newSyntax(a, "/posts/tags/*"), h1))
 	a.NotError(l.add(newSyntax(a, "/posts/author"), h1))
 
-	l.Clean("/posts/1")
+	l.clean("/posts/1")
 	a.Equal(l.entries[2].len(), 1)
 
-	l.Clean("")
+	l.clean("")
 	a.Equal(len(l.entries), 0)
 }
 

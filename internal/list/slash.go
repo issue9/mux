@@ -16,7 +16,7 @@ import (
 
 const wildcardIndex = -1
 
-// slash entry.Entry 列表。
+// 按 / 进行分类的 entry.Entry 列表
 type slash struct {
 	disableOptions bool
 	mu             sync.RWMutex
@@ -40,9 +40,9 @@ func newSlash(disableOptions bool) *slash {
 	}
 }
 
-// Clean 清除所有的路由项，在 prefix 不为空的情况下，
+// 清除所有的路由项，在 prefix 不为空的情况下，
 // 则为删除所有路径前缀为 prefix 的匹配项。
-func (l *slash) Clean(prefix string) {
+func (l *slash) clean(prefix string) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
@@ -56,11 +56,11 @@ func (l *slash) Clean(prefix string) {
 	}
 }
 
-// Remove 移除指定的路由项。
+// 移除指定的路由项。
 //
 // 当未指定 methods 时，将删除所有 method 匹配的项。
 // 指定错误的 methods 值，将自动忽略该值。
-func (l *slash) Remove(pattern string, methods ...string) {
+func (l *slash) remove(pattern string, methods ...string) {
 	s, err := syntax.New(pattern)
 	if err != nil { // 错误的语法，肯定不存在于现有路由项，可以直接返回
 		return

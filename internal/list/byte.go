@@ -14,7 +14,7 @@ import (
 	"github.com/issue9/mux/internal/syntax"
 )
 
-// Byte entry.Entry 列表。
+// Byte 按字符进行分类的 entry.Entry 列表。
 type Byte struct {
 	disableOptions bool
 	mu             sync.RWMutex
@@ -50,7 +50,7 @@ func (l *Byte) Clean(prefix string) {
 	}
 
 	for _, es := range l.entries {
-		es.Clean(prefix)
+		es.clean(prefix)
 	}
 }
 
@@ -71,7 +71,7 @@ func (l *Byte) Remove(pattern string, methods ...string) {
 		return
 	}
 
-	es.Remove(pattern, methods...)
+	es.remove(pattern, methods...)
 }
 
 // Add 添加一条路由数据。
