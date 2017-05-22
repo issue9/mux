@@ -180,12 +180,8 @@ func TestMux_ServeHTTP(t *testing.T) {
 	srvmux.Add("/posts/{path}.html", h1) // 命名参数不能带 /
 	request(a, srvmux, http.MethodGet, "/posts/2017/1.html", 404)
 
-	// 正则的优先级更高些
-	srvmux.Add("/posts/{year:\\d+}/{id:\\d+}.html", h2)
+	srvmux.Add("/posts/{path:.+}.html", h2)
 	request(a, srvmux, http.MethodGet, "/posts/2017/1.html", 2)
-
-	srvmux.Add("/blog/{path}", h3)
-	request(a, srvmux, http.MethodGet, "/blog/2017/1.html", 404)
 }
 
 // 测试匹配顺序是否正确

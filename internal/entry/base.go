@@ -5,7 +5,6 @@
 package entry
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"sort"
@@ -71,7 +70,7 @@ func (b *base) Add(h http.Handler, methods ...string) error {
 func (b *base) addSingle(h http.Handler, method string) error {
 	if method == http.MethodOptions { // 强制修改 OPTIONS 方法的处理方式
 		if b.optionsState == optionsStateFixedHandler { // 被强制修改过，不能再受理。
-			return errors.New("该请求方法 OPTIONS 已经存在") // 与以下的错误提示相同
+			return fmt.Errorf("%v 该请求方法 OPTIONS 已经存在", b.pattern) // 与以下的错误提示相同
 		}
 
 		b.handlers[http.MethodOptions] = h
@@ -81,7 +80,7 @@ func (b *base) addSingle(h http.Handler, method string) error {
 
 	// 非 OPTIONS 请求
 	if _, found := b.handlers[method]; found {
-		return fmt.Errorf("该请求方法 %v 已经存在", method)
+		return fmt.Errorf("%v 该请求方法 %v 已经存在", b.pattern, method)
 	}
 	b.handlers[method] = h
 
