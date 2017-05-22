@@ -2,7 +2,6 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
-// Package list 提供了对 entry.Entry 元素的存储、匹配等功能。
 package list
 
 import (

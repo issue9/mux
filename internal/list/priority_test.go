@@ -11,17 +11,12 @@ import (
 	"github.com/issue9/assert"
 	"github.com/issue9/mux/internal/entry"
 	"github.com/issue9/mux/internal/method"
-	"github.com/issue9/mux/internal/syntax"
 )
+
+var _ entries = &priority{}
 
 func (es *priority) len() int {
 	return len(es.entries)
-}
-
-func newSyntax(a *assert.Assertion, pattern string) *syntax.Syntax {
-	s, err := syntax.New(pattern)
-	a.NotError(err).NotNil(s)
-	return s
 }
 
 func TestEntries_add_remove(t *testing.T) {

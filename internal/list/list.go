@@ -2,8 +2,37 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
+// Package list 提供了对 entry.Entry 元素的各种存储和匹配方式。
 package list
 
-// collection
-type collection interface {
+import (
+	"net/http"
+
+	"github.com/issue9/mux/internal/entry"
+	"github.com/issue9/mux/internal/syntax"
+)
+
+type entries interface {
+	// 清除所有的路由项，在 prefix 不为空的情况下，
+	// 则为删除所有路径前缀为 prefix 的匹配项。
+	clean(prefix string)
+
+	// 移除指定的路由项。
+	//
+	// 当未指定 methods 时，将删除所有 method 匹配的项。
+	// 指定错误的 methods 值，将自动忽略该值。
+	remove(pattern string, methods ...string)
+
+	// 添加一条路由数据。
+	//
+	// pattern 为路由匹配模式，可以是正则匹配也可以是字符串匹配；
+	// methods 为可以匹配的请求方法，默认为 method.Default 中的所有元素，
+	// 可以为 method.Supported 中的所有元素。
+	add(s *syntax.Syntax, h http.Handler, methods ...string) error
+
+	// 查找指定匹配模式下的 entry.Entry，不存在，则声明新的
+	entry(s *syntax.Syntax) (entry.Entry, error)
+
+	// 查找与 path 最匹配的路由项以及对应的参数
+	match(path string) (entry.Entry, map[string]string)
 }

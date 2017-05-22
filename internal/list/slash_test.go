@@ -5,7 +5,6 @@
 package list
 
 import (
-	"net/http"
 	"strings"
 	"testing"
 
@@ -14,12 +13,7 @@ import (
 
 const countTestString = "/adfada/adfa/dd//adfadasd/ada/dfad/"
 
-var (
-	f1 = func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(1)
-	}
-	h1 = http.HandlerFunc(f1)
-)
+var _ entries = &slash{}
 
 func (l *slash) len() int {
 	ret := 0
