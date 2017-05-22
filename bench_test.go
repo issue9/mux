@@ -11,7 +11,7 @@ import (
 	"testing"
 )
 
-// go1.8.1 BenchmarkGithubAPI-4   	    1000	   1513943 ns/op	 1424297 B/op	    4872 allocs/op
+// go1.8.1 BenchmarkGithubAPI-4   	  200000	      7001 ns/op	    6444 B/op	      22 allocs/op
 func BenchmarkGithubAPI(b *testing.B) {
 	h := func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(r.URL.Path))
@@ -25,14 +25,14 @@ func BenchmarkGithubAPI(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		for _, api := range apis {
-			w := httptest.NewRecorder()
-			r := httptest.NewRequest(api.method, api.test, nil)
-			mux.ServeHTTP(w, r)
+		api := apis[i%len(apis)]
 
-			if w.Body.String() != r.URL.Path {
-				b.Errorf("BenchmarkGithubAPI: %v:%v", w.Body.String(), r.URL.Path)
-			}
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(api.method, api.test, nil)
+		mux.ServeHTTP(w, r)
+
+		if w.Body.String() != r.URL.Path {
+			b.Errorf("BenchmarkGithubAPI: %v:%v", w.Body.String(), r.URL.Path)
 		}
 	}
 }
