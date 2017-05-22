@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/issue9/mux/internal/entry"
+	"github.com/issue9/mux/internal/syntax"
 )
 
 // 按 Entry.Priority() 为优先级保存的 entry.Entry 实例列表。
@@ -64,8 +65,8 @@ func (es *entries) remove(pattern string, methods ...string) {
 }
 
 // 添加一条路由数据。
-func (es *entries) add(pattern string, h http.Handler, methods ...string) error {
-	ety, err := es.entry(pattern)
+func (es *entries) add(s *syntax.Syntax, h http.Handler, methods ...string) error {
+	ety, err := es.entry(s)
 	if err != nil {
 		return err
 	}
@@ -74,12 +75,12 @@ func (es *entries) add(pattern string, h http.Handler, methods ...string) error 
 }
 
 // 查找指定匹配模式下的 Entry，不存在，则声明新的
-func (es *entries) entry(pattern string) (entry.Entry, error) {
-	if ety := es.findEntry(pattern); ety != nil {
+func (es *entries) entry(s *syntax.Syntax) (entry.Entry, error) {
+	if ety := es.findEntry(s.Pattern); ety != nil {
 		return ety, nil
 	}
 
-	ety, err := entry.New(pattern)
+	ety, err := entry.New(s)
 	if err != nil {
 		return nil, err
 	}
