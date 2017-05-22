@@ -22,14 +22,14 @@ type List struct {
 	disableOptions bool
 	mu             sync.RWMutex
 
-	// entries 是按路由项首字母进行第一次分类，
+	// entries 是按路由项中 / 字符的数量进行分类，
 	// 这样在进行路由匹配时，可以减少大量的时间：
-	//  /posts/{id}              // p
-	//  /tags/{name}             // t
-	//  /posts/{id}/author       // p
-	//  /posts/{id}/author/*     // p
-	// 比如以上路由项，如果要查找 /posts/1 只需要比较 p
-	// 中的数据就行，如果需要匹配 /tags/abc.html 则只需要比较 t。
+	//  /posts/{id}              // 2
+	//  /tags/{name}             // 2
+	//  /posts/{id}/author       // 3
+	//  /posts/{id}/author/*     // -1
+	// 比如以上路由项，如果要查找 /posts/1 只需要比较 2
+	// 中的数据就行，如果需要匹配 /tags/abc/1.html 则只需要比较 3。
 	entries map[int]*entries // TODO go1.9 改为 sync.Map
 }
 
