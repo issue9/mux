@@ -12,6 +12,7 @@ import (
 
 	beego "github.com/beego/mux"
 	"github.com/dimfeld/httptreemux"
+	"github.com/go-playground/lars"
 	"github.com/issue9/assert"
 )
 
@@ -63,6 +64,31 @@ func BenchmarkGithubAPI_httptreemux(b *testing.B) {
 
 		if w.Body.String() != r.URL.Path {
 			b.Errorf("BenchmarkGithubAPI_httptreemux: %v:%v", w.Body.String(), r.URL.Path)
+		}
+	}
+}
+
+func BenchmarkGithubAPI_lars(b *testing.B) {
+	h := func(c lars.Context) {
+		c.Response().Write([]byte(c.Request().URL.Path))
+	}
+
+	l := lars.New()
+	for _, api := range apis {
+		l.Handle(api.method, api.colonPattern, h)
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		api := apis[i%len(apis)]
+
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(api.method, api.test, nil)
+		l.Serve().ServeHTTP(w, r)
+
+		if w.Body.String() != r.URL.Path {
+			b.Errorf("BenchmarkGithubAPI_lars: %v:%v", w.Body.String(), r.URL.Path)
 		}
 	}
 }
