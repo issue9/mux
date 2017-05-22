@@ -121,7 +121,12 @@ func (l *Byte) Entry(pattern string) (entry.Entry, error) {
 		l.entries[index] = es
 	}
 
-	return es.Entry(pattern)
+	s, err := syntax.New(pattern)
+	if err != nil {
+		return nil, err
+	}
+
+	return es.entry(s)
 }
 
 // Match 查找与 path 最匹配的路由项以及对应的参数
@@ -131,7 +136,7 @@ func (l *Byte) Match(path string) (entry.Entry, map[string]string) {
 	es := l.entries[cnt]
 	l.mu.RUnlock()
 	if es != nil {
-		if ety, ps := es.Match(path); ety != nil {
+		if ety, ps := es.match(path); ety != nil {
 			return ety, ps
 		}
 	}
@@ -140,7 +145,7 @@ func (l *Byte) Match(path string) (entry.Entry, map[string]string) {
 	es = l.entries['{']
 	l.mu.RUnlock()
 	if es != nil {
-		return es.Match(path)
+		return es.match(path)
 	}
 
 	return nil, nil

@@ -63,12 +63,12 @@ func TestSlash_Entry(t *testing.T) {
 
 	a.Equal(l.entries[2].len(), 1)
 	a.Equal(l.entries[wildcardIndex].len(), 1)
-	e, err := l.Entry("/posts/tags/*")
+	e, err := l.entry(newSyntax(a, "/posts/tags/*"))
 	a.NotError(err).NotNil(e)
 	a.Equal(e.Pattern(), "/posts/tags/*")
 
 	// 不存在，自动添加
-	e, err = l.Entry("/posts/1/author")
+	e, err = l.entry(newSyntax(a, "/posts/1/author"))
 	a.NotError(err).NotNil(e)
 	a.Equal(e.Pattern(), "/posts/1/author")
 	a.Equal(l.entries[3].len(), 1)
@@ -82,22 +82,22 @@ func TestSlash_Match(t *testing.T) {
 	a.NotError(l.add(newSyntax(a, "/posts/{id}/*"), h1)) // 1
 	a.NotError(l.add(newSyntax(a, "/posts/{id}/"), h1))  // 2
 
-	ety, ps := l.Match("/posts/1/")
+	ety, ps := l.match("/posts/1/")
 	a.NotNil(ps).NotNil(ety)
 	a.Equal(ety.Pattern(), "/posts/{id}/").
 		Equal(ps, map[string]string{"id": "1"})
 
-	ety, ps = l.Match("/posts/1/author")
+	ety, ps = l.match("/posts/1/author")
 	a.NotNil(ps).NotNil(ety)
 	a.Equal(ety.Pattern(), "/posts/{id}/*").
 		Equal(ps, map[string]string{"id": "1"})
 
-	ety, ps = l.Match("/posts/1/author/profile")
+	ety, ps = l.match("/posts/1/author/profile")
 	a.NotNil(ps).NotNil(ety)
 	a.Equal(ety.Pattern(), "/posts/{id}/*").
 		Equal(ps, map[string]string{"id": "1"})
 
-	ety, ps = l.Match("/not-exists")
+	ety, ps = l.match("/not-exists")
 	a.Nil(ps).Nil(ety)
 }
 

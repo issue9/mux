@@ -100,13 +100,8 @@ func (l *slash) add(s *syntax.Syntax, h http.Handler, methods ...string) error {
 	return es.add(s, h, methods...)
 }
 
-// Entry 查找指定匹配模式下的 Entry，不存在，则声明新的
-func (l *slash) Entry(pattern string) (entry.Entry, error) {
-	s, err := syntax.New(pattern)
-	if err != nil {
-		return nil, err
-	}
-
+// 查找指定匹配模式下的 entry.Entry，不存在，则声明新的
+func (l *slash) entry(s *syntax.Syntax) (entry.Entry, error) {
 	index := l.entriesIndex(s)
 
 	l.mu.RLock()
@@ -120,8 +115,8 @@ func (l *slash) Entry(pattern string) (entry.Entry, error) {
 	return es.entry(s)
 }
 
-// Match 查找与 path 最匹配的路由项以及对应的参数
-func (l *slash) Match(path string) (entry.Entry, map[string]string) {
+// 查找与 path 最匹配的路由项以及对应的参数
+func (l *slash) match(path string) (entry.Entry, map[string]string) {
 	cnt := byteCount('/', path)
 	l.mu.RLock()
 	es := l.entries[cnt]
