@@ -25,8 +25,8 @@ const (
 const (
 	TypeUnknown = iota
 	TypeBasic
-	TypeRegexp
 	TypeNamed
+	TypeRegexp
 )
 
 // Syntax 描述指定的字符串所表示的语法结构
