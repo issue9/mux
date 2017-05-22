@@ -104,8 +104,9 @@ func TestList_Match(t *testing.T) {
 func TestList_entriesIndex(t *testing.T) {
 	a := assert.New(t)
 	l := &List{}
-	a.Equal(l.entriesIndex(countTestString), 8)
-	a.Equal(l.entriesIndex("/{action}/1"), 2)
+
+	a.Equal(l.entriesIndex(newSyntax(a, countTestString)), 8)
+	a.Equal(l.entriesIndex(newSyntax(a, "/{action}/1")), 2)
 }
 
 func TestByteCount(t *testing.T) {

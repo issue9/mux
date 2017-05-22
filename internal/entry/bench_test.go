@@ -12,7 +12,7 @@ import (
 
 func BenchmarkBasic_Match(b *testing.B) {
 	a := assert.New(b)
-	e, err := New("/blog/post/1")
+	e, err := newEntry("/blog/post/1")
 	a.NotError(err).NotNil(e)
 
 	b.ReportAllocs()
@@ -26,7 +26,7 @@ func BenchmarkBasic_Match(b *testing.B) {
 
 func BenchmarkRegexp_Match(b *testing.B) {
 	a := assert.New(b)
-	e, err := New("/blog/post/{id:\\d+}")
+	e, err := newEntry("/blog/post/{id:\\d+}")
 	a.NotError(err).NotNil(e)
 
 	b.ReportAllocs()
@@ -40,7 +40,7 @@ func BenchmarkRegexp_Match(b *testing.B) {
 
 func BenchmarkNamed_Match(b *testing.B) {
 	a := assert.New(b)
-	e, err := New("/blog/post/{id}.html/{id2}")
+	e, err := newEntry("/blog/post/{id}.html/{id2}")
 	a.NotError(err).NotNil(e)
 
 	b.ReportAllocs()
@@ -54,7 +54,7 @@ func BenchmarkNamed_Match(b *testing.B) {
 
 func BenchmarkBasic_URL(b *testing.B) {
 	a := assert.New(b)
-	e, err := New("/blog/post/1/*")
+	e, err := newEntry("/blog/post/1/*")
 	a.NotError(err).NotNil(e)
 
 	b.ReportAllocs()
@@ -68,7 +68,7 @@ func BenchmarkBasic_URL(b *testing.B) {
 
 func BenchmarkRegexp_URL(b *testing.B) {
 	a := assert.New(b)
-	e, err := New("/blog/post/{id:\\d+}/*")
+	e, err := newEntry("/blog/post/{id:\\d+}/*")
 	a.NotError(err).NotNil(e)
 	params := map[string]string{"id": "1"}
 
@@ -83,7 +83,7 @@ func BenchmarkRegexp_URL(b *testing.B) {
 
 func BenchmarkNamed_URL(b *testing.B) {
 	a := assert.New(b)
-	e, err := New("/blog/post/{id}/{id2}/*")
+	e, err := newEntry("/blog/post/{id}/{id2}/*")
 	a.NotError(err).NotNil(e)
 	params := map[string]string{"id": "1", "id2": "2"}
 

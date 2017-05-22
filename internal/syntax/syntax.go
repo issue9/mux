@@ -38,16 +38,6 @@ type Syntax struct {
 	Type      int      // 该语法应该被解析成的类型
 }
 
-// IsWildcard 当前字符串是否为通配符模式
-func IsWildcard(pattern string) bool {
-	return strings.HasSuffix(pattern, "/*")
-}
-
-// IsRegexp 是否为正则表达式
-func IsRegexp(pattern string) bool {
-	return strings.IndexByte(pattern, ':') > -1
-}
-
 // 判断 str 是一个合法的语法结构还是普通的字符串
 func isSyntax(str string) bool {
 	return str[0] == Start && str[len(str)-1] == End
@@ -65,7 +55,7 @@ func New(pattern string) (*Syntax, error) {
 	s := &Syntax{
 		Pattern:  pattern,
 		Patterns: make([]string, 0, len(strs)),
-		Wildcard: IsWildcard(pattern),
+		Wildcard: strings.HasSuffix(pattern, "/*"),
 	}
 	if len(strs) == 0 ||
 		len(strs) == 1 && !isSyntax(strs[0]) {

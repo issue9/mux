@@ -62,12 +62,17 @@ func (l *List) Clean(prefix string) {
 // 当未指定 methods 时，将删除所有 method 匹配的项。
 // 指定错误的 methods 值，将自动忽略该值。
 func (l *List) Remove(pattern string, methods ...string) {
+	s, err := syntax.New(pattern)
+	if err != nil { // 错误的语法，肯定不存在于现有路由项，可以直接返回
+		return
+	}
+
 	if len(methods) == 0 {
 		methods = method.Supported
 	}
 
 	l.mu.RLock()
-	es, found := l.entries[l.entriesIndex(pattern)]
+	es, found := l.entries[l.entriesIndex(s)]
 	l.mu.RUnlock()
 
 	if !found {
@@ -95,7 +100,12 @@ func (l *List) Add(pattern string, h http.Handler, methods ...string) error {
 		methods = method.Default
 	}
 
-	index := l.entriesIndex(pattern)
+	s, err := syntax.New(pattern)
+	if err != nil {
+		return err
+	}
+
+	index := l.entriesIndex(s)
 
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -105,12 +115,17 @@ func (l *List) Add(pattern string, h http.Handler, methods ...string) error {
 		l.entries[index] = es
 	}
 
-	return es.add(pattern, h, methods...)
+	return es.add(s, h, methods...)
 }
 
 // Entry 查找指定匹配模式下的 Entry，不存在，则声明新的
 func (l *List) Entry(pattern string) (entry.Entry, error) {
-	index := l.entriesIndex(pattern)
+	s, err := syntax.New(pattern)
+	if err != nil {
+		return nil, err
+	}
+
+	index := l.entriesIndex(s)
 
 	l.mu.RLock()
 	defer l.mu.RUnlock()
@@ -120,7 +135,7 @@ func (l *List) Entry(pattern string) (entry.Entry, error) {
 		l.entries[index] = es
 	}
 
-	return es.entry(pattern)
+	return es.entry(s)
 }
 
 // Match 查找与 path 最匹配的路由项以及对应的参数
@@ -146,12 +161,12 @@ func (l *List) Match(path string) (entry.Entry, map[string]string) {
 }
 
 // 计算 str 应该属于哪个 entries。
-func (l *List) entriesIndex(str string) int {
-	if syntax.IsWildcard(str) || syntax.IsRegexp(str) {
+func (l *List) entriesIndex(s *syntax.Syntax) int {
+	if s.Wildcard || s.Type == syntax.TypeRegexp {
 		return wildcardIndex
 	}
 
-	return byteCount('/', str)
+	return byteCount('/', s.Pattern)
 }
 
 // 统计字符串包含的指定字符的数量
