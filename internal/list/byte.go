@@ -151,15 +151,6 @@ func (l *Byte) Match(path string) (entry.Entry, map[string]string) {
 	return nil, nil
 }
 
-// Len
-func (l *Byte) Len() int {
-	ret := 0
-	for _, item := range l.entries {
-		ret += item.len()
-	}
-	return ret
-}
-
 // 计算 str 应该属于哪个 entries。
 func (l *Byte) slashIndex(str string) byte {
 	if len(str) < 2 {

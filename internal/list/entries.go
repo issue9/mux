@@ -143,7 +143,3 @@ func removeEntries(es []entry.Entry, pattern string) []entry.Entry {
 
 	return es
 }
-
-func (es *entries) len() int {
-	return len(es.entries)
-}

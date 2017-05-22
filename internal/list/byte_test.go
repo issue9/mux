@@ -10,6 +10,14 @@ import (
 	"github.com/issue9/assert"
 )
 
+func (l *Byte) len() int {
+	ret := 0
+	for _, item := range l.entries {
+		ret += item.len()
+	}
+	return ret
+}
+
 func TestByte_Add_Remove(t *testing.T) {
 	a := assert.New(t)
 	l := NewByte(false)

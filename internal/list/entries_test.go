@@ -14,6 +14,10 @@ import (
 	"github.com/issue9/mux/internal/syntax"
 )
 
+func (es *entries) len() int {
+	return len(es.entries)
+}
+
 func newSyntax(a *assert.Assertion, pattern string) *syntax.Syntax {
 	s, err := syntax.New(pattern)
 	a.NotError(err).NotNil(s)

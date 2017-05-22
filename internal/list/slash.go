@@ -157,12 +157,3 @@ func byteCount(b byte, str string) int {
 
 	return ret
 }
-
-func (l *slash) len() int {
-	ret := 0
-	for _, es := range l.entries {
-		ret += es.len()
-	}
-
-	return ret
-}
