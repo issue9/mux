@@ -34,7 +34,7 @@ type List struct {
 func New(disableOptions bool) *List {
 	return &List{
 		disableOptions: disableOptions,
-		entries:        make(map[byte]*entries, 27),
+		entries:        make(map[byte]*entries, 28), // 26 + '{' + 0
 	}
 }
 
@@ -45,7 +45,7 @@ func (l *List) Clean(prefix string) {
 	defer l.mu.Unlock()
 
 	if len(prefix) == 0 {
-		l.entries = make(map[byte]*entries, 27)
+		l.entries = make(map[byte]*entries, 28)
 		return
 	}
 

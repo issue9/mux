@@ -15,9 +15,6 @@ import (
 // 路由中允许的最大参数数量
 const maxParamsSize = 255
 
-// MaxPatternDepth 最大的路径深度
-const MaxPatternDepth = 255
-
 // 正则语法的起止字符
 const (
 	Start = '{'
@@ -55,10 +52,6 @@ func isSyntax(str string) bool {
 func New(pattern string) (*Syntax, error) {
 	if len(pattern) == 0 || pattern[0] != '/' {
 		return nil, errors.New("参数 pattern 必须以 / 开头")
-	}
-
-	if SlashCount(pattern) > MaxPatternDepth {
-		return nil, fmt.Errorf("匹配字符串最多只能包含 %d 个 / 字符", MaxPatternDepth)
 	}
 
 	names := []string{} // 缓存各个参数的名称，用于判断是否有重名
@@ -190,16 +183,4 @@ func split(str string) []string {
 		ret = append(ret, str[start:end])
 		str = str[end:]
 	}
-}
-
-// SlashCount 统计字符串包含的 / 字符数量
-func SlashCount(str string) int {
-	ret := 0
-	for _, c := range str {
-		if c == '/' {
-			ret++
-		}
-	}
-
-	return ret
 }
