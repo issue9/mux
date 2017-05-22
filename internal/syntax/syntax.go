@@ -49,60 +49,53 @@ func New(pattern string) (*Syntax, error) {
 		return nil, errors.New("参数 pattern 必须以 / 开头")
 	}
 
-	names := []string{} // 缓存各个参数的名称，用于判断是否有重名
-
 	strs := split(pattern)
 	s := &Syntax{
 		Pattern:  pattern,
-		Patterns: make([]string, 0, len(strs)),
 		Wildcard: strings.HasSuffix(pattern, "/*"),
 	}
 	if len(strs) == 0 ||
-		len(strs) == 1 && !isSyntax(strs[0]) {
+		(len(strs) == 1 && !isSyntax(strs[0])) {
 		s.Type = TypeBasic
 		return s, nil
 	}
 
-	// 判断类型
-	for _, v := range strs {
-		s.Patterns = append(s.Patterns, v)
-
-		if !isSyntax(v) { // 普通字符串
+	s.Patterns = strs
+	for _, v := range strs { // 判断类型
+		if !isSyntax(v) {
 			continue
 		}
 
-		// 只存在命名，而不存在正则表达式
-		if index := strings.IndexByte(v, ':'); index < 0 {
-			if s.Type != TypeRegexp {
-				s.Type = TypeNamed
-			}
-		} else {
+		if strings.IndexByte(v, ':') > -1 {
 			s.Type = TypeRegexp
+			break // 如果是正则了，则可以退出 for 了，不会再降级成其它的
 		}
+
+		s.Type = TypeNamed
 	}
+
+	names := make([]string, 0, len(s.Patterns)) // 缓存各个参数的名称，用于判断是否有重名
 
 	// 命名参数
 	if s.Type == TypeNamed {
+		s.HasParams = true
 		for _, str := range s.Patterns {
 			lastIndex := len(str) - 1
 			if str[0] == Start && str[lastIndex] == End {
 				names = append(names, str[1:lastIndex])
-				s.HasParams = true
 			}
 		}
 
-		goto DUP
+		goto NAMES
 	}
 
 	// nType == typeRegexp
 	for i, str := range s.Patterns {
-		lastIndex := len(str) - 1
 		if !isSyntax(str) {
 			continue
 		}
 
-		str = str[1:lastIndex] // 去掉首尾的{}符号
-
+		str = str[1 : len(str)-1] // 去掉首尾的{}符号
 		index := strings.IndexByte(str, ':')
 		if index < 0 { // 只存在命名，而不存在正则表达式，默认匹配[^/]
 			s.Patterns[i] = "(?P<" + str + ">[^/]+)"
@@ -121,7 +114,7 @@ func New(pattern string) (*Syntax, error) {
 		names = append(names, str[:index])
 	}
 
-DUP:
+NAMES:
 	if index := duplicateName(names); index >= 0 {
 		return nil, fmt.Errorf("相同的路由参数名：%v", names[index])
 	}
@@ -135,12 +128,14 @@ DUP:
 
 func duplicateName(names []string) int {
 	// 先按名称排序，之后只要检测相邻两个名称是否相同即可。
-	if len(names) > 1 {
-		sort.Strings(names)
-		for i := 1; i < len(names); i++ {
-			if names[i] == names[i-1] {
-				return i
-			}
+	if len(names) <= 1 {
+		return -1
+	}
+
+	sort.Strings(names)
+	for i := 1; i < len(names); i++ {
+		if names[i] == names[i-1] {
+			return i
 		}
 	}
 
