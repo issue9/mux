@@ -6,6 +6,7 @@ package list
 
 import (
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/issue9/assert"
@@ -24,16 +25,16 @@ func TestList_Add_Remove(t *testing.T) {
 	a := assert.New(t)
 	l := New(false)
 
-	a.NotError(l.Add("/posts/1", h1))
+	a.NotError(l.Add("/posts/1/detail", h1))
 	a.NotError(l.Add("/posts/1/author", h1))
 	a.NotError(l.Add("/{posts}/1/*", h1))
-	a.Equal(l.entries['p'].len(), 2)
-	a.Equal(l.entries['{'].len(), 1)
+	a.Equal(l.entries[3].len(), 2)
+	a.Equal(l.entries[wildcardIndex].len(), 1)
 
-	l.Remove("/posts/1")
-	a.Equal(l.entries['p'].len(), 1)
+	l.Remove("/posts/1/detail")
+	a.Equal(l.entries[3].len(), 1)
 	l.Remove("/{posts}/1/*")
-	a.Equal(l.entries['{'].len(), 0)
+	a.Equal(l.entries[wildcardIndex].len(), 0)
 }
 
 func TestList_Clean(t *testing.T) {
@@ -47,7 +48,7 @@ func TestList_Clean(t *testing.T) {
 	a.NotError(l.Add("/posts/author", h1))
 
 	l.Clean("/posts/1")
-	a.Equal(l.entries['p'].len(), 2)
+	a.Equal(l.entries[2].len(), 1)
 
 	l.Clean("")
 	a.Equal(len(l.entries), 0)
@@ -60,7 +61,8 @@ func TestList_Entry(t *testing.T) {
 	a.NotError(l.Add("/posts/1", h1))
 	a.NotError(l.Add("/posts/tags/*", h1))
 
-	a.Equal(l.entries['p'].len(), 2)
+	a.Equal(l.entries[2].len(), 1)
+	a.Equal(l.entries[wildcardIndex].len(), 1)
 	e, err := l.Entry("/posts/tags/*")
 	a.NotError(err).NotNil(e)
 	a.Equal(e.Pattern(), "/posts/tags/*")
@@ -69,7 +71,7 @@ func TestList_Entry(t *testing.T) {
 	e, err = l.Entry("/posts/1/author")
 	a.NotError(err).NotNil(e)
 	a.Equal(e.Pattern(), "/posts/1/author")
-	a.Equal(l.entries['p'].len(), 3)
+	a.Equal(l.entries[3].len(), 1)
 }
 
 func TestList_Match(t *testing.T) {
@@ -102,6 +104,31 @@ func TestList_Match(t *testing.T) {
 func TestList_entriesIndex(t *testing.T) {
 	a := assert.New(t)
 	l := &List{}
-	a.Equal(l.entriesIndex(countTestString), 'a')
-	a.Equal(l.entriesIndex("/{action}/1"), '{')
+	a.Equal(l.entriesIndex(countTestString), 8)
+	a.Equal(l.entriesIndex("/{action}/1"), 2)
+}
+
+func TestByteCount(t *testing.T) {
+	a := assert.New(t)
+	a.Equal(byteCount('/', countTestString), 8)
+}
+
+func BenchmarkStringsCount(b *testing.B) {
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if strings.Count(countTestString, "/") != 8 {
+			b.Error("strings.Count:error")
+		}
+	}
+}
+
+func BenchmarkSlashCount(b *testing.B) {
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if byteCount('/', countTestString) != 8 {
+			b.Error("count:error")
+		}
+	}
 }

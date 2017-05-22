@@ -43,6 +43,11 @@ func IsWildcard(pattern string) bool {
 	return strings.HasSuffix(pattern, "/*")
 }
 
+// IsRegexp 是否为正则表达式
+func IsRegexp(pattern string) bool {
+	return strings.IndexByte(pattern, ':') > -1
+}
+
 // 判断 str 是一个合法的语法结构还是普通的字符串
 func isSyntax(str string) bool {
 	return str[0] == Start && str[len(str)-1] == End

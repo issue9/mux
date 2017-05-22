@@ -12,7 +12,10 @@ import (
 
 	"github.com/issue9/mux/internal/entry"
 	"github.com/issue9/mux/internal/method"
+	"github.com/issue9/mux/internal/syntax"
 )
+
+const wildcardIndex = -1
 
 // List entry.Entry 列表。
 type List struct {
@@ -27,14 +30,14 @@ type List struct {
 	//  /posts/{id}/author/*     // p
 	// 比如以上路由项，如果要查找 /posts/1 只需要比较 p
 	// 中的数据就行，如果需要匹配 /tags/abc.html 则只需要比较 t。
-	entries map[byte]*entries // TODO go1.9 改为 sync.Map
+	entries map[int]*entries // TODO go1.9 改为 sync.Map
 }
 
 // New 声明一个 List 实例
 func New(disableOptions bool) *List {
 	return &List{
 		disableOptions: disableOptions,
-		entries:        make(map[byte]*entries, 28), // 26 + '{' + 0
+		entries:        make(map[int]*entries, 20),
 	}
 }
 
@@ -45,7 +48,7 @@ func (l *List) Clean(prefix string) {
 	defer l.mu.Unlock()
 
 	if len(prefix) == 0 {
-		l.entries = make(map[byte]*entries, 28)
+		l.entries = make(map[int]*entries, 20)
 		return
 	}
 
@@ -122,7 +125,7 @@ func (l *List) Entry(pattern string) (entry.Entry, error) {
 
 // Match 查找与 path 最匹配的路由项以及对应的参数
 func (l *List) Match(path string) (entry.Entry, map[string]string) {
-	cnt := l.entriesIndex(path)
+	cnt := byteCount('/', path)
 	l.mu.RLock()
 	es := l.entries[cnt]
 	l.mu.RUnlock()
@@ -133,7 +136,7 @@ func (l *List) Match(path string) (entry.Entry, map[string]string) {
 	}
 
 	l.mu.RLock()
-	es = l.entries['{']
+	es = l.entries[wildcardIndex]
 	l.mu.RUnlock()
 	if es != nil {
 		return es.match(path)
@@ -143,10 +146,22 @@ func (l *List) Match(path string) (entry.Entry, map[string]string) {
 }
 
 // 计算 str 应该属于哪个 entries。
-func (l *List) entriesIndex(str string) byte {
-	if len(str) < 2 {
-		return 0
+func (l *List) entriesIndex(str string) int {
+	if syntax.IsWildcard(str) || syntax.IsRegexp(str) {
+		return wildcardIndex
 	}
 
-	return str[1]
+	return byteCount('/', str)
+}
+
+// 统计字符串包含的指定字符的数量
+func byteCount(b byte, str string) int {
+	ret := 0
+	for i := 0; i < len(str); i++ {
+		if str[i] == b {
+			ret++
+		}
+	}
+
+	return ret
 }
