@@ -31,7 +31,6 @@ type slash struct {
 	entries map[int]*priority // TODO go1.9 改为 sync.Map
 }
 
-// New 声明一个 slash 实例
 func newSlash(disableOptions bool) *slash {
 	return &slash{
 		disableOptions: disableOptions,
@@ -39,8 +38,7 @@ func newSlash(disableOptions bool) *slash {
 	}
 }
 
-// 清除所有的路由项，在 prefix 不为空的情况下，
-// 则为删除所有路径前缀为 prefix 的匹配项。
+// entries.clean
 func (l *slash) clean(prefix string) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -55,10 +53,7 @@ func (l *slash) clean(prefix string) {
 	}
 }
 
-// 移除指定的路由项。
-//
-// 当未指定 methods 时，将删除所有 method 匹配的项。
-// 指定错误的 methods 值，将自动忽略该值。
+// entries.remove
 func (l *slash) remove(pattern string, methods ...string) {
 	s, err := syntax.New(pattern)
 	if err != nil { // 错误的语法，肯定不存在于现有路由项，可以直接返回
@@ -80,11 +75,7 @@ func (l *slash) remove(pattern string, methods ...string) {
 	es.remove(pattern, methods...)
 }
 
-// 添加一条路由数据。
-//
-// pattern 为路由匹配模式，可以是正则匹配也可以是字符串匹配；
-// methods 为可以匹配的请求方法，默认为 method.Default 中的所有元素，
-// 可以为 method.Supported 中的所有元素。
+// entries.add
 func (l *slash) add(s *syntax.Syntax, h http.Handler, methods ...string) error {
 	index := l.entriesIndex(s)
 
@@ -99,7 +90,7 @@ func (l *slash) add(s *syntax.Syntax, h http.Handler, methods ...string) error {
 	return es.add(s, h, methods...)
 }
 
-// 查找指定匹配模式下的 entry.Entry，不存在，则声明新的
+// entries.entry
 func (l *slash) entry(s *syntax.Syntax) (entry.Entry, error) {
 	index := l.entriesIndex(s)
 
@@ -114,7 +105,7 @@ func (l *slash) entry(s *syntax.Syntax) (entry.Entry, error) {
 	return es.entry(s)
 }
 
-// 查找与 path 最匹配的路由项以及对应的参数
+// entries.match
 func (l *slash) match(path string) (entry.Entry, map[string]string) {
 	cnt := byteCount('/', path)
 	l.mu.RLock()
@@ -143,6 +134,15 @@ func (l *slash) entriesIndex(s *syntax.Syntax) int {
 	}
 
 	return byteCount('/', s.Pattern)
+}
+
+func (l *slash) len() int {
+	ret := 0
+	for _, es := range l.entries {
+		ret += es.len()
+	}
+
+	return ret
 }
 
 // 统计字符串包含的指定字符的数量

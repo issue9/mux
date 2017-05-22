@@ -15,15 +15,6 @@ const countTestString = "/adfada/adfa/dd//adfadasd/ada/dfad/"
 
 var _ entries = &slash{}
 
-func (l *slash) len() int {
-	ret := 0
-	for _, es := range l.entries {
-		ret += es.len()
-	}
-
-	return ret
-}
-
 func TestSlash_add_remove(t *testing.T) {
 	a := assert.New(t)
 	l := newSlash(false)

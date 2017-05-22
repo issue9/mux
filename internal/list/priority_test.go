@@ -15,10 +15,6 @@ import (
 
 var _ entries = &priority{}
 
-func (es *priority) len() int {
-	return len(es.entries)
-}
-
 func TestEntries_add_remove(t *testing.T) {
 	a := assert.New(t)
 	es := newEntries(false)

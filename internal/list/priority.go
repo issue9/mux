@@ -28,8 +28,7 @@ func newEntries(disableOptions bool) *priority {
 	}
 }
 
-// 清除所有的路由项，在 prefix 不为空的情况下，
-// 则为删除所有路径前缀为 prefix 的匹配项。
+// entries.clean
 func (es *priority) clean(prefix string) {
 	es.mu.Lock()
 	defer es.mu.Unlock()
@@ -47,7 +46,7 @@ func (es *priority) clean(prefix string) {
 	}
 }
 
-// 移除指定的路由项。
+// entries.remove
 func (es *priority) remove(pattern string, methods ...string) {
 	es.mu.Lock()
 	defer es.mu.Unlock()
@@ -64,7 +63,7 @@ func (es *priority) remove(pattern string, methods ...string) {
 	}
 }
 
-// 添加一条路由数据。
+// entries.add
 func (es *priority) add(s *syntax.Syntax, h http.Handler, methods ...string) error {
 	ety, err := es.entry(s)
 	if err != nil {
@@ -74,7 +73,7 @@ func (es *priority) add(s *syntax.Syntax, h http.Handler, methods ...string) err
 	return ety.Add(h, methods...)
 }
 
-// 查找指定匹配模式下的 Entry，不存在，则声明新的
+// entries.entry
 func (es *priority) entry(s *syntax.Syntax) (entry.Entry, error) {
 	if ety := es.findEntry(s.Pattern); ety != nil {
 		return ety, nil
@@ -110,7 +109,7 @@ func (es *priority) findEntry(pattern string) entry.Entry {
 	return nil
 }
 
-// 查找与 path 最匹配的路由项以及对应的参数
+// entries.match
 func (es *priority) match(path string) (entry.Entry, map[string]string) {
 	es.mu.RLock()
 	defer es.mu.RUnlock()
@@ -122,6 +121,10 @@ func (es *priority) match(path string) (entry.Entry, map[string]string) {
 	}
 
 	return nil, nil
+}
+
+func (es *priority) len() int {
+	return len(es.entries)
 }
 
 func removeEntries(es []entry.Entry, pattern string) []entry.Entry {

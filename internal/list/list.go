@@ -24,10 +24,6 @@ type entries interface {
 	remove(pattern string, methods ...string)
 
 	// 添加一条路由数据。
-	//
-	// pattern 为路由匹配模式，可以是正则匹配也可以是字符串匹配；
-	// methods 为可以匹配的请求方法，默认为 method.Default 中的所有元素，
-	// 可以为 method.Supported 中的所有元素。
 	add(s *syntax.Syntax, h http.Handler, methods ...string) error
 
 	// 查找指定匹配模式下的 entry.Entry，不存在，则声明新的
@@ -35,4 +31,7 @@ type entries interface {
 
 	// 查找与 path 最匹配的路由项以及对应的参数
 	match(path string) (entry.Entry, map[string]string)
+
+	// 返回当前列表的元素数量
+	len() int
 }
