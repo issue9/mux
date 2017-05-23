@@ -97,12 +97,12 @@ func TestSlash_Match(t *testing.T) {
 	a.Nil(ps).Nil(ety)
 }
 
-func TestSlash_entriesIndex(t *testing.T) {
+func TestSlash_slashIndex(t *testing.T) {
 	a := assert.New(t)
 	l := &slash{}
 
-	a.Equal(l.entriesIndex(newSyntax(a, countTestString)), 8)
-	a.Equal(l.entriesIndex(newSyntax(a, "/{action}/1")), 2)
+	a.Equal(l.slashIndex(newSyntax(a, countTestString)), 8)
+	a.Equal(l.slashIndex(newSyntax(a, "/{action}/1")), 2)
 }
 
 func TestByteCount(t *testing.T) {

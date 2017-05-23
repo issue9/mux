@@ -70,7 +70,7 @@ func (l *slash) remove(pattern string, methods ...string) {
 		methods = method.Supported
 	}
 
-	es := l.entries[l.entriesIndex(s)]
+	es := l.entries[l.slashIndex(s)]
 	if es == nil {
 		return
 	}
@@ -80,7 +80,7 @@ func (l *slash) remove(pattern string, methods ...string) {
 
 // entries.add
 func (l *slash) add(s *syntax.Syntax, h http.Handler, methods ...string) error {
-	index := l.entriesIndex(s)
+	index := l.slashIndex(s)
 
 	es := l.entries[index]
 	if es == nil {
@@ -93,7 +93,7 @@ func (l *slash) add(s *syntax.Syntax, h http.Handler, methods ...string) error {
 
 // entries.entry
 func (l *slash) entry(s *syntax.Syntax) (entry.Entry, error) {
-	index := l.entriesIndex(s)
+	index := l.slashIndex(s)
 
 	es := l.entries[index]
 	if es == nil {
@@ -122,7 +122,7 @@ func (l *slash) match(path string) (entry.Entry, map[string]string) {
 }
 
 // 计算 str 应该属于哪个 entries。
-func (l *slash) entriesIndex(s *syntax.Syntax) int {
+func (l *slash) slashIndex(s *syntax.Syntax) int {
 	if s.Wildcard || s.Type == syntax.TypeRegexp {
 		return lastSlashIndex
 	}
@@ -160,7 +160,7 @@ func (l *slash) addEntry(ety entry.Entry) error {
 		return err
 	}
 
-	index := l.entriesIndex(s)
+	index := l.slashIndex(s)
 
 	es := l.entries[index]
 	if es == nil {
