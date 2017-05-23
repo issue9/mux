@@ -5,6 +5,7 @@
 package list
 
 import (
+	"fmt"
 	"net/http"
 	"sort"
 	"strings"
@@ -21,7 +22,7 @@ type priority struct {
 	disableOptions bool
 }
 
-func newEntries(disableOptions bool) *priority {
+func newPriority(disableOptions bool) *priority {
 	return &priority{
 		disableOptions: disableOptions,
 		entries:        make([]entry.Entry, 0, 100),
@@ -123,8 +124,28 @@ func (es *priority) match(path string) (entry.Entry, map[string]string) {
 	return nil, nil
 }
 
+// entries.len
 func (es *priority) len() int {
 	return len(es.entries)
+}
+
+func (es *priority) toSlash() (entries, error) {
+	ret := newSlash(es.disableOptions)
+	for _, ety := range es.entries {
+		if err := ret.addEntry(ety); err != nil {
+			return nil, err
+		}
+	}
+
+	return ret, nil
+}
+
+// printDeep
+func (es *priority) printDeep(deep int) {
+	fmt.Println(strings.Repeat(" ", deep*4), "*********priority")
+	for _, item := range es.entries {
+		fmt.Println(strings.Repeat(" ", deep*4), item.Pattern())
+	}
 }
 
 func removeEntries(es []entry.Entry, pattern string) []entry.Entry {

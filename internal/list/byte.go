@@ -6,6 +6,7 @@ package list
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"sync"
 
@@ -13,6 +14,8 @@ import (
 	"github.com/issue9/mux/internal/method"
 	"github.com/issue9/mux/internal/syntax"
 )
+
+const size = 10
 
 // Byte 按字符进行分类的 entry.Entry 列表。
 type Byte struct {
@@ -27,29 +30,29 @@ type Byte struct {
 	//  /posts/{id}/author/*     // p
 	// 比如以上路由项，如果要查找 /posts/1 只需要比较 p
 	// 中的数据就行，如果需要匹配 /tags/abc.html 则只需要比较 t。
-	entries map[byte]*slash // TODO go1.9 改为 sync.Map
+	entries map[byte]entries // TODO go1.9 改为 sync.Map
 }
 
 // NewByte 声明一个 Byte 实例
 func NewByte(disableOptions bool) *Byte {
 	return &Byte{
 		disableOptions: disableOptions,
-		entries:        make(map[byte]*slash, 28), // 26 + '{' + 0
+		entries:        make(map[byte]entries, 28), // 26 + '{' + 0
 	}
 }
 
 // Clean 清除所有的路由项，在 prefix 不为空的情况下，
 // 则为删除所有路径前缀为 prefix 的匹配项。
-func (l *Byte) Clean(prefix string) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
+func (b *Byte) Clean(prefix string) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
 
 	if len(prefix) == 0 {
-		l.entries = make(map[byte]*slash, 28)
+		b.entries = make(map[byte]entries, 28)
 		return
 	}
 
-	for _, es := range l.entries {
+	for _, es := range b.entries {
 		es.clean(prefix)
 	}
 }
@@ -58,20 +61,29 @@ func (l *Byte) Clean(prefix string) {
 //
 // 当未指定 methods 时，将删除所有 method 匹配的项。
 // 指定错误的 methods 值，将自动忽略该值。
-func (l *Byte) Remove(pattern string, methods ...string) {
+func (b *Byte) Remove(pattern string, methods ...string) {
 	if len(methods) == 0 {
 		methods = method.Supported
 	}
+	index := b.byteIndex(pattern)
 
-	l.mu.RLock()
-	es, found := l.entries[l.slashIndex(pattern)]
-	l.mu.RUnlock()
+	b.mu.RLock()
+	es, found := b.entries[index]
+	b.mu.RUnlock()
 
 	if !found {
 		return
 	}
 
 	es.remove(pattern, methods...)
+
+	if es.len() < size { // 数量少，改用 priority
+		if p, ok := es.(*slash); ok {
+			b.mu.Lock()
+			b.entries[index] = p.toPriority()
+			b.mu.Unlock()
+		}
+	}
 }
 
 // Add 添加一条路由数据。
@@ -80,7 +92,7 @@ func (l *Byte) Remove(pattern string, methods ...string) {
 // methods 为可以匹配的请求方法，默认为 method.Default 中的所有元素，
 // 可以为 method.Supported 中的所有元素。
 // 当 h 或是 pattern 为空时，将触发 panic。
-func (l *Byte) Add(pattern string, h http.Handler, methods ...string) error {
+func (b *Byte) Add(pattern string, h http.Handler, methods ...string) error {
 	if len(pattern) == 0 {
 		return errors.New("参数 pattern 不能为空")
 	}
@@ -92,33 +104,58 @@ func (l *Byte) Add(pattern string, h http.Handler, methods ...string) error {
 		methods = method.Default
 	}
 
-	index := l.slashIndex(pattern)
-
-	l.mu.Lock()
-	defer l.mu.Unlock()
-	es, found := l.entries[index]
-	if !found {
-		es = newSlash(l.disableOptions)
-		l.entries[index] = es
-	}
-
 	s, err := syntax.New(pattern)
 	if err != nil {
 		return err
 	}
-	return es.add(s, h, methods...)
+
+	index := b.byteIndex(pattern)
+
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	es, found := b.entries[index]
+	if !found {
+		es = newPriority(b.disableOptions)
+		b.entries[index] = es
+	}
+
+	if err = es.add(s, h, methods...); err != nil {
+		return err
+	}
+
+	if es.len() > size { // 数量多，改用 slash
+		if p, ok := es.(*priority); ok {
+			es, err = p.toSlash()
+			if err != nil {
+				return err
+			}
+			b.entries[index] = es
+		}
+	}
+
+	return nil
+}
+
+// Print
+func (b *Byte) Print() {
+	for i, item := range b.entries {
+		fmt.Println("#########", string(i))
+		item.printDeep(0)
+	}
+
+	fmt.Println("+++++++++++++++++", len(b.entries))
 }
 
 // Entry 查找指定匹配模式下的 Entry，不存在，则声明新的
-func (l *Byte) Entry(pattern string) (entry.Entry, error) {
-	index := l.slashIndex(pattern)
+func (b *Byte) Entry(pattern string) (entry.Entry, error) {
+	index := b.byteIndex(pattern)
 
-	l.mu.RLock()
-	defer l.mu.RUnlock()
-	es, found := l.entries[index]
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+	es, found := b.entries[index]
 	if !found {
-		es = newSlash(l.disableOptions)
-		l.entries[index] = es
+		es = newPriority(b.disableOptions)
+		b.entries[index] = es
 	}
 
 	s, err := syntax.New(pattern)
@@ -130,20 +167,20 @@ func (l *Byte) Entry(pattern string) (entry.Entry, error) {
 }
 
 // Match 查找与 path 最匹配的路由项以及对应的参数
-func (l *Byte) Match(path string) (entry.Entry, map[string]string) {
-	cnt := l.slashIndex(path)
-	l.mu.RLock()
-	es := l.entries[cnt]
-	l.mu.RUnlock()
+func (b *Byte) Match(path string) (entry.Entry, map[string]string) {
+	cnt := b.byteIndex(path)
+	b.mu.RLock()
+	es := b.entries[cnt]
+	b.mu.RUnlock()
 	if es != nil {
 		if ety, ps := es.match(path); ety != nil {
 			return ety, ps
 		}
 	}
 
-	l.mu.RLock()
-	es = l.entries['{']
-	l.mu.RUnlock()
+	b.mu.RLock()
+	es = b.entries['{']
+	b.mu.RUnlock()
 	if es != nil {
 		return es.match(path)
 	}
@@ -152,7 +189,7 @@ func (l *Byte) Match(path string) (entry.Entry, map[string]string) {
 }
 
 // 计算 str 应该属于哪个 entries。
-func (l *Byte) slashIndex(str string) byte {
+func (b *Byte) byteIndex(str string) byte {
 	if len(str) < 2 {
 		return 0
 	}

@@ -5,8 +5,11 @@
 package list
 
 import (
+	"fmt"
 	"net/http"
 	"sync"
+
+	"strings"
 
 	"github.com/issue9/mux/internal/entry"
 	"github.com/issue9/mux/internal/method"
@@ -83,7 +86,7 @@ func (l *slash) add(s *syntax.Syntax, h http.Handler, methods ...string) error {
 	defer l.mu.Unlock()
 	es, found := l.entries[index]
 	if !found {
-		es = newEntries(l.disableOptions)
+		es = newPriority(l.disableOptions)
 		l.entries[index] = es
 	}
 
@@ -98,7 +101,7 @@ func (l *slash) entry(s *syntax.Syntax) (entry.Entry, error) {
 	defer l.mu.RUnlock()
 	es, found := l.entries[index]
 	if !found {
-		es = newEntries(l.disableOptions)
+		es = newPriority(l.disableOptions)
 		l.entries[index] = es
 	}
 
@@ -136,6 +139,7 @@ func (l *slash) entriesIndex(s *syntax.Syntax) int {
 	return byteCount('/', s.Pattern)
 }
 
+// entries.len
 func (l *slash) len() int {
 	ret := 0
 	for _, es := range l.entries {
@@ -143,6 +147,46 @@ func (l *slash) len() int {
 	}
 
 	return ret
+}
+
+func (l *slash) toPriority() entries {
+	es := newPriority(l.disableOptions)
+	for _, item := range l.entries {
+		for _, i := range item.entries {
+			es.entries = append(es.entries, i)
+		}
+	}
+
+	return es
+}
+
+func (l *slash) addEntry(ety entry.Entry) error {
+	s, err := syntax.New(ety.Pattern())
+	if err != nil {
+		return err
+	}
+
+	index := l.entriesIndex(s)
+
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	es, found := l.entries[index]
+	if !found {
+		es = newPriority(l.disableOptions)
+		l.entries[index] = es
+	}
+
+	es.mu.Lock()
+	es.entries = append(es.entries, ety)
+	es.mu.Unlock()
+	return nil
+}
+
+func (l *slash) printDeep(deep int) {
+	fmt.Println(strings.Repeat(" ", deep*4), "---------slash")
+	for _, item := range l.entries {
+		item.printDeep(deep + 1)
+	}
 }
 
 // 统计字符串包含的指定字符的数量

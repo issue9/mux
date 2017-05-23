@@ -12,6 +12,7 @@ import (
 	"github.com/issue9/mux/internal/syntax"
 )
 
+// 存储 entry.Entry 的容器需要实现的接口
 type entries interface {
 	// 清除所有的路由项，在 prefix 不为空的情况下，
 	// 则为删除所有路径前缀为 prefix 的匹配项。
@@ -34,4 +35,6 @@ type entries interface {
 
 	// 返回当前列表的元素数量
 	len() int
+
+	printDeep(deep int)
 }

@@ -17,7 +17,7 @@ var _ entries = &priority{}
 
 func TestEntries_add_remove(t *testing.T) {
 	a := assert.New(t)
-	es := newEntries(false)
+	es := newPriority(false)
 	a.NotNil(es)
 
 	// 添加 delete /api/1
@@ -47,7 +47,7 @@ func TestEntries_add_remove(t *testing.T) {
 
 func TestEntries_clean(t *testing.T) {
 	a := assert.New(t)
-	es := newEntries(false)
+	es := newPriority(false)
 	a.NotNil(es)
 
 	// 添加 delete /api/1

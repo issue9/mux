@@ -97,9 +97,9 @@ func TestByte_Match(t *testing.T) {
 	a.Nil(ps).Nil(ety)
 }
 
-func TestByte_slashIndex(t *testing.T) {
+func TestByte_byteIndex(t *testing.T) {
 	a := assert.New(t)
 	l := &Byte{}
-	a.Equal(l.slashIndex(countTestString), 'a')
-	a.Equal(l.slashIndex("/{action}/1"), '{')
+	a.Equal(l.byteIndex(countTestString), 'a')
+	a.Equal(l.byteIndex("/{action}/1"), '{')
 }
