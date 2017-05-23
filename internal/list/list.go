@@ -25,10 +25,10 @@ type entries interface {
 	remove(pattern string, methods ...string)
 
 	// 添加一条路由数据。
-	add(s *syntax.Syntax, h http.Handler, methods ...string) error
+	add(disableOptions bool, s *syntax.Syntax, h http.Handler, methods ...string) error
 
 	// 查找指定匹配模式下的 entry.Entry，不存在，则声明新的
-	entry(s *syntax.Syntax) (entry.Entry, error)
+	entry(disableOptions bool, s *syntax.Syntax) (entry.Entry, error)
 
 	// 查找与 path 最匹配的路由项以及对应的参数
 	match(path string) (entry.Entry, map[string]string)

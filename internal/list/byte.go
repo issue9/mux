@@ -115,11 +115,11 @@ func (b *Byte) Add(pattern string, h http.Handler, methods ...string) error {
 	defer b.mu.Unlock()
 	es, found := b.entries[index]
 	if !found {
-		es = newPriority(b.disableOptions)
+		es = newPriority()
 		b.entries[index] = es
 	}
 
-	if err = es.add(s, h, methods...); err != nil {
+	if err = es.add(b.disableOptions, s, h, methods...); err != nil {
 		return err
 	}
 
@@ -136,7 +136,7 @@ func (b *Byte) Add(pattern string, h http.Handler, methods ...string) error {
 	return nil
 }
 
-// Print
+// Print 将内容以树状形式打印出来
 func (b *Byte) Print() {
 	for i, item := range b.entries {
 		fmt.Println("#########", string(i))
@@ -154,7 +154,7 @@ func (b *Byte) Entry(pattern string) (entry.Entry, error) {
 	defer b.mu.RUnlock()
 	es, found := b.entries[index]
 	if !found {
-		es = newPriority(b.disableOptions)
+		es = newPriority()
 		b.entries[index] = es
 	}
 
@@ -163,7 +163,7 @@ func (b *Byte) Entry(pattern string) (entry.Entry, error) {
 		return nil, err
 	}
 
-	return es.entry(s)
+	return es.entry(b.disableOptions, s)
 }
 
 // Match 查找与 path 最匹配的路由项以及对应的参数
