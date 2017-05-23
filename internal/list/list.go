@@ -22,13 +22,14 @@ type entries interface {
 	//
 	// 当未指定 methods 时，将删除所有 method 匹配的项。
 	// 指定错误的 methods 值，将自动忽略该值。
-	remove(pattern string, methods ...string)
+	// 返回值表示当前路由是否已经被删除。
+	remove(pattern string, methods ...string) bool
 
 	// 添加一条路由数据。
-	add(s *syntax.Syntax, h http.Handler, methods ...string) error
+	add(disableOptions bool, s *syntax.Syntax, h http.Handler, methods ...string) error
 
 	// 查找指定匹配模式下的 entry.Entry，不存在，则声明新的
-	entry(s *syntax.Syntax) (entry.Entry, error)
+	entry(disableOptions bool, s *syntax.Syntax) (entry.Entry, error)
 
 	// 查找与 path 最匹配的路由项以及对应的参数
 	match(path string) (entry.Entry, map[string]string)

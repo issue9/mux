@@ -7,7 +7,6 @@ package list
 import (
 	"fmt"
 	"net/http"
-	"sync"
 
 	"strings"
 
@@ -16,113 +15,101 @@ import (
 	"github.com/issue9/mux/internal/syntax"
 )
 
-const wildcardIndex = -1
+const (
+	maxSlashSize   = 20
+	lastSlashIndex = maxSlashSize
+)
 
 // 按 / 进行分类的 entry.Entry 列表
 type slash struct {
-	disableOptions bool
-	mu             sync.RWMutex
-
-	// entries 是按路由项中 / 字符的数量进行分类，
-	// 这样在进行路由匹配时，可以减少大量的时间：
+	// entries 是按路由项中 / 字符的数量进行分类，索引值表示数量，
+	// 元素表示对应的 priority 对象。这样在进行路由匹配时，可以减少大量的时间：
 	//  /posts/{id}              // 2
 	//  /tags/{name}             // 2
 	//  /posts/{id}/author       // 3
 	//  /posts/{id}/author/*     // -1
 	// 比如以上路由项，如果要查找 /posts/1 只需要比较 2
 	// 中的数据就行，如果需要匹配 /tags/abc/1.html 则只需要比较 3。
-	entries map[int]*priority // TODO go1.9 改为 sync.Map
+	entries []*priority
 }
 
-func newSlash(disableOptions bool) *slash {
+func newSlash() *slash {
 	return &slash{
-		disableOptions: disableOptions,
-		entries:        make(map[int]*priority, 20),
+		entries: make([]*priority, maxSlashSize+1),
 	}
 }
 
 // entries.clean
 func (l *slash) clean(prefix string) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-
 	if len(prefix) == 0 {
-		l.entries = make(map[int]*priority, 20)
+		for i := 0; i <= maxSlashSize; i++ {
+			l.entries[i] = nil
+		}
 		return
 	}
 
 	for _, es := range l.entries {
+		if es == nil {
+			continue
+		}
 		es.clean(prefix)
 	}
 }
 
 // entries.remove
-func (l *slash) remove(pattern string, methods ...string) {
-	s, err := syntax.New(pattern)
-	if err != nil { // 错误的语法，肯定不存在于现有路由项，可以直接返回
-		return
-	}
-
+func (l *slash) remove(pattern string, methods ...string) bool {
 	if len(methods) == 0 {
 		methods = method.Supported
 	}
 
-	l.mu.RLock()
-	es, found := l.entries[l.entriesIndex(s)]
-	l.mu.RUnlock()
-
-	if !found {
-		return
+	for _, item := range l.entries {
+		if item == nil {
+			continue
+		}
+		if item.remove(pattern, methods...) {
+			return true
+		}
 	}
 
-	es.remove(pattern, methods...)
+	return false
 }
 
 // entries.add
-func (l *slash) add(s *syntax.Syntax, h http.Handler, methods ...string) error {
-	index := l.entriesIndex(s)
+func (l *slash) add(disableOptions bool, s *syntax.Syntax, h http.Handler, methods ...string) error {
+	index := l.slashIndex(s)
 
-	l.mu.Lock()
-	defer l.mu.Unlock()
-	es, found := l.entries[index]
-	if !found {
-		es = newPriority(l.disableOptions)
+	es := l.entries[index]
+	if es == nil {
+		es = newPriority()
 		l.entries[index] = es
 	}
 
-	return es.add(s, h, methods...)
+	return es.add(disableOptions, s, h, methods...)
 }
 
 // entries.entry
-func (l *slash) entry(s *syntax.Syntax) (entry.Entry, error) {
-	index := l.entriesIndex(s)
+func (l *slash) entry(disableOptions bool, s *syntax.Syntax) (entry.Entry, error) {
+	index := l.slashIndex(s)
 
-	l.mu.RLock()
-	defer l.mu.RUnlock()
-	es, found := l.entries[index]
-	if !found {
-		es = newPriority(l.disableOptions)
+	es := l.entries[index]
+	if es == nil {
+		es = newPriority()
 		l.entries[index] = es
 	}
 
-	return es.entry(s)
+	return es.entry(disableOptions, s)
 }
 
 // entries.match
 func (l *slash) match(path string) (entry.Entry, map[string]string) {
-	cnt := byteCount('/', path)
-	l.mu.RLock()
-	es := l.entries[cnt]
-	l.mu.RUnlock()
+	es := l.entries[byteCount('/', path)]
 	if es != nil {
 		if ety, ps := es.match(path); ety != nil {
 			return ety, ps
 		}
 	}
 
-	l.mu.RLock()
-	es = l.entries[wildcardIndex]
-	l.mu.RUnlock()
+	es = l.entries[lastSlashIndex]
 	if es != nil {
 		return es.match(path)
 	}
@@ -131,9 +118,9 @@ func (l *slash) match(path string) (entry.Entry, map[string]string) {
 }
 
 // 计算 str 应该属于哪个 entries。
-func (l *slash) entriesIndex(s *syntax.Syntax) int {
+func (l *slash) slashIndex(s *syntax.Syntax) int {
 	if s.Wildcard || s.Type == syntax.TypeRegexp {
-		return wildcardIndex
+		return lastSlashIndex
 	}
 
 	return byteCount('/', s.Pattern)
@@ -143,6 +130,9 @@ func (l *slash) entriesIndex(s *syntax.Syntax) int {
 func (l *slash) len() int {
 	ret := 0
 	for _, es := range l.entries {
+		if es == nil {
+			continue
+		}
 		ret += es.len()
 	}
 
@@ -150,7 +140,7 @@ func (l *slash) len() int {
 }
 
 func (l *slash) toPriority() entries {
-	es := newPriority(l.disableOptions)
+	es := newPriority()
 	for _, item := range l.entries {
 		for _, i := range item.entries {
 			es.entries = append(es.entries, i)
@@ -166,19 +156,15 @@ func (l *slash) addEntry(ety entry.Entry) error {
 		return err
 	}
 
-	index := l.entriesIndex(s)
+	index := l.slashIndex(s)
 
-	l.mu.Lock()
-	defer l.mu.Unlock()
-	es, found := l.entries[index]
-	if !found {
-		es = newPriority(l.disableOptions)
+	es := l.entries[index]
+	if es == nil {
+		es = newPriority()
 		l.entries[index] = es
 	}
 
-	es.mu.Lock()
 	es.entries = append(es.entries, ety)
-	es.mu.Unlock()
 	return nil
 }
 

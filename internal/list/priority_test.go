@@ -17,19 +17,19 @@ var _ entries = &priority{}
 
 func TestEntries_add_remove(t *testing.T) {
 	a := assert.New(t)
-	es := newPriority(false)
+	es := newPriority()
 	a.NotNil(es)
 
 	// 添加 delete /api/1
-	a.NotError(es.add(newSyntax(a, "/api/1"), h1, http.MethodDelete))
+	a.NotError(es.add(false, newSyntax(a, "/api/1"), h1, http.MethodDelete))
 	a.Equal(len(es.entries), 1)
 
 	// 添加 patch /api/1
-	a.NotError(es.add(newSyntax(a, "/api/1"), h1, http.MethodPatch))
+	a.NotError(es.add(false, newSyntax(a, "/api/1"), h1, http.MethodPatch))
 	a.Equal(len(es.entries), 1) // 加在同一个 Entry 下，所以数量不变
 
 	// 添加 post /api/2
-	a.NotError(es.add(newSyntax(a, "/api/2"), h1, http.MethodPost))
+	a.NotError(es.add(false, newSyntax(a, "/api/2"), h1, http.MethodPost))
 	a.Equal(len(es.entries), 2)
 
 	// 删除 any /api/2
@@ -47,29 +47,29 @@ func TestEntries_add_remove(t *testing.T) {
 
 func TestEntries_clean(t *testing.T) {
 	a := assert.New(t)
-	es := newPriority(false)
+	es := newPriority()
 	a.NotNil(es)
 
 	// 添加 delete /api/1
-	a.NotError(es.add(newSyntax(a, "/api/1"), h1, http.MethodDelete))
-	a.NotError(es.add(newSyntax(a, "/api/1"), h1, http.MethodPatch))
+	a.NotError(es.add(false, newSyntax(a, "/api/1"), h1, http.MethodDelete))
+	a.NotError(es.add(false, newSyntax(a, "/api/1"), h1, http.MethodPatch))
 	a.Equal(len(es.entries), 1)
 
 	es.clean("")
 	a.Equal(len(es.entries), 0)
 
 	// 添加两条 entry
-	a.NotError(es.add(newSyntax(a, "/api/1"), h1, http.MethodDelete))
-	a.NotError(es.add(newSyntax(a, "/api/1"), h1, http.MethodPatch))
-	a.NotError(es.add(newSyntax(a, "/api/2/1"), h1, http.MethodPatch))
-	a.NotError(es.add(newSyntax(a, "/api/2/1"), h1, http.MethodDelete))
+	a.NotError(es.add(false, newSyntax(a, "/api/1"), h1, http.MethodDelete))
+	a.NotError(es.add(false, newSyntax(a, "/api/1"), h1, http.MethodPatch))
+	a.NotError(es.add(false, newSyntax(a, "/api/2/1"), h1, http.MethodPatch))
+	a.NotError(es.add(false, newSyntax(a, "/api/2/1"), h1, http.MethodDelete))
 	a.Equal(len(es.entries), 2)
 	es.clean("/api/2") // 带路径参数的
 	a.Equal(len(es.entries), 1)
 
 	// 添加两条 entry
-	a.NotError(es.add(newSyntax(a, "/api/2/1"), h1, http.MethodDelete))
-	a.NotError(es.add(newSyntax(a, "/1"), h1, http.MethodDelete))
+	a.NotError(es.add(false, newSyntax(a, "/api/2/1"), h1, http.MethodDelete))
+	a.NotError(es.add(false, newSyntax(a, "/1"), h1, http.MethodDelete))
 	es.clean("/api/") // 带路径参数的
 	a.Equal(len(es.entries), 1)
 }
