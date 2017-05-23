@@ -7,21 +7,30 @@ package mux
 import (
 	"net/http"
 	"net/http/httptest"
+	"runtime"
 	"strings"
 	"testing"
 
-	beego "github.com/beego/mux"
 	"github.com/dimfeld/httptreemux"
-	"github.com/go-playground/lars"
 	"github.com/issue9/assert"
 )
 
 func BenchmarkGithubAPI_mux(b *testing.B) {
 	a := assert.New(b)
 
+	state := new(runtime.MemStats)
+	runtime.GC()
+	runtime.ReadMemStats(state)
+	before := state.HeapAlloc
+
 	h := func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(r.URL.Path))
 	}
+
+	runtime.GC()
+	runtime.ReadMemStats(state)
+	after := state.HeapAlloc
+	b.Logf("BenchmarkGithubAPI_mux: %d Bytes", after-before)
 
 	mux := New(false, false, nil, nil)
 	for _, api := range apis {
@@ -48,10 +57,20 @@ func BenchmarkGithubAPI_httptreemux(b *testing.B) {
 		w.Write([]byte(r.URL.Path))
 	}
 
+	state := &runtime.MemStats{}
+	runtime.GC()
+	runtime.ReadMemStats(state)
+	before := state.HeapAlloc
+
 	mux := httptreemux.New()
 	for _, api := range apis {
 		mux.Handle(api.method, api.colonPattern, h)
 	}
+
+	runtime.GC()
+	runtime.ReadMemStats(state)
+	after := state.HeapAlloc
+	b.Logf("BenchmarkGithubAPI_httptreemux: %d Bytes", after-before)
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -64,56 +83,6 @@ func BenchmarkGithubAPI_httptreemux(b *testing.B) {
 
 		if w.Body.String() != r.URL.Path {
 			b.Errorf("BenchmarkGithubAPI_httptreemux: %v:%v", w.Body.String(), r.URL.Path)
-		}
-	}
-}
-
-func benchmarkGithubAPI_lars(b *testing.B) {
-	h := func(c lars.Context) {
-		c.Response().Write([]byte(c.Request().URL.Path))
-	}
-
-	l := lars.New()
-	for _, api := range apis {
-		l.Handle(api.method, api.colonPattern, h)
-	}
-
-	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		api := apis[i%len(apis)]
-
-		w := httptest.NewRecorder()
-		r := httptest.NewRequest(api.method, api.test, nil)
-		l.Serve().ServeHTTP(w, r)
-
-		if w.Body.String() != r.URL.Path {
-			b.Errorf("BenchmarkGithubAPI_lars: %v:%v", w.Body.String(), r.URL.Path)
-		}
-	}
-}
-
-func benchmarkGithubAPI_beego(b *testing.B) {
-	h := func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(r.URL.Path))
-	}
-
-	mux := beego.New()
-	for _, api := range apis {
-		mux.Handle(api.method, api.colonPattern, h)
-	}
-
-	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		api := apis[i%len(apis)]
-
-		w := httptest.NewRecorder()
-		r := httptest.NewRequest(api.method, api.test, nil)
-		mux.ServeHTTP(w, r)
-
-		if w.Body.String() != r.URL.Path {
-			b.Errorf("BenchmarkGithubAPI_beego: %v:%v", w.Body.String(), r.URL.Path)
 		}
 	}
 }
