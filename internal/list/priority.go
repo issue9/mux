@@ -5,6 +5,7 @@
 package list
 
 import (
+	"fmt"
 	"net/http"
 	"sort"
 	"strings"
@@ -14,23 +15,22 @@ import (
 	"github.com/issue9/mux/internal/syntax"
 )
 
-// 按 Entry.Priority() 为优先级保存的 entry.Entry 实例列表。
-type entries struct {
+// 按 Entry.Priority() 为优先级保存的 entry.Entry 列表。
+type priority struct {
 	mu             sync.RWMutex
 	entries        []entry.Entry
 	disableOptions bool
 }
 
-func newEntries(disableOptions bool) *entries {
-	return &entries{
+func newPriority(disableOptions bool) *priority {
+	return &priority{
 		disableOptions: disableOptions,
 		entries:        make([]entry.Entry, 0, 100),
 	}
 }
 
-// 清除所有的路由项，在 prefix 不为空的情况下，
-// 则为删除所有路径前缀为 prefix 的匹配项。
-func (es *entries) clean(prefix string) {
+// entries.clean
+func (es *priority) clean(prefix string) {
 	es.mu.Lock()
 	defer es.mu.Unlock()
 
@@ -47,8 +47,8 @@ func (es *entries) clean(prefix string) {
 	}
 }
 
-// 移除指定的路由项。
-func (es *entries) remove(pattern string, methods ...string) {
+// entries.remove
+func (es *priority) remove(pattern string, methods ...string) {
 	es.mu.Lock()
 	defer es.mu.Unlock()
 
@@ -64,8 +64,8 @@ func (es *entries) remove(pattern string, methods ...string) {
 	}
 }
 
-// 添加一条路由数据。
-func (es *entries) add(s *syntax.Syntax, h http.Handler, methods ...string) error {
+// entries.add
+func (es *priority) add(s *syntax.Syntax, h http.Handler, methods ...string) error {
 	ety, err := es.entry(s)
 	if err != nil {
 		return err
@@ -74,8 +74,8 @@ func (es *entries) add(s *syntax.Syntax, h http.Handler, methods ...string) erro
 	return ety.Add(h, methods...)
 }
 
-// 查找指定匹配模式下的 Entry，不存在，则声明新的
-func (es *entries) entry(s *syntax.Syntax) (entry.Entry, error) {
+// entries.entry
+func (es *priority) entry(s *syntax.Syntax) (entry.Entry, error) {
 	if ety := es.findEntry(s.Pattern); ety != nil {
 		return ety, nil
 	}
@@ -97,7 +97,7 @@ func (es *entries) entry(s *syntax.Syntax) (entry.Entry, error) {
 	return ety, nil
 }
 
-func (es *entries) findEntry(pattern string) entry.Entry {
+func (es *priority) findEntry(pattern string) entry.Entry {
 	es.mu.RLock()
 	defer es.mu.RUnlock()
 
@@ -110,8 +110,8 @@ func (es *entries) findEntry(pattern string) entry.Entry {
 	return nil
 }
 
-// 查找与 path 最匹配的路由项以及对应的参数
-func (es *entries) match(path string) (entry.Entry, map[string]string) {
+// entries.match
+func (es *priority) match(path string) (entry.Entry, map[string]string) {
 	es.mu.RLock()
 	defer es.mu.RUnlock()
 
@@ -122,6 +122,30 @@ func (es *entries) match(path string) (entry.Entry, map[string]string) {
 	}
 
 	return nil, nil
+}
+
+// entries.len
+func (es *priority) len() int {
+	return len(es.entries)
+}
+
+func (es *priority) toSlash() (entries, error) {
+	ret := newSlash(es.disableOptions)
+	for _, ety := range es.entries {
+		if err := ret.addEntry(ety); err != nil {
+			return nil, err
+		}
+	}
+
+	return ret, nil
+}
+
+// printDeep
+func (es *priority) printDeep(deep int) {
+	fmt.Println(strings.Repeat(" ", deep*4), "*********priority")
+	for _, item := range es.entries {
+		fmt.Println(strings.Repeat(" ", deep*4), item.Pattern())
+	}
 }
 
 func removeEntries(es []entry.Entry, pattern string) []entry.Entry {
