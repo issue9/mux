@@ -5,7 +5,6 @@
 package mux
 
 import (
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -28,9 +27,6 @@ func BenchmarkGithubAPI_mux(b *testing.B) {
 	for _, api := range apis {
 		a.NotError(mux.AddFunc(api.bracePattern, h, api.method))
 	}
-
-	mux.list.Print()
-	fmt.Println("--------------mux")
 
 	b.ReportAllocs()
 	b.ResetTimer()
