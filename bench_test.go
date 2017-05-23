@@ -5,6 +5,7 @@
 package mux
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"runtime"
@@ -12,80 +13,12 @@ import (
 	"testing"
 
 	"github.com/dimfeld/httptreemux"
-	"github.com/issue9/assert"
 )
 
-func BenchmarkGithubAPI_mux(b *testing.B) {
-	a := assert.New(b)
-
-	stats := new(runtime.MemStats)
-	runtime.GC()
-	runtime.ReadMemStats(stats)
-	before := stats.HeapAlloc
-
-	h := func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(r.URL.Path))
-	}
-
-	runtime.GC()
-	runtime.ReadMemStats(stats)
-	after := stats.HeapAlloc
-	b.Logf("BenchmarkGithubAPI_mux: %d Bytes", after-before)
-
-	mux := New(false, false, nil, nil)
-	for _, api := range apis {
-		a.NotError(mux.AddFunc(api.bracePattern, h, api.method))
-	}
-
-	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		api := apis[i%len(apis)]
-
-		w := httptest.NewRecorder()
-		r := httptest.NewRequest(api.method, api.test, nil)
-		mux.ServeHTTP(w, r)
-
-		if w.Body.String() != r.URL.Path {
-			b.Errorf("BenchmarkGithubAPI_mux: %v:%v", w.Body.String(), r.URL.Path)
-		}
-	}
-}
-
-func BenchmarkGithubAPI_httptreemux(b *testing.B) {
-	h := func(w http.ResponseWriter, r *http.Request, _ map[string]string) {
-		w.Write([]byte(r.URL.Path))
-	}
-
-	stats := &runtime.MemStats{}
-	runtime.GC()
-	runtime.ReadMemStats(stats)
-	before := stats.HeapAlloc
-
-	mux := httptreemux.New()
-	for _, api := range apis {
-		mux.Handle(api.method, api.colonPattern, h)
-	}
-
-	runtime.GC()
-	runtime.ReadMemStats(stats)
-	after := stats.HeapAlloc
-	b.Logf("BenchmarkGithubAPI_httptreemux: %d Bytes", after-before)
-
-	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		api := apis[i%len(apis)]
-
-		w := httptest.NewRecorder()
-		r := httptest.NewRequest(api.method, api.test, nil)
-		mux.ServeHTTP(w, r)
-
-		if w.Body.String() != r.URL.Path {
-			b.Errorf("BenchmarkGithubAPI_httptreemux: %v:%v", w.Body.String(), r.URL.Path)
-		}
-	}
-}
+var (
+	issue9Mux   *Mux
+	httpTreeMux *httptreemux.TreeMux
+)
 
 func init() {
 	for _, api := range apis {
@@ -94,6 +27,70 @@ func init() {
 
 		api.colonPattern = strings.Replace(path, "{", ":", -1)
 	}
+
+	calcMemStats("Issue9Mux", func() {
+		h := func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte(r.URL.Path))
+		}
+
+		issue9Mux = New(false, false, nil, nil)
+		for _, api := range apis {
+			if err := issue9Mux.AddFunc(api.bracePattern, h, api.method); err != nil {
+				fmt.Println("calcMemStats:", err)
+			}
+		}
+	})
+
+	calcMemStats("httptreemux", func() {
+		h := func(w http.ResponseWriter, r *http.Request, _ map[string]string) {
+			w.Write([]byte(r.URL.Path))
+		}
+
+		httpTreeMux = httptreemux.New()
+		for _, api := range apis {
+			httpTreeMux.Handle(api.method, api.colonPattern, h)
+		}
+	})
+}
+
+func calcMemStats(name string, load func()) {
+	stats := &runtime.MemStats{}
+
+	runtime.GC()
+	runtime.ReadMemStats(stats)
+	before := stats.HeapAlloc
+
+	load()
+
+	runtime.GC()
+	runtime.ReadMemStats(stats)
+	after := stats.HeapAlloc
+	fmt.Printf("%v: %d Bytes\n", name, after-before)
+}
+
+func benchGithubAPI(name string, b *testing.B, srv http.Handler) {
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		api := apis[i%len(apis)]
+
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(api.method, api.test, nil)
+		srv.ServeHTTP(w, r)
+
+		if w.Body.String() != r.URL.Path {
+			b.Errorf("%v: %v:%v", name, w.Body.String(), r.URL.Path)
+		}
+	}
+}
+
+func BenchmarkGithubAPI_mux(b *testing.B) {
+	benchGithubAPI("Issue9Mux", b, issue9Mux)
+}
+
+func BenchmarkGithubAPI_httptreemux(b *testing.B) {
+	benchGithubAPI("httptreemux", b, httpTreeMux)
 }
 
 type api struct {
