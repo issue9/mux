@@ -18,18 +18,18 @@ import (
 func BenchmarkGithubAPI_mux(b *testing.B) {
 	a := assert.New(b)
 
-	state := new(runtime.MemStats)
+	stats := new(runtime.MemStats)
 	runtime.GC()
-	runtime.ReadMemStats(state)
-	before := state.HeapAlloc
+	runtime.ReadMemStats(stats)
+	before := stats.HeapAlloc
 
 	h := func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(r.URL.Path))
 	}
 
 	runtime.GC()
-	runtime.ReadMemStats(state)
-	after := state.HeapAlloc
+	runtime.ReadMemStats(stats)
+	after := stats.HeapAlloc
 	b.Logf("BenchmarkGithubAPI_mux: %d Bytes", after-before)
 
 	mux := New(false, false, nil, nil)
@@ -57,10 +57,10 @@ func BenchmarkGithubAPI_httptreemux(b *testing.B) {
 		w.Write([]byte(r.URL.Path))
 	}
 
-	state := &runtime.MemStats{}
+	stats := &runtime.MemStats{}
 	runtime.GC()
-	runtime.ReadMemStats(state)
-	before := state.HeapAlloc
+	runtime.ReadMemStats(stats)
+	before := stats.HeapAlloc
 
 	mux := httptreemux.New()
 	for _, api := range apis {
@@ -68,8 +68,8 @@ func BenchmarkGithubAPI_httptreemux(b *testing.B) {
 	}
 
 	runtime.GC()
-	runtime.ReadMemStats(state)
-	after := state.HeapAlloc
+	runtime.ReadMemStats(stats)
+	after := stats.HeapAlloc
 	b.Logf("BenchmarkGithubAPI_httptreemux: %d Bytes", after-before)
 
 	b.ReportAllocs()
