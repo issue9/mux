@@ -22,8 +22,6 @@ const (
 
 // 按 / 进行分类的 entry.Entry 列表
 type slash struct {
-	disableOptions bool
-
 	// entries 是按路由项中 / 字符的数量进行分类，索引值表示数量，
 	// 元素表示对应的 priority 对象。这样在进行路由匹配时，可以减少大量的时间：
 	//  /posts/{id}              // 2
@@ -35,10 +33,9 @@ type slash struct {
 	entries []*priority
 }
 
-func newSlash(disableOptions bool) *slash {
+func newSlash() *slash {
 	return &slash{
-		disableOptions: disableOptions,
-		entries:        make([]*priority, maxSlashSize),
+		entries: make([]*priority, maxSlashSize),
 	}
 }
 
@@ -79,29 +76,29 @@ func (l *slash) remove(pattern string, methods ...string) {
 }
 
 // entries.add
-func (l *slash) add(s *syntax.Syntax, h http.Handler, methods ...string) error {
+func (l *slash) add(disableOptions bool, s *syntax.Syntax, h http.Handler, methods ...string) error {
 	index := l.slashIndex(s)
 
 	es := l.entries[index]
 	if es == nil {
-		es = newPriority(l.disableOptions)
+		es = newPriority()
 		l.entries[index] = es
 	}
 
-	return es.add(s, h, methods...)
+	return es.add(disableOptions, s, h, methods...)
 }
 
 // entries.entry
-func (l *slash) entry(s *syntax.Syntax) (entry.Entry, error) {
+func (l *slash) entry(disableOptions bool, s *syntax.Syntax) (entry.Entry, error) {
 	index := l.slashIndex(s)
 
 	es := l.entries[index]
 	if es == nil {
-		es = newPriority(l.disableOptions)
+		es = newPriority()
 		l.entries[index] = es
 	}
 
-	return es.entry(s)
+	return es.entry(disableOptions, s)
 }
 
 // entries.match
@@ -144,7 +141,7 @@ func (l *slash) len() int {
 }
 
 func (l *slash) toPriority() entries {
-	es := newPriority(l.disableOptions)
+	es := newPriority()
 	for _, item := range l.entries {
 		for _, i := range item.entries {
 			es.entries = append(es.entries, i)
@@ -164,7 +161,7 @@ func (l *slash) addEntry(ety entry.Entry) error {
 
 	es := l.entries[index]
 	if es == nil {
-		es = newPriority(l.disableOptions)
+		es = newPriority()
 		l.entries[index] = es
 	}
 

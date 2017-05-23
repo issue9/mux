@@ -17,11 +17,11 @@ var _ entries = &slash{}
 
 func TestSlash_add_remove(t *testing.T) {
 	a := assert.New(t)
-	l := newSlash(false)
+	l := newSlash()
 
-	a.NotError(l.add(newSyntax(a, "/posts/1/detail"), h1))
-	a.NotError(l.add(newSyntax(a, "/posts/1/author"), h1))
-	a.NotError(l.add(newSyntax(a, "/{posts}/1/*"), h1))
+	a.NotError(l.add(false, newSyntax(a, "/posts/1/detail"), h1))
+	a.NotError(l.add(false, newSyntax(a, "/posts/1/author"), h1))
+	a.NotError(l.add(false, newSyntax(a, "/{posts}/1/*"), h1))
 	a.Equal(l.entries[3].len(), 2)
 	a.Equal(l.entries[lastSlashIndex].len(), 1)
 
@@ -33,13 +33,13 @@ func TestSlash_add_remove(t *testing.T) {
 
 func TestSlash_Clean(t *testing.T) {
 	a := assert.New(t)
-	l := newSlash(false)
+	l := newSlash()
 
-	a.NotError(l.add(newSyntax(a, "/posts/1"), h1))
-	a.NotError(l.add(newSyntax(a, "/posts/1/author"), h1))
-	a.NotError(l.add(newSyntax(a, "/posts/1/*"), h1))
-	a.NotError(l.add(newSyntax(a, "/posts/tags/*"), h1))
-	a.NotError(l.add(newSyntax(a, "/posts/author"), h1))
+	a.NotError(l.add(false, newSyntax(a, "/posts/1"), h1))
+	a.NotError(l.add(false, newSyntax(a, "/posts/1/author"), h1))
+	a.NotError(l.add(false, newSyntax(a, "/posts/1/*"), h1))
+	a.NotError(l.add(false, newSyntax(a, "/posts/tags/*"), h1))
+	a.NotError(l.add(false, newSyntax(a, "/posts/author"), h1))
 
 	l.clean("/posts/1")
 	a.Equal(l.entries[2].len(), 1)
@@ -52,19 +52,19 @@ func TestSlash_Clean(t *testing.T) {
 
 func TestSlash_Entry(t *testing.T) {
 	a := assert.New(t)
-	l := newSlash(false)
+	l := newSlash()
 
-	a.NotError(l.add(newSyntax(a, "/posts/1"), h1))
-	a.NotError(l.add(newSyntax(a, "/posts/tags/*"), h1))
+	a.NotError(l.add(false, newSyntax(a, "/posts/1"), h1))
+	a.NotError(l.add(false, newSyntax(a, "/posts/tags/*"), h1))
 
 	a.Equal(l.entries[2].len(), 1)
 	a.Equal(l.entries[lastSlashIndex].len(), 1)
-	e, err := l.entry(newSyntax(a, "/posts/tags/*"))
+	e, err := l.entry(false, newSyntax(a, "/posts/tags/*"))
 	a.NotError(err).NotNil(e)
 	a.Equal(e.Pattern(), "/posts/tags/*")
 
 	// 不存在，自动添加
-	e, err = l.entry(newSyntax(a, "/posts/1/author"))
+	e, err = l.entry(false, newSyntax(a, "/posts/1/author"))
 	a.NotError(err).NotNil(e)
 	a.Equal(e.Pattern(), "/posts/1/author")
 	a.Equal(l.entries[3].len(), 1)
@@ -72,11 +72,11 @@ func TestSlash_Entry(t *testing.T) {
 
 func TestSlash_Match(t *testing.T) {
 	a := assert.New(t)
-	l := newSlash(false)
+	l := newSlash()
 	a.NotNil(l)
 
-	a.NotError(l.add(newSyntax(a, "/posts/{id}/*"), h1)) // 1
-	a.NotError(l.add(newSyntax(a, "/posts/{id}/"), h1))  // 2
+	a.NotError(l.add(false, newSyntax(a, "/posts/{id}/*"), h1)) // 1
+	a.NotError(l.add(false, newSyntax(a, "/posts/{id}/"), h1))  // 2
 
 	ety, ps := l.match("/posts/1/")
 	a.NotNil(ps).NotNil(ety)

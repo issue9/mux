@@ -17,15 +17,13 @@ import (
 
 // 按 Entry.Priority() 为优先级保存的 entry.Entry 列表。
 type priority struct {
-	mu             sync.RWMutex
-	entries        []entry.Entry
-	disableOptions bool
+	mu      sync.RWMutex
+	entries []entry.Entry
 }
 
-func newPriority(disableOptions bool) *priority {
+func newPriority() *priority {
 	return &priority{
-		disableOptions: disableOptions,
-		entries:        make([]entry.Entry, 0, 100),
+		entries: make([]entry.Entry, 0, 100),
 	}
 }
 
@@ -65,8 +63,8 @@ func (es *priority) remove(pattern string, methods ...string) {
 }
 
 // entries.add
-func (es *priority) add(s *syntax.Syntax, h http.Handler, methods ...string) error {
-	ety, err := es.entry(s)
+func (es *priority) add(disableOptions bool, s *syntax.Syntax, h http.Handler, methods ...string) error {
+	ety, err := es.entry(disableOptions, s)
 	if err != nil {
 		return err
 	}
@@ -75,7 +73,7 @@ func (es *priority) add(s *syntax.Syntax, h http.Handler, methods ...string) err
 }
 
 // entries.entry
-func (es *priority) entry(s *syntax.Syntax) (entry.Entry, error) {
+func (es *priority) entry(disableOptions bool, s *syntax.Syntax) (entry.Entry, error) {
 	if ety := es.findEntry(s.Pattern); ety != nil {
 		return ety, nil
 	}
@@ -85,7 +83,7 @@ func (es *priority) entry(s *syntax.Syntax) (entry.Entry, error) {
 		return nil, err
 	}
 
-	if es.disableOptions { // 禁用 OPTIONS
+	if disableOptions { // 禁用 OPTIONS
 		ety.Remove(http.MethodOptions)
 	}
 
@@ -130,7 +128,7 @@ func (es *priority) len() int {
 }
 
 func (es *priority) toSlash() (entries, error) {
-	ret := newSlash(es.disableOptions)
+	ret := newSlash()
 	for _, ety := range es.entries {
 		if err := ret.addEntry(ety); err != nil {
 			return nil, err
