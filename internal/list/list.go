@@ -22,7 +22,8 @@ type entries interface {
 	//
 	// 当未指定 methods 时，将删除所有 method 匹配的项。
 	// 指定错误的 methods 值，将自动忽略该值。
-	remove(pattern string, methods ...string)
+	// 返回值表示当前路由是否已经被删除。
+	remove(pattern string, methods ...string) bool
 
 	// 添加一条路由数据。
 	add(disableOptions bool, s *syntax.Syntax, h http.Handler, methods ...string) error

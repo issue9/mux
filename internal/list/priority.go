@@ -46,7 +46,7 @@ func (es *priority) clean(prefix string) {
 }
 
 // entries.remove
-func (es *priority) remove(pattern string, methods ...string) {
+func (es *priority) remove(pattern string, methods ...string) bool {
 	es.mu.Lock()
 	defer es.mu.Unlock()
 
@@ -58,8 +58,10 @@ func (es *priority) remove(pattern string, methods ...string) {
 		if empty := e.Remove(methods...); empty { // 空了，则整个路由项都移除
 			es.entries = removeEntries(es.entries, e.Pattern())
 		}
-		return // 只可能有一相完全匹配，找到之后，即可返回
+		return true // 只可能有一相完全匹配，找到之后，即可返回
 	}
+
+	return false
 }
 
 // entries.add
