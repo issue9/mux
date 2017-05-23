@@ -191,13 +191,14 @@ func TestMux_ServeHTTP_Order(t *testing.T) {
 	serveMux := New(false, false, nil, nil)
 	a.NotNil(serveMux)
 
-	a.NotError(serveMux.GetFunc("/posts/{id}", f3))      // f3
-	a.NotError(serveMux.GetFunc("/posts/{id:\\d+}", f2)) // f2
-	a.NotError(serveMux.GetFunc("/posts/1", f1))         // f1
+	a.NotError(serveMux.GetFunc("/posts/{id}", f3))    // f3
+	a.NotError(serveMux.GetFunc("/posts/{id:.+}", f2)) // f2
+	a.NotError(serveMux.GetFunc("/posts/1", f1))       // f1
 
-	request(a, serveMux, http.MethodGet, "/posts/1", 1)   // f1 普通路由项完全匹配
-	request(a, serveMux, http.MethodGet, "/posts/2", 2)   // f2 正则完全匹配
-	request(a, serveMux, http.MethodGet, "/posts/abc", 3) // f3 命名路由
+	request(a, serveMux, http.MethodGet, "/posts/1", 1)        // f1 普通路由项完全匹配
+	request(a, serveMux, http.MethodGet, "/posts/2", 3)        // f1 命名路由
+	request(a, serveMux, http.MethodGet, "/posts/2/author", 2) // f2 正则正则匹配
+	request(a, serveMux, http.MethodGet, "/posts/abc", 3)      // f3 命名路由
 
 	serveMux = New(false, false, nil, nil)
 	a.NotNil(serveMux)

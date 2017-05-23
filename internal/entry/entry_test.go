@@ -8,7 +8,17 @@ import (
 	"testing"
 
 	"github.com/issue9/assert"
+	"github.com/issue9/mux/internal/syntax"
 )
+
+func newEntry(pattern string) (Entry, error) {
+	s, err := syntax.New(pattern)
+	if err != nil {
+		return nil, err
+	}
+
+	return New(s)
+}
 
 // 用于测试 Entry.match 的对象
 type matcher struct {
@@ -17,7 +27,7 @@ type matcher struct {
 }
 
 func newMatcher(a *assert.Assertion, pattern string) *matcher {
-	e, err := New(pattern)
+	e, err := newEntry(pattern)
 	a.NotError(err).NotNil(e)
 
 	return &matcher{
@@ -45,37 +55,37 @@ func TestNew(t *testing.T) {
 	a := assert.New(t)
 
 	// basic
-	e, err := New("/basic/basic")
+	e, err := newEntry("/basic/basic")
 	a.NotError(err).NotNil(e)
 	b, ok := e.(*basic)
 	a.True(ok).False(b.wildcard)
 
 	// basic with wildcard
-	e, err = New("/basic/basic/*")
+	e, err = newEntry("/basic/basic/*")
 	a.NotError(err).NotNil(e)
 	b, ok = e.(*basic)
 	a.True(ok).True(b.wildcard)
 
 	// named
-	e, err = New("/named/{named}/path")
+	e, err = newEntry("/named/{named}/path")
 	a.NotError(err).NotNil(e)
 	n, ok := e.(*named)
 	a.True(ok).False(n.wildcard)
 
 	// named with wildcard
-	e, err = New("/named/{named}/path/*")
+	e, err = newEntry("/named/{named}/path/*")
 	a.NotError(err).NotNil(e)
 	n, ok = e.(*named)
 	a.True(ok).True(n.wildcard)
 
 	// regexp
-	e, err = New("/regexp/{named:\\d+}")
+	e, err = newEntry("/regexp/{named:\\d+}")
 	a.NotError(err).NotNil(e)
 	r, ok := e.(*regexp)
 	a.True(ok).False(r.wildcard)
 
 	// regexp with wildcard
-	e, err = New("/regexp/{named:\\d+}/*")
+	e, err = newEntry("/regexp/{named:\\d+}/*")
 	a.NotError(err).NotNil(e)
 	r, ok = e.(*regexp)
 	a.True(ok).True(r.wildcard)
@@ -84,24 +94,30 @@ func TestNew(t *testing.T) {
 func TestEntry_Priority(t *testing.T) {
 	a := assert.New(t)
 
-	b, err := New("/basic/basic")
+	b, err := newEntry("/basic/basic")
 	a.NotError(err).NotNil(b)
 
-	bw, err := New("/basic/basic/*")
+	bw, err := newEntry("/basic/basic/*")
 	a.NotError(err).NotNil(bw)
 
-	n, err := New("/basic/{named}")
+	n, err := newEntry("/basic/{named}")
 	a.NotError(err).NotNil(n)
 
-	nw, err := New("/basic/{named}/*")
+	nw, err := newEntry("/basic/{named}/*")
 	a.NotError(err).NotNil(nw)
 
-	r, err := New("/basic/{named:\\d+}")
+	r, err := newEntry("/basic/{named:\\d+}")
 	a.NotError(err).NotNil(r)
 
-	rw, err := New("/basic/{named:\\d+}/*")
+	rw, err := newEntry("/basic/{named:\\d+}/*")
 	a.NotError(err).NotNil(rw)
 
-	a.True(n.Priority() > r.Priority()).
-		True(r.Priority() > b.Priority())
+	a.True(r.Priority() > n.Priority()).
+		True(n.Priority() > b.Priority())
+
+	a.True(rw.Priority() > r.Priority()).
+		True(nw.Priority() > n.Priority()).
+		True(bw.Priority() > b.Priority())
+
+	a.True(bw.Priority() > r.Priority())
 }
