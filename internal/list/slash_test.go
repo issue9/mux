@@ -23,12 +23,12 @@ func TestSlash_add_remove(t *testing.T) {
 	a.NotError(l.add(newSyntax(a, "/posts/1/author"), h1))
 	a.NotError(l.add(newSyntax(a, "/{posts}/1/*"), h1))
 	a.Equal(l.entries[3].len(), 2)
-	a.Equal(l.entries[wildcardIndex].len(), 1)
+	a.Equal(l.entries[lastSlashIndex].len(), 1)
 
 	l.remove("/posts/1/detail")
 	a.Equal(l.entries[3].len(), 1)
 	l.remove("/{posts}/1/*")
-	a.Equal(l.entries[wildcardIndex].len(), 0)
+	a.Equal(l.entries[lastSlashIndex].len(), 0)
 }
 
 func TestSlash_Clean(t *testing.T) {
@@ -45,7 +45,9 @@ func TestSlash_Clean(t *testing.T) {
 	a.Equal(l.entries[2].len(), 1)
 
 	l.clean("")
-	a.Equal(len(l.entries), 0)
+	for _, elem := range l.entries {
+		a.Nil(elem)
+	}
 }
 
 func TestSlash_Entry(t *testing.T) {
@@ -56,7 +58,7 @@ func TestSlash_Entry(t *testing.T) {
 	a.NotError(l.add(newSyntax(a, "/posts/tags/*"), h1))
 
 	a.Equal(l.entries[2].len(), 1)
-	a.Equal(l.entries[wildcardIndex].len(), 1)
+	a.Equal(l.entries[lastSlashIndex].len(), 1)
 	e, err := l.entry(newSyntax(a, "/posts/tags/*"))
 	a.NotError(err).NotNil(e)
 	a.Equal(e.Pattern(), "/posts/tags/*")
@@ -95,12 +97,12 @@ func TestSlash_Match(t *testing.T) {
 	a.Nil(ps).Nil(ety)
 }
 
-func TestSlash_entriesIndex(t *testing.T) {
+func TestSlash_slashIndex(t *testing.T) {
 	a := assert.New(t)
 	l := &slash{}
 
-	a.Equal(l.entriesIndex(newSyntax(a, countTestString)), 8)
-	a.Equal(l.entriesIndex(newSyntax(a, "/{action}/1")), 2)
+	a.Equal(l.slashIndex(newSyntax(a, countTestString)), 8)
+	a.Equal(l.slashIndex(newSyntax(a, "/{action}/1")), 2)
 }
 
 func TestByteCount(t *testing.T) {

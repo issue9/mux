@@ -37,7 +37,7 @@ type Byte struct {
 func NewByte(disableOptions bool) *Byte {
 	return &Byte{
 		disableOptions: disableOptions,
-		entries:        make(map[byte]entries, 28), // 26 + '{' + 0
+		entries:        make(map[byte]entries, 50),
 	}
 }
 
@@ -48,7 +48,7 @@ func (b *Byte) Clean(prefix string) {
 	defer b.mu.Unlock()
 
 	if len(prefix) == 0 {
-		b.entries = make(map[byte]entries, 28)
+		b.entries = make(map[byte]entries, 50)
 		return
 	}
 
