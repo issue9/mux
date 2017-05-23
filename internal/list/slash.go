@@ -17,7 +17,7 @@ import (
 
 const (
 	maxSlashSize   = 20
-	lastSlashIndex = maxSlashSize - 1
+	lastSlashIndex = maxSlashSize
 )
 
 // 按 / 进行分类的 entry.Entry 列表
@@ -35,14 +35,14 @@ type slash struct {
 
 func newSlash() *slash {
 	return &slash{
-		entries: make([]*priority, maxSlashSize),
+		entries: make([]*priority, maxSlashSize+1),
 	}
 }
 
 // entries.clean
 func (l *slash) clean(prefix string) {
 	if len(prefix) == 0 {
-		for i := 0; i < maxSlashSize; i++ {
+		for i := 0; i <= maxSlashSize; i++ {
 			l.entries[i] = nil
 		}
 		return
