@@ -45,7 +45,9 @@ func TestSlash_Clean(t *testing.T) {
 	a.Equal(l.entries[2].len(), 1)
 
 	l.clean("")
-	a.Equal(len(l.entries), 0)
+	for _, elem := range l.entries {
+		a.Nil(elem)
+	}
 }
 
 func TestSlash_Entry(t *testing.T) {

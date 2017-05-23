@@ -7,7 +7,6 @@ package list
 import (
 	"fmt"
 	"net/http"
-	"sync"
 
 	"strings"
 
@@ -24,7 +23,6 @@ const (
 // 按 / 进行分类的 entry.Entry 列表
 type slash struct {
 	disableOptions bool
-	mu             sync.RWMutex
 
 	// entries 是按路由项中 / 字符的数量进行分类，索引值表示数量，
 	// 元素表示对应的 priority 对象。这样在进行路由匹配时，可以减少大量的时间：
@@ -46,11 +44,10 @@ func newSlash(disableOptions bool) *slash {
 
 // entries.clean
 func (l *slash) clean(prefix string) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-
 	if len(prefix) == 0 {
-		l.entries = l.entries[:0]
+		for i := 0; i < maxSlashSize; i++ {
+			l.entries[i] = nil
+		}
 		return
 	}
 
@@ -73,10 +70,7 @@ func (l *slash) remove(pattern string, methods ...string) {
 		methods = method.Supported
 	}
 
-	l.mu.RLock()
 	es := l.entries[l.entriesIndex(s)]
-	l.mu.RUnlock()
-
 	if es == nil {
 		return
 	}
@@ -88,8 +82,6 @@ func (l *slash) remove(pattern string, methods ...string) {
 func (l *slash) add(s *syntax.Syntax, h http.Handler, methods ...string) error {
 	index := l.entriesIndex(s)
 
-	l.mu.Lock()
-	defer l.mu.Unlock()
 	es := l.entries[index]
 	if es == nil {
 		es = newPriority(l.disableOptions)
@@ -103,8 +95,6 @@ func (l *slash) add(s *syntax.Syntax, h http.Handler, methods ...string) error {
 func (l *slash) entry(s *syntax.Syntax) (entry.Entry, error) {
 	index := l.entriesIndex(s)
 
-	l.mu.RLock()
-	defer l.mu.RUnlock()
 	es := l.entries[index]
 	if es == nil {
 		es = newPriority(l.disableOptions)
@@ -116,19 +106,14 @@ func (l *slash) entry(s *syntax.Syntax) (entry.Entry, error) {
 
 // entries.match
 func (l *slash) match(path string) (entry.Entry, map[string]string) {
-	cnt := byteCount('/', path)
-	l.mu.RLock()
-	es := l.entries[cnt]
-	l.mu.RUnlock()
+	es := l.entries[byteCount('/', path)]
 	if es != nil {
 		if ety, ps := es.match(path); ety != nil {
 			return ety, ps
 		}
 	}
 
-	l.mu.RLock()
 	es = l.entries[lastSlashIndex]
-	l.mu.RUnlock()
 	if es != nil {
 		return es.match(path)
 	}
@@ -177,17 +162,13 @@ func (l *slash) addEntry(ety entry.Entry) error {
 
 	index := l.entriesIndex(s)
 
-	l.mu.Lock()
-	defer l.mu.Unlock()
 	es := l.entries[index]
 	if es == nil {
 		es = newPriority(l.disableOptions)
 		l.entries[index] = es
 	}
 
-	es.mu.Lock()
 	es.entries = append(es.entries, ety)
-	es.mu.Unlock()
 	return nil
 }
 
