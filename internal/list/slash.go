@@ -17,7 +17,7 @@ import (
 
 const (
 	maxSlashSize   = 20
-	lastSlashIndex = maxSlashSize - 1
+	lastSlashIndex = maxSlashSize
 )
 
 // 按 / 进行分类的 entry.Entry 列表
@@ -35,14 +35,14 @@ type slash struct {
 
 func newSlash() *slash {
 	return &slash{
-		entries: make([]*priority, maxSlashSize),
+		entries: make([]*priority, maxSlashSize+1),
 	}
 }
 
 // entries.clean
 func (l *slash) clean(prefix string) {
 	if len(prefix) == 0 {
-		for i := 0; i < maxSlashSize; i++ {
+		for i := 0; i <= maxSlashSize; i++ {
 			l.entries[i] = nil
 		}
 		return
@@ -57,22 +57,21 @@ func (l *slash) clean(prefix string) {
 }
 
 // entries.remove
-func (l *slash) remove(pattern string, methods ...string) {
-	s, err := syntax.New(pattern)
-	if err != nil { // 错误的语法，肯定不存在于现有路由项，可以直接返回
-		return
-	}
-
+func (l *slash) remove(pattern string, methods ...string) bool {
 	if len(methods) == 0 {
 		methods = method.Supported
 	}
 
-	es := l.entries[l.slashIndex(s)]
-	if es == nil {
-		return
+	for _, item := range l.entries {
+		if item == nil {
+			continue
+		}
+		if item.remove(pattern, methods...) {
+			return true
+		}
 	}
 
-	es.remove(pattern, methods...)
+	return false
 }
 
 // entries.add

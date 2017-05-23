@@ -100,6 +100,10 @@ func (b *Byte) Add(pattern string, h http.Handler, methods ...string) error {
 		return errors.New("参数 h 不能为空")
 	}
 
+	if byteCount('/', pattern) > maxSlashSize {
+		return fmt.Errorf("最多只能有 %d 个 / 字符", maxSlashSize)
+	}
+
 	if len(methods) == 0 {
 		methods = method.Default
 	}
