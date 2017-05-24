@@ -19,3 +19,13 @@ func TestPrefixLen(t *testing.T) {
 	a.Equal(prefixLen("/test", "/abc"), 1)
 	a.Equal(prefixLen("/test", "/test"), 5)
 }
+
+func TestCheckSyntax(t *testing.T) {
+	a := assert.New(t)
+
+	a.Error(checkSyntax("{{"))
+	a.Error(checkSyntax("}{"))
+
+	a.NotError(checkSyntax("{}"))
+	a.NotError(checkSyntax(":{}"))
+}
