@@ -183,7 +183,7 @@ func (b *Byte) Match(path string) (entry.Entry, map[string]string) {
 	}
 
 	b.mu.RLock()
-	es = b.entries['{']
+	es = b.entries[syntax.Start]
 	b.mu.RUnlock()
 	if es != nil {
 		return es.match(path)

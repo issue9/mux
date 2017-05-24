@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/issue9/assert"
+	"github.com/issue9/mux/internal/syntax"
 )
 
 func (l *Byte) len() int {
@@ -26,12 +27,12 @@ func TestByte_Add_Remove(t *testing.T) {
 	a.NotError(l.Add("/posts/1/author", h1))
 	a.NotError(l.Add("/{posts}/1/*", h1))
 	a.Equal(l.entries['p'].len(), 2)
-	a.Equal(l.entries['{'].len(), 1)
+	a.Equal(l.entries[syntax.Start].len(), 1)
 
 	l.Remove("/posts/1")
 	a.Equal(l.entries['p'].len(), 1)
 	l.Remove("/{posts}/1/*")
-	a.Equal(l.entries['{'].len(), 0)
+	a.Equal(l.entries[syntax.Start].len(), 0)
 }
 
 func TestByte_Clean(t *testing.T) {
@@ -101,5 +102,5 @@ func TestByte_byteIndex(t *testing.T) {
 	a := assert.New(t)
 	l := &Byte{}
 	a.Equal(l.byteIndex(countTestString), 'a')
-	a.Equal(l.byteIndex("/{action}/1"), '{')
+	a.Equal(l.byteIndex("/{action}/1"), syntax.Start)
 }

@@ -61,7 +61,7 @@ func TestMux_Add_Remove(t *testing.T) {
 	// 添加 GET /api/1
 	// 添加 PUT /api/1
 	// 添加 GET /api/2
-	a.NotError(srvmux.AddFunc("/api/1", f1, http.MethodGet))
+	a.NotError(srvmux.HandleFunc("/api/1", f1, http.MethodGet))
 	a.NotPanic(func() {
 		srvmux.PutFunc("/api/1", f1)
 	})
@@ -102,7 +102,7 @@ func TestMux_Options(t *testing.T) {
 	a.NotNil(srvmux)
 
 	// 添加 GET /api/1
-	a.NotError(srvmux.Add("/api/1", h1, http.MethodGet))
+	a.NotError(srvmux.Handle("/api/1", h1, http.MethodGet))
 	requestOptions(a, srvmux, "/api/1", http.StatusOK, "GET, OPTIONS")
 
 	// 添加 DELETE /api/1
@@ -121,7 +121,7 @@ func TestMux_Options(t *testing.T) {
 	srvmux.Options("/api/1", "CUSTOM OPTIONS2")
 	requestOptions(a, srvmux, "/api/1", http.StatusOK, "CUSTOM OPTIONS2")
 
-	srvmux.AddFunc("/api/1", f1, http.MethodOptions)
+	srvmux.HandleFunc("/api/1", f1, http.MethodOptions)
 	requestOptions(a, srvmux, "/api/1", 1, "")
 }
 
@@ -177,10 +177,10 @@ func TestMux_ServeHTTP(t *testing.T) {
 	srvmux := New(false, false, nil, nil)
 	a.NotNil(srvmux)
 
-	srvmux.Add("/posts/{path}.html", h1) // 命名参数不能带 /
+	srvmux.Handle("/posts/{path}.html", h1) // 命名参数不能带 /
 	request(a, srvmux, http.MethodGet, "/posts/2017/1.html", 404)
 
-	srvmux.Add("/posts/{path:.+}.html", h2)
+	srvmux.Handle("/posts/{path:.+}.html", h2)
 	request(a, srvmux, http.MethodGet, "/posts/2017/1.html", 2)
 }
 

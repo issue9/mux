@@ -37,7 +37,7 @@ func init() {
 
 		issue9Mux = New(false, false, nil, nil)
 		for _, api := range apis {
-			if err := issue9Mux.AddFunc(api.bracePattern, h, api.method); err != nil {
+			if err := issue9Mux.HandleFunc(api.bracePattern, h, api.method); err != nil {
 				fmt.Println("calcMemStats:", err)
 			}
 		}

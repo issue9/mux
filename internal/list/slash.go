@@ -7,7 +7,6 @@ package list
 import (
 	"fmt"
 	"net/http"
-
 	"strings"
 
 	"github.com/issue9/mux/internal/entry"
