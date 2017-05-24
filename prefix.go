@@ -25,13 +25,13 @@ func (p *Prefix) Options(pattern string, allow string) *Prefix {
 	return p
 }
 
-// Add 相当于 Mux.Add(prefix+pattern, h, methods...) 的简易写法
-func (p *Prefix) Add(pattern string, h http.Handler, methods ...string) error {
-	return p.mux.Add(p.prefix+pattern, h, methods...)
+// Handle 相当于 Mux.Handle(prefix+pattern, h, methods...) 的简易写法
+func (p *Prefix) Handle(pattern string, h http.Handler, methods ...string) error {
+	return p.mux.Handle(p.prefix+pattern, h, methods...)
 }
 
-func (p *Prefix) add(pattern string, h http.Handler, methods ...string) *Prefix {
-	if err := p.mux.Add(p.prefix+pattern, h, methods...); err != nil {
+func (p *Prefix) handle(pattern string, h http.Handler, methods ...string) *Prefix {
+	if err := p.mux.Handle(p.prefix+pattern, h, methods...); err != nil {
 		panic(err)
 	}
 
@@ -40,41 +40,41 @@ func (p *Prefix) add(pattern string, h http.Handler, methods ...string) *Prefix 
 
 // Get 相当于 Mux.Get(prefix+pattern, h) 的简易写法
 func (p *Prefix) Get(pattern string, h http.Handler) *Prefix {
-	return p.add(pattern, h, http.MethodGet)
+	return p.handle(pattern, h, http.MethodGet)
 }
 
 // Post 相当于 Mux.Post(prefix+pattern, h) 的简易写法
 func (p *Prefix) Post(pattern string, h http.Handler) *Prefix {
-	return p.add(pattern, h, http.MethodPost)
+	return p.handle(pattern, h, http.MethodPost)
 }
 
 // Delete 相当于 Mux.Delete(prefix+pattern, h)的简易写法
 func (p *Prefix) Delete(pattern string, h http.Handler) *Prefix {
-	return p.add(pattern, h, http.MethodDelete)
+	return p.handle(pattern, h, http.MethodDelete)
 }
 
 // Put 相当于 Mux.Put(prefix+pattern, h) 的简易写法
 func (p *Prefix) Put(pattern string, h http.Handler) *Prefix {
-	return p.add(pattern, h, http.MethodPut)
+	return p.handle(pattern, h, http.MethodPut)
 }
 
 // Patch 相当于 Mux.Patch(prefix+pattern, h) 的简易写法
 func (p *Prefix) Patch(pattern string, h http.Handler) *Prefix {
-	return p.add(pattern, h, http.MethodPatch)
+	return p.handle(pattern, h, http.MethodPatch)
 }
 
 // Any 相当于 Mux.Any(prefix+pattern, h) 的简易写法
 func (p *Prefix) Any(pattern string, h http.Handler) *Prefix {
-	return p.add(pattern, h, method.Default...)
+	return p.handle(pattern, h, method.Default...)
 }
 
-// AddFunc 功能同 Mux.AddFunc(prefix+pattern, fun, ...)
+// HandleFunc 功能同 Mux.HandleFunc(prefix+pattern, fun, ...)
 func (p *Prefix) AddFunc(pattern string, fun http.HandlerFunc, methods ...string) error {
-	return p.mux.AddFunc(p.prefix+pattern, fun, methods...)
+	return p.mux.HandleFunc(p.prefix+pattern, fun, methods...)
 }
 
-func (p *Prefix) addFunc(pattern string, fun http.HandlerFunc, methods ...string) *Prefix {
-	if err := p.mux.AddFunc(p.prefix+pattern, fun, methods...); err != nil {
+func (p *Prefix) handleFunc(pattern string, fun http.HandlerFunc, methods ...string) *Prefix {
+	if err := p.mux.HandleFunc(p.prefix+pattern, fun, methods...); err != nil {
 		panic(err)
 	}
 	return p
@@ -82,32 +82,32 @@ func (p *Prefix) addFunc(pattern string, fun http.HandlerFunc, methods ...string
 
 // GetFunc 相当于 Mux.GetFunc(prefix+pattern, func) 的简易写法
 func (p *Prefix) GetFunc(pattern string, fun http.HandlerFunc) *Prefix {
-	return p.addFunc(pattern, fun, http.MethodGet)
+	return p.handleFunc(pattern, fun, http.MethodGet)
 }
 
 // PutFunc 相当于 Mux.PutFunc(prefix+pattern, func) 的简易写法
 func (p *Prefix) PutFunc(pattern string, fun http.HandlerFunc) *Prefix {
-	return p.addFunc(pattern, fun, http.MethodPut)
+	return p.handleFunc(pattern, fun, http.MethodPut)
 }
 
 // PostFunc 相当 于Mux.PostFunc(prefix+pattern, func) 的简易写法
 func (p *Prefix) PostFunc(pattern string, fun http.HandlerFunc) *Prefix {
-	return p.addFunc(pattern, fun, http.MethodPost)
+	return p.handleFunc(pattern, fun, http.MethodPost)
 }
 
 // DeleteFunc 相当于 Mux.DeleteFunc(prefix+pattern, func) 的简易写法
 func (p *Prefix) DeleteFunc(pattern string, fun http.HandlerFunc) *Prefix {
-	return p.addFunc(pattern, fun, http.MethodDelete)
+	return p.handleFunc(pattern, fun, http.MethodDelete)
 }
 
 // PatchFunc 相当于 Mux.PatchFunc(prefix+pattern, func) 的简易写法
 func (p *Prefix) PatchFunc(pattern string, fun http.HandlerFunc) *Prefix {
-	return p.addFunc(pattern, fun, http.MethodPatch)
+	return p.handleFunc(pattern, fun, http.MethodPatch)
 }
 
 // AnyFunc 相当于 Mux.AnyFunc(prefix+pattern, func) 的简易写法
 func (p *Prefix) AnyFunc(pattern string, fun http.HandlerFunc) *Prefix {
-	return p.addFunc(pattern, fun, method.Default...)
+	return p.handleFunc(pattern, fun, method.Default...)
 }
 
 // Remove 删除指定匹配模式的路由项

@@ -36,13 +36,13 @@ func (r *Resource) Options(allow string) *Resource {
 	return r
 }
 
-// Add 相当于 Mux.Add(pattern, h, methods...) 的简易写法
-func (r *Resource) Add(h http.Handler, methods ...string) error {
-	return r.mux.Add(r.pattern, h, methods...)
+// Handle 相当于 Mux.Handle(pattern, h, methods...) 的简易写法
+func (r *Resource) Handle(h http.Handler, methods ...string) error {
+	return r.mux.Handle(r.pattern, h, methods...)
 }
 
-func (r *Resource) add(h http.Handler, methods ...string) *Resource {
-	if err := r.mux.Add(r.pattern, h, methods...); err != nil {
+func (r *Resource) handle(h http.Handler, methods ...string) *Resource {
+	if err := r.mux.Handle(r.pattern, h, methods...); err != nil {
 		panic(err)
 	}
 	return r
@@ -50,41 +50,41 @@ func (r *Resource) add(h http.Handler, methods ...string) *Resource {
 
 // Get 相当于 Mux.Get(pattern, h) 的简易写法
 func (r *Resource) Get(h http.Handler) *Resource {
-	return r.add(h, http.MethodGet)
+	return r.handle(h, http.MethodGet)
 }
 
 // Post 相当于 Mux.Post(pattern, h) 的简易写法
 func (r *Resource) Post(h http.Handler) *Resource {
-	return r.add(h, http.MethodPost)
+	return r.handle(h, http.MethodPost)
 }
 
 // Delete 相当于 Mux.Delete(pattern, h) 的简易写法
 func (r *Resource) Delete(h http.Handler) *Resource {
-	return r.add(h, http.MethodDelete)
+	return r.handle(h, http.MethodDelete)
 }
 
 // Put 相当于 Mux.Put(pattern, h) 的简易写法
 func (r *Resource) Put(h http.Handler) *Resource {
-	return r.add(h, http.MethodPut)
+	return r.handle(h, http.MethodPut)
 }
 
 // Patch 相当于 Mux.Patch(pattern, h) 的简易写法
 func (r *Resource) Patch(h http.Handler) *Resource {
-	return r.add(h, http.MethodPatch)
+	return r.handle(h, http.MethodPatch)
 }
 
 // Any 相当于 Mux.Any(pattern, h) 的简易写法
 func (r *Resource) Any(h http.Handler) *Resource {
-	return r.add(h, method.Default...)
+	return r.handle(h, method.Default...)
 }
 
-// AddFunc 功能同 Mux.AddFunc(pattern, fun, ...)
-func (r *Resource) AddFunc(fun http.HandlerFunc, methods ...string) error {
-	return r.mux.AddFunc(r.pattern, fun, methods...)
+// HandleFunc 功能同 Mux.HandleFunc(pattern, fun, ...)
+func (r *Resource) HandleFunc(fun http.HandlerFunc, methods ...string) error {
+	return r.mux.HandleFunc(r.pattern, fun, methods...)
 }
 
-func (r *Resource) addFunc(fun http.HandlerFunc, methods ...string) *Resource {
-	if err := r.mux.AddFunc(r.pattern, fun, methods...); err != nil {
+func (r *Resource) handleFunc(fun http.HandlerFunc, methods ...string) *Resource {
+	if err := r.mux.HandleFunc(r.pattern, fun, methods...); err != nil {
 		panic(err)
 	}
 
@@ -93,32 +93,32 @@ func (r *Resource) addFunc(fun http.HandlerFunc, methods ...string) *Resource {
 
 // GetFunc 相当于 Mux.GetFunc(pattern, func) 的简易写法
 func (r *Resource) GetFunc(fun http.HandlerFunc) *Resource {
-	return r.addFunc(fun, http.MethodGet)
+	return r.handleFunc(fun, http.MethodGet)
 }
 
 // PutFunc 相当于 Mux.PutFunc(pattern, func) 的简易写法
 func (r *Resource) PutFunc(fun http.HandlerFunc) *Resource {
-	return r.addFunc(fun, http.MethodPut)
+	return r.handleFunc(fun, http.MethodPut)
 }
 
 // PostFunc 相当于 Mux.PostFunc(pattern, func) 的简易写法
 func (r *Resource) PostFunc(fun http.HandlerFunc) *Resource {
-	return r.addFunc(fun, http.MethodPost)
+	return r.handleFunc(fun, http.MethodPost)
 }
 
 // DeleteFunc 相当于 Mux.DeleteFunc(pattern, func) 的简易写法
 func (r *Resource) DeleteFunc(fun http.HandlerFunc) *Resource {
-	return r.addFunc(fun, http.MethodDelete)
+	return r.handleFunc(fun, http.MethodDelete)
 }
 
 // PatchFunc 相当于 Mux.PatchFunc(pattern, func) 的简易写法
 func (r *Resource) PatchFunc(fun http.HandlerFunc) *Resource {
-	return r.addFunc(fun, http.MethodPatch)
+	return r.handleFunc(fun, http.MethodPatch)
 }
 
 // AnyFunc 相当于 Mux.AnyFunc(pattern, func) 的简易写法
 func (r *Resource) AnyFunc(fun http.HandlerFunc) *Resource {
-	return r.addFunc(fun, method.Default...)
+	return r.handleFunc(fun, method.Default...)
 }
 
 // Remove 删除指定匹配模式的路由项
