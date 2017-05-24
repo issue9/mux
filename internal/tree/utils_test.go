@@ -18,6 +18,9 @@ func TestPrefixLen(t *testing.T) {
 	a.Equal(prefixLen("/test", "test"), 0)
 	a.Equal(prefixLen("/test", "/abc"), 1)
 	a.Equal(prefixLen("/test", "/test"), 5)
+	a.Equal(prefixLen("/te{st", "/test"), 3)
+	a.Equal(prefixLen("/test", "/tes{t"), 4)
+	a.Equal(prefixLen("/tes{t}", "/tes{t}"), 7)
 }
 
 func TestCheckSyntax(t *testing.T) {
