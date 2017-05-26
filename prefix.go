@@ -69,7 +69,7 @@ func (p *Prefix) Any(pattern string, h http.Handler) *Prefix {
 }
 
 // HandleFunc 功能同 Mux.HandleFunc(prefix+pattern, fun, ...)
-func (p *Prefix) AddFunc(pattern string, fun http.HandlerFunc, methods ...string) error {
+func (p *Prefix) HandleFunc(pattern string, fun http.HandlerFunc, methods ...string) error {
 	return p.mux.HandleFunc(p.prefix+pattern, fun, methods...)
 }
 
