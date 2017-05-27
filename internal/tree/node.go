@@ -15,7 +15,8 @@ import (
 type nodeType int8
 
 const (
-	nodeTypeBasic nodeType = iota
+	nodeTypeUnknown nodeType = iota
+	nodeTypeBasic
 	nodeTypeNamed
 	nodeTypeRegexp
 	nodeTypeWildcard
