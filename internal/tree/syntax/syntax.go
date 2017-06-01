@@ -16,8 +16,7 @@ type Type int8
 
 // 表示路由项的类型
 const (
-	TypeUnknown Type = iota
-	TypeBasic
+	TypeBasic Type = iota + 1
 	TypeNamed
 	TypeRegexp
 	TypeWildcard
