@@ -26,6 +26,7 @@ const (
 	start     = '{'
 	end       = '}'
 	separator = ':'
+	wildcard  = '*'
 )
 
 // Segment 表示路由中最小的不可分割内容。
@@ -41,9 +42,24 @@ func Parse(str string) ([]*Segment, error) {
 	startIndex := 0
 	nType := TypeBasic
 	state := end // 表示当前的状态
+	isLast := len(str) - 1
 
 	for i := 0; i < len(str); i++ {
 		switch str[i] {
+		case wildcard:
+			if i < isLast {
+				return nil, fmt.Errorf("%s 只能出现在结尾", string(wildcard))
+			}
+
+			ss = append(ss, &Segment{
+				Value: str[startIndex:i],
+				Type:  nType,
+			}, &Segment{
+				Value: "*",
+				Type:  TypeWildcard,
+			})
+
+			return ss, nil
 		case start:
 			if state != end {
 				return nil, fmt.Errorf("不能嵌套 %s", string(start))
@@ -87,17 +103,10 @@ func Parse(str string) ([]*Segment, error) {
 	}
 
 	if startIndex < len(str) {
-		if strings.HasSuffix(str, "/*") {
-			ss = append(ss, &Segment{
-				Value: str[startIndex:],
-				Type:  TypeWildcard,
-			})
-		} else {
-			ss = append(ss, &Segment{
-				Value: str[startIndex:],
-				Type:  nType,
-			})
-		}
+		ss = append(ss, &Segment{
+			Value: str[startIndex:],
+			Type:  nType,
+		})
 	}
 
 	return ss, nil
