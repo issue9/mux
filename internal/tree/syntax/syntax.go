@@ -2,6 +2,7 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
+// Package syntax 主要处理路由语法。
 package syntax
 
 import (
@@ -15,8 +16,8 @@ type Type int8
 
 // 表示路由项的类型
 const (
-	TypeUnknown Type = 0
-	TypeBasic   Type = 1 << iota
+	TypeUnknown Type = iota
+	TypeBasic
 	TypeNamed
 	TypeRegexp
 	TypeWildcard
@@ -27,6 +28,81 @@ const (
 	end       = '}'
 	separator = ':'
 )
+
+// Segment 表示路由中最小的不可分割内容。
+type Segment struct {
+	Value string
+	Type  Type
+}
+
+// Parse 将字符串解析成 Segment 对象数组
+func Parse(str string) ([]*Segment, error) {
+	ss := make([]*Segment, 0, strings.Count(str, string(start)))
+
+	startIndex := 0
+	nType := TypeBasic
+	state := end // 表示当前的状态
+
+	for i := 0; i < len(str); i++ {
+		switch str[i] {
+		case start:
+			if state != end {
+				return nil, fmt.Errorf("不能嵌套 %s", string(start))
+			}
+			ss = append(ss, &Segment{
+				Value: str[startIndex:i],
+				Type:  nType,
+			})
+
+			startIndex = i
+			state = start
+			nType = TypeBasic // 记录了数据之后，重置为 TypeBasic
+		case separator:
+			if state != start {
+				return nil, fmt.Errorf(": 只能出现在 %v %v 中间", string(start), string(end))
+			}
+
+			if i == startIndex+1 {
+				return nil, errors.New("空的参数名称")
+			}
+
+			nType = TypeRegexp
+			state = separator
+		case end:
+			if state == end {
+				return nil, fmt.Errorf("%v %v 必须成对出现", string(start), string(end))
+			}
+
+			if i == startIndex+1 {
+				return nil, errors.New("空的参数名称")
+			}
+
+			if state == start {
+				nType = TypeNamed
+			} else {
+				nType = TypeRegexp
+			}
+
+			state = end
+		}
+	}
+
+	if startIndex < len(str) {
+		if strings.HasSuffix(str, "/*") {
+			ss = append(ss, &Segment{
+				Value: str[startIndex:],
+				Type:  TypeWildcard,
+			})
+		} else {
+			ss = append(ss, &Segment{
+				Value: str[startIndex:],
+				Type:  nType,
+			})
+		}
+	}
+
+	return ss, nil
+}
 
 // PrefixLen 判断两个字符串之间共同的开始内容的长度，
 // 不会从{} 中间被分开，正则表达式与之后的内容也不再分隔。
