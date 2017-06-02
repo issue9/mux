@@ -22,11 +22,12 @@ const (
 	TypeWildcard
 )
 
+// 路由项字符串中的几个特殊字符定义
 const (
-	start     = '{'
-	end       = '}'
-	separator = ':'
-	wildcard  = '*'
+	NameStart       byte = '{' // 包含命名参数的起始字符
+	NameEnd         byte = '}' // 包含命名参数的结束字符
+	RegexpSeparator byte = ':' // 名称和正则的分隔符
+	Wildcard        byte = '*' // 通配符
 )
 
 // Segment 表示路由中最小的不可分割内容。
@@ -37,18 +38,18 @@ type Segment struct {
 
 // Parse 将字符串解析成 Segment 对象数组
 func Parse(str string) ([]*Segment, error) {
-	ss := make([]*Segment, 0, strings.Count(str, string(start)))
+	ss := make([]*Segment, 0, strings.Count(str, string(NameStart)))
 
 	startIndex := 0
 	nType := TypeBasic
-	state := end // 表示当前的状态
+	state := NameEnd // 表示当前的状态
 	isLast := len(str) - 1
 
 	for i := 0; i < len(str); i++ {
 		switch str[i] {
-		case wildcard:
+		case Wildcard:
 			if i < isLast {
-				return nil, fmt.Errorf("%s 只能出现在结尾", string(wildcard))
+				return nil, fmt.Errorf("%s 只能出现在结尾", string(Wildcard))
 			}
 
 			ss = append(ss, &Segment{
@@ -60,9 +61,9 @@ func Parse(str string) ([]*Segment, error) {
 			})
 
 			return ss, nil
-		case start:
-			if state != end {
-				return nil, fmt.Errorf("不能嵌套 %s", string(start))
+		case NameStart:
+			if state != NameEnd {
+				return nil, fmt.Errorf("不能嵌套 %s", string(NameStart))
 			}
 			ss = append(ss, &Segment{
 				Value: str[startIndex:i],
@@ -70,11 +71,11 @@ func Parse(str string) ([]*Segment, error) {
 			})
 
 			startIndex = i
-			state = start
+			state = NameStart
 			nType = TypeBasic // 记录了数据之后，重置为 TypeBasic
-		case separator:
-			if state != start {
-				return nil, fmt.Errorf(": 只能出现在 %v %v 中间", string(start), string(end))
+		case RegexpSeparator:
+			if state != NameStart {
+				return nil, fmt.Errorf(": 只能出现在 %v %v 中间", string(NameStart), string(NameEnd))
 			}
 
 			if i == startIndex+1 {
@@ -82,23 +83,23 @@ func Parse(str string) ([]*Segment, error) {
 			}
 
 			nType = TypeRegexp
-			state = separator
-		case end:
-			if state == end {
-				return nil, fmt.Errorf("%v %v 必须成对出现", string(start), string(end))
+			state = RegexpSeparator
+		case NameEnd:
+			if state == NameEnd {
+				return nil, fmt.Errorf("%v %v 必须成对出现", string(NameStart), string(NameEnd))
 			}
 
 			if i == startIndex+1 {
 				return nil, errors.New("空的参数名称")
 			}
 
-			if state == start {
+			if state == NameStart {
 				nType = TypeNamed
 			} else {
 				nType = TypeRegexp
 			}
 
-			state = end
+			state = NameEnd
 		}
 	}
 
@@ -128,11 +129,11 @@ func PrefixLen(s1, s2 string) int {
 			return startIndex
 		}
 
-		if s1[i] == start {
+		if s1[i] == NameStart {
 			startIndex = i
 		}
 
-		if s1[i] == end {
+		if s1[i] == NameEnd {
 			startIndex = -1
 		}
 
