@@ -5,82 +5,238 @@
 package tree
 
 import (
+	"bytes"
+	"fmt"
 	"net/http"
 	"regexp"
 	"regexp/syntax"
 	"sort"
 	"strings"
-)
 
-type nodeType int8
-
-const (
-	nodeTypeUnknown nodeType = iota
-	nodeTypeBasic
-	nodeTypeNamed
-	nodeTypeRegexp
-	nodeTypeWildcard
+	ts "github.com/issue9/mux/internal/tree/syntax"
 )
 
 type node struct {
 	parent   *node
-	nodeType nodeType
+	nodeType ts.Type
 	children []*node
 	pattern  string
 	handlers *handlers
 
-	expr       *regexp.Regexp
-	syntaxExpr syntax.Regexp
-}
+	// 命名参数特有的参数
+	name   string // 命名时，缓存着名称
+	suffix string // 命名时，保存着命名之后的字符串内容
 
-func newNode(parent *node, pattern string) *node {
-	nType := nodeTypeBasic
-	if strings.IndexByte(pattern, start) > -1 {
-		nType = nodeTypeNamed
-	}
-	return &node{
-		parent:   parent,
-		pattern:  pattern,
-		nodeType: nType,
-	}
+	// 正则特有的参数
+	expr       *regexp.Regexp
+	syntaxExpr *syntax.Regexp
 }
 
 // 添加一条路由
-func (n *node) addToChild(pattern string, h http.Handler, methods ...string) error {
-	var ll int
-	var nn *node
-	for _, child := range n.children {
-		l := prefixLen(child.pattern, pattern)
+func (n *node) add(segments []*ts.Segment, h http.Handler, methods ...string) error {
+	current := segments[0]
+	isLast := len(segments) == 1
+	var child *node
 
-		if l > ll {
-			ll = l
-			nn = child
+	for _, c := range n.children {
+		if c.nodeType != current.Type {
+			continue
 		}
+
+		if c.pattern != current.Value {
+			continue
+		}
+
+		child = c
+		break
 	}
 
-	if nn == nil {
-		if n.children == nil {
-			n.children = make([]*node, 0, 10)
+	// 没有找到相关的子节点，新建一个 node 实例
+	if child == nil {
+		child = &node{
+			parent:   n,
+			pattern:  current.Value,
+			nodeType: current.Type,
 		}
-		n.children = append(n.children, newNode(n, pattern))
-		sort.SliceStable(n.children, func(i, j int) bool { return n.children[i].nodeType < n.children[j].nodeType })
-		return nil
+
+		if current.Type == ts.TypeNamed {
+			endIndex := strings.IndexByte(current.Value, ts.NameEnd)
+			child.suffix = current.Value[endIndex+1:]
+			child.name = current.Value[1:endIndex]
+		}
+
+		if current.Type == ts.TypeRegexp {
+			expr, err := regexp.Compile(current.Value)
+			if err != nil {
+				return err
+			}
+
+			syntaxExpr, err := syntax.Parse(current.Value, syntax.Perl)
+			if err != nil {
+				return err
+			}
+			child.expr = expr
+			child.syntaxExpr = syntaxExpr
+		}
+
+		n.children = append(n.children, child)
+		sort.SliceStable(n.children, func(i, j int) bool {
+			return n.children[i].nodeType < n.children[j].nodeType
+		})
 	}
 
-	nn.addToChild(pattern[ll:], h, methods...)
-
-	return nil
+	if isLast {
+		return child.handlers.add(h, methods...)
+	}
+	return child.add(segments[1:], h, methods...)
 }
 
 // remove
-func (n *node) remove(pattern string, methods ...string) {
+func (n *node) remove(segments []*ts.Segment, methods ...string) error {
+	current := segments[0]
+	isLast := len(segments) == 1
+	var child *node
 
+	for _, c := range n.children {
+		if c.pattern == current.Value {
+			child = c
+			break
+		}
+	}
+
+	if child == nil {
+		return fmt.Errorf("不存在的节点 %v", current.Value)
+	}
+
+	if !isLast {
+		return child.remove(segments[1:], methods...)
+	}
+
+	if child.handlers.remove(methods...) {
+		n.children = removeNodes(n.children, current.Value)
+	}
+	return nil
 }
 
 func (n *node) match(path string) *node {
+	var node *node
+	matched := false
 
-	// TODO
-	return nil
+	for _, node = range n.children {
+		switch node.nodeType {
+		case ts.TypeBasic:
+			matched = strings.HasPrefix(path, node.pattern)
+			path = path[len(node.pattern):]
+		case ts.TypeNamed:
+			index := strings.Index(path, node.suffix)
+			if index > 0 { // 为零说明前面没有命名参数，肯定不正确
+				matched = true
+				path = path[index+len(node.suffix):]
+			}
+		case ts.TypeRegexp:
+			loc := node.expr.FindStringIndex(path)
+			if loc != nil && loc[0] == 0 {
+				matched = true
+				path = path[loc[1]+1:]
+			}
+		case ts.TypeWildcard:
+			matched = true
+		}
+
+		if matched {
+			break
+		}
+	}
+
+	if !matched {
+		return nil
+	}
+	return node.match(path)
+}
+
+// params 由调用方确保能正常匹配 path
+func (n *node) params(path string) map[string]string {
+	nodes := make([]*node, 0, 10) // 从尾部向上开始获取节点
+	curr := n
+	for curr != nil {
+		nodes = append(nodes, curr)
+		curr = curr.parent
+	}
+
+	params := make(map[string]string, 10)
+
+	for i := len(nodes) - 1; i >= 0; i-- {
+		node := nodes[i]
+		switch node.nodeType {
+		case ts.TypeBasic:
+			path = path[len(node.pattern):]
+		case ts.TypeNamed:
+			index := strings.Index(path, node.suffix)
+			if index > 0 { // 为零说明前面没有命名参数，肯定不正确
+				params[node.name] = path[:index+1]
+				path = path[index+len(node.suffix):]
+			}
+		case ts.TypeRegexp:
+			// 正确匹配正则表达式，则获相关的正则表达式命名变量。
+			subexps := node.expr.SubexpNames()
+			args := node.expr.FindStringSubmatch(path)
+			for index, name := range subexps {
+				if len(name) > 0 && index < len(args) {
+					params[name] = args[index]
+				}
+			}
+		case ts.TypeWildcard:
+			params[string(ts.Wildcard)] = path
+		}
+	}
+
+	return params
+}
+
+func (n *node) url(params map[string]string, path string) (string, error) {
+	nodes := make([]*node, 0, 10) // 从尾部向上开始获取节点
+	curr := n
+	for curr != nil {
+		nodes = append(nodes, curr)
+		curr = curr.parent
+	}
+
+	buf := new(bytes.Buffer)
+
+LOOP:
+	for i := len(nodes) - 1; i >= 0; i-- {
+		node := nodes[i]
+		switch node.nodeType {
+		case ts.TypeBasic:
+			buf.WriteString(node.pattern)
+		case ts.TypeNamed:
+			buf.WriteString(params[node.name])
+			buf.WriteString(node.suffix)
+		case ts.TypeRegexp:
+			if node.syntaxExpr == nil {
+				continue LOOP
+			}
+
+			url := node.syntaxExpr.String()
+			for _, sub := range node.syntaxExpr.Sub {
+				if len(sub.Name) == 0 {
+					continue
+				}
+
+				param, exists := params[sub.Name]
+				if !exists {
+					return "", fmt.Errorf("未找到参数 %v 的值", sub.Name)
+				}
+				url = strings.Replace(url, sub.String(), param, -1)
+			}
+
+			buf.WriteString(url)
+		case ts.TypeWildcard:
+			params[string(ts.Wildcard)] = path
+		}
+	}
+
+	return buf.String(), nil
 }
 
 // 获取该节点下与参数相对应的处理函数
@@ -92,8 +248,22 @@ func (n *node) handler(method string) http.Handler {
 	return n.handlers.handler(method)
 }
 
-func (n *node) url(params map[string]string, path string) (string, error) {
-	//
+func removeNodes(nodes []*node, pattern string) []*node {
+	lastIndex := len(nodes) - 1
+	for index, n := range nodes {
+		if n.pattern != pattern {
+			continue
+		}
 
-	return "", nil
+		switch {
+		case len(nodes) == 1: // 只有一个元素
+			return nodes[:0]
+		case index == lastIndex: // 最后一个元素
+			return nodes[:lastIndex]
+		default:
+			return append(nodes[:index], nodes[index+1:]...)
+		}
+	} // end for
+
+	return nodes
 }
