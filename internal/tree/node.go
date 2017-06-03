@@ -32,6 +32,15 @@ type node struct {
 	syntaxExpr *syntax.Regexp
 }
 
+// priority
+func (n *node) priority() int {
+	if len(n.children) == 0 {
+		return int(n.nodeType)
+	}
+
+	return int(n.nodeType) + 1
+}
+
 // 添加一条路由
 func (n *node) add(segments []*ts.Segment, h http.Handler, methods ...string) error {
 	current := segments[0]
@@ -55,7 +64,7 @@ func (n *node) add(segments []*ts.Segment, h http.Handler, methods ...string) er
 			nodeType: current.Type,
 		}
 
-		if current.Type == ts.TypeNamed {
+		if current.Type == ts.TypeNamedBasic {
 			endIndex := strings.IndexByte(current.Value, ts.NameEnd)
 			child.suffix = current.Value[endIndex+1:]
 			child.name = current.Value[1:endIndex]
@@ -75,7 +84,7 @@ func (n *node) add(segments []*ts.Segment, h http.Handler, methods ...string) er
 
 		n.children = append(n.children, child)
 		sort.SliceStable(n.children, func(i, j int) bool {
-			return n.children[i].nodeType < n.children[j].nodeType
+			return n.children[i].priority() < n.children[j].priority()
 		})
 	}
 
@@ -128,15 +137,13 @@ func (n *node) match(path string) *node {
 				newPath = path[len(node.pattern):]
 			}
 		case ts.TypeNamed:
-			if len(node.suffix) == 0 { // 最后一个节点
+			matched = true
+			newPath = path[:0]
+		case ts.TypeNamedBasic:
+			index := strings.Index(path, node.suffix)
+			if index > 0 { // 为零说明前面没有命名参数，肯定不正确
 				matched = true
-				newPath = path[:0]
-			} else {
-				index := strings.Index(path, node.suffix)
-				if index > 0 { // 为零说明前面没有命名参数，肯定不正确
-					matched = true
-					newPath = path[index+len(node.suffix):]
-				}
+				newPath = path[index+len(node.suffix):]
 			}
 		case ts.TypeRegexp:
 			loc := node.expr.FindStringIndex(path)
@@ -146,7 +153,7 @@ func (n *node) match(path string) *node {
 			}
 		case ts.TypeWildcard:
 			matched = true
-			newPath = path[len(path)-1:]
+			newPath = path[:0]
 		default:
 			// nodeType 错误，肯定是代码级别的错误，直接 panic
 			panic("无效的 nodeType 值")
@@ -183,14 +190,12 @@ func (n *node) params(path string) map[string]string {
 		case ts.TypeBasic:
 			path = path[len(node.pattern):]
 		case ts.TypeNamed:
-			if len(node.suffix) == 0 {
-				params[node.name] = path
-			} else {
-				index := strings.Index(path, node.suffix)
-				if index > 0 { // 为零说明前面没有命名参数，肯定不正确
-					params[node.name] = path[:index+1]
-					path = path[index+len(node.suffix):]
-				}
+			params[node.name] = path
+		case ts.TypeNamedBasic:
+			index := strings.Index(path, node.suffix)
+			if index > 0 { // 为零说明前面没有命名参数，肯定不正确
+				params[node.name] = path[:index+1]
+				path = path[index+len(node.suffix):]
 			}
 		case ts.TypeRegexp:
 			// 正确匹配正则表达式，则获相关的正则表达式命名变量。

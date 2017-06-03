@@ -16,7 +16,7 @@ type Type int8
 
 // 表示路由项的类型，同时也表示节点的匹配优先级，值越小优先级越高。
 const (
-	TypeBasic Type = iota + 1
+	TypeBasic Type = iota + 2
 	TypeNamedBasic
 	TypeNamed
 	TypeRegexp
