@@ -30,11 +30,19 @@ func TestParse(t *testing.T) {
 
 	test("/posts/1", false, &Segment{Value: "/posts/1", Type: TypeBasic})
 
+	// 以命名参数开头的
+	test("/{action}", false, &Segment{Value: "/", Type: TypeBasic},
+		&Segment{Value: "{action}", Type: TypeNamed})
+
 	test("/posts/{id}", false, &Segment{Value: "/posts/", Type: TypeBasic},
 		&Segment{Value: "{id}", Type: TypeNamed})
 
 	test("/posts/{id}/author/profile", false, &Segment{Value: "/posts/", Type: TypeBasic},
-		&Segment{Value: "{id}/author/profile", Type: TypeNamed})
+		&Segment{Value: "{id}/author/profile", Type: TypeNamedBasic})
+
+	// 以 NamedBasic 结尾的
+	test("/posts/{id}/author", false, &Segment{Value: "/posts/", Type: TypeBasic},
+		&Segment{Value: "{id}/author", Type: TypeNamedBasic})
 
 	// 命名参数，通配符
 	test("/posts/{id}/*", false, &Segment{Value: "/posts/", Type: TypeBasic},

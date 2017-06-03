@@ -42,8 +42,8 @@ func Parse(str string) ([]*Segment, error) {
 	ss := make([]*Segment, 0, strings.Count(str, string(NameStart)))
 
 	startIndex := 0
-	endIndex := 0
-	separatorIndex := 0
+	endIndex := -1
+	separatorIndex := -1
 
 	nType := TypeBasic
 	state := NameEnd // 表示当前的状态
@@ -126,6 +126,10 @@ func Parse(str string) ([]*Segment, error) {
 	}
 
 	if startIndex < len(str) {
+		if nType == TypeNamed && str[len(str)-1] != NameEnd {
+			nType = TypeNamedBasic
+		}
+
 		ss = append(ss, &Segment{
 			Value: str[startIndex:],
 			Type:  nType,
