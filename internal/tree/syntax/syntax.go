@@ -18,8 +18,8 @@ type Type int8
 // 同时也会被用于表示节点的匹配优先级，值越小优先级越高。
 const (
 	TypeBasic Type = iota + 10
-	TypeNamed
 	TypeRegexp
+	TypeNamed
 	TypeWildcard
 )
 
