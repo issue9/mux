@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
-// Package syntax 主要处理路由语法。
+// Package syntax 处理路由语法。
 package syntax
 
 import (
@@ -14,9 +14,10 @@ import (
 // Type 表示路由项的类型
 type Type int8
 
-// 表示路由项的类型
+// 表示路由项的类型，同时也表示节点的匹配优先级，值越小优先级越高。
 const (
 	TypeBasic Type = iota + 1
+	TypeNamedBasic
 	TypeNamed
 	TypeRegexp
 	TypeWildcard
@@ -41,6 +42,9 @@ func Parse(str string) ([]*Segment, error) {
 	ss := make([]*Segment, 0, strings.Count(str, string(NameStart)))
 
 	startIndex := 0
+	endIndex := 0
+	separatorIndex := 0
+
 	nType := TypeBasic
 	state := NameEnd // 表示当前的状态
 	isLast := len(str) - 1
@@ -50,6 +54,10 @@ func Parse(str string) ([]*Segment, error) {
 		case Wildcard:
 			if i < isLast {
 				return nil, fmt.Errorf("%s 只能出现在结尾", string(Wildcard))
+			}
+
+			if endIndex+1 == i {
+				return nil, fmt.Errorf("不能同时出现 %v %v", string(NameEnd), string(Wildcard))
 			}
 
 			ss = append(ss, &Segment{
@@ -65,6 +73,14 @@ func Parse(str string) ([]*Segment, error) {
 			if state != NameEnd {
 				return nil, fmt.Errorf("不能嵌套 %s", string(NameStart))
 			}
+			if endIndex+1 == i {
+				return nil, errors.New("两个命名参数不能相邻")
+			}
+
+			if nType == TypeNamed {
+				nType = TypeNamedBasic
+			}
+
 			ss = append(ss, &Segment{
 				Value: str[startIndex:i],
 				Type:  nType,
@@ -84,6 +100,7 @@ func Parse(str string) ([]*Segment, error) {
 
 			nType = TypeRegexp
 			state = RegexpSeparator
+			separatorIndex = i
 		case NameEnd:
 			if state == NameEnd {
 				return nil, fmt.Errorf("%v %v 必须成对出现", string(NameStart), string(NameEnd))
@@ -93,6 +110,10 @@ func Parse(str string) ([]*Segment, error) {
 				return nil, errors.New("空的参数名称")
 			}
 
+			if i == separatorIndex+1 {
+				return nil, fmt.Errorf("无效的字符 %v", string(RegexpSeparator))
+			}
+
 			if state == NameStart {
 				nType = TypeNamed
 			} else {
@@ -100,6 +121,7 @@ func Parse(str string) ([]*Segment, error) {
 			}
 
 			state = NameEnd
+			endIndex = i
 		}
 	}
 

@@ -43,16 +43,12 @@ func TestParse(t *testing.T) {
 
 	// 两个命名参数
 	test("/posts/{id}/page/{page}", false, &Segment{Value: "/posts/", Type: TypeBasic},
-		&Segment{Value: "{id}/page/", Type: TypeNamed},
+		&Segment{Value: "{id}/page/", Type: TypeNamedBasic},
 		&Segment{Value: "{page}", Type: TypeNamed})
 
 	// 正则
 	test("/posts/{id:\\d+}", false, &Segment{Value: "/posts/", Type: TypeBasic},
 		&Segment{Value: "{id:\\d+}", Type: TypeRegexp})
-
-	// 正则
-	test("/posts/{id:}", false, &Segment{Value: "/posts/", Type: TypeBasic},
-		&Segment{Value: "{id:}", Type: TypeRegexp})
 
 	// 正则，命名参数
 	test("/posts/{id:\\d+}/page/{page}", false, &Segment{Value: "/posts/", Type: TypeBasic},
@@ -64,6 +60,7 @@ func TestParse(t *testing.T) {
 		&Segment{Value: "{id:\\d+}/", Type: TypeRegexp},
 		&Segment{Value: "*", Type: TypeWildcard})
 
+	test("/posts/{id:}", true, nil)
 	test("/posts/{{id:\\d+}/author", true, nil)
 	test("/posts/{id:\\d+}/*author", true, nil)
 	test("/posts/{id:\\d+}/*/author", true, nil)
@@ -71,6 +68,7 @@ func TestParse(t *testing.T) {
 	test("/posts/{}/author", true, nil)
 	test("/posts/:id/author", true, nil)
 	test("/posts/}/author", true, nil)
+	test("/posts/{id}*", true, nil) // 命名参数与 * 都可以匹配任意字符，无法判断从何处截断
 }
 
 func TestPrefixLen(t *testing.T) {
