@@ -117,40 +117,54 @@ func (n *node) remove(segments []*ts.Segment, methods ...string) error {
 	return nil
 }
 
+// 从子节点中查找与当前路径匹配的节点，若找不到，则返回 nil
 func (n *node) match(path string) *node {
-	var node *node
-	matched := false
+	for _, node := range n.children {
+		matched := false
+		newPath := path
 
-	for _, node = range n.children {
 		switch node.nodeType {
 		case ts.TypeBasic:
 			matched = strings.HasPrefix(path, node.pattern)
-			path = path[len(node.pattern):]
+			if matched {
+				newPath = path[len(node.pattern):]
+			}
 		case ts.TypeNamed:
-			index := strings.Index(path, node.suffix)
-			if index > 0 { // 为零说明前面没有命名参数，肯定不正确
+			if len(node.suffix) == 0 { // 最后一个节点
 				matched = true
-				path = path[index+len(node.suffix):]
+				newPath = path[:0]
+			} else {
+				index := strings.Index(path, node.suffix)
+				if index > 0 { // 为零说明前面没有命名参数，肯定不正确
+					matched = true
+					newPath = path[index+len(node.suffix):]
+				}
 			}
 		case ts.TypeRegexp:
 			loc := node.expr.FindStringIndex(path)
 			if loc != nil && loc[0] == 0 {
 				matched = true
-				path = path[loc[1]+1:]
+				newPath = path[loc[1]+1:]
 			}
 		case ts.TypeWildcard:
 			matched = true
+			newPath = path[len(path)-1:]
+		default:
+			// TODO error ?
 		}
 
 		if matched {
-			break
-		}
-	}
+			if len(newPath) == 0 { // 当前为最后节点
+				return node
+			}
 
-	if !matched {
-		return nil
-	}
-	return node.match(path)
+			if nn := node.match(newPath); nn != nil {
+				return nn
+			}
+		}
+	} // end for
+
+	return nil
 }
 
 // params 由调用方确保能正常匹配 path
@@ -170,10 +184,14 @@ func (n *node) params(path string) map[string]string {
 		case ts.TypeBasic:
 			path = path[len(node.pattern):]
 		case ts.TypeNamed:
-			index := strings.Index(path, node.suffix)
-			if index > 0 { // 为零说明前面没有命名参数，肯定不正确
-				params[node.name] = path[:index+1]
-				path = path[index+len(node.suffix):]
+			if len(node.suffix) == 0 {
+				params[node.name] = path
+			} else {
+				index := strings.Index(path, node.suffix)
+				if index > 0 { // 为零说明前面没有命名参数，肯定不正确
+					params[node.name] = path[:index+1]
+					path = path[index+len(node.suffix):]
+				}
 			}
 		case ts.TypeRegexp:
 			// 正确匹配正则表达式，则获相关的正则表达式命名变量。

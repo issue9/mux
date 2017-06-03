@@ -28,10 +28,34 @@ func TestNode_add_remove(t *testing.T) {
 	a.NotError(node.add(newSegments(a, "/posts/{id}/author"), h1, http.MethodGet))
 	a.NotError(node.add(newSegments(a, "/posts/1/author"), h1, http.MethodGet))
 
-	// / 和 /test/
+	// / 和 /posts/ 以及 /posts/1/author
 	a.Equal(len(node.children), 3)
-
 	node.print(0)
+
+	node.remove(newSegments(a, "/posts/1/author"), http.MethodGet)
+	// / 和 /posts/
+	a.Equal(len(node.children), 2)
+
+	node.remove(newSegments(a, "/posts/{id}/author"), http.MethodGet)
+	// / 和 /posts/
+	a.Equal(len(node.children), 2)
+}
+
+func TestNode_match(t *testing.T) {
+	a := assert.New(t)
+
+	node := &node{}
+
+	a.NotError(node.add(newSegments(a, "/"), h1, http.MethodGet))
+	a.NotError(node.add(newSegments(a, "/posts/{id}"), h2, http.MethodGet))
+	a.NotError(node.add(newSegments(a, "/posts/{id}/author"), h3, http.MethodGet))
+	a.NotError(node.add(newSegments(a, "/posts/1/author"), h4, http.MethodGet))
+
+	a.Equal(node.match("/").handlers.handlers[http.MethodGet], h1)
+	a.Equal(node.match("/posts/1").handlers.handlers[http.MethodGet], h2)
+	a.Equal(node.match("/posts/2").handlers.handlers[http.MethodGet], h2)
+	a.Equal(node.match("/posts/2/author").handlers.handlers[http.MethodGet], h3)
+	a.Equal(node.match("/posts/1/author").handlers.handlers[http.MethodGet], h4)
 }
 
 func TestRemoveNoddes(t *testing.T) {
