@@ -17,7 +17,6 @@ type Type int8
 // 表示路由项的类型，同时也表示节点的匹配优先级，值越小优先级越高。
 const (
 	TypeBasic Type = iota + 2
-	TypeNamedBasic
 	TypeNamed
 	TypeRegexp
 	TypeWildcard
@@ -28,7 +27,6 @@ const (
 	NameStart       byte = '{' // 包含命名参数的起始字符
 	NameEnd         byte = '}' // 包含命名参数的结束字符
 	RegexpSeparator byte = ':' // 名称和正则的分隔符
-	Wildcard        byte = '*' // 通配符
 )
 
 // Segment 表示路由中最小的不可分割内容。
@@ -47,38 +45,15 @@ func Parse(str string) ([]*Segment, error) {
 
 	nType := TypeBasic
 	state := NameEnd // 表示当前的状态
-	isLast := len(str) - 1
 
 	for i := 0; i < len(str); i++ {
 		switch str[i] {
-		case Wildcard:
-			if i < isLast {
-				return nil, fmt.Errorf("%s 只能出现在结尾", string(Wildcard))
-			}
-
-			if endIndex+1 == i {
-				return nil, fmt.Errorf("不能同时出现 %v %v", string(NameEnd), string(Wildcard))
-			}
-
-			ss = append(ss, &Segment{
-				Value: str[startIndex:i],
-				Type:  nType,
-			}, &Segment{
-				Value: "*",
-				Type:  TypeWildcard,
-			})
-
-			return ss, nil
 		case NameStart:
 			if state != NameEnd {
 				return nil, fmt.Errorf("不能嵌套 %s", string(NameStart))
 			}
 			if endIndex+1 == i {
 				return nil, errors.New("两个命名参数不能相邻")
-			}
-
-			if nType == TypeNamed {
-				nType = TypeNamedBasic
 			}
 
 			ss = append(ss, &Segment{
@@ -126,8 +101,8 @@ func Parse(str string) ([]*Segment, error) {
 	}
 
 	if startIndex < len(str) {
-		if nType == TypeNamed && str[len(str)-1] != NameEnd {
-			nType = TypeNamedBasic
+		if str[len(str)-1] == NameEnd && nType == TypeNamed {
+			nType = TypeWildcard
 		}
 
 		ss = append(ss, &Segment{

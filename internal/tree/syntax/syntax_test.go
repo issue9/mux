@@ -32,27 +32,23 @@ func TestParse(t *testing.T) {
 
 	// 以命名参数开头的
 	test("/{action}", false, &Segment{Value: "/", Type: TypeBasic},
-		&Segment{Value: "{action}", Type: TypeNamed})
+		&Segment{Value: "{action}", Type: TypeWildcard})
 
+	// 以通配符结尾
 	test("/posts/{id}", false, &Segment{Value: "/posts/", Type: TypeBasic},
-		&Segment{Value: "{id}", Type: TypeNamed})
+		&Segment{Value: "{id}", Type: TypeWildcard})
 
 	test("/posts/{id}/author/profile", false, &Segment{Value: "/posts/", Type: TypeBasic},
-		&Segment{Value: "{id}/author/profile", Type: TypeNamedBasic})
+		&Segment{Value: "{id}/author/profile", Type: TypeNamed})
 
-	// 以 NamedBasic 结尾的
+	// 以命名参数结尾的
 	test("/posts/{id}/author", false, &Segment{Value: "/posts/", Type: TypeBasic},
-		&Segment{Value: "{id}/author", Type: TypeNamedBasic})
+		&Segment{Value: "{id}/author", Type: TypeNamed})
 
-	// 命名参数，通配符
-	test("/posts/{id}/*", false, &Segment{Value: "/posts/", Type: TypeBasic},
-		&Segment{Value: "{id}/", Type: TypeNamed},
-		&Segment{Value: "*", Type: TypeWildcard})
-
-	// 两个命名参数
+	// 命名参数及通配符
 	test("/posts/{id}/page/{page}", false, &Segment{Value: "/posts/", Type: TypeBasic},
-		&Segment{Value: "{id}/page/", Type: TypeNamedBasic},
-		&Segment{Value: "{page}", Type: TypeNamed})
+		&Segment{Value: "{id}/page/", Type: TypeNamed},
+		&Segment{Value: "{page}", Type: TypeWildcard})
 
 	// 正则
 	test("/posts/{id:\\d+}", false, &Segment{Value: "/posts/", Type: TypeBasic},
@@ -61,22 +57,14 @@ func TestParse(t *testing.T) {
 	// 正则，命名参数
 	test("/posts/{id:\\d+}/page/{page}", false, &Segment{Value: "/posts/", Type: TypeBasic},
 		&Segment{Value: "{id:\\d+}/page/", Type: TypeRegexp},
-		&Segment{Value: "{page}", Type: TypeNamed})
-
-	// 正则，通配符
-	test("/posts/{id:\\d+}/*", false, &Segment{Value: "/posts/", Type: TypeBasic},
-		&Segment{Value: "{id:\\d+}/", Type: TypeRegexp},
-		&Segment{Value: "*", Type: TypeWildcard})
+		&Segment{Value: "{page}", Type: TypeWildcard})
 
 	test("/posts/{id:}", true, nil)
 	test("/posts/{{id:\\d+}/author", true, nil)
-	test("/posts/{id:\\d+}/*author", true, nil)
-	test("/posts/{id:\\d+}/*/author", true, nil)
 	test("/posts/{:\\d+}/author", true, nil)
 	test("/posts/{}/author", true, nil)
 	test("/posts/:id/author", true, nil)
 	test("/posts/}/author", true, nil)
-	test("/posts/{id}*", true, nil) // 命名参数与 * 都可以匹配任意字符，无法判断从何处截断
 }
 
 func TestPrefixLen(t *testing.T) {

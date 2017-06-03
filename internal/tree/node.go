@@ -64,7 +64,7 @@ func (n *node) add(segments []*ts.Segment, h http.Handler, methods ...string) er
 			nodeType: current.Type,
 		}
 
-		if current.Type == ts.TypeNamedBasic {
+		if current.Type == ts.TypeNamed {
 			endIndex := strings.IndexByte(current.Value, ts.NameEnd)
 			child.suffix = current.Value[endIndex+1:]
 			child.name = current.Value[1:endIndex]
@@ -137,9 +137,6 @@ func (n *node) match(path string) *node {
 				newPath = path[len(node.pattern):]
 			}
 		case ts.TypeNamed:
-			matched = true
-			newPath = path[:0]
-		case ts.TypeNamedBasic:
 			index := strings.Index(path, node.suffix)
 			if index > 0 { // 为零说明前面没有命名参数，肯定不正确
 				matched = true
@@ -190,8 +187,6 @@ func (n *node) params(path string) map[string]string {
 		case ts.TypeBasic:
 			path = path[len(node.pattern):]
 		case ts.TypeNamed:
-			params[node.name] = path
-		case ts.TypeNamedBasic:
 			index := strings.Index(path, node.suffix)
 			if index > 0 { // 为零说明前面没有命名参数，肯定不正确
 				params[node.name] = path[:index+1]
@@ -207,7 +202,7 @@ func (n *node) params(path string) map[string]string {
 				}
 			}
 		case ts.TypeWildcard:
-			params[string(ts.Wildcard)] = path
+			params[node.name] = path
 		}
 	}
 
@@ -253,7 +248,7 @@ LOOP:
 
 			buf.WriteString(url)
 		case ts.TypeWildcard:
-			params[string(ts.Wildcard)] = path
+			buf.WriteString(path)
 		}
 	}
 
