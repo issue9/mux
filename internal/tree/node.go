@@ -39,11 +39,7 @@ func (n *node) add(segments []*ts.Segment, h http.Handler, methods ...string) er
 	var child *node
 
 	for _, c := range n.children {
-		if c.nodeType != current.Type {
-			continue
-		}
-
-		if c.pattern != current.Value {
+		if c.nodeType != current.Type || c.pattern != current.Value {
 			continue
 		}
 
@@ -86,6 +82,9 @@ func (n *node) add(segments []*ts.Segment, h http.Handler, methods ...string) er
 	}
 
 	if isLast {
+		if child.handlers == nil {
+			child.handlers = newHandlers()
+		}
 		return child.handlers.add(h, methods...)
 	}
 	return child.add(segments[1:], h, methods...)
@@ -246,6 +245,15 @@ func (n *node) handler(method string) http.Handler {
 	}
 
 	return n.handlers.handler(method)
+}
+
+// 向客户端打印节点的树状结构
+func (n *node) print(deep int) {
+	fmt.Println(strings.Repeat(" ", deep*4), n.pattern)
+
+	for _, child := range n.children {
+		child.print(deep + 1)
+	}
 }
 
 func removeNodes(nodes []*node, pattern string) []*node {

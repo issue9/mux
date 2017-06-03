@@ -5,10 +5,34 @@
 package tree
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/issue9/assert"
+	ts "github.com/issue9/mux/internal/tree/syntax"
 )
+
+func newSegments(a *assert.Assertion, pattern string) []*ts.Segment {
+	ss, err := ts.Parse(pattern)
+	a.NotError(err).NotNil(ss)
+
+	return ss
+}
+
+func TestNode_add_remove(t *testing.T) {
+	a := assert.New(t)
+	node := &node{}
+
+	a.NotError(node.add(newSegments(a, "/"), h1, http.MethodGet))
+	a.NotError(node.add(newSegments(a, "/posts/{id}"), h1, http.MethodGet))
+	a.NotError(node.add(newSegments(a, "/posts/{id}/author"), h1, http.MethodGet))
+	a.NotError(node.add(newSegments(a, "/posts/1/author"), h1, http.MethodGet))
+
+	// / 和 /test/
+	a.Equal(len(node.children), 3)
+
+	node.print(0)
+}
 
 func TestRemoveNoddes(t *testing.T) {
 	a := assert.New(t)
