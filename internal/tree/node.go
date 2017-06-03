@@ -32,7 +32,8 @@ type node struct {
 	syntaxExpr *syntax.Regexp
 }
 
-// priority
+// 当前节点的优先级，根据节点类型来判断，
+// 若类型相同时，则有子节点的优先级低一些，但不会超过不同节点类型。
 func (n *node) priority() int {
 	if len(n.children) == 0 {
 		return int(n.nodeType)

@@ -63,7 +63,9 @@ func TestParse(t *testing.T) {
 	test("/posts/{{id:\\d+}/author", true, nil)
 	test("/posts/{:\\d+}/author", true, nil)
 	test("/posts/{}/author", true, nil)
+	test("/posts/{id}{page}/", true, nil)
 	test("/posts/:id/author", true, nil)
+	test("/posts/{id}/{author", true, nil)
 	test("/posts/}/author", true, nil)
 }
 
@@ -79,4 +81,23 @@ func TestPrefixLen(t *testing.T) {
 	a.Equal(PrefixLen("/test", "/tes{t"), 4)
 	a.Equal(PrefixLen("/tes{t}", "/tes{t}"), 7)
 	a.Equal(PrefixLen("/tes{t:\\d+}", "/tes{t:\\d+}"), 4)
+}
+
+func BenchmarkParse(b *testing.B) {
+	patterns := []string{
+		"/",
+		"/posts/1",
+		"/posts/{id}",
+		"/posts/{id}/author/profile",
+		"/posts/{id}/author",
+	}
+
+	for i := 0; i < b.N; i++ {
+		for index, pattern := range patterns {
+			v, _ := Parse(pattern)
+			if v == nil {
+				b.Error("BenchmarkParse: %d", index)
+			}
+		}
+	}
 }

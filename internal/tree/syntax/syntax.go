@@ -14,9 +14,10 @@ import (
 // Type 表示路由项的类型
 type Type int8
 
-// 表示路由项的类型，同时也表示节点的匹配优先级，值越小优先级越高。
+// 表示路由项的类型。
+// 同时也会被用于表示节点的匹配优先级，值越小优先级越高。
 const (
-	TypeBasic Type = iota + 2
+	TypeBasic Type = iota + 10
 	TypeNamed
 	TypeRegexp
 	TypeWildcard
@@ -66,14 +67,13 @@ func Parse(str string) ([]*Segment, error) {
 			nType = TypeBasic // 记录了数据之后，重置为 TypeBasic
 		case RegexpSeparator:
 			if state != NameStart {
-				return nil, fmt.Errorf(": 只能出现在 %v %v 中间", string(NameStart), string(NameEnd))
+				return nil, fmt.Errorf("字符(:)只能出现在 %v %v 中间", string(NameStart), string(NameEnd))
 			}
 
 			if i == startIndex+1 {
-				return nil, errors.New("空的参数名称")
+				return nil, errors.New("未指定参数名称")
 			}
 
-			nType = TypeRegexp
 			state = RegexpSeparator
 			separatorIndex = i
 		case NameEnd:
@@ -82,11 +82,11 @@ func Parse(str string) ([]*Segment, error) {
 			}
 
 			if i == startIndex+1 {
-				return nil, errors.New("空的参数名称")
+				return nil, errors.New("未指定参数名称")
 			}
 
 			if i == separatorIndex+1 {
-				return nil, fmt.Errorf("无效的字符 %v", string(RegexpSeparator))
+				return nil, errors.New("未指定的正则表达式")
 			}
 
 			if state == NameStart {
@@ -101,6 +101,11 @@ func Parse(str string) ([]*Segment, error) {
 	}
 
 	if startIndex < len(str) {
+		if state != NameEnd {
+			return nil, fmt.Errorf("缺少 %s 字符", string(NameEnd))
+		}
+
+		// 最后一个节点是命名节点，则转换成通配符模式
 		if str[len(str)-1] == NameEnd && nType == TypeNamed {
 			nType = TypeWildcard
 		}
