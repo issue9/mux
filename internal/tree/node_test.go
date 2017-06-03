@@ -6,6 +6,7 @@ package tree
 
 import (
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/issue9/assert"
@@ -43,19 +44,32 @@ func TestNode_add_remove(t *testing.T) {
 
 func TestNode_match(t *testing.T) {
 	a := assert.New(t)
-
 	node := &node{}
 
+	// 添加路由项
 	a.NotError(node.add(newSegments(a, "/"), h1, http.MethodGet))
 	a.NotError(node.add(newSegments(a, "/posts/{id}"), h2, http.MethodGet))
 	a.NotError(node.add(newSegments(a, "/posts/{id}/author"), h3, http.MethodGet))
 	a.NotError(node.add(newSegments(a, "/posts/1/author"), h4, http.MethodGet))
 
-	a.Equal(node.match("/").handlers.handlers[http.MethodGet], h1)
-	a.Equal(node.match("/posts/1").handlers.handlers[http.MethodGet], h2)
-	a.Equal(node.match("/posts/2").handlers.handlers[http.MethodGet], h2)
-	a.Equal(node.match("/posts/2/author").handlers.handlers[http.MethodGet], h3)
-	a.Equal(node.match("/posts/1/author").handlers.handlers[http.MethodGet], h4)
+	test := func(path, method string, code int) {
+		n := node.match(path)
+		a.NotNil(n)
+		a.NotNil(n.handlers)
+		h := n.handlers.handler(method)
+		a.NotNil(h)
+
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(method, path, nil)
+		h.ServeHTTP(w, r)
+		a.Equal(w.Code, code)
+	}
+
+	test("/", http.MethodGet, 1)
+	test("/posts/1", http.MethodGet, 2)
+	test("/posts/2", http.MethodGet, 2)
+	test("/posts/2/author", http.MethodGet, 3)
+	test("/posts/1/author", http.MethodGet, 4)
 }
 
 func TestRemoveNoddes(t *testing.T) {

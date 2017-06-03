@@ -59,9 +59,7 @@ func (n *node) add(segments []*ts.Segment, h http.Handler, methods ...string) er
 			endIndex := strings.IndexByte(current.Value, ts.NameEnd)
 			child.suffix = current.Value[endIndex+1:]
 			child.name = current.Value[1:endIndex]
-		}
-
-		if current.Type == ts.TypeRegexp {
+		} else if current.Type == ts.TypeRegexp {
 			expr, err := regexp.Compile(current.Value)
 			if err != nil {
 				return err
@@ -150,7 +148,8 @@ func (n *node) match(path string) *node {
 			matched = true
 			newPath = path[len(path)-1:]
 		default:
-			// TODO error ?
+			// nodeType 错误，肯定是代码级别的错误，直接 panic
+			panic("无效的 nodeType 值")
 		}
 
 		if matched {
