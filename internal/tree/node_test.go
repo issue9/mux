@@ -24,10 +24,11 @@ func TestNode_add_remove(t *testing.T) {
 	a := assert.New(t)
 	node := &node{}
 
-	a.NotError(node.add(newSegments(a, "/"), h1, http.MethodGet))
-	a.NotError(node.add(newSegments(a, "/posts/{id}"), h1, http.MethodGet))
-	a.NotError(node.add(newSegments(a, "/posts/{id}/author"), h1, http.MethodGet))
-	a.NotError(node.add(newSegments(a, "/posts/1/author"), h1, http.MethodGet))
+	a.NotError(node.add(newSegments(a, "/"), buildHandler(1), http.MethodGet))
+	a.NotError(node.add(newSegments(a, "/posts/{id}"), buildHandler(1), http.MethodGet))
+	a.NotError(node.add(newSegments(a, "/posts/{id}/author"), buildHandler(1), http.MethodGet))
+	a.NotError(node.add(newSegments(a, "/posts/1/author"), buildHandler(1), http.MethodGet))
+	a.NotError(node.add(newSegments(a, "/posts/{id}/{author:\\w+}/profile"), buildHandler(1), http.MethodGet))
 
 	// / 和 /posts/ 以及 /posts/1/author
 	a.Equal(len(node.children), 3)
@@ -42,15 +43,15 @@ func TestNode_add_remove(t *testing.T) {
 	a.Equal(len(node.children), 2)
 }
 
-func TestNode_match(t *testing.T) {
+func TestNode_match_1(t *testing.T) {
 	a := assert.New(t)
 	node := &node{}
 
 	// 添加路由项
-	a.NotError(node.add(newSegments(a, "/"), h1, http.MethodGet))
-	a.NotError(node.add(newSegments(a, "/posts/{id}"), h2, http.MethodGet))
-	a.NotError(node.add(newSegments(a, "/posts/{id}/author"), h3, http.MethodGet))
-	a.NotError(node.add(newSegments(a, "/posts/1/author"), h4, http.MethodGet))
+	a.NotError(node.add(newSegments(a, "/"), buildHandler(1), http.MethodGet))
+	a.NotError(node.add(newSegments(a, "/posts/{id}"), buildHandler(2), http.MethodGet))
+	a.NotError(node.add(newSegments(a, "/posts/{id}/author"), buildHandler(3), http.MethodGet))
+	a.NotError(node.add(newSegments(a, "/posts/1/author"), buildHandler(4), http.MethodGet))
 
 	test := func(path, method string, code int) {
 		n := node.match(path)
@@ -70,6 +71,24 @@ func TestNode_match(t *testing.T) {
 	test("/posts/2", http.MethodGet, 2)
 	test("/posts/2/author", http.MethodGet, 3)
 	test("/posts/1/author", http.MethodGet, 4)
+}
+
+func TestNode_getParents(t *testing.T) {
+	a := assert.New(t)
+
+	n1 := &node{
+		children: make([]*node, 0, 1),
+	}
+	n2 := &node{
+		children: make([]*node, 0, 1),
+		parent:   n1,
+	}
+	n3 := &node{
+		parent: n2,
+	}
+
+	a.Equal(n3.getParents(), []*node{n3, n2, n1})
+	a.Equal(n2.getParents(), []*node{n2, n1})
 }
 
 func TestRemoveNoddes(t *testing.T) {

@@ -173,12 +173,7 @@ func (n *node) match(path string) *node {
 
 // params 由调用方确保能正常匹配 path
 func (n *node) params(path string) map[string]string {
-	nodes := make([]*node, 0, 10) // 从尾部向上开始获取节点
-	curr := n
-	for curr != nil {
-		nodes = append(nodes, curr)
-		curr = curr.parent
-	}
+	nodes := n.getParents()
 
 	params := make(map[string]string, 10)
 
@@ -211,13 +206,7 @@ func (n *node) params(path string) map[string]string {
 }
 
 func (n *node) url(params map[string]string, path string) (string, error) {
-	nodes := make([]*node, 0, 10) // 从尾部向上开始获取节点
-	curr := n
-	for curr != nil {
-		nodes = append(nodes, curr)
-		curr = curr.parent
-	}
-
+	nodes := n.getParents()
 	buf := new(bytes.Buffer)
 
 LOOP:
@@ -254,6 +243,17 @@ LOOP:
 	}
 
 	return buf.String(), nil
+}
+
+// 逐级向上获取父节点，包含当前节点。
+func (n *node) getParents() []*node {
+	nodes := make([]*node, 0, 10) // 从尾部向上开始获取节点
+
+	for curr := n; curr != nil; curr = curr.parent {
+		nodes = append(nodes, curr)
+	}
+
+	return nodes
 }
 
 // 获取该节点下与参数相对应的处理函数

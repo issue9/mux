@@ -6,25 +6,8 @@ package tree
 
 import "net/http"
 
-var (
-	h1 = http.HandlerFunc(f1)
-	h2 = http.HandlerFunc(f2)
-	h3 = http.HandlerFunc(f3)
-	h4 = http.HandlerFunc(f4)
-)
-
-func f1(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(1)
-}
-
-func f2(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(2)
-}
-
-func f3(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(3)
-}
-
-func f4(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(4)
+func buildHandler(code int) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(code)
+	})
 }
