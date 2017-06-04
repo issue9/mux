@@ -161,3 +161,22 @@ func PrefixLen(s1, s2 string) int {
 
 	return l
 }
+
+// StringType 获取字符串的类型。
+// 调用者需要确保 str 语法正确。
+func StringType(str string) Type {
+	typ := TypeBasic
+
+	for i := 0; i < len(str); i++ {
+		switch str[i] {
+		case RegexpSeparator:
+			typ = TypeRegexp
+		case NameStart:
+			typ = TypeNamed
+		case NameEnd:
+			break
+		}
+	} // end for
+
+	return typ
+}

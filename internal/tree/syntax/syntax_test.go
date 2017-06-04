@@ -105,8 +105,17 @@ func BenchmarkParse(b *testing.B) {
 		for index, pattern := range patterns {
 			v, _ := Parse(pattern)
 			if v == nil {
-				b.Error("BenchmarkParse: %d", index)
+				b.Errorf("BenchmarkParse: %d", index)
 			}
 		}
 	}
+}
+
+func TestStringType(t *testing.T) {
+	a := assert.New(t)
+
+	a.Equal(StringType("/posts"), TypeBasic)
+	a.Equal(StringType("/posts/{id}"), TypeNamed)
+	a.Equal(StringType("/posts/{id}/author"), TypeNamed)
+	a.Equal(StringType("/posts/{id:\\d+}/author"), TypeRegexp)
 }
