@@ -99,6 +99,22 @@ func TestNode_add_remove(t *testing.T) {
 	a.Equal(len(node.children), 2)
 }
 
+func TestNode_find(t *testing.T) {
+	a := assert.New(t)
+	node := &node{}
+
+	a.NotError(node.add(newSegments(a, "/"), buildHandler(1), http.MethodGet))
+	a.NotError(node.add(newSegments(a, "/posts/{id}"), buildHandler(1), http.MethodGet))
+	a.NotError(node.add(newSegments(a, "/posts/{id}/author"), buildHandler(1), http.MethodGet))
+	a.NotError(node.add(newSegments(a, "/posts/1/author"), buildHandler(1), http.MethodGet))
+	a.NotError(node.add(newSegments(a, "/posts/{id}/{author:\\w+}/profile"), buildHandler(1), http.MethodGet))
+
+	a.Equal(node.find("/").pattern, "/")
+	a.Equal(node.find("/posts/{id}").pattern, "{id}")
+	a.Equal(node.find("/posts/{id}/author").pattern, "{id}/author")
+	a.Equal(node.find("/posts/{id}/{author:\\w+}/profile").pattern, "{author:\\w+}/profile")
+}
+
 func TestNode_clean(t *testing.T) {
 	a := assert.New(t)
 	node := &node{}

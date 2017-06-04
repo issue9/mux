@@ -51,3 +51,8 @@ func (tree *Tree) Add(pattern string, h http.Handler, methods ...string) error {
 func (tree *Tree) Match(path string) Noder {
 	return tree.match(path)
 }
+
+// Find 查找路由项，不存在返回 nil
+func (tree *Tree) Find(pattern string) Noder {
+	return tree.find(pattern)
+}

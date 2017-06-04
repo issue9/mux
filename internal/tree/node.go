@@ -114,6 +114,28 @@ func (n *node) add(segments []*ts.Segment, h http.Handler, methods ...string) er
 	return child.add(segments[1:], h, methods...)
 }
 
+// 查找路由项，不存在返回 nil
+func (n *node) find(pattern string) *node {
+	for _, child := range n.children {
+		if len(child.pattern) < len(pattern) {
+			if !strings.HasPrefix(pattern, child.pattern) {
+				continue
+			}
+
+			nn := child.find(pattern[len(child.pattern):])
+			if nn != nil {
+				return nn
+			}
+		}
+
+		if child.pattern == pattern {
+			return child
+		}
+	}
+
+	return nil
+}
+
 // 清除路由项
 func (n *node) clean(prefix string) {
 	if len(prefix) == 0 {
