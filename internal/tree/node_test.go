@@ -33,13 +33,12 @@ func (n *nodeTest) add(method, pattern string, code int) {
 	n.a.NotError(n.n.add(segs, buildHandler(code), method))
 }
 
-// 验证指定的路径是否匹配正确的路由项，通过 code 来确定
+// 验证指定的路径是否匹配正确的路由项，通过 code 来确定，并返回该节点的实例。
 func (n *nodeTest) matchTrue(method, path string, code int) *node {
 	nn := n.n.match(path)
 	n.a.NotNil(nn)
-	n.a.NotNil(nn.handlers)
 
-	h := nn.handlers.handler(method)
+	h := nn.handler(method)
 	n.a.NotNil(h)
 
 	w := httptest.NewRecorder()
@@ -56,6 +55,16 @@ func (n *nodeTest) paramsTrue(method, path string, code int, params map[string]s
 
 	ps := nn.params(path)
 	n.a.Equal(ps, params)
+}
+
+// 验证 node.url 的正确性
+// method+path 用于获取指定的节点
+func (n *nodeTest) urlTrue(method, path string, code int, params map[string]string, url string) {
+	nn := n.matchTrue(method, path, code)
+
+	u, err := nn.url(params)
+	n.a.NotError(err)
+	n.a.Equal(u, url)
 }
 
 func newSegments(a *assert.Assertion, pattern string) []*ts.Segment {
@@ -127,6 +136,22 @@ func TestNode_params(t *testing.T) {
 	// 命名
 	test.paramsTrue(http.MethodGet, "/posts/1.html", 1, map[string]string{"id": "1.html"})
 	test.paramsTrue(http.MethodGet, "/posts/1.html/author/profile/", 2, map[string]string{"id": "1.html", "action": "profile"})
+}
+
+func TestNode_url(t *testing.T) {
+	a := assert.New(t)
+	test := newNodeTest(a)
+
+	// 添加路由项
+	test.add(http.MethodGet, "/posts/{id}", 1)                       // 命名
+	test.add(http.MethodGet, "/posts/{id}/author/{action}/", 2)      // 命名
+	test.add(http.MethodGet, "/posts/{id:\\d+}", 3)                  // 正则
+	test.add(http.MethodGet, "/posts/{id:\\d+}/author/{action}/", 4) // 正则
+
+	test.urlTrue(http.MethodGet, "/posts/1", 3, map[string]string{"id": "100"}, "/posts/100")
+	test.urlTrue(http.MethodGet, "/posts/1/author/profile/", 4, map[string]string{"id": "100", "action": "p"}, "/posts/100/author/p/")
+	test.urlTrue(http.MethodGet, "/posts/1.html", 1, map[string]string{"id": "100.htm"}, "/posts/100.htm")
+	test.urlTrue(http.MethodGet, "/posts/1.html/author/profile/", 2, map[string]string{"id": "100.htm", "action": "p"}, "/posts/100.htm/author/p/")
 }
 
 func TestNode_getParents(t *testing.T) {

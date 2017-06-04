@@ -234,7 +234,8 @@ LOOP:
 			}
 
 			url := node.syntaxExpr.String()
-			for _, sub := range node.syntaxExpr.Sub {
+			subs := append(node.syntaxExpr.Sub, node.syntaxExpr)
+			for _, sub := range subs {
 				if len(sub.Name) == 0 {
 					continue
 				}
