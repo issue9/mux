@@ -69,6 +69,13 @@ func TestParse(t *testing.T) {
 	test("/posts/}/author", true, nil)
 }
 
+func TestRegexp(t *testing.T) {
+	a := assert.New(t)
+
+	a.Equal(Regexp("{id:\\d+}"), "(?P<id>\\d+)")
+	a.Equal(Regexp("{id:\\d+}/author"), "(?P<id>\\d+)/author")
+}
+
 func TestPrefixLen(t *testing.T) {
 	a := assert.New(t)
 

@@ -119,6 +119,17 @@ func Parse(str string) ([]*Segment, error) {
 	return ss, nil
 }
 
+var repl = strings.NewReplacer(string(NameStart), "(?P<",
+	string(RegexpSeparator), ">",
+	string(NameEnd), ")")
+
+// Regexp 将路由语法转换成正则表达式语法，比如：
+//  {id:\\d+}/author => (?P<id>\\d+)
+// 需要保证 pattern 的语法正确，此处不再做检测。
+func Regexp(pattern string) string {
+	return repl.Replace(pattern)
+}
+
 // PrefixLen 判断两个字符串之间共同的开始内容的长度，
 // 不会从{} 中间被分开，正则表达式与之后的内容也不再分隔。
 func PrefixLen(s1, s2 string) int {
