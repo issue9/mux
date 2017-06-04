@@ -146,6 +146,7 @@ func TestNode_match(t *testing.T) {
 	test.add(http.MethodGet, "/posts/{id:\\d+}", 5)
 	test.add(http.MethodGet, "/posts/{id:\\d+}/author", 6)
 	test.add(http.MethodGet, "/page/{page:\\d*}", 7) // 可选的正则节点
+	test.add(http.MethodGet, "/posts/{id}/{page}/author", 8)
 	//test.n.print(0)
 
 	test.matchTrue(http.MethodGet, "/", 1)
@@ -156,6 +157,7 @@ func TestNode_match(t *testing.T) {
 	test.matchTrue(http.MethodGet, "/posts/1.html", 2)        // 命名参数
 	test.matchTrue(http.MethodGet, "/posts/2.html/author", 3) // 命名参数
 	test.matchTrue(http.MethodGet, "/page/", 7)
+	test.matchTrue(http.MethodGet, "/posts/2.html/2/author", 8) // 若 {id} 可匹配任意字符，此条也可匹配 3
 }
 
 func TestNode_params(t *testing.T) {

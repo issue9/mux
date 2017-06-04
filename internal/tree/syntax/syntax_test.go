@@ -88,6 +88,8 @@ func TestPrefixLen(t *testing.T) {
 	a.Equal(PrefixLen("/test", "/tes{t"), 4)
 	a.Equal(PrefixLen("/tes{t}", "/tes{t}"), 7)
 	a.Equal(PrefixLen("/tes{t:\\d+}", "/tes{t:\\d+}"), 4)
+	a.Equal(PrefixLen("{t}/a", "{t}/b"), 4)
+	a.Equal(PrefixLen("{t}/abc", "{t}/bbc"), 4)
 }
 
 func BenchmarkParse(b *testing.B) {

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
-// Package syntax 处理路由语法。
+// Package syntax 处理路由字符串语法。
 package syntax
 
 import (
@@ -142,15 +142,12 @@ func PrefixLen(s1, s2 string) int {
 	for i := 0; i < l; i++ {
 		// 如果是正则，直接从 { 开始一直到结尾不再分隔，
 		// 不用判断两个是否相同，不可存在两个一模一样的正则
-		if s1[i] == ':' {
+		switch s1[i] {
+		case RegexpSeparator:
 			return startIndex
-		}
-
-		if s1[i] == NameStart {
+		case NameStart:
 			startIndex = i
-		}
-
-		if s1[i] == NameEnd {
+		case NameEnd:
 			startIndex = -1
 		}
 
@@ -160,7 +157,7 @@ func PrefixLen(s1, s2 string) int {
 			}
 			return i
 		}
-	}
+	} // end for
 
 	return l
 }

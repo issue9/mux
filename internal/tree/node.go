@@ -74,38 +74,11 @@ func (n *node) add(segments []*ts.Segment, h http.Handler, methods ...string) er
 
 	// 没有找到相关的子节点，新建一个 node 实例
 	if child == nil {
-		child = &node{
-			parent:   n,
-			pattern:  current.Value,
-			nodeType: current.Type,
+		c, err := n.newChild(current)
+		if err != nil {
+			return err
 		}
-
-		switch current.Type {
-		case ts.TypeNamed:
-			endIndex := strings.IndexByte(current.Value, ts.NameEnd)
-			child.suffix = current.Value[endIndex+1:]
-			child.name = current.Value[1:endIndex]
-		case ts.TypeRegexp:
-			reg := ts.Regexp(current.Value)
-			expr, err := regexp.Compile(reg)
-			if err != nil {
-				return err
-			}
-
-			syntaxExpr, err := syntax.Parse(reg, syntax.Perl)
-			if err != nil {
-				return err
-			}
-			child.expr = expr
-			child.syntaxExpr = syntaxExpr
-		case ts.TypeWildcard:
-			child.name = current.Value[1 : len(current.Value)-1]
-		} // end switch
-
-		n.children = append(n.children, child)
-		sort.SliceStable(n.children, func(i, j int) bool {
-			return n.children[i].priority() < n.children[j].priority()
-		})
+		child = c
 	}
 
 	if isLast {
@@ -115,6 +88,44 @@ func (n *node) add(segments []*ts.Segment, h http.Handler, methods ...string) er
 		return child.handlers.add(h, methods...)
 	}
 	return child.add(segments[1:], h, methods...)
+}
+
+// 根据 seg 内容为当前节点产生一个子节点
+func (n *node) newChild(seg *ts.Segment) (*node, error) {
+	child := &node{
+		parent:   n,
+		pattern:  seg.Value,
+		nodeType: seg.Type,
+	}
+
+	switch seg.Type {
+	case ts.TypeNamed:
+		endIndex := strings.IndexByte(seg.Value, ts.NameEnd)
+		child.suffix = seg.Value[endIndex+1:]
+		child.name = seg.Value[1:endIndex]
+	case ts.TypeRegexp:
+		reg := ts.Regexp(seg.Value)
+		expr, err := regexp.Compile(reg)
+		if err != nil {
+			return nil, err
+		}
+
+		syntaxExpr, err := syntax.Parse(reg, syntax.Perl)
+		if err != nil {
+			return nil, err
+		}
+		child.expr = expr
+		child.syntaxExpr = syntaxExpr
+	case ts.TypeWildcard:
+		child.name = seg.Value[1 : len(seg.Value)-1]
+	} // end switch
+
+	n.children = append(n.children, child)
+	sort.SliceStable(n.children, func(i, j int) bool {
+		return n.children[i].priority() < n.children[j].priority()
+	})
+
+	return child, nil
 }
 
 // 查找路由项，不存在返回 nil
