@@ -34,7 +34,7 @@ func (n *nodeTest) add(method, pattern string, code int) {
 }
 
 // 验证指定的路径是否匹配正确的路由项，通过 code 来确定
-func (n *nodeTest) matchTrue(method, path string, code int) {
+func (n *nodeTest) matchTrue(method, path string, code int) *node {
 	nn := n.n.match(path)
 	n.a.NotNil(nn)
 	n.a.NotNil(nn.handlers)
@@ -46,21 +46,13 @@ func (n *nodeTest) matchTrue(method, path string, code int) {
 	r := httptest.NewRequest(method, path, nil)
 	h.ServeHTTP(w, r)
 	n.a.Equal(w.Code, code)
+
+	return nn
 }
 
 // 验证指定的路径返回的参数是否正确
 func (n *nodeTest) paramsTrue(method, path string, code int, params map[string]string) {
-	nn := n.n.match(path)
-	n.a.NotNil(nn)
-	n.a.NotNil(nn.handlers)
-
-	h := nn.handlers.handler(method)
-	n.a.NotNil(h)
-
-	w := httptest.NewRecorder()
-	r := httptest.NewRequest(method, path, nil)
-	h.ServeHTTP(w, r)
-	n.a.Equal(w.Code, code)
+	nn := n.matchTrue(method, path, code)
 
 	ps := nn.params(path)
 	n.a.Equal(ps, params)
