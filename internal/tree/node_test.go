@@ -28,13 +28,13 @@ func newNodeTest(a *assert.Assertion) *nodeTest {
 
 // 添加一条路由项。code 表示该路由项返回的报头，
 // 测试路由项的 code 需要唯一，之后也是通过此值来判断其命中的路由项。
-func (n *nodeTest) add(pattern string, code int, method string) {
+func (n *nodeTest) add(method, pattern string, code int) {
 	segs := newSegments(n.a, pattern)
 	n.a.NotError(n.n.add(segs, buildHandler(code), method))
 }
 
 // 验证指定的路径是否匹配正确的路由项，通过 code 来确定
-func (n *nodeTest) matchTrue(path string, code int, method string) {
+func (n *nodeTest) matchTrue(method, path string, code int) {
 	nn := n.n.match(path)
 	n.a.NotNil(nn)
 	n.a.NotNil(nn.handlers)
@@ -46,6 +46,24 @@ func (n *nodeTest) matchTrue(path string, code int, method string) {
 	r := httptest.NewRequest(method, path, nil)
 	h.ServeHTTP(w, r)
 	n.a.Equal(w.Code, code)
+}
+
+// 验证指定的路径返回的参数是否正确
+func (n *nodeTest) paramsTrue(method, path string, code int, params map[string]string) {
+	nn := n.n.match(path)
+	n.a.NotNil(nn)
+	n.a.NotNil(nn.handlers)
+
+	h := nn.handlers.handler(method)
+	n.a.NotNil(h)
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(method, path, nil)
+	h.ServeHTTP(w, r)
+	n.a.Equal(w.Code, code)
+
+	ps := nn.params(path)
+	n.a.Equal(ps, params)
 }
 
 func newSegments(a *assert.Assertion, pattern string) []*ts.Segment {
@@ -67,7 +85,7 @@ func TestNode_add_remove(t *testing.T) {
 
 	// / 和 /posts/ 以及 /posts/1/author
 	a.Equal(len(node.children), 3)
-	node.print(0)
+	//node.print(0)
 
 	node.remove(newSegments(a, "/posts/1/author"), http.MethodGet)
 	// / 和 /posts/
@@ -83,16 +101,40 @@ func TestNode_match(t *testing.T) {
 	test := newNodeTest(a)
 
 	// 添加路由项
-	test.add("/", 1, http.MethodGet)
-	test.add("/posts/{id}", 2, http.MethodGet)
-	test.add("/posts/{id}/author", 3, http.MethodGet)
-	test.add("/posts/1/author", 4, http.MethodGet)
+	test.add(http.MethodGet, "/", 1)
+	test.add(http.MethodGet, "/posts/{id}", 2)
+	test.add(http.MethodGet, "/posts/{id}/author", 3)
+	test.add(http.MethodGet, "/posts/1/author", 4)
+	test.add(http.MethodGet, "/posts/{id:\\d+}", 5)
+	test.add(http.MethodGet, "/posts/{id:\\d+}/author", 6)
+	//test.n.print(0)
 
-	test.matchTrue("/", 1, http.MethodGet)
-	test.matchTrue("/posts/1", 2, http.MethodGet)
-	test.matchTrue("/posts/2", 2, http.MethodGet)
-	test.matchTrue("/posts/2/author", 3, http.MethodGet)
-	test.matchTrue("/posts/1/author", 4, http.MethodGet)
+	test.matchTrue(http.MethodGet, "/", 1)
+	test.matchTrue(http.MethodGet, "/posts/1", 5)             // 正则
+	test.matchTrue(http.MethodGet, "/posts/2", 5)             // 正则
+	test.matchTrue(http.MethodGet, "/posts/2/author", 6)      // 正则
+	test.matchTrue(http.MethodGet, "/posts/1/author", 4)      // 字符串
+	test.matchTrue(http.MethodGet, "/posts/1.html", 2)        // 命名参数
+	test.matchTrue(http.MethodGet, "/posts/2.html/author", 3) // 命名参数
+}
+
+func TestNode_params(t *testing.T) {
+	a := assert.New(t)
+	test := newNodeTest(a)
+
+	// 添加路由项
+	test.add(http.MethodGet, "/posts/{id}", 1)                       // 命名
+	test.add(http.MethodGet, "/posts/{id}/author/{action}/", 2)      // 命名
+	test.add(http.MethodGet, "/posts/{id:\\d+}", 3)                  // 正则
+	test.add(http.MethodGet, "/posts/{id:\\d+}/author/{action}/", 4) // 正则
+
+	// 正则
+	test.paramsTrue(http.MethodGet, "/posts/1", 3, map[string]string{"id": "1"})
+	test.paramsTrue(http.MethodGet, "/posts/1/author/profile/", 4, map[string]string{"id": "1", "action": "profile"})
+
+	// 命名
+	test.paramsTrue(http.MethodGet, "/posts/1.html", 1, map[string]string{"id": "1.html"})
+	test.paramsTrue(http.MethodGet, "/posts/1.html/author/profile/", 2, map[string]string{"id": "1.html", "action": "profile"})
 }
 
 func TestNode_getParents(t *testing.T) {

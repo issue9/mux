@@ -65,23 +65,27 @@ func (n *node) add(segments []*ts.Segment, h http.Handler, methods ...string) er
 			nodeType: current.Type,
 		}
 
-		if current.Type == ts.TypeNamed {
+		switch current.Type {
+		case ts.TypeNamed:
 			endIndex := strings.IndexByte(current.Value, ts.NameEnd)
 			child.suffix = current.Value[endIndex+1:]
 			child.name = current.Value[1:endIndex]
-		} else if current.Type == ts.TypeRegexp {
-			expr, err := regexp.Compile(current.Value)
+		case ts.TypeRegexp:
+			reg := ts.Regexp(current.Value)
+			expr, err := regexp.Compile(reg)
 			if err != nil {
 				return err
 			}
 
-			syntaxExpr, err := syntax.Parse(current.Value, syntax.Perl)
+			syntaxExpr, err := syntax.Parse(reg, syntax.Perl)
 			if err != nil {
 				return err
 			}
 			child.expr = expr
 			child.syntaxExpr = syntaxExpr
-		}
+		case ts.TypeWildcard:
+			child.name = current.Value[1 : len(current.Value)-1]
+		} // end switch
 
 		n.children = append(n.children, child)
 		sort.SliceStable(n.children, func(i, j int) bool {
@@ -147,7 +151,11 @@ func (n *node) match(path string) *node {
 			loc := node.expr.FindStringIndex(path)
 			if loc != nil && loc[0] == 0 {
 				matched = true
-				newPath = path[loc[1]+1:]
+				if loc[1] >= len(path) {
+					newPath = path[:0]
+				} else {
+					newPath = path[loc[1]+1:]
+				}
 			}
 		case ts.TypeWildcard:
 			matched = true
@@ -185,7 +193,7 @@ func (n *node) params(path string) map[string]string {
 		case ts.TypeNamed:
 			index := strings.Index(path, node.suffix)
 			if index > 0 { // 为零说明前面没有命名参数，肯定不正确
-				params[node.name] = path[:index+1]
+				params[node.name] = path[:index]
 				path = path[index+len(node.suffix):]
 			}
 		case ts.TypeRegexp:
@@ -197,6 +205,8 @@ func (n *node) params(path string) map[string]string {
 					params[name] = args[index]
 				}
 			}
+
+			path = path[len(args[0]):]
 		case ts.TypeWildcard:
 			params[node.name] = path
 		}
@@ -205,7 +215,7 @@ func (n *node) params(path string) map[string]string {
 	return params
 }
 
-func (n *node) url(params map[string]string, path string) (string, error) {
+func (n *node) url(params map[string]string) (string, error) {
 	nodes := n.getParents()
 	buf := new(bytes.Buffer)
 
@@ -238,7 +248,7 @@ LOOP:
 
 			buf.WriteString(url)
 		case ts.TypeWildcard:
-			buf.WriteString(path)
+			buf.WriteString(params[node.name])
 		}
 	}
 
