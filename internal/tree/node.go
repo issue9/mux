@@ -20,6 +20,12 @@ import (
 type Noder interface {
 	// 获取当前节点下指定请求方法对应的处理函数
 	Handler(method string) http.Handler
+
+	// 根据参数生成地址
+	URL(params map[string]string) (string, error)
+
+	// 获取当前节点的路由参数
+	Params(path string) map[string]string
 }
 
 type node struct {
@@ -210,8 +216,8 @@ func (n *node) match(path string) *node {
 	return nil
 }
 
-// params 由调用方确保能正常匹配 path
-func (n *node) params(path string) map[string]string {
+// Params 由调用方确保能正常匹配 path
+func (n *node) Params(path string) map[string]string {
 	nodes := n.getParents()
 
 	params := make(map[string]string, 10)
@@ -246,7 +252,8 @@ func (n *node) params(path string) map[string]string {
 	return params
 }
 
-func (n *node) url(params map[string]string) (string, error) {
+// URL 根据参数生成地址
+func (n *node) URL(params map[string]string) (string, error) {
 	nodes := n.getParents()
 	buf := new(bytes.Buffer)
 

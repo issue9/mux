@@ -13,6 +13,8 @@ import (
 	ts "github.com/issue9/mux/internal/tree/syntax"
 )
 
+var _ Noder = &node{}
+
 // node 的测试工具
 type nodeTest struct {
 	n *node
@@ -53,7 +55,7 @@ func (n *nodeTest) matchTrue(method, path string, code int) *node {
 func (n *nodeTest) paramsTrue(method, path string, code int, params map[string]string) {
 	nn := n.matchTrue(method, path, code)
 
-	ps := nn.params(path)
+	ps := nn.Params(path)
 	n.a.Equal(ps, params)
 }
 
@@ -62,7 +64,7 @@ func (n *nodeTest) paramsTrue(method, path string, code int, params map[string]s
 func (n *nodeTest) urlTrue(method, path string, code int, params map[string]string, url string) {
 	nn := n.matchTrue(method, path, code)
 
-	u, err := nn.url(params)
+	u, err := nn.URL(params)
 	n.a.NotError(err)
 	n.a.Equal(u, url)
 }
