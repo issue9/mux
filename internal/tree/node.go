@@ -102,6 +102,31 @@ func (n *node) add(segments []*ts.Segment, h http.Handler, methods ...string) er
 	return child.add(segments[1:], h, methods...)
 }
 
+// 清除路由项
+func (n *node) clean(prefix string) {
+	if len(prefix) == 0 {
+		n.children = n.children[:0]
+		return
+	}
+
+	dels := make([]string, 0, len(n.children))
+	for _, child := range n.children {
+		if len(child.pattern) < len(prefix) {
+			if strings.HasPrefix(prefix, child.pattern) {
+				child.clean(prefix[len(child.pattern):])
+			}
+		}
+
+		if strings.HasPrefix(child.pattern, prefix) {
+			dels = append(dels, child.pattern)
+		}
+	}
+
+	for _, del := range dels {
+		n.children = removeNodes(n.children, del)
+	}
+}
+
 // remove
 func (n *node) remove(segments []*ts.Segment, methods ...string) error {
 	current := segments[0]
@@ -283,6 +308,20 @@ func (n *node) print(deep int) {
 	for _, child := range n.children {
 		child.print(deep + 1)
 	}
+}
+
+// 获取路由数量
+func (n *node) len() int {
+	var cnt int
+	for _, child := range n.children {
+		cnt += child.len()
+	}
+
+	if n.handlers != nil && len(n.handlers.handlers) > 0 {
+		cnt++
+	}
+
+	return cnt
 }
 
 func removeNodes(nodes []*node, pattern string) []*node {
