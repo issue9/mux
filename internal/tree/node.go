@@ -16,8 +16,8 @@ import (
 	ts "github.com/issue9/mux/internal/tree/syntax"
 )
 
-// Noder 表示一个节点
-type Noder interface {
+// Node 表示一个节点
+type Node interface {
 	// 获取当前节点下指定请求方法对应的处理函数
 	Handler(method string) http.Handler
 
@@ -26,6 +26,9 @@ type Noder interface {
 
 	// 获取当前节点的路由参数
 	Params(path string) map[string]string
+
+	//  设置当前节点的 allow 报头
+	SetAllow(allow string)
 }
 
 type node struct {
@@ -54,7 +57,7 @@ func (n *node) priority() int {
 	return int(n.nodeType) + 1
 }
 
-// 添加一条路由
+// 添加一条路由，当 methods 为空时，表示仅添加节点，而不添加任何处理函数。
 func (n *node) add(segments []*ts.Segment, h http.Handler, methods ...string) error {
 	current := segments[0]
 	isLast := len(segments) == 1
@@ -190,6 +193,10 @@ func (n *node) remove(segments []*ts.Segment, methods ...string) error {
 
 // 从子节点中查找与当前路径匹配的节点，若找不到，则返回 nil
 func (n *node) match(path string) *node {
+	if len(n.children) == 0 && len(path) == 0 {
+		return n
+	}
+
 	for _, node := range n.children {
 		matched := false
 		newPath := path
@@ -225,10 +232,8 @@ func (n *node) match(path string) *node {
 		}
 
 		if matched {
-			if len(newPath) == 0 { // 当前为最后节点
-				return node
-			}
-
+			// 即使 newPath 为空，也有可能子节点正好可以匹配空的内容。
+			// 比如 /posts/{path:\\w*} 后面的 path 即为空节点。
 			if nn := node.match(newPath); nn != nil {
 				return nn
 			}
@@ -286,7 +291,12 @@ LOOP:
 		case ts.TypeBasic:
 			buf.WriteString(node.pattern)
 		case ts.TypeNamed:
-			buf.WriteString(params[node.name])
+			param, exists := params[node.name]
+			if !exists {
+				return "", fmt.Errorf("未找到参数 %s 的值", node.name)
+			}
+			buf.WriteString(param)
+
 			buf.WriteString(node.suffix)
 		case ts.TypeRegexp:
 			if node.syntaxExpr == nil {
@@ -325,6 +335,15 @@ func (n *node) getParents() []*node {
 	}
 
 	return nodes
+}
+
+// SetAllow 设置当前节点的 allow 报头
+func (n *node) SetAllow(allow string) {
+	if n.handlers == nil {
+		n.handlers = newHandlers()
+	}
+
+	n.handlers.setAllow(allow)
 }
 
 // Handler 获取该节点下与参数相对应的处理函数

@@ -5,6 +5,7 @@
 package tree
 
 import (
+	"fmt"
 	"net/http"
 
 	ts "github.com/issue9/mux/internal/tree/syntax"
@@ -37,7 +38,9 @@ func (tree *Tree) Remove(pattern string, methods ...string) error {
 	return tree.remove(ss, methods...)
 }
 
-// Add 添加路由项
+// Add 添加路由项。
+//
+// methods 可以为空，表示不为任何请求方法作设置。
 func (tree *Tree) Add(pattern string, h http.Handler, methods ...string) error {
 	ss, err := ts.Parse(pattern)
 	if err != nil {
@@ -48,11 +51,31 @@ func (tree *Tree) Add(pattern string, h http.Handler, methods ...string) error {
 }
 
 // Match 匹配路由项
-func (tree *Tree) Match(path string) Noder {
-	return tree.match(path)
+func (tree *Tree) Match(path string) Node {
+	// TODO: tree.match() 返回的是 *node 与 Node 类型不一样。不能直接返回
+	if n := tree.match(path); n != nil {
+		return n
+	}
+
+	return nil
 }
 
-// Find 查找路由项，不存在返回 nil
-func (tree *Tree) Find(pattern string) Noder {
-	return tree.find(pattern)
+// Node 查找路由项，不存在，则返回一个新建的实例。
+func (tree *Tree) Node(pattern string) (Node, error) {
+	n := tree.find(pattern)
+	if n != nil {
+		return n, nil
+	}
+
+	if err := tree.Add(pattern, nil); err != nil {
+		return nil, err
+	}
+
+	n = tree.find(pattern)
+	if n != nil {
+		return n, nil
+	}
+
+	// 添加了，却找不到，肯定是代码问题，直接 panic
+	panic(fmt.Sprintf("无法找到 %s 相匹配的节点", pattern))
 }

@@ -8,8 +8,8 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/issue9/mux/internal/entry"
 	"github.com/issue9/mux/internal/method"
+	"github.com/issue9/mux/internal/tree"
 )
 
 // ErrResourceNameExists 当为一个资源命名时，若存在相同名称的，
@@ -27,7 +27,7 @@ var ErrResourceNameExists = errors.New("存在相同名称的资源")
 type Resource struct {
 	mux     *Mux
 	pattern string
-	entry   entry.Entry
+	node    tree.Node
 }
 
 // Options 手动指定 OPTIONS 请求方法的值。具体说明可参考 Mux.Options 方法。
@@ -130,7 +130,7 @@ func (r *Resource) Remove(methods ...string) *Resource {
 // Clean 清除当前资源的所有路由项
 func (r *Resource) Clean() *Resource {
 	r.mux.Remove(r.pattern, method.Supported...)
-	r.entry = nil
+	r.node = nil
 	return r
 }
 
@@ -155,14 +155,14 @@ func (r *Resource) Name(name string) error {
 // URL 根据参数构建一条 URL。
 //
 // params 匹配路由参数中的同名参数，或是不存在路由参数，比如普通的字符串路由项，
-// 该参数不启作用；path 仅对通配符路由项启作用。
+// 该参数不启作用；
 //  res, := m.Resource("/posts/{id}")
 //  res.URL(map[string]string{"id": "1"}, "") // /posts/1
 //
-//  res, := m.Resource("/posts/{id}/*")
-//  res.URL(map[string]string{"id": "1"}, "author/profile") // /posts/1/author/profile
-func (r *Resource) URL(params map[string]string, path string) (string, error) {
-	return r.entry.URL(params, path)
+//  res, := m.Resource("/posts/{id}/{path}")
+//  res.URL(map[string]string{"id": "1","path":"author/profile"}) // /posts/1/author/profile
+func (r *Resource) URL(params map[string]string) (string, error) {
+	return r.node.URL(params)
 }
 
 // Name 返回指定名称的 *Resource 实例，如果不存在返回 nil。
@@ -190,7 +190,7 @@ func (r *Resource) Mux() *Mux {
 }
 
 func newResource(mux *Mux, pattern string) (*Resource, error) {
-	ety, err := mux.list.Entry(pattern)
+	n, err := mux.tree.Node(pattern)
 	if err != nil {
 		return nil, err
 	}
@@ -198,6 +198,6 @@ func newResource(mux *Mux, pattern string) (*Resource, error) {
 	return &Resource{
 		mux:     mux,
 		pattern: pattern,
-		entry:   ety,
+		node:    n,
 	}, nil
 }

@@ -13,7 +13,7 @@ import (
 	ts "github.com/issue9/mux/internal/tree/syntax"
 )
 
-var _ Noder = &node{}
+var _ Node = &node{}
 
 // node 的测试工具
 type nodeTest struct {
@@ -145,6 +145,7 @@ func TestNode_match(t *testing.T) {
 	test.add(http.MethodGet, "/posts/1/author", 4)
 	test.add(http.MethodGet, "/posts/{id:\\d+}", 5)
 	test.add(http.MethodGet, "/posts/{id:\\d+}/author", 6)
+	test.add(http.MethodGet, "/page/{page:\\d*}", 7) // 可选的正则节点
 	//test.n.print(0)
 
 	test.matchTrue(http.MethodGet, "/", 1)
@@ -154,6 +155,7 @@ func TestNode_match(t *testing.T) {
 	test.matchTrue(http.MethodGet, "/posts/1/author", 4)      // 字符串
 	test.matchTrue(http.MethodGet, "/posts/1.html", 2)        // 命名参数
 	test.matchTrue(http.MethodGet, "/posts/2.html/author", 3) // 命名参数
+	test.matchTrue(http.MethodGet, "/page/", 7)
 }
 
 func TestNode_params(t *testing.T) {

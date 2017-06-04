@@ -20,6 +20,19 @@ var options = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Allow", "options")
 })
 
+func TestHandlers_add(t *testing.T) {
+	a := assert.New(t)
+
+	hs := newHandlers()
+	a.NotNil(hs)
+
+	a.NotError(hs.add(buildHandler(1)))
+	a.Equal(len(hs.handlers), 1) // 还有一个自动生成的 OPTIONS
+
+	a.NotError(hs.add(buildHandler(1), http.MethodGet, http.MethodPut))
+	a.Equal(len(hs.handlers), 3)
+}
+
 func TestHandlers_add_remove(t *testing.T) {
 	a := assert.New(t)
 
