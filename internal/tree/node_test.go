@@ -13,6 +13,41 @@ import (
 	ts "github.com/issue9/mux/internal/tree/syntax"
 )
 
+// node 的测试工具
+type nodeTest struct {
+	n *node
+	a *assert.Assertion
+}
+
+func newNodeTest(a *assert.Assertion) *nodeTest {
+	return &nodeTest{
+		n: &node{},
+		a: a,
+	}
+}
+
+// 添加一条路由项。code 表示该路由项返回的报头，
+// 测试路由项的 code 需要唯一，之后也是通过此值来判断其命中的路由项。
+func (n *nodeTest) add(pattern string, code int, method string) {
+	segs := newSegments(n.a, pattern)
+	n.a.NotError(n.n.add(segs, buildHandler(code), method))
+}
+
+// 验证指定的路径是否匹配正确的路由项，通过 code 来确定
+func (n *nodeTest) matchTrue(path string, code int, method string) {
+	nn := n.n.match(path)
+	n.a.NotNil(nn)
+	n.a.NotNil(nn.handlers)
+
+	h := nn.handlers.handler(method)
+	n.a.NotNil(h)
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(method, path, nil)
+	h.ServeHTTP(w, r)
+	n.a.Equal(w.Code, code)
+}
+
 func newSegments(a *assert.Assertion, pattern string) []*ts.Segment {
 	ss, err := ts.Parse(pattern)
 	a.NotError(err).NotNil(ss)
@@ -43,34 +78,21 @@ func TestNode_add_remove(t *testing.T) {
 	a.Equal(len(node.children), 2)
 }
 
-func TestNode_match_1(t *testing.T) {
+func TestNode_match(t *testing.T) {
 	a := assert.New(t)
-	node := &node{}
+	test := newNodeTest(a)
 
 	// 添加路由项
-	a.NotError(node.add(newSegments(a, "/"), buildHandler(1), http.MethodGet))
-	a.NotError(node.add(newSegments(a, "/posts/{id}"), buildHandler(2), http.MethodGet))
-	a.NotError(node.add(newSegments(a, "/posts/{id}/author"), buildHandler(3), http.MethodGet))
-	a.NotError(node.add(newSegments(a, "/posts/1/author"), buildHandler(4), http.MethodGet))
+	test.add("/", 1, http.MethodGet)
+	test.add("/posts/{id}", 2, http.MethodGet)
+	test.add("/posts/{id}/author", 3, http.MethodGet)
+	test.add("/posts/1/author", 4, http.MethodGet)
 
-	test := func(path, method string, code int) {
-		n := node.match(path)
-		a.NotNil(n)
-		a.NotNil(n.handlers)
-		h := n.handlers.handler(method)
-		a.NotNil(h)
-
-		w := httptest.NewRecorder()
-		r := httptest.NewRequest(method, path, nil)
-		h.ServeHTTP(w, r)
-		a.Equal(w.Code, code)
-	}
-
-	test("/", http.MethodGet, 1)
-	test("/posts/1", http.MethodGet, 2)
-	test("/posts/2", http.MethodGet, 2)
-	test("/posts/2/author", http.MethodGet, 3)
-	test("/posts/1/author", http.MethodGet, 4)
+	test.matchTrue("/", 1, http.MethodGet)
+	test.matchTrue("/posts/1", 2, http.MethodGet)
+	test.matchTrue("/posts/2", 2, http.MethodGet)
+	test.matchTrue("/posts/2/author", 3, http.MethodGet)
+	test.matchTrue("/posts/1/author", 4, http.MethodGet)
 }
 
 func TestNode_getParents(t *testing.T) {
