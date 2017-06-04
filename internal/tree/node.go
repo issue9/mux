@@ -16,6 +16,12 @@ import (
 	ts "github.com/issue9/mux/internal/tree/syntax"
 )
 
+// Noder 表示一个节点
+type Noder interface {
+	// 获取当前节点下指定请求方法对应的处理函数
+	Handler(method string) http.Handler
+}
+
 type node struct {
 	parent   *node
 	nodeType ts.Type
@@ -24,8 +30,8 @@ type node struct {
 	handlers *handlers
 
 	// 命名参数特有的参数
-	name   string // 命名时，缓存着名称
-	suffix string // 命名时，保存着命名之后的字符串内容
+	name   string // 缓存着名称
+	suffix string // 保存着命名之后的字符串内容
 
 	// 正则特有的参数
 	expr       *regexp.Regexp
@@ -292,8 +298,8 @@ func (n *node) getParents() []*node {
 	return nodes
 }
 
-// 获取该节点下与参数相对应的处理函数
-func (n *node) handler(method string) http.Handler {
+// Handler 获取该节点下与参数相对应的处理函数
+func (n *node) Handler(method string) http.Handler {
 	if n.handlers == nil {
 		return nil
 	}

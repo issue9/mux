@@ -38,7 +38,7 @@ func (n *nodeTest) matchTrue(method, path string, code int) *node {
 	nn := n.n.match(path)
 	n.a.NotNil(nn)
 
-	h := nn.handler(method)
+	h := nn.Handler(method)
 	n.a.NotNil(h)
 
 	w := httptest.NewRecorder()
