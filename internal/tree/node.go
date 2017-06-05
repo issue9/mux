@@ -59,35 +59,82 @@ func (n *node) priority() int {
 
 // 添加一条路由，当 methods 为空时，表示仅添加节点，而不添加任何处理函数。
 func (n *node) add(segments []*ts.Segment, h http.Handler, methods ...string) error {
-	current := segments[0]
-	isLast := len(segments) == 1
-	var child *node
-
-	for _, c := range n.children {
-		if c.nodeType != current.Type || c.pattern != current.Value {
-			continue
-		}
-
-		child = c
-		break
+	child, err := n.addSegment(segments[0])
+	if err != nil {
+		return err
 	}
 
-	// 没有找到相关的子节点，新建一个 node 实例
-	if child == nil {
-		c, err := n.newChild(current)
-		if err != nil {
-			return err
-		}
-		child = c
-	}
-
-	if isLast {
+	if len(segments) == 1 { // 最后一个节点
 		if child.handlers == nil {
 			child.handlers = newHandlers()
 		}
 		return child.handlers.add(h, methods...)
 	}
 	return child.add(segments[1:], h, methods...)
+}
+
+// 添加一条 ts.Segment 到当前路由项，并返回其最后的节点
+func (n *node) addSegment(s *ts.Segment) (*node, error) {
+	var child *node // 找到的最匹配节点
+	var l int       // 最大的匹配字符数量
+
+	// 提取两者的共同前缀
+	for _, c := range n.children {
+		if c.nodeType == ts.TypeWildcard {
+			continue
+		}
+
+		// 有完全相同的节点
+		if c.nodeType == s.Type && c.pattern == s.Value {
+			return c, nil
+		}
+
+		if l1 := ts.PrefixLen(c.pattern, s.Value); l1 > l {
+			l = l1
+			child = c
+		}
+	}
+
+	// 没有共同前缀，声明一个新的加入到当前节点
+	if l <= 0 {
+		return n.newChild(s)
+	}
+
+	parent := child
+
+	if len(child.pattern) > l { // 需要将当前节点分解成两个节点
+		n.children = removeNodes(n.children, child.pattern) // 删除老的
+
+		p, err := n.newChild(&ts.Segment{
+			Value: s.Value[:l],
+			Type:  ts.StringType(s.Value[:l]),
+		})
+		if err != nil {
+			return nil, err
+		}
+		parent = p
+
+		c, err := parent.newChild(&ts.Segment{
+			Value: child.pattern[l:],
+			Type:  ts.StringType(child.pattern[l:]),
+		})
+		if err != nil {
+			return nil, err
+		}
+		c.handlers = child.handlers
+		c.children = child.children
+		for _, item := range c.children {
+			item.parent = c
+		}
+	}
+
+	if len(s.Value) == l {
+		return parent, nil
+	}
+	return parent.addSegment(&ts.Segment{
+		Value: s.Value[l:],
+		Type:  ts.StringType(s.Value[l:]),
+	})
 }
 
 // 根据 seg 内容为当前节点产生一个子节点
@@ -248,6 +295,7 @@ func (n *node) match(path string) *node {
 			if nn := node.match(newPath); nn != nil {
 				return nn
 			}
+			return node
 		}
 	} // end for
 

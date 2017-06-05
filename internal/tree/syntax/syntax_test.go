@@ -86,10 +86,11 @@ func TestPrefixLen(t *testing.T) {
 	a.Equal(PrefixLen("/test", "/test"), 5)
 	a.Equal(PrefixLen("/te{st", "/test"), 3)
 	a.Equal(PrefixLen("/test", "/tes{t"), 4)
-	a.Equal(PrefixLen("/tes{t}", "/tes{t}"), 7)
-	a.Equal(PrefixLen("/tes{t:\\d+}", "/tes{t:\\d+}"), 4)
+	a.Equal(PrefixLen("/tes{t:\\d+}", "/tes{t:\\d+}/a"), 4) // 不应该包含正则部分
+	a.Equal(PrefixLen("/tes{t:\\d+}/a", "/tes{t:\\d+}/"), 12)
 	a.Equal(PrefixLen("{t}/a", "{t}/b"), 4)
 	a.Equal(PrefixLen("{t}/abc", "{t}/bbc"), 4)
+	a.Equal(PrefixLen("/tes{t:\\d+}", "/tes{t}"), 4)
 }
 
 func BenchmarkParse(b *testing.B) {

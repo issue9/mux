@@ -138,26 +138,33 @@ func PrefixLen(s1, s2 string) int {
 		l = len(s2)
 	}
 
-	startIndex := -1
+	startIndex := -10
+	endIndex := -10
+	state := NameEnd
 	for i := 0; i < l; i++ {
-		// 如果是正则，直接从 { 开始一直到结尾不再分隔，
-		// 不用判断两个是否相同，不可存在两个一模一样的正则
 		switch s1[i] {
-		case RegexpSeparator:
-			return startIndex
 		case NameStart:
 			startIndex = i
+			state = NameStart
 		case NameEnd:
-			startIndex = -1
+			state = NameEnd
+			endIndex = i
 		}
 
 		if s1[i] != s2[i] {
-			if startIndex > -1 { // 不从命名参数中间分隔
+			if state != NameEnd { // 不从命名参数中间分隔
+				return startIndex
+			}
+			if endIndex == i { // 命名参数之后必须要有一个或以上的普通字符
 				return startIndex
 			}
 			return i
 		}
 	} // end for
+
+	if endIndex == l-1 {
+		return startIndex
+	}
 
 	return l
 }

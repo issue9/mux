@@ -86,17 +86,9 @@ func TestNode_add_remove(t *testing.T) {
 	a.NotError(node.add(newSegments(a, "/posts/1/author"), buildHandler(1), http.MethodGet))
 	a.NotError(node.add(newSegments(a, "/posts/{id}/{author:\\w+}/profile"), buildHandler(1), http.MethodGet))
 
-	// / 和 /posts/ 以及 /posts/1/author
-	a.Equal(len(node.children), 3)
-	//node.print(0)
-
+	// TODO 重写测试内容
 	node.remove(newSegments(a, "/posts/1/author"), http.MethodGet)
-	// / 和 /posts/
-	a.Equal(len(node.children), 2)
-
 	node.remove(newSegments(a, "/posts/{id}/author"), http.MethodGet)
-	// / 和 /posts/
-	a.Equal(len(node.children), 2)
 }
 
 func TestNode_find(t *testing.T) {
@@ -111,7 +103,7 @@ func TestNode_find(t *testing.T) {
 
 	a.Equal(node.find("/").pattern, "/")
 	a.Equal(node.find("/posts/{id}").pattern, "{id}")
-	a.Equal(node.find("/posts/{id}/author").pattern, "{id}/author")
+	a.Equal(node.find("/posts/{id}/author").pattern, "author")
 	a.Equal(node.find("/posts/{id}/{author:\\w+}/profile").pattern, "{author:\\w+}/profile")
 }
 
@@ -147,7 +139,7 @@ func TestNode_match(t *testing.T) {
 	test.add(http.MethodGet, "/posts/{id:\\d+}/author", 6)
 	test.add(http.MethodGet, "/page/{page:\\d*}", 7) // 可选的正则节点
 	test.add(http.MethodGet, "/posts/{id}/{page}/author", 8)
-	//test.n.print(0)
+	test.n.print(0)
 
 	test.matchTrue(http.MethodGet, "/", 1)
 	test.matchTrue(http.MethodGet, "/posts/1", 5)             // 正则
