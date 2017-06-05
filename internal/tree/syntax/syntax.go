@@ -170,8 +170,9 @@ func PrefixLen(s1, s2 string) int {
 // NewSegment 将字符串声明为一个 Segment 实例
 func NewSegment(str string) *Segment {
 	return &Segment{
-		Value: str,
-		Type:  stringType(str),
+		Value:    str,
+		Type:     stringType(str),
+		Endpoint: str[len(str)-1] == NameEnd,
 	}
 }
 
