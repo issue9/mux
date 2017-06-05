@@ -37,6 +37,7 @@ type node struct {
 	children []*node
 	pattern  string
 	handlers *handlers
+	endpoint bool
 
 	// 命名参数特有的参数
 	name   string // 缓存着名称
@@ -50,11 +51,16 @@ type node struct {
 // 当前节点的优先级，根据节点类型来判断，
 // 若类型相同时，则有子节点的优先级低一些，但不会超过不同节点类型。
 func (n *node) priority() int {
-	if len(n.children) == 0 {
-		return int(n.nodeType)
+	p := int(n.nodeType)
+
+	if len(n.children) > 0 {
+		p++
+	}
+	if n.endpoint {
+		p++
 	}
 
-	return int(n.nodeType) + 1
+	return p
 }
 
 // 添加一条路由，当 methods 为空时，表示仅添加节点，而不添加任何处理函数。
@@ -80,12 +86,14 @@ func (n *node) addSegment(s *ts.Segment) (*node, error) {
 
 	// 提取两者的共同前缀
 	for _, c := range n.children {
-		if c.nodeType == ts.TypeWildcard {
+		if c.endpoint != s.Endpoint {
 			continue
 		}
 
 		// 有完全相同的节点
-		if c.nodeType == s.Type && c.pattern == s.Value {
+		if c.endpoint == s.Endpoint &&
+			c.pattern == s.Value &&
+			c.nodeType == s.Type {
 			return c, nil
 		}
 
@@ -141,6 +149,7 @@ func (n *node) newChild(seg *ts.Segment) (*node, error) {
 		endIndex := strings.IndexByte(seg.Value, ts.NameEnd)
 		child.suffix = seg.Value[endIndex+1:]
 		child.name = seg.Value[1:endIndex]
+		child.endpoint = seg.Endpoint
 	case ts.TypeRegexp:
 		reg := ts.Regexp(seg.Value)
 		expr, err := regexp.Compile(reg)
@@ -154,8 +163,7 @@ func (n *node) newChild(seg *ts.Segment) (*node, error) {
 		}
 		child.expr = expr
 		child.syntaxExpr = syntaxExpr
-	case ts.TypeWildcard:
-		child.name = seg.Value[1 : len(seg.Value)-1]
+		child.endpoint = seg.Endpoint
 	} // end switch
 
 	n.children = append(n.children, child)
@@ -257,10 +265,15 @@ func (n *node) match(path string) *node {
 				newPath = path[len(node.pattern):]
 			}
 		case ts.TypeNamed:
-			index := strings.Index(path, node.suffix)
-			if index > 0 { // 为零说明前面没有命名参数，肯定不正确
+			if node.endpoint {
 				matched = true
-				newPath = path[index+len(node.suffix):]
+				newPath = path[:0]
+			} else {
+				index := strings.Index(path, node.suffix)
+				if index > 0 { // 为零说明前面没有命名参数，肯定不正确
+					matched = true
+					newPath = path[index+len(node.suffix):]
+				}
 			}
 		case ts.TypeRegexp:
 			loc := node.expr.FindStringIndex(path)
@@ -272,9 +285,6 @@ func (n *node) match(path string) *node {
 					newPath = path[loc[1]+1:]
 				}
 			}
-		case ts.TypeWildcard:
-			matched = true
-			newPath = path[:0]
 		default:
 			// nodeType 错误，肯定是代码级别的错误，直接 panic
 			panic("无效的 nodeType 值")
@@ -286,7 +296,7 @@ func (n *node) match(path string) *node {
 			if nn := node.match(newPath); nn != nil {
 				return nn
 			}
-			if len(newPath) == 0 {
+			if len(newPath) == 0 && node.handlers != nil && len(node.handlers.handlers) > 0 {
 				return node
 			}
 		}
@@ -307,10 +317,15 @@ func (n *node) Params(path string) map[string]string {
 		case ts.TypeBasic:
 			path = path[len(node.pattern):]
 		case ts.TypeNamed:
-			index := strings.Index(path, node.suffix)
-			if index > 0 { // 为零说明前面没有命名参数，肯定不正确
-				params[node.name] = path[:index]
-				path = path[index+len(node.suffix):]
+			if node.endpoint {
+				params[node.name] = path
+				path = path[:0]
+			} else {
+				index := strings.Index(path, node.suffix)
+				if index > 0 { // 为零说明前面没有命名参数，肯定不正确
+					params[node.name] = path[:index]
+					path = path[index+len(node.suffix):]
+				}
 			}
 		case ts.TypeRegexp:
 			// 正确匹配正则表达式，则获相关的正则表达式命名变量。
@@ -323,8 +338,6 @@ func (n *node) Params(path string) map[string]string {
 			}
 
 			path = path[len(args[0]):]
-		case ts.TypeWildcard:
-			params[node.name] = path
 		}
 	}
 
@@ -348,8 +361,7 @@ LOOP:
 				return "", fmt.Errorf("未找到参数 %s 的值", node.name)
 			}
 			buf.WriteString(param)
-
-			buf.WriteString(node.suffix)
+			buf.WriteString(node.suffix) // 如果是 endpoint suffix 肯定为空
 		case ts.TypeRegexp:
 			if node.syntaxExpr == nil {
 				continue LOOP
@@ -370,8 +382,6 @@ LOOP:
 			}
 
 			buf.WriteString(url)
-		case ts.TypeWildcard:
-			buf.WriteString(params[node.name])
 		}
 	}
 
