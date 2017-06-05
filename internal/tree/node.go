@@ -275,7 +275,7 @@ func (n *node) match(path string) *node {
 			loc := node.expr.FindStringIndex(path)
 			if loc != nil && loc[0] == 0 {
 				matched = true
-				if loc[1] >= len(path) {
+				if loc[1] == len(path) {
 					newPath = path[:0]
 				} else {
 					newPath = path[loc[1]+1:]
@@ -295,7 +295,9 @@ func (n *node) match(path string) *node {
 			if nn := node.match(newPath); nn != nil {
 				return nn
 			}
-			return node
+			if len(newPath) == 0 {
+				return node
+			}
 		}
 	} // end for
 
