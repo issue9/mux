@@ -115,8 +115,8 @@ func BenchmarkParse(b *testing.B) {
 func TestStringType(t *testing.T) {
 	a := assert.New(t)
 
-	a.Equal(StringType("/posts"), TypeBasic)
-	a.Equal(StringType("/posts/{id}"), TypeNamed)
-	a.Equal(StringType("/posts/{id}/author"), TypeNamed)
-	a.Equal(StringType("/posts/{id:\\d+}/author"), TypeRegexp)
+	a.Equal(stringType("/posts"), TypeBasic)
+	a.Equal(stringType("/posts/{id}"), TypeNamed)
+	a.Equal(stringType("/posts/{id}/author"), TypeNamed)
+	a.Equal(stringType("/posts/{id:\\d+}/author"), TypeRegexp)
 }

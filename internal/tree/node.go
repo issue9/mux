@@ -105,19 +105,13 @@ func (n *node) addSegment(s *ts.Segment) (*node, error) {
 	if len(child.pattern) > l { // 需要将当前节点分解成两个节点
 		n.children = removeNodes(n.children, child.pattern) // 删除老的
 
-		p, err := n.newChild(&ts.Segment{
-			Value: s.Value[:l],
-			Type:  ts.StringType(s.Value[:l]),
-		})
+		p, err := n.newChild(ts.NewSegment(s.Value[:l]))
 		if err != nil {
 			return nil, err
 		}
 		parent = p
 
-		c, err := parent.newChild(&ts.Segment{
-			Value: child.pattern[l:],
-			Type:  ts.StringType(child.pattern[l:]),
-		})
+		c, err := parent.newChild(ts.NewSegment(child.pattern[l:]))
 		if err != nil {
 			return nil, err
 		}
@@ -131,10 +125,7 @@ func (n *node) addSegment(s *ts.Segment) (*node, error) {
 	if len(s.Value) == l {
 		return parent, nil
 	}
-	return parent.addSegment(&ts.Segment{
-		Value: s.Value[l:],
-		Type:  ts.StringType(s.Value[l:]),
-	})
+	return parent.addSegment(ts.NewSegment(s.Value[l:]))
 }
 
 // 根据 seg 内容为当前节点产生一个子节点
