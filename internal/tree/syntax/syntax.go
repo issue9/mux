@@ -20,7 +20,7 @@ const (
 	TypeBasic Type = iota + 10
 	TypeRegexp
 	TypeNamed
-	TypeWildcard
+	//TypeWildcard // 通配符类型，即以命名参数结尾
 )
 
 // 路由项字符串中的几个特殊字符定义
@@ -32,8 +32,9 @@ const (
 
 // Segment 表示路由中最小的不可分割内容。
 type Segment struct {
-	Value string
-	Type  Type
+	Value    string
+	Type     Type
+	Endpoint bool // 是否为终点
 }
 
 // Parse 将字符串解析成 Segment 对象数组
@@ -106,13 +107,10 @@ func Parse(str string) ([]*Segment, error) {
 		}
 
 		// 最后一个节点是命名节点，则转换成通配符模式
-		if str[len(str)-1] == NameEnd && nType == TypeNamed {
-			nType = TypeWildcard
-		}
-
 		ss = append(ss, &Segment{
-			Value: str[startIndex:],
-			Type:  nType,
+			Value:    str[startIndex:],
+			Type:     nType,
+			Endpoint: str[len(str)-1] == NameEnd,
 		})
 	}
 
