@@ -79,7 +79,7 @@ func TestMux_Add_Remove(t *testing.T) {
 	request(a, srvmux, http.MethodPut, "/api/1", 1) // 不影响 PUT
 	request(a, srvmux, http.MethodGet, "/api/2", 2)
 
-	// 删除 GET /api/2，只有一个，所以相当于整个 Entry 被删除
+	// 删除 GET /api/2，只有一个，所以相当于整个节点被删除
 	srvmux.Remove("/api/2", http.MethodGet)
 	request(a, srvmux, http.MethodGet, "/api/1", http.StatusMethodNotAllowed)
 	request(a, srvmux, http.MethodPut, "/api/1", 1)                   // 不影响 PUT
