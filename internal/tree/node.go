@@ -37,7 +37,7 @@ type node struct {
 	children []*node
 	pattern  string
 	handlers *handlers
-	endpoint bool
+	endpoint bool // 仅对 nodeType 为 TypeRegexp 和 TypeNamed 有用
 
 	// 命名参数特有的参数
 	name   string // 缓存着名称
@@ -222,28 +222,19 @@ func (n *node) clean(prefix string) {
 }
 
 // remove
-func (n *node) remove(segments []*ts.Segment, methods ...string) error {
-	current := segments[0]
-	isLast := len(segments) == 1
-	var child *node
-
-	for _, c := range n.children {
-		if c.pattern == current.Value {
-			child = c
-			break
-		}
-	}
+func (n *node) remove(pattern string, methods ...string) error {
+	child := n.find(pattern)
 
 	if child == nil {
-		return fmt.Errorf("不存在的节点 %v", current.Value)
+		return fmt.Errorf("不存在的节点 %v", pattern)
 	}
 
-	if !isLast {
-		return child.remove(segments[1:], methods...)
+	if child.handlers == nil {
+		return nil
 	}
 
 	if child.handlers.remove(methods...) {
-		n.children = removeNodes(n.children, current.Value)
+		child.parent.children = removeNodes(child.parent.children, child.pattern)
 	}
 	return nil
 }

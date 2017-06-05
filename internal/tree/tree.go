@@ -30,12 +30,7 @@ func (tree *Tree) Clean(prefix string) {
 
 // Remove 移除路由项
 func (tree *Tree) Remove(pattern string, methods ...string) error {
-	ss, err := ts.Parse(pattern)
-	if err != nil {
-		return err
-	}
-
-	return tree.remove(ss, methods...)
+	return tree.remove(pattern, methods...)
 }
 
 // Add 添加路由项。
