@@ -22,8 +22,8 @@ func TestMux_Resource(t *testing.T) {
 
 	r2, err := srvmux.Resource("/abc/1")
 	a.NotError(err).NotNil(r2)
-	a.False(r1 == r2)            // 不是同一个 *Resource
-	a.True(r1.entry == r2.entry) // 但应该指向同一个 entry.Entry 实例
+	a.False(r1 == r2)          // 不是同一个 *Resource
+	a.True(r1.node == r2.node) // 但应该指向同一个 node.Entry 实例
 }
 
 func TestResource_Name(t *testing.T) {
@@ -54,27 +54,21 @@ func TestResource_URL(t *testing.T) {
 	// 非正则
 	res, err := srvmux.Resource("/api/v1")
 	a.NotError(err).NotNil(res)
-	url, err := res.URL(map[string]string{"id": "1"}, "path")
+	url, err := res.URL(map[string]string{"id": "1"})
 	a.NotError(err).Equal(url, "/api/v1")
 
-	// 未命名正则
-	res, err = srvmux.Resource("/api/{:\\d+}")
-	a.NotError(err).NotNil(res)
-	url, err = res.URL(map[string]string{"id": "1"}, "path")
-	a.NotError(err).Equal(url, "/api/[0-9]+")
-
 	// 正常的单个参数
-	res, err = srvmux.Resource("/api/{id:\\d+}/*")
+	res, err = srvmux.Resource("/api/{id:\\d+}/{path}")
 	a.NotError(err).NotNil(res)
-	url, err = res.URL(map[string]string{"id": "1"}, "path")
-	a.NotError(err).Equal(url, "/api/1/path")
+	url, err = res.URL(map[string]string{"id": "1", "path": "p1"})
+	a.NotError(err).Equal(url, "/api/1/p1")
 
 	// 多个参数
 	res, err = srvmux.Resource("/api/{action}/{id:\\d+}")
 	a.NotError(err).NotNil(res)
-	url, err = res.URL(map[string]string{"id": "1", "action": "blog"}, "path")
+	url, err = res.URL(map[string]string{"id": "1", "action": "blog"})
 	a.NotError(err).Equal(url, "/api/blog/1")
 	// 缺少参数
-	url, err = res.URL(map[string]string{"id": "1"}, "path")
+	url, err = res.URL(map[string]string{"id": "1"})
 	a.Error(err).Equal(url, "")
 }
