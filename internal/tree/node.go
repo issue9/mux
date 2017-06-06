@@ -39,7 +39,10 @@ type Node struct {
 	children []*Node
 	pattern  string
 	handlers *handlers.Handlers
-	endpoint bool // 仅对 nodeType 为 TypeRegexp 和 TypeNamed 有用
+
+	// 用于表示当前节点是否为终点，仅对 nodeType 为 TypeRegexp 和 TypeNamed 有用。
+	// 此值为 true，该节点的优先级会比同类型的节点低，以便优先对比其它非最终节点。
+	endpoint bool
 
 	// 命名参数特有的参数
 	name   string // 缓存着名称
