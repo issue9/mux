@@ -198,8 +198,8 @@ func (n *Node) find(pattern string) *Node {
 	return nil
 }
 
-// 清除路由项
-func (n *Node) clean(prefix string) {
+// Clean 清除路由项
+func (n *Node) Clean(prefix string) {
 	if len(prefix) == 0 {
 		n.children = n.children[:0]
 		return
@@ -209,7 +209,7 @@ func (n *Node) clean(prefix string) {
 	for _, child := range n.children {
 		if len(child.pattern) < len(prefix) {
 			if strings.HasPrefix(prefix, child.pattern) {
-				child.clean(prefix[len(child.pattern):])
+				child.Clean(prefix[len(child.pattern):])
 			}
 		}
 
@@ -223,8 +223,8 @@ func (n *Node) clean(prefix string) {
 	}
 }
 
-// remove
-func (n *Node) remove(pattern string, methods ...string) error {
+// Remove 移除路由项
+func (n *Node) Remove(pattern string, methods ...string) error {
 	child := n.find(pattern)
 
 	if child == nil {
@@ -241,8 +241,8 @@ func (n *Node) remove(pattern string, methods ...string) error {
 	return nil
 }
 
-// 从子节点中查找与当前路径匹配的节点，若找不到，则返回 nil
-func (n *Node) match(path string) *Node {
+// Match 从子节点中查找与当前路径匹配的节点，若找不到，则返回 nil
+func (n *Node) Match(path string) *Node {
 	if len(n.children) == 0 && len(path) == 0 {
 		return n
 	}
@@ -286,7 +286,7 @@ func (n *Node) match(path string) *Node {
 		if matched {
 			// 即使 newPath 为空，也有可能子节点正好可以匹配空的内容。
 			// 比如 /posts/{path:\\w*} 后面的 path 即为空节点。
-			if nn := node.match(newPath); nn != nil {
+			if nn := node.Match(newPath); nn != nil {
 				return nn
 			}
 			if len(newPath) == 0 && node.handlers != nil && node.handlers.Len() > 0 {
