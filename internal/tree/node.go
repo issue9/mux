@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/issue9/mux/internal/tree/handlers"
 	ts "github.com/issue9/mux/internal/tree/syntax"
 )
 
@@ -37,7 +38,7 @@ type Node struct {
 	nodeType ts.Type
 	children []*Node
 	pattern  string
-	handlers *handlers
+	handlers *handlers.Handlers
 	endpoint bool // 仅对 nodeType 为 TypeRegexp 和 TypeNamed 有用
 
 	// 命名参数特有的参数
@@ -73,9 +74,9 @@ func (n *Node) add(segments []*ts.Segment, h http.Handler, methods ...string) er
 
 	if len(segments) == 1 { // 最后一个节点
 		if child.handlers == nil {
-			child.handlers = newHandlers()
+			child.handlers = handlers.New()
 		}
-		return child.handlers.add(h, methods...)
+		return child.handlers.Add(h, methods...)
 	}
 	return child.add(segments[1:], h, methods...)
 }
@@ -234,7 +235,7 @@ func (n *Node) remove(pattern string, methods ...string) error {
 		return nil
 	}
 
-	if child.handlers.remove(methods...) {
+	if child.handlers.Remove(methods...) {
 		child.parent.children = removeNodes(child.parent.children, child.pattern)
 	}
 	return nil
@@ -288,7 +289,7 @@ func (n *Node) match(path string) *Node {
 			if nn := node.match(newPath); nn != nil {
 				return nn
 			}
-			if len(newPath) == 0 && node.handlers != nil && len(node.handlers.handlers) > 0 {
+			if len(newPath) == 0 && node.handlers != nil && node.handlers.Len() > 0 {
 				return node
 			}
 		}
@@ -394,10 +395,10 @@ func (n *Node) getParents() []*Node {
 // SetAllow 设置当前节点的 allow 报头
 func (n *Node) SetAllow(allow string) {
 	if n.handlers == nil {
-		n.handlers = newHandlers()
+		n.handlers = handlers.New()
 	}
 
-	n.handlers.setAllow(allow)
+	n.handlers.SetAllow(allow)
 }
 
 // Handler 获取该节点下与参数相对应的处理函数
@@ -406,7 +407,7 @@ func (n *Node) Handler(method string) http.Handler {
 		return nil
 	}
 
-	return n.handlers.handler(method)
+	return n.handlers.Handler(method)
 }
 
 // 向客户端打印节点的树状结构
@@ -425,7 +426,7 @@ func (n *Node) len() int {
 		cnt += child.len()
 	}
 
-	if n.handlers != nil && len(n.handlers.handlers) > 0 {
+	if n.handlers != nil && n.handlers.Len() > 0 {
 		cnt++
 	}
 

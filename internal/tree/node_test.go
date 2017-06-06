@@ -85,7 +85,7 @@ func TestNode_add_remove(t *testing.T) {
 	a.NotError(node.add(newSegments(a, "/posts/1/author"), buildHandler(1), http.MethodGet))
 	a.NotError(node.add(newSegments(a, "/posts/{id}/{author:\\w+}/profile"), buildHandler(1), http.MethodGet))
 
-	a.NotEmpty(node.find("/posts/1/author").handlers.handlers)
+	a.True(node.find("/posts/1/author").handlers.Len() > 0)
 	a.NotError(node.remove("/posts/1/author", http.MethodGet))
 	a.Nil(node.find("/posts/1/author"))
 
