@@ -79,11 +79,11 @@ func TestMux_Add_Remove(t *testing.T) {
 	request(a, srvmux, http.MethodPut, "/api/1", 1) // 不影响 PUT
 	request(a, srvmux, http.MethodGet, "/api/2", 2)
 
-	// 删除 GET /api/2，只有一个，所以相当于整个 Entry 被删除
+	// 删除 GET /api/2，只有一个，所以相当于整个节点被删除
 	srvmux.Remove("/api/2", http.MethodGet)
 	request(a, srvmux, http.MethodGet, "/api/1", http.StatusMethodNotAllowed)
 	request(a, srvmux, http.MethodPut, "/api/1", 1)                   // 不影响 PUT
-	request(a, srvmux, http.MethodGet, "/api/2", http.StatusNotFound) // 整个 entry 被删除
+	request(a, srvmux, http.MethodGet, "/api/2", http.StatusNotFound) // 整个节点被删除
 
 	// 添加 POST /api/1
 	a.NotPanic(func() {
@@ -93,7 +93,7 @@ func TestMux_Add_Remove(t *testing.T) {
 
 	// 删除 ANY /api/1
 	srvmux.Remove("/api/1")
-	request(a, srvmux, http.MethodPost, "/api/1", http.StatusNotFound) // 404 表示整个 entry 都没了
+	request(a, srvmux, http.MethodPost, "/api/1", http.StatusNotFound) // 404 表示整个节点都没了
 }
 
 func TestMux_Options(t *testing.T) {
@@ -161,7 +161,7 @@ func TestMux_Params(t *testing.T) {
 	requestParams(a, srvmux, http.MethodPatch, "/api/256", http.StatusOK, map[string]string{"version": "256"})
 	requestParams(a, srvmux, http.MethodGet, "/api/256", http.StatusMethodNotAllowed, nil) // 不存在的请求方法
 
-	// 添加 patch /api/v2/{version:\\d+}
+	// 添加 patch /api/v2/{version:\\d*}
 	a.NotError(srvmux.Patch("/api/v2/{version:\\d*}", buildParamsHandler()))
 	requestParams(a, srvmux, http.MethodPatch, "/api/v2/2", http.StatusOK, map[string]string{"version": "2"})
 	requestParams(a, srvmux, http.MethodPatch, "/api/v2/", http.StatusOK, map[string]string{"version": ""})
@@ -177,8 +177,8 @@ func TestMux_ServeHTTP(t *testing.T) {
 	srvmux := New(false, false, nil, nil)
 	a.NotNil(srvmux)
 
-	srvmux.Handle("/posts/{path}.html", h1) // 命名参数不能带 /
-	request(a, srvmux, http.MethodGet, "/posts/2017/1.html", 404)
+	srvmux.Handle("/posts/{path}.html", h1)
+	request(a, srvmux, http.MethodGet, "/posts/2017/1.html", 1)
 
 	srvmux.Handle("/posts/{path:.+}.html", h2)
 	request(a, srvmux, http.MethodGet, "/posts/2017/1.html", 2)
@@ -191,25 +191,13 @@ func TestMux_ServeHTTP_Order(t *testing.T) {
 	serveMux := New(false, false, nil, nil)
 	a.NotNil(serveMux)
 
-	a.NotError(serveMux.GetFunc("/posts/{id}", f3))    // f3
-	a.NotError(serveMux.GetFunc("/posts/{id:.+}", f2)) // f2
-	a.NotError(serveMux.GetFunc("/posts/1", f1))       // f1
-
-	request(a, serveMux, http.MethodGet, "/posts/1", 1)        // f1 普通路由项完全匹配
-	request(a, serveMux, http.MethodGet, "/posts/2", 3)        // f1 命名路由
-	request(a, serveMux, http.MethodGet, "/posts/2/author", 2) // f2 正则正则匹配
-	request(a, serveMux, http.MethodGet, "/posts/abc", 3)      // f3 命名路由
-
-	serveMux = New(false, false, nil, nil)
-	a.NotNil(serveMux)
-
-	a.NotError(serveMux.GetFunc("/posts/*", f3))         // f3
+	a.NotError(serveMux.GetFunc("/posts/{id}", f3))      // f3
 	a.NotError(serveMux.GetFunc("/posts/{id:\\d+}", f2)) // f2
 	a.NotError(serveMux.GetFunc("/posts/1", f1))         // f1
 
 	request(a, serveMux, http.MethodGet, "/posts/1", 1)   // f1 普通路由项完全匹配
-	request(a, serveMux, http.MethodGet, "/posts/2", 2)   // f2 正则完全匹配
-	request(a, serveMux, http.MethodGet, "/posts/abc", 3) // f3 通配符完全匹配
+	request(a, serveMux, http.MethodGet, "/posts/2", 2)   // f1 正则路由
+	request(a, serveMux, http.MethodGet, "/posts/abc", 3) // f3 命名路由
 
 	serveMux = New(false, false, nil, nil)
 	a.NotNil(serveMux)

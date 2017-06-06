@@ -10,8 +10,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/issue9/mux/internal/list"
 	"github.com/issue9/mux/internal/method"
+	"github.com/issue9/mux/internal/tree"
 )
 
 var (
@@ -33,7 +33,7 @@ var (
 //    Handle("/api/{version:\\d+}",h3, http.MethodGet, http.MethodPost) // 只匹配 GET 和 POST
 //  http.ListenAndServe(m)
 type Mux struct {
-	list             *list.Byte
+	tree             *tree.Tree
 	skipCleanPath    bool
 	notFound         http.HandlerFunc
 	methodNotAllowed http.HandlerFunc
@@ -57,7 +57,7 @@ func New(disableOptions, skipCleanPath bool, notFound, methodNotAllowed http.Han
 	}
 
 	return &Mux{
-		list:             list.NewByte(disableOptions),
+		tree:             tree.New(),
 		resources:        make(map[string]*Resource, 500),
 		skipCleanPath:    skipCleanPath,
 		notFound:         notFound,
@@ -67,7 +67,7 @@ func New(disableOptions, skipCleanPath bool, notFound, methodNotAllowed http.Han
 
 // Clean 清除所有的路由项
 func (mux *Mux) Clean() *Mux {
-	mux.list.Clean("")
+	mux.tree.Clean("")
 	return mux
 }
 
@@ -76,7 +76,11 @@ func (mux *Mux) Clean() *Mux {
 // 当未指定 methods 时，将删除所有 method 匹配的项。
 // 指定错误的 methods 值，将自动忽略该值。
 func (mux *Mux) Remove(pattern string, methods ...string) *Mux {
-	mux.list.Remove(pattern, methods...)
+	if len(methods) == 0 {
+		methods = method.Default
+	}
+
+	mux.tree.Remove(pattern, methods...)
 	return mux
 }
 
@@ -86,7 +90,11 @@ func (mux *Mux) Remove(pattern string, methods ...string) *Mux {
 // methods 该路由项对应的请求方法，可通过 SupportedMethods() 获得当前支持的请求方法。
 // 当 pattern 或是 h 为空时，将触发 panic。
 func (mux *Mux) Handle(pattern string, h http.Handler, methods ...string) error {
-	return mux.list.Add(pattern, h, methods...)
+	if len(methods) == 0 {
+		methods = method.Default
+	}
+
+	return mux.tree.Add(pattern, h, methods...)
 }
 
 // Options 将 OPTIONS 请求方法的报头 allow 值固定为指定的值。
@@ -95,11 +103,11 @@ func (mux *Mux) Handle(pattern string, h http.Handler, methods ...string) error 
 // 如果想实现对处理方法的自定义，可以显示地调用 Handle 方法:
 //  Mux.Handle("/api/1", handle, http.MethodOptions)
 func (mux *Mux) Options(pattern string, allow string) *Mux {
-	ety, err := mux.list.Entry(pattern)
+	n, err := mux.tree.GetNode(pattern)
 	if err != nil {
 		panic(err)
 	}
-	ety.SetAllow(allow)
+	n.SetAllow(allow)
 
 	return mux
 }
@@ -186,18 +194,19 @@ func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		p = cleanPath(p)
 	}
 
-	e, params := mux.list.Match(p)
-	if e == nil {
+	node := mux.tree.Match(p)
+	if node == nil {
 		mux.notFound(w, r)
 		return
 	}
 
-	h := e.Handler(r.Method)
+	h := node.Handler(r.Method)
 	if h == nil {
 		mux.methodNotAllowed(w, r)
 		return
 	}
 
+	params := node.Params(p)
 	if len(params) > 0 {
 		ctx := context.WithValue(r.Context(), contextKeyParams, Params(params))
 		r = r.WithContext(ctx)
