@@ -289,10 +289,13 @@ func (n *Node) Match(path string) *Node {
 }
 
 // Params 由调用方确保能正常匹配 path
+//
+// 调用方需确保 path 与 n.Match 中传递的是相同的值，此函数中，不再作验证。
 func (n *Node) Params(path string) map[string]string {
 	nodes := n.getParents()
 	params := make(map[string]string, 10)
 
+LOOP:
 	for i := len(nodes) - 1; i >= 0; i-- {
 		node := nodes[i]
 		switch node.nodeType {
@@ -301,16 +304,13 @@ func (n *Node) Params(path string) map[string]string {
 		case ts.TypeNamed:
 			if node.endpoint {
 				params[node.name] = path
-				path = path[:0]
-			} else {
-				index := strings.Index(path, node.suffix)
-				if index > 0 { // 为零说明前面没有命名参数，肯定不正确
-					params[node.name] = path[:index]
-					path = path[index+len(node.suffix):]
-				}
+				break LOOP
 			}
+
+			index := strings.Index(path, node.suffix)
+			params[node.name] = path[:index]
+			path = path[index+len(node.suffix):]
 		case ts.TypeRegexp:
-			// 正确匹配正则表达式，则获相关的正则表达式命名变量。
 			subexps := node.expr.SubexpNames()
 			args := node.expr.FindStringSubmatch(path)
 			for index, name := range subexps {
