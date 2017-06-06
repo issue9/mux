@@ -6,6 +6,7 @@ package tree
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -113,26 +114,9 @@ func (n *Node) addSegment(s *ts.Segment) (*Node, error) {
 		return n.newChild(s)
 	}
 
-	parent := child
-
-	if len(child.pattern) > l { // 需要将当前节点分解成两个节点
-		n.children = removeNodes(n.children, child.pattern) // 删除老的
-
-		p, err := n.newChild(ts.NewSegment(s.Value[:l]))
-		if err != nil {
-			return nil, err
-		}
-		parent = p
-
-		c, err := parent.newChild(ts.NewSegment(child.pattern[l:]))
-		if err != nil {
-			return nil, err
-		}
-		c.handlers = child.handlers
-		c.children = child.children
-		for _, item := range c.children {
-			item.parent = c
-		}
+	parent, err := splitNode(child, l)
+	if err != nil {
+		return nil, err
 	}
 
 	if len(s.Value) == l {
@@ -152,6 +136,9 @@ func (n *Node) newChild(seg *ts.Segment) (*Node, error) {
 	switch seg.Type {
 	case ts.TypeNamed:
 		endIndex := strings.IndexByte(seg.Value, ts.NameEnd)
+		if endIndex == -1 { // TODO 由 ts.Segment 保存语法是有效的，是否更佳？
+			return nil, fmt.Errorf("无效的路由语法：%s", seg.Value)
+		}
 		child.suffix = seg.Value[endIndex+1:]
 		child.name = seg.Value[1:endIndex]
 		child.endpoint = seg.Endpoint
@@ -304,7 +291,6 @@ func (n *Node) Match(path string) *Node {
 // Params 由调用方确保能正常匹配 path
 func (n *Node) Params(path string) map[string]string {
 	nodes := n.getParents()
-
 	params := make(map[string]string, 10)
 
 	for i := len(nodes) - 1; i >= 0; i-- {
@@ -345,7 +331,6 @@ func (n *Node) URL(params map[string]string) (string, error) {
 	nodes := n.getParents()
 	buf := new(bytes.Buffer)
 
-LOOP:
 	for i := len(nodes) - 1; i >= 0; i-- {
 		node := nodes[i]
 		switch node.nodeType {
@@ -359,10 +344,6 @@ LOOP:
 			buf.WriteString(param)
 			buf.WriteString(node.suffix) // 如果是 endpoint suffix 肯定为空
 		case ts.TypeRegexp:
-			if node.syntaxExpr == nil {
-				continue LOOP
-			}
-
 			url := node.syntaxExpr.String()
 			subs := append(node.syntaxExpr.Sub, node.syntaxExpr)
 			for _, sub := range subs {
@@ -454,4 +435,39 @@ func removeNodes(nodes []*Node, pattern string) []*Node {
 	} // end for
 
 	return nodes
+}
+
+// 将节点 n 从 pos 位置进行拆分。后一段作为当前段的子节点，并返回当前节点。
+// 若 pos 大于或等于 n.pattern 的长度，则直接返回 n 不会拆分。
+//
+// NOTE: 调用者需确保 pos 位置是可拆分的。
+func splitNode(n *Node, pos int) (*Node, error) {
+	if len(n.pattern) <= pos { // 不需要拆分
+		return n, nil
+	}
+
+	p := n.parent
+	if p == nil {
+		return nil, errors.New("split:节点必须要有一个有效的父节点，才能进行拆分")
+	}
+
+	// 先从父节点中删除老的 n
+	p.children = removeNodes(p.children, n.pattern)
+
+	ret, err := p.newChild(ts.NewSegment(n.pattern[:pos]))
+	if err != nil {
+		return nil, err
+	}
+
+	c, err := ret.newChild(ts.NewSegment(n.pattern[pos:]))
+	if err != nil {
+		return nil, err
+	}
+	c.handlers = n.handlers
+	c.children = n.children
+	for _, item := range c.children {
+		item.parent = c
+	}
+
+	return ret, nil
 }

@@ -243,3 +243,24 @@ func TestRemoveNoddes(t *testing.T) {
 	nodes = removeNodes(nodes, "/3")
 	a.Equal(len(nodes), 0)
 }
+
+func TestSplitNode(t *testing.T) {
+	a := assert.New(t)
+	p := &Node{pattern: "/blog"}
+
+	// 没有父节点
+	nn, err := splitNode(p, 1)
+	a.Error(err).Nil(nn)
+
+	node, err := p.newChild(ts.NewSegment("/posts/{id}/author"))
+	a.NotError(err).NotNil(node)
+
+	nn, err = splitNode(node, 7) // 从 { 开始拆分
+	a.NotError(err).NotNil(nn)
+	a.Equal(len(nn.children), 1).
+		Equal(nn.children[0].pattern, "{id}/author")
+	a.Equal(nn.parent, p)
+
+	nn, err = splitNode(node, 8) // 从 i 开始拆分
+	a.Error(err).Nil(nn)
+}
