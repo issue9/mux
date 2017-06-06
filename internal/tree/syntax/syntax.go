@@ -20,7 +20,6 @@ const (
 	TypeBasic Type = iota + 10
 	TypeRegexp
 	TypeNamed
-	//TypeWildcard // 通配符类型，即以命名参数结尾
 )
 
 // 路由项字符串中的几个特殊字符定义

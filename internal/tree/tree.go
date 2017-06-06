@@ -50,6 +50,11 @@ func (tree *Tree) Match(path string) *Node {
 	return tree.match(path)
 }
 
+// Print 打印树状结构
+func (tree *Tree) Print() {
+	tree.print(0)
+}
+
 // GetNode 查找路由项，不存在，则返回一个新建的实例。
 func (tree *Tree) GetNode(pattern string) (*Node, error) {
 	n := tree.find(pattern)

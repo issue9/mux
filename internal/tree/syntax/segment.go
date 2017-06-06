@@ -11,7 +11,8 @@ type Segment struct {
 	Endpoint bool // 是否为终点
 }
 
-// NewSegment 将字符串转换为一个 Segment 实例
+// NewSegment 将字符串转换为一个 Segment 实例。
+// 调用者需要确保 str 语法正确。
 func NewSegment(str string) *Segment {
 	return &Segment{
 		Value:    str,
