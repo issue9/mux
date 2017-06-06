@@ -13,10 +13,17 @@ import (
 	"regexp/syntax"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/issue9/mux/internal/tree/handlers"
 	ts "github.com/issue9/mux/internal/tree/syntax"
 )
+
+var nodesPool = &sync.Pool{
+	New: func() interface{} {
+		return make([]*Node, 0, 10)
+	},
+}
 
 // Node 表示路由中的节点。多段路由项，会提取其中的相同的内容组成树状结构的节点。
 // 比如以下路由项：
@@ -293,6 +300,8 @@ func (n *Node) Match(path string) *Node {
 // 调用方需确保 path 与 n.Match 中传递的是相同的值，此函数中，不再作验证。
 func (n *Node) Params(path string) map[string]string {
 	nodes := n.getParents()
+	defer nodesPool.Put(nodes)
+
 	params := make(map[string]string, 10)
 
 LOOP:
@@ -329,6 +338,8 @@ LOOP:
 // URL 根据参数生成地址
 func (n *Node) URL(params map[string]string) (string, error) {
 	nodes := n.getParents()
+	defer nodesPool.Put(nodes)
+
 	buf := new(bytes.Buffer)
 
 	for i := len(nodes) - 1; i >= 0; i-- {
@@ -366,8 +377,9 @@ func (n *Node) URL(params map[string]string) (string, error) {
 }
 
 // 逐级向上获取父节点，包含当前节点。
+// NOTE: 记得将 []*Node 放回对象池中。
 func (n *Node) getParents() []*Node {
-	nodes := make([]*Node, 0, 10)
+	nodes := nodesPool.Get().([]*Node)[:0]
 
 	for curr := n; curr != nil; curr = curr.parent { // 从尾部向上开始获取节点
 		nodes = append(nodes, curr)
