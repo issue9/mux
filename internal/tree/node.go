@@ -55,7 +55,7 @@ type Node struct {
 }
 
 // 当前节点的优先级，根据节点类型来判断，
-// 若类型相同时，则有子节点的优先级低一些，但不会超过不同节点类型。
+// 若类型相同时，则有子节点的优先级低一些，但不会超过其它不同类型的节点。
 func (n *Node) priority() int {
 	p := int(n.nodeType)
 
@@ -136,7 +136,7 @@ func (n *Node) newChild(seg *ts.Segment) (*Node, error) {
 	switch seg.Type {
 	case ts.TypeNamed:
 		endIndex := strings.IndexByte(seg.Value, ts.NameEnd)
-		if endIndex == -1 { // TODO 由 ts.Segment 保存语法是有效的，是否更佳？
+		if endIndex == -1 { // TODO 由 ts.Segment 保证语法是有效的，是否更佳？
 			return nil, fmt.Errorf("无效的路由语法：%s", seg.Value)
 		}
 		child.suffix = seg.Value[endIndex+1:]
@@ -367,9 +367,9 @@ func (n *Node) URL(params map[string]string) (string, error) {
 
 // 逐级向上获取父节点，包含当前节点。
 func (n *Node) getParents() []*Node {
-	nodes := make([]*Node, 0, 10) // 从尾部向上开始获取节点
+	nodes := make([]*Node, 0, 10)
 
-	for curr := n; curr != nil; curr = curr.parent {
+	for curr := n; curr != nil; curr = curr.parent { // 从尾部向上开始获取节点
 		nodes = append(nodes, curr)
 	}
 
