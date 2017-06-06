@@ -146,7 +146,7 @@ func TestNode_match(t *testing.T) {
 	test.add(http.MethodGet, "/posts/{id:\\d+}/author", 6)
 	test.add(http.MethodGet, "/page/{page:\\d*}", 7) // 可选的正则节点
 	test.add(http.MethodGet, "/posts/{id}/{page}/author", 8)
-	test.n.print(0)
+	//test.n.print(0)
 
 	test.matchTrue(http.MethodGet, "/", 1)
 	test.matchTrue(http.MethodGet, "/posts/1", 5)             // 正则
