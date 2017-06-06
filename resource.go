@@ -27,7 +27,7 @@ var ErrResourceNameExists = errors.New("存在相同名称的资源")
 type Resource struct {
 	mux     *Mux
 	pattern string
-	node    tree.Node
+	node    *tree.Node
 }
 
 // Options 手动指定 OPTIONS 请求方法的值。具体说明可参考 Mux.Options 方法。
@@ -190,7 +190,7 @@ func (r *Resource) Mux() *Mux {
 }
 
 func newResource(mux *Mux, pattern string) (*Resource, error) {
-	n, err := mux.tree.Node(pattern)
+	n, err := mux.tree.GetNode(pattern)
 	if err != nil {
 		return nil, err
 	}

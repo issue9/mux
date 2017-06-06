@@ -14,17 +14,15 @@ import (
 	ts "github.com/issue9/mux/internal/tree/syntax"
 )
 
-var _ Node = &node{}
-
 // node 的测试工具
 type nodeTest struct {
-	n *node
+	n *Node
 	a *assert.Assertion
 }
 
 func newNodeTest(a *assert.Assertion) *nodeTest {
 	return &nodeTest{
-		n: &node{},
+		n: &Node{},
 		a: a,
 	}
 }
@@ -37,7 +35,7 @@ func (n *nodeTest) add(method, pattern string, code int) {
 }
 
 // 验证指定的路径是否匹配正确的路由项，通过 code 来确定，并返回该节点的实例。
-func (n *nodeTest) matchTrue(method, path string, code int) *node {
+func (n *nodeTest) matchTrue(method, path string, code int) *Node {
 	nn := n.n.match(path)
 	n.a.NotNil(nn)
 
@@ -79,7 +77,7 @@ func newSegments(a *assert.Assertion, pattern string) []*ts.Segment {
 
 func TestNode_add_remove(t *testing.T) {
 	a := assert.New(t)
-	node := &node{}
+	node := &Node{}
 
 	a.NotError(node.add(newSegments(a, "/"), buildHandler(1), http.MethodGet))
 	a.NotError(node.add(newSegments(a, "/posts/{id}"), buildHandler(1), http.MethodGet))
@@ -100,7 +98,7 @@ func TestNode_add_remove(t *testing.T) {
 
 func TestNode_find(t *testing.T) {
 	a := assert.New(t)
-	node := &node{}
+	node := &Node{}
 
 	a.NotError(node.add(newSegments(a, "/"), buildHandler(1), http.MethodGet))
 	a.NotError(node.add(newSegments(a, "/posts/{id}"), buildHandler(1), http.MethodGet))
@@ -116,7 +114,7 @@ func TestNode_find(t *testing.T) {
 
 func TestNode_clean(t *testing.T) {
 	a := assert.New(t)
-	node := &node{}
+	node := &Node{}
 
 	a.NotError(node.add(newSegments(a, "/"), buildHandler(1), http.MethodGet))
 	a.NotError(node.add(newSegments(a, "/posts/1/author"), buildHandler(1), http.MethodGet))
@@ -197,29 +195,29 @@ func TestNode_url(t *testing.T) {
 func TestNode_getParents(t *testing.T) {
 	a := assert.New(t)
 
-	n1 := &node{
-		children: make([]*node, 0, 1),
+	n1 := &Node{
+		children: make([]*Node, 0, 1),
 	}
-	n2 := &node{
-		children: make([]*node, 0, 1),
+	n2 := &Node{
+		children: make([]*Node, 0, 1),
 		parent:   n1,
 	}
-	n3 := &node{
+	n3 := &Node{
 		parent: n2,
 	}
 
-	a.Equal(n3.getParents(), []*node{n3, n2, n1})
-	a.Equal(n2.getParents(), []*node{n2, n1})
+	a.Equal(n3.getParents(), []*Node{n3, n2, n1})
+	a.Equal(n2.getParents(), []*Node{n2, n1})
 }
 
 func TestRemoveNoddes(t *testing.T) {
 	a := assert.New(t)
 
-	n1 := &node{pattern: "/1"}
-	n2 := &node{pattern: "/2"}
-	n3 := &node{pattern: "/3"}
-	n4 := &node{pattern: "/4"}
-	nodes := []*node{n1, n2, n3, n4}
+	n1 := &Node{pattern: "/1"}
+	n2 := &Node{pattern: "/2"}
+	n3 := &Node{pattern: "/3"}
+	n4 := &Node{pattern: "/4"}
+	nodes := []*Node{n1, n2, n3, n4}
 
 	// 不存在的元素
 	nodes = removeNodes(nodes, "")

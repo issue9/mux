@@ -16,25 +16,10 @@ import (
 	ts "github.com/issue9/mux/internal/tree/syntax"
 )
 
-// Node 表示一个节点
-type Node interface {
-	// 获取当前节点下指定请求方法对应的处理函数
-	Handler(method string) http.Handler
-
-	// 根据参数生成地址
-	URL(params map[string]string) (string, error)
-
-	// 获取当前节点的路由参数
-	Params(path string) map[string]string
-
-	//  设置当前节点的 allow 报头
-	SetAllow(allow string)
-}
-
-type node struct {
-	parent   *node
+type Node struct {
+	parent   *Node
 	nodeType ts.Type
-	children []*node
+	children []*Node
 	pattern  string
 	handlers *handlers
 	endpoint bool // 仅对 nodeType 为 TypeRegexp 和 TypeNamed 有用
@@ -50,7 +35,7 @@ type node struct {
 
 // 当前节点的优先级，根据节点类型来判断，
 // 若类型相同时，则有子节点的优先级低一些，但不会超过不同节点类型。
-func (n *node) priority() int {
+func (n *Node) priority() int {
 	p := int(n.nodeType)
 
 	if len(n.children) > 0 {
@@ -64,7 +49,7 @@ func (n *node) priority() int {
 }
 
 // 添加一条路由，当 methods 为空时，表示仅添加节点，而不添加任何处理函数。
-func (n *node) add(segments []*ts.Segment, h http.Handler, methods ...string) error {
+func (n *Node) add(segments []*ts.Segment, h http.Handler, methods ...string) error {
 	child, err := n.addSegment(segments[0])
 	if err != nil {
 		return err
@@ -80,8 +65,8 @@ func (n *node) add(segments []*ts.Segment, h http.Handler, methods ...string) er
 }
 
 // 添加一条 ts.Segment 到当前路由项，并返回其最后的节点
-func (n *node) addSegment(s *ts.Segment) (*node, error) {
-	var child *node // 找到的最匹配节点
+func (n *Node) addSegment(s *ts.Segment) (*Node, error) {
+	var child *Node // 找到的最匹配节点
 	var l int       // 最大的匹配字符数量
 
 	// 提取两者的共同前缀
@@ -137,8 +122,8 @@ func (n *node) addSegment(s *ts.Segment) (*node, error) {
 }
 
 // 根据 seg 内容为当前节点产生一个子节点
-func (n *node) newChild(seg *ts.Segment) (*node, error) {
-	child := &node{
+func (n *Node) newChild(seg *ts.Segment) (*Node, error) {
+	child := &Node{
 		parent:   n,
 		pattern:  seg.Value,
 		nodeType: seg.Type,
@@ -175,7 +160,7 @@ func (n *node) newChild(seg *ts.Segment) (*node, error) {
 }
 
 // 查找路由项，不存在返回 nil
-func (n *node) find(pattern string) *node {
+func (n *Node) find(pattern string) *Node {
 	for _, child := range n.children {
 		if len(child.pattern) < len(pattern) {
 			if !strings.HasPrefix(pattern, child.pattern) {
@@ -197,7 +182,7 @@ func (n *node) find(pattern string) *node {
 }
 
 // 清除路由项
-func (n *node) clean(prefix string) {
+func (n *Node) clean(prefix string) {
 	if len(prefix) == 0 {
 		n.children = n.children[:0]
 		return
@@ -222,7 +207,7 @@ func (n *node) clean(prefix string) {
 }
 
 // remove
-func (n *node) remove(pattern string, methods ...string) error {
+func (n *Node) remove(pattern string, methods ...string) error {
 	child := n.find(pattern)
 
 	if child == nil {
@@ -240,7 +225,7 @@ func (n *node) remove(pattern string, methods ...string) error {
 }
 
 // 从子节点中查找与当前路径匹配的节点，若找不到，则返回 nil
-func (n *node) match(path string) *node {
+func (n *Node) match(path string) *Node {
 	if len(n.children) == 0 && len(path) == 0 {
 		return n
 	}
@@ -297,7 +282,7 @@ func (n *node) match(path string) *node {
 }
 
 // Params 由调用方确保能正常匹配 path
-func (n *node) Params(path string) map[string]string {
+func (n *Node) Params(path string) map[string]string {
 	nodes := n.getParents()
 
 	params := make(map[string]string, 10)
@@ -336,7 +321,7 @@ func (n *node) Params(path string) map[string]string {
 }
 
 // URL 根据参数生成地址
-func (n *node) URL(params map[string]string) (string, error) {
+func (n *Node) URL(params map[string]string) (string, error) {
 	nodes := n.getParents()
 	buf := new(bytes.Buffer)
 
@@ -380,8 +365,8 @@ LOOP:
 }
 
 // 逐级向上获取父节点，包含当前节点。
-func (n *node) getParents() []*node {
-	nodes := make([]*node, 0, 10) // 从尾部向上开始获取节点
+func (n *Node) getParents() []*Node {
+	nodes := make([]*Node, 0, 10) // 从尾部向上开始获取节点
 
 	for curr := n; curr != nil; curr = curr.parent {
 		nodes = append(nodes, curr)
@@ -391,7 +376,7 @@ func (n *node) getParents() []*node {
 }
 
 // SetAllow 设置当前节点的 allow 报头
-func (n *node) SetAllow(allow string) {
+func (n *Node) SetAllow(allow string) {
 	if n.handlers == nil {
 		n.handlers = newHandlers()
 	}
@@ -400,7 +385,7 @@ func (n *node) SetAllow(allow string) {
 }
 
 // Handler 获取该节点下与参数相对应的处理函数
-func (n *node) Handler(method string) http.Handler {
+func (n *Node) Handler(method string) http.Handler {
 	if n.handlers == nil {
 		return nil
 	}
@@ -409,7 +394,7 @@ func (n *node) Handler(method string) http.Handler {
 }
 
 // 向客户端打印节点的树状结构
-func (n *node) print(deep int) {
+func (n *Node) print(deep int) {
 	fmt.Println(strings.Repeat(" ", deep*4), n.pattern)
 
 	for _, child := range n.children {
@@ -418,7 +403,7 @@ func (n *node) print(deep int) {
 }
 
 // 获取路由数量
-func (n *node) len() int {
+func (n *Node) len() int {
 	var cnt int
 	for _, child := range n.children {
 		cnt += child.len()
@@ -431,7 +416,7 @@ func (n *node) len() int {
 	return cnt
 }
 
-func removeNodes(nodes []*node, pattern string) []*node {
+func removeNodes(nodes []*Node, pattern string) []*Node {
 	lastIndex := len(nodes) - 1
 	for index, n := range nodes {
 		if n.pattern != pattern {
