@@ -21,7 +21,7 @@ var options = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Allow", "options")
 })
 
-func TestItems_Add_Remove(t *testing.T) {
+func TestBase_Add_Remove(t *testing.T) {
 	a := assert.New(t)
 
 	b := newBase(&syntax.Syntax{Pattern: "/", Wildcard: false})
@@ -43,7 +43,7 @@ func TestItems_Add_Remove(t *testing.T) {
 	b.Remove("not exists")
 }
 
-func TestItems_OptionsAllow(t *testing.T) {
+func TestBase_OptionsAllow(t *testing.T) {
 	a := assert.New(t)
 
 	b := newBase(&syntax.Syntax{Pattern: "/", Wildcard: false})

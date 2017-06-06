@@ -220,6 +220,14 @@ func TestMux_ServeHTTP_Order(t *testing.T) {
 	request(a, serveMux, http.MethodGet, "/p1/1/p2/1", 1) // f1
 	request(a, serveMux, http.MethodGet, "/p1/2/p2/s", 2) // f2
 
+	serveMux = New(false, false, nil, nil)
+	a.NotNil(serveMux)
+
+	a.NotError(serveMux.GetFunc("/posts/{id}/{page}", f2))
+	a.NotError(serveMux.GetFunc("/posts/{id}/1", f1))
+
+	request(a, serveMux, http.MethodGet, "/posts/1/1", 1) // f1 普通路由项完全匹配
+	request(a, serveMux, http.MethodGet, "/posts/2/5", 2) // f2 命名完全匹配
 }
 
 func TestClearPath(t *testing.T) {
