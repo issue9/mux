@@ -19,11 +19,7 @@ type Tree struct {
 // New 声明一个 Tree 实例
 func New() *Tree {
 	return &Tree{
-		node: &node{
-			pattern:  "/",
-			nodeType: ts.TypeBasic,
-			children: make([]*node, 0, 50),
-		},
+		node: &node{},
 	}
 }
 
