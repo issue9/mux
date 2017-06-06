@@ -13,13 +13,13 @@ import (
 
 // Tree 以树节点的形式保存的路由
 type Tree struct {
-	*node
+	*Node
 }
 
 // New 声明一个 Tree 实例
 func New() *Tree {
 	return &Tree{
-		node: &node{},
+		Node: &Node{},
 	}
 }
 
@@ -46,17 +46,12 @@ func (tree *Tree) Add(pattern string, h http.Handler, methods ...string) error {
 }
 
 // Match 匹配路由项
-func (tree *Tree) Match(path string) Node {
-	// TODO: tree.match() 返回的是 *node 与 Node 类型不一样。不能直接返回
-	if n := tree.match(path); n != nil {
-		return n
-	}
-
-	return nil
+func (tree *Tree) Match(path string) *Node {
+	return tree.match(path)
 }
 
-// Node 查找路由项，不存在，则返回一个新建的实例。
-func (tree *Tree) Node(pattern string) (Node, error) {
+// GetNode 查找路由项，不存在，则返回一个新建的实例。
+func (tree *Tree) GetNode(pattern string) (*Node, error) {
 	n := tree.find(pattern)
 	if n != nil {
 		return n, nil
