@@ -25,22 +25,7 @@ var nodesPool = &sync.Pool{
 	},
 }
 
-// Node 表示路由中的节点。多段路由项，会提取其中的相同的内容组成树状结构的节点。
-// 比如以下路由项：
-//  /posts/{id}/author
-//  /posts/{id}/author/emails
-//  /posts/{id}/author/profile
-//  /posts/1/author
-// 会被转换成以下结构
-//  /posts
-//     |
-//     +---- 1/author
-//     |
-//     +---- {id}/author
-//               |
-//               +---- profile
-//               |
-//               +---- emails
+// Node 表示路由中的节点。
 type Node struct {
 	parent   *Node
 	nodeType ts.Type
