@@ -2,6 +2,7 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
+// Package handlers 用于处理节点下请求方法与处理函数的对应关系
 package handlers
 
 import (
