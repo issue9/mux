@@ -108,18 +108,18 @@ func (hs *Handlers) Remove(methods ...string) bool {
 	}
 
 	// 删完了
-	if len(hs.handlers) == 0 {
+	if hs.Len() == 0 {
 		hs.optionsAllow = ""
 		return true
 	}
 
 	// 只有一个 OPTIONS 了，且未经外界强制修改，则将其也一并删除。
-	if len(hs.handlers) == 1 && hs.handlers[http.MethodOptions] != nil {
-		if hs.optionsState == optionsStateDefault {
-			delete(hs.handlers, http.MethodOptions)
-			hs.optionsAllow = ""
-			return true
-		}
+	if hs.Len() == 1 &&
+		hs.handlers[http.MethodOptions] != nil &&
+		hs.optionsState == optionsStateDefault {
+		delete(hs.handlers, http.MethodOptions)
+		hs.optionsAllow = ""
+		return true
 	}
 
 	if hs.optionsState == optionsStateDefault {

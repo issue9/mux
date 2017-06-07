@@ -26,36 +26,36 @@ func TestParse(t *testing.T) {
 		}
 	}
 
-	test("/", false, &Segment{Value: "/", Type: TypeBasic})
+	test("/", false, &Segment{Value: "/", Type: TypeString})
 
-	test("/posts/1", false, &Segment{Value: "/posts/1", Type: TypeBasic})
+	test("/posts/1", false, &Segment{Value: "/posts/1", Type: TypeString})
 
 	// 以命名参数开头的
-	test("/{action}", false, &Segment{Value: "/", Type: TypeBasic},
+	test("/{action}", false, &Segment{Value: "/", Type: TypeString},
 		&Segment{Value: "{action}", Type: TypeNamed, Endpoint: true})
 
 	// 以通配符结尾
-	test("/posts/{id}", false, &Segment{Value: "/posts/", Type: TypeBasic},
+	test("/posts/{id}", false, &Segment{Value: "/posts/", Type: TypeString},
 		&Segment{Value: "{id}", Type: TypeNamed, Endpoint: true})
 
-	test("/posts/{id}/author/profile", false, &Segment{Value: "/posts/", Type: TypeBasic},
+	test("/posts/{id}/author/profile", false, &Segment{Value: "/posts/", Type: TypeString},
 		&Segment{Value: "{id}/author/profile", Type: TypeNamed})
 
 	// 以命名参数结尾的
-	test("/posts/{id}/author", false, &Segment{Value: "/posts/", Type: TypeBasic},
+	test("/posts/{id}/author", false, &Segment{Value: "/posts/", Type: TypeString},
 		&Segment{Value: "{id}/author", Type: TypeNamed})
 
 	// 命名参数及通配符
-	test("/posts/{id}/page/{page}", false, &Segment{Value: "/posts/", Type: TypeBasic},
+	test("/posts/{id}/page/{page}", false, &Segment{Value: "/posts/", Type: TypeString},
 		&Segment{Value: "{id}/page/", Type: TypeNamed},
 		&Segment{Value: "{page}", Type: TypeNamed, Endpoint: true})
 
 	// 正则
-	test("/posts/{id:\\d+}", false, &Segment{Value: "/posts/", Type: TypeBasic},
+	test("/posts/{id:\\d+}", false, &Segment{Value: "/posts/", Type: TypeString},
 		&Segment{Value: "{id:\\d+}", Type: TypeRegexp, Endpoint: true})
 
 	// 正则，命名参数
-	test("/posts/{id:\\d+}/page/{page}", false, &Segment{Value: "/posts/", Type: TypeBasic},
+	test("/posts/{id:\\d+}/page/{page}", false, &Segment{Value: "/posts/", Type: TypeString},
 		&Segment{Value: "{id:\\d+}/page/", Type: TypeRegexp},
 		&Segment{Value: "{page}", Type: TypeNamed, Endpoint: true})
 

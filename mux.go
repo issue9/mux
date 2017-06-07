@@ -206,8 +206,7 @@ func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	params := node.Params(p)
-	if len(params) > 0 {
+	if params := node.Params(p); len(params) > 0 {
 		ctx := context.WithValue(r.Context(), contextKeyParams, Params(params))
 		r = r.WithContext(ctx)
 	}

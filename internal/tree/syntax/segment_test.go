@@ -13,7 +13,7 @@ import (
 func TestStringType(t *testing.T) {
 	a := assert.New(t)
 
-	a.Equal(stringType("/posts"), TypeBasic)
+	a.Equal(stringType("/posts"), TypeString)
 	a.Equal(stringType("/posts/{id}"), TypeNamed)
 	a.Equal(stringType("/posts/{id}/author"), TypeNamed)
 	a.Equal(stringType("/posts/{id:\\d+}/author"), TypeRegexp)

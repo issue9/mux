@@ -14,19 +14,19 @@ import (
 // Type 表示路由项的类型
 type Type int8
 
-// 表示路由项的类型。
-// 同时也会被用于表示节点的匹配优先级，值越小优先级越高。
+// 表示某段路由字符串的类型。
+// 同时也会被用于表示节点的匹配优先级。
 const (
-	TypeBasic Type = iota * 10
+	TypeString Type = iota * 10
 	TypeRegexp
 	TypeNamed
 )
 
 // 路由项字符串中的几个特殊字符定义
 const (
-	NameStart       byte = '{' // 包含命名参数的起始字符
-	NameEnd         byte = '}' // 包含命名参数的结束字符
-	RegexpSeparator byte = ':' // 名称和正则的分隔符
+	NameStart       byte = '{' // 命名或是正则参数的起始字符
+	NameEnd         byte = '}' // 命名或是正则参数的结束字符
+	RegexpSeparator byte = ':' // 正则参数中名称和正则的分隔符
 )
 
 // Parse 将字符串解析成 Segment 对象数组
@@ -37,7 +37,7 @@ func Parse(str string) ([]*Segment, error) {
 	endIndex := -1
 	separatorIndex := -1
 
-	nType := TypeBasic
+	nType := TypeString
 	state := NameEnd // 表示当前的状态
 
 	for i := 0; i < len(str); i++ {
@@ -57,7 +57,7 @@ func Parse(str string) ([]*Segment, error) {
 
 			startIndex = i
 			state = NameStart
-			nType = TypeBasic // 记录了数据之后，重置为 TypeBasic
+			nType = TypeString // 记录了数据之后，重置为 TypeBasic
 		case RegexpSeparator:
 			if state != NameStart {
 				return nil, fmt.Errorf("字符(:)只能出现在 %v %v 中间", string(NameStart), string(NameEnd))

@@ -50,16 +50,11 @@ type Node struct {
 // 当前节点的优先级，根据节点类型来判断，
 // 若类型相同时，则有子节点的优先级低一些，但不会超过其它不同类型的节点。
 func (n *Node) priority() int {
-	p := int(n.nodeType)
-
-	if len(n.children) > 0 {
-		p++
-	}
-	if n.endpoint {
-		p++
+	if len(n.children) > 0 || n.endpoint {
+		return int(n.nodeType) + 1
 	}
 
-	return p
+	return int(n.nodeType)
 }
 
 // 添加一条路由，当 methods 为空时，表示仅添加节点，而不添加任何处理函数。
@@ -203,7 +198,7 @@ func (n *Node) clean(prefix string) {
 	}
 }
 
-// Remove 移除路由项
+// 移除路由项
 func (n *Node) remove(pattern string, methods ...string) error {
 	child := n.find(pattern)
 
@@ -252,7 +247,7 @@ func (n *Node) match(path string) *Node {
 // 确定当前节点是否与 path 匹配。
 func (n *Node) matchCurrent(path string) (bool, string) {
 	switch n.nodeType {
-	case ts.TypeBasic:
+	case ts.TypeString:
 		if strings.HasPrefix(path, n.pattern) {
 			return true, path[len(n.pattern):]
 		}
@@ -295,7 +290,7 @@ LOOP:
 	for i := len(nodes) - 1; i >= 0; i-- {
 		node := nodes[i]
 		switch node.nodeType {
-		case ts.TypeBasic:
+		case ts.TypeString:
 			path = path[len(node.pattern):]
 		case ts.TypeNamed:
 			if node.endpoint {
@@ -331,7 +326,7 @@ func (n *Node) URL(params map[string]string) (string, error) {
 	for i := len(nodes) - 1; i >= 0; i-- {
 		node := nodes[i]
 		switch node.nodeType {
-		case ts.TypeBasic:
+		case ts.TypeString:
 			buf.WriteString(node.pattern)
 		case ts.TypeNamed:
 			param, exists := params[node.name]

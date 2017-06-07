@@ -23,7 +23,7 @@ func NewSegment(str string) *Segment {
 
 // 获取字符串的类型。调用者需要确保 str 语法正确。
 func stringType(str string) Type {
-	typ := TypeBasic
+	typ := TypeString
 
 	for i := 0; i < len(str); i++ {
 		switch str[i] {
