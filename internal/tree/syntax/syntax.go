@@ -61,7 +61,7 @@ func Parse(str string) ([]*Segment, error) {
 
 			startIndex = i
 			state = NameStart
-			nType = TypeString // 记录了数据之后，重置为 TypeBasic
+			nType = TypeString // 记录了数据之后，重置为 TypeString
 		case RegexpSeparator:
 			if state != NameStart {
 				return nil, fmt.Errorf("字符(:)只能出现在 %v %v 中间", string(NameStart), string(NameEnd))
@@ -102,7 +102,6 @@ func Parse(str string) ([]*Segment, error) {
 			return nil, fmt.Errorf("缺少 %s 字符", string(NameEnd))
 		}
 
-		// 最后一个节点是命名节点，则转换成通配符模式
 		ss = append(ss, &Segment{
 			Value:    str[startIndex:],
 			Type:     nType,
