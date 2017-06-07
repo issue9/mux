@@ -44,8 +44,6 @@
 //  /posts/{id}-{page}           // 匹配 /posts/1-10
 //  /posts/{id}/{page}           // 不匹配 /posts/1.html/10
 //
-// 正则和命名参数混用时，最终会将整个字符串转换成正则：
-//  /blog/{action}/{page:\\d+}   // 转换成正则 /blog/[^/]+/(?P<page>\\d+)
 //
 //
 //

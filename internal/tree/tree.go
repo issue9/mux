@@ -2,6 +2,7 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
+// Package tree 提供了以树形结构保存路由项的相关操作。
 package tree
 
 import (
