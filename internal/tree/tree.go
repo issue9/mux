@@ -2,6 +2,7 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
+// Package tree 提供了以树形结构保存路由项的相关操作。
 package tree
 
 import (
@@ -11,7 +12,23 @@ import (
 	ts "github.com/issue9/mux/internal/tree/syntax"
 )
 
-// Tree 以树节点的形式保存的路由
+// Tree 以树节点的形式保存的路由。
+// 多段路由项，会提取其中的相同的内容组成树状结构的节点。
+// 比如以下路由项：
+//  /posts/{id}/author
+//  /posts/{id}/author/emails
+//  /posts/{id}/author/profile
+//  /posts/1/author
+// 会被转换成以下结构
+//  /posts
+//     |
+//     +---- 1/author
+//     |
+//     +---- {id}/author
+//               |
+//               +---- profile
+//               |
+//               +---- emails
 type Tree struct {
 	*Node
 }
