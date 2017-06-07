@@ -13,6 +13,7 @@ import (
 )
 
 // Tree 以树节点的形式保存的路由。
+//
 // 多段路由项，会提取其中的相同的内容组成树状结构的节点。
 // 比如以下路由项：
 //  /posts/{id}/author
@@ -50,6 +51,21 @@ func (tree *Tree) Add(pattern string, h http.Handler, methods ...string) error {
 	}
 
 	return tree.add(ss, h, methods...)
+}
+
+// Match 查找与 path 匹配的节点
+func (tree *Tree) Match(path string) *Node {
+	return tree.match(path)
+}
+
+// Clean 清除路由项
+func (tree *Tree) Clean(prefix string) {
+	tree.clean(prefix)
+}
+
+// Remove 移除路由项
+func (tree *Tree) Remove(pattern string, methods ...string) error {
+	return tree.remove(pattern, methods...)
 }
 
 // Print 打印树状结构

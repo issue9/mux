@@ -36,7 +36,7 @@ func (n *nodeTest) add(method, pattern string, code int) {
 
 // 验证指定的路径是否匹配正确的路由项，通过 code 来确定，并返回该节点的实例。
 func (n *nodeTest) matchTrue(method, path string, code int) *Node {
-	nn := n.n.Match(path)
+	nn := n.n.match(path)
 	n.a.NotNil(nn)
 
 	h := nn.Handler(method)
@@ -86,14 +86,14 @@ func TestNode_add_remove(t *testing.T) {
 	a.NotError(node.add(newSegments(a, "/posts/{id}/{author:\\w+}/profile"), buildHandler(1), http.MethodGet))
 
 	a.True(node.find("/posts/1/author").handlers.Len() > 0)
-	a.NotError(node.Remove("/posts/1/author", http.MethodGet))
+	a.NotError(node.remove("/posts/1/author", http.MethodGet))
 	a.Nil(node.find("/posts/1/author"))
 
-	a.NotError(node.Remove("/posts/{id}/author", http.MethodGet)) // 只删除 GET
+	a.NotError(node.remove("/posts/{id}/author", http.MethodGet)) // 只删除 GET
 	a.NotNil(node.find("/posts/{id}/author"))
-	a.NotError(node.Remove("/posts/{id}/author", method.Supported...)) // 删除所有请求方法
+	a.NotError(node.remove("/posts/{id}/author", method.Supported...)) // 删除所有请求方法
 	a.Nil(node.find("/posts/{id}/author"))
-	a.Error(node.Remove("/posts/{id}/author", method.Supported...)) // 删除已经不存在的节点
+	a.Error(node.remove("/posts/{id}/author", method.Supported...)) // 删除已经不存在的节点
 }
 
 func TestNode_find(t *testing.T) {
@@ -112,7 +112,7 @@ func TestNode_find(t *testing.T) {
 	a.Equal(node.find("/posts/{id}/{author:\\w+}/profile").pattern, "{author:\\w+}/profile")
 }
 
-func TestNode_Clean(t *testing.T) {
+func TestNode_clean(t *testing.T) {
 	a := assert.New(t)
 	node := &Node{}
 
@@ -124,14 +124,14 @@ func TestNode_Clean(t *testing.T) {
 
 	a.Equal(node.len(), 5)
 
-	node.Clean("/posts/{id")
+	node.clean("/posts/{id")
 	a.Equal(node.len(), 2)
 
-	node.Clean("")
+	node.clean("")
 	a.Equal(node.len(), 0)
 }
 
-func TestNode_Match(t *testing.T) {
+func TestNode_match(t *testing.T) {
 	a := assert.New(t)
 	test := newNodeTest(a)
 
