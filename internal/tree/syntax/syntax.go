@@ -31,6 +31,10 @@ const (
 
 // Parse 将字符串解析成 Segment 对象数组
 func Parse(str string) ([]*Segment, error) {
+	if len(str) == 0 {
+		return nil, errors.New("参数 str 不能为空")
+	}
+
 	ss := make([]*Segment, 0, strings.Count(str, string(NameStart)))
 
 	startIndex := 0

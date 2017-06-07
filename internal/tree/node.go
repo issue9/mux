@@ -57,7 +57,7 @@ func (n *Node) priority() int {
 	return int(n.nodeType)
 }
 
-// 添加一条路由，当 methods 为空时，表示仅添加节点，而不添加任何处理函数。
+// 添加一条路由。当 methods 为空时，表示仅添加节点，而不添加任何处理函数。
 func (n *Node) add(segments []*ts.Segment, h http.Handler, methods ...string) error {
 	child, err := n.addSegment(segments[0])
 	if err != nil {

@@ -61,6 +61,7 @@ func TestParse(t *testing.T) {
 		&Segment{Value: "{id:\\d+}/page/", Type: TypeRegexp},
 		&Segment{Value: "{page}", Type: TypeNamed, Endpoint: true})
 
+	test("", true, nil)
 	test("/posts/{id:}", true, nil)
 	test("/posts/{{id:\\d+}/author", true, nil)
 	test("/posts/{:\\d+}/author", true, nil)

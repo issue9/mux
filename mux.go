@@ -88,12 +88,7 @@ func (mux *Mux) Remove(pattern string, methods ...string) *Mux {
 //
 // pattern 为路由匹配模式，可以是正则匹配也可以是字符串匹配；
 // methods 该路由项对应的请求方法，可通过 SupportedMethods() 获得当前支持的请求方法。
-// 当 pattern 或是 h 为空时，将触发 panic。
 func (mux *Mux) Handle(pattern string, h http.Handler, methods ...string) error {
-	if len(methods) == 0 {
-		methods = method.Default
-	}
-
 	return mux.tree.Add(pattern, h, methods...)
 }
 

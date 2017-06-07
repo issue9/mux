@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/issue9/mux/internal/method"
 	ts "github.com/issue9/mux/internal/tree/syntax"
 )
 
@@ -43,13 +44,16 @@ func New() *Tree {
 
 // Add 添加路由项。
 //
-// methods 可以为空，表示不为任何请求方法作设置。
+// methods 可以为空，表示添加除 OPTIONS 之外所有支持的请求方法。
 func (tree *Tree) Add(pattern string, h http.Handler, methods ...string) error {
 	ss, err := ts.Parse(pattern)
 	if err != nil {
 		return err
 	}
 
+	if len(methods) == 0 {
+		methods = method.Default
+	}
 	return tree.add(ss, h, methods...)
 }
 
@@ -80,15 +84,19 @@ func (tree *Tree) GetNode(pattern string) (*Node, error) {
 		return n, nil
 	}
 
-	if err := tree.Add(pattern, nil); err != nil {
+	// 没有找到，则尝试添加一个空的节点
+	ss, err := ts.Parse(pattern)
+	if err != nil {
+		return nil, err
+	}
+	if err := tree.add(ss, nil); err != nil { // 不添加任何处理方法。
 		return nil, err
 	}
 
+	// 再次查找刚才添加的节点
 	n = tree.find(pattern)
-	if n != nil {
-		return n, nil
+	if n == nil {
+		panic(fmt.Sprintf("添加了 %s 节点，却无法找到与 %s 相匹配的节点", pattern, pattern))
 	}
-
-	// 添加了，却找不到，肯定是代码问题，直接 panic
-	panic(fmt.Sprintf("无法找到与 %s 相匹配的节点", pattern))
+	return n, nil
 }
