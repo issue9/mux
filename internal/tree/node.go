@@ -78,19 +78,17 @@ func (n *Node) add(segments []*ts.Segment, h http.Handler, methods ...string) er
 	return child.add(segments[1:], h, methods...)
 }
 
-// 添加一条 ts.Segment 到当前路由项，并返回其最后的节点
+// 将 ts.Segment 添加到当前节点，并返回新节点
 func (n *Node) addSegment(s *ts.Segment) (*Node, error) {
 	var child *Node // 找到的最匹配节点
 	var l int       // 最大的匹配字符数量
 
-	// 提取两者的共同前缀
-	for _, c := range n.children {
+	for _, c := range n.children { // 提取两者的共同前缀
 		if c.endpoint != s.Endpoint {
 			continue
 		}
 
-		// 有完全相同的节点
-		if c.endpoint == s.Endpoint &&
+		if c.endpoint == s.Endpoint && // 有完全相同的节点
 			c.pattern == s.Value &&
 			c.nodeType == s.Type {
 			return c, nil
@@ -102,8 +100,7 @@ func (n *Node) addSegment(s *ts.Segment) (*Node, error) {
 		}
 	}
 
-	// 没有共同前缀，声明一个新的加入到当前节点
-	if l <= 0 {
+	if l <= 0 { // 没有共同前缀，声明一个新的加入到当前节点
 		return n.newChild(s)
 	}
 
@@ -118,7 +115,7 @@ func (n *Node) addSegment(s *ts.Segment) (*Node, error) {
 	return parent.addSegment(ts.NewSegment(s.Value[l:]))
 }
 
-// 根据 seg 内容为当前节点产生一个子节点
+// 根据 seg 内容为当前节点产生一个子节点，并返回该新节点。
 func (n *Node) newChild(seg *ts.Segment) (*Node, error) {
 	child := &Node{
 		parent:   n,
