@@ -282,9 +282,9 @@ func (n *Node) matchCurrent(path string) (bool, string) {
 	return false, path
 }
 
-// Params 由调用方确保能正常匹配 path
+// Params 获取 path 在当前路由节点下的参数。
 //
-// 调用方需确保 path 与 n.Match 中传递的是相同的值，此函数中，不再作验证。
+// 由调用方确保能正常匹配 path
 func (n *Node) Params(path string) map[string]string {
 	nodes := n.getParents()
 	defer nodesPool.Put(nodes)
