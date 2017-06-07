@@ -238,45 +238,56 @@ func (n *Node) Match(path string) *Node {
 				newPath = path[len(node.pattern):]
 			}
 		case ts.TypeNamed:
-			if node.endpoint {
-				matched = true
-				newPath = path[:0]
-			} else {
-				index := strings.Index(path, node.suffix)
-				if index > 0 { // 为零说明前面没有命名参数，肯定不正确
-					matched = true
-					newPath = path[index+len(node.suffix):]
-				}
-			}
+			matched, newPath = node.matchNamed(path)
 		case ts.TypeRegexp:
-			loc := node.expr.FindStringIndex(path)
-			if loc != nil && loc[0] == 0 {
-				matched = true
-				if loc[1] == len(path) {
-					newPath = path[:0]
-				} else {
-					newPath = path[loc[1]+1:]
-				}
-			}
-		default:
-			// nodeType 错误，肯定是代码级别的错误，直接 panic
+			matched, newPath = node.matchRegexp(path)
+		default: // nodeType 错误，肯定是代码级别的错误，直接 panic
 			panic("无效的 nodeType 值")
 		}
 
-		if matched {
-			// 即使 newPath 为空，也有可能子节点正好可以匹配空的内容。
-			// 比如 /posts/{path:\\w*} 后面的 path 即为空节点。
-			if nn := node.Match(newPath); nn != nil {
-				return nn
-			}
-			// 已经到达最终点
-			if len(newPath) == 0 && node.handlers != nil && node.handlers.Len() > 0 {
-				return node
-			}
+		if !matched {
+			continue
+		}
+
+		// 即使 newPath 为空，也有可能子节点正好可以匹配空的内容。
+		// 比如 /posts/{path:\\w*} 后面的 path 即为空节点。
+		if nn := node.Match(newPath); nn != nil {
+			return nn
+		}
+
+		if len(newPath) == 0 && // 已经到达最终点
+			node.handlers != nil &&
+			node.handlers.Len() > 0 {
+			return node
 		}
 	} // end for
 
 	return nil
+}
+
+func (n *Node) matchRegexp(path string) (bool, string) {
+	loc := n.expr.FindStringIndex(path)
+	if loc != nil && loc[0] == 0 {
+		if loc[1] == len(path) {
+			return true, path[:0]
+		}
+		return true, path[loc[1]+1:]
+	}
+
+	return false, path
+}
+
+func (n *Node) matchNamed(path string) (bool, string) {
+	if n.endpoint {
+		return true, path[:0]
+	}
+
+	index := strings.Index(path, n.suffix)
+	if index > 0 { // 为零说明前面没有命名参数，肯定不正确
+		return true, path[index+len(n.suffix):]
+	}
+
+	return false, path
 }
 
 // Params 由调用方确保能正常匹配 path
