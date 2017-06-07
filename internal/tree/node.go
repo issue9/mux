@@ -173,7 +173,7 @@ func (n *Node) find(pattern string) *Node {
 		if child.pattern == pattern {
 			return child
 		}
-	}
+	} // end for
 
 	return nil
 }
@@ -228,23 +228,7 @@ func (n *Node) Match(path string) *Node {
 	}
 
 	for _, node := range n.children {
-		matched := false
-		newPath := path
-
-		switch node.nodeType {
-		case ts.TypeBasic:
-			matched = strings.HasPrefix(path, node.pattern)
-			if matched {
-				newPath = path[len(node.pattern):]
-			}
-		case ts.TypeNamed:
-			matched, newPath = node.matchNamed(path)
-		case ts.TypeRegexp:
-			matched, newPath = node.matchRegexp(path)
-		default: // nodeType 错误，肯定是代码级别的错误，直接 panic
-			panic("无效的 nodeType 值")
-		}
-
+		matched, newPath := node.matchCurrent(path)
 		if !matched {
 			continue
 		}
@@ -265,27 +249,35 @@ func (n *Node) Match(path string) *Node {
 	return nil
 }
 
-func (n *Node) matchRegexp(path string) (bool, string) {
-	loc := n.expr.FindStringIndex(path)
-	if loc != nil && loc[0] == 0 {
+// 确定当前节点是否与 path 匹配。
+func (n *Node) matchCurrent(path string) (bool, string) {
+	switch n.nodeType {
+	case ts.TypeBasic:
+		if strings.HasPrefix(path, n.pattern) {
+			return true, path[len(n.pattern):]
+		}
+	case ts.TypeNamed:
+		if n.endpoint {
+			return true, path[:0]
+		}
+
+		index := strings.Index(path, n.suffix)
+		if index > 0 { // 为零说明前面没有命名参数，肯定不正确
+			return true, path[index+len(n.suffix):]
+		}
+	case ts.TypeRegexp:
+		loc := n.expr.FindStringIndex(path)
+		if loc == nil || loc[0] != 0 { // 不匹配
+			break
+		}
+
 		if loc[1] == len(path) {
 			return true, path[:0]
 		}
 		return true, path[loc[1]+1:]
-	}
-
-	return false, path
-}
-
-func (n *Node) matchNamed(path string) (bool, string) {
-	if n.endpoint {
-		return true, path[:0]
-	}
-
-	index := strings.Index(path, n.suffix)
-	if index > 0 { // 为零说明前面没有命名参数，肯定不正确
-		return true, path[index+len(n.suffix):]
-	}
+	default: // nodeType 错误，肯定是代码级别的错误，直接 panic
+		panic("无效的 nodeType 值")
+	} // end switch
 
 	return false, path
 }
@@ -325,7 +317,7 @@ LOOP:
 
 			path = path[len(args[0]):]
 		}
-	}
+	} // end for
 
 	return params
 }
@@ -366,7 +358,7 @@ func (n *Node) URL(params map[string]string) (string, error) {
 
 			buf.WriteString(url)
 		}
-	}
+	} // end for
 
 	return buf.String(), nil
 }
