@@ -30,6 +30,8 @@ func TestParse(t *testing.T) {
 
 	test("/posts/1", false, &Segment{Value: "/posts/1", Type: TypeString})
 
+	test("{action}/1", false, &Segment{Value: "{action}/1", Type: TypeNamed})
+
 	// 以命名参数开头的
 	test("/{action}", false, &Segment{Value: "/", Type: TypeString},
 		&Segment{Value: "{action}", Type: TypeNamed, Endpoint: true})

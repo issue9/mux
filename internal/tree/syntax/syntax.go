@@ -34,8 +34,8 @@ func Parse(str string) ([]*Segment, error) {
 	ss := make([]*Segment, 0, strings.Count(str, string(NameStart)))
 
 	startIndex := 0
-	endIndex := -1
-	separatorIndex := -1
+	endIndex := -10
+	separatorIndex := -10
 
 	nType := TypeString
 	state := NameEnd // 表示当前的状态
@@ -48,6 +48,10 @@ func Parse(str string) ([]*Segment, error) {
 			}
 			if endIndex+1 == i {
 				return nil, errors.New("两个命名参数不能相邻")
+			}
+			if startIndex == i {
+				state = NameStart
+				continue
 			}
 
 			ss = append(ss, &Segment{
