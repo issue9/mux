@@ -62,6 +62,53 @@ func (t *tester) optionsTrue(url string, code int, allow string) {
 	t.a.Equal(w.Header().Get("Allow"), allow)
 }
 
+func TestMux(t *testing.T) {
+	a := assert.New(t)
+	test := newTester(a, false, false)
+
+	test.mux.Get("/h/1", buildHandler(1))
+	test.matchTrue(http.MethodGet, "/h/1", 1)
+	test.mux.GetFunc("/f/1", buildFunc(1))
+	test.matchTrue(http.MethodGet, "/f/1", 1)
+
+	test.mux.Post("/h/1", buildHandler(2))
+	test.matchTrue(http.MethodPost, "/h/1", 2)
+	test.mux.PostFunc("/f/1", buildFunc(2))
+	test.matchTrue(http.MethodPost, "/f/1", 2)
+
+	test.mux.Put("/h/1", buildHandler(3))
+	test.matchTrue(http.MethodPut, "/h/1", 3)
+	test.mux.PutFunc("/f/1", buildFunc(3))
+	test.matchTrue(http.MethodPut, "/f/1", 3)
+
+	test.mux.Patch("/h/1", buildHandler(4))
+	test.matchTrue(http.MethodPatch, "/h/1", 4)
+	test.mux.PatchFunc("/f/1", buildFunc(4))
+	test.matchTrue(http.MethodPatch, "/f/1", 4)
+
+	test.mux.Delete("/h/1", buildHandler(5))
+	test.matchTrue(http.MethodDelete, "/h/1", 5)
+	test.mux.DeleteFunc("/f/1", buildFunc(5))
+	test.matchTrue(http.MethodDelete, "/f/1", 5)
+
+	// Any
+	test.mux.Any("/h/any", buildHandler(6))
+	test.matchTrue(http.MethodGet, "/h/any", 6)
+	test.matchTrue(http.MethodPost, "/h/any", 6)
+	test.matchTrue(http.MethodPut, "/h/any", 6)
+	test.matchTrue(http.MethodPatch, "/h/any", 6)
+	test.matchTrue(http.MethodDelete, "/h/any", 6)
+	test.matchTrue(http.MethodTrace, "/h/any", 6)
+
+	test.mux.AnyFunc("/f/any", buildFunc(6))
+	test.matchTrue(http.MethodGet, "/f/any", 6)
+	test.matchTrue(http.MethodPost, "/f/any", 6)
+	test.matchTrue(http.MethodPut, "/f/any", 6)
+	test.matchTrue(http.MethodPatch, "/f/any", 6)
+	test.matchTrue(http.MethodDelete, "/f/any", 6)
+	test.matchTrue(http.MethodTrace, "/f/any", 6)
+}
+
 func TestMux_Add_Remove(t *testing.T) {
 	a := assert.New(t)
 	test := newTester(a, false, false)
