@@ -117,12 +117,8 @@ func TestMux_Add_Remove(t *testing.T) {
 	// 添加 PUT /api/1
 	// 添加 GET /api/2
 	a.NotError(test.mux.HandleFunc("/api/1", buildFunc(1), http.MethodGet))
-	a.NotPanic(func() {
-		test.mux.PutFunc("/api/1", buildFunc(1))
-	})
-	a.NotPanic(func() {
-		test.mux.GetFunc("/api/2", buildFunc(2))
-	})
+	a.NotError(test.mux.HandleFunc("/api/1", buildFunc(1), http.MethodPut))
+	a.NotError(test.mux.HandleFunc("/api/2", buildFunc(2), http.MethodGet))
 
 	test.matchTrue(http.MethodGet, "/api/1", 1)
 	test.matchTrue(http.MethodPut, "/api/1", 1)
@@ -142,9 +138,7 @@ func TestMux_Add_Remove(t *testing.T) {
 	test.matchTrue(http.MethodGet, "/api/2", http.StatusNotFound) // 整个节点被删除
 
 	// 添加 POST /api/1
-	a.NotPanic(func() {
-		test.mux.PostFunc("/api/1", buildFunc(1))
-	})
+	a.NotError(test.mux.Handle("/api/1", buildFunc(1), http.MethodPost))
 	test.matchTrue(http.MethodPost, "/api/1", 1)
 
 	// 删除 ANY /api/1
@@ -161,9 +155,7 @@ func TestMux_Options(t *testing.T) {
 	test.optionsTrue("/api/1", http.StatusOK, "GET, OPTIONS")
 
 	// 添加 DELETE /api/1
-	a.NotPanic(func() {
-		test.mux.Delete("/api/1", buildHandler(1))
-	})
+	a.NotError(test.mux.Handle("/api/1", buildHandler(1), http.MethodDelete))
 	test.optionsTrue("/api/1", http.StatusOK, "DELETE, GET, OPTIONS")
 
 	// 删除 DELETE /api/1
