@@ -11,7 +11,6 @@ import (
 	"github.com/issue9/assert"
 )
 
-// fun
 func (t *tester) prefix(p string) *Prefix {
 	return t.mux.Prefix(p)
 }

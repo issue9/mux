@@ -25,6 +25,7 @@ func buildFunc(code int) http.HandlerFunc {
 	})
 }
 
+// mux 的测试工具
 type tester struct {
 	a   *assert.Assertion
 	mux *Mux

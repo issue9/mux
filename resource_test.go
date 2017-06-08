@@ -5,10 +5,69 @@
 package mux
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/issue9/assert"
 )
+
+func (t *tester) resource(p string) *Resource {
+	r, err := t.mux.Resource(p)
+
+	t.a.NotError(err).NotNil(r)
+	return r
+}
+
+func TestResource(t *testing.T) {
+	a := assert.New(t)
+	test := newTester(a, false, false)
+	h := test.resource("/h/1")
+	f := test.resource("/f/1")
+
+	h.Get(buildHandler(1))
+	test.matchTrue(http.MethodGet, "/h/1", 1)
+	f.GetFunc(buildFunc(1))
+	test.matchTrue(http.MethodGet, "/f/1", 1)
+
+	h.Post(buildHandler(2))
+	test.matchTrue(http.MethodPost, "/h/1", 2)
+	f.PostFunc(buildFunc(2))
+	test.matchTrue(http.MethodPost, "/f/1", 2)
+
+	h.Put(buildHandler(3))
+	test.matchTrue(http.MethodPut, "/h/1", 3)
+	f.PutFunc(buildFunc(3))
+	test.matchTrue(http.MethodPut, "/f/1", 3)
+
+	h.Patch(buildHandler(4))
+	test.matchTrue(http.MethodPatch, "/h/1", 4)
+	f.PatchFunc(buildFunc(4))
+	test.matchTrue(http.MethodPatch, "/f/1", 4)
+
+	h.Delete(buildHandler(5))
+	test.matchTrue(http.MethodDelete, "/h/1", 5)
+	f.DeleteFunc(buildFunc(5))
+	test.matchTrue(http.MethodDelete, "/f/1", 5)
+
+	// Any
+	h = test.resource("/h/any")
+	h.Any(buildHandler(6))
+	test.matchTrue(http.MethodGet, "/h/any", 6)
+	test.matchTrue(http.MethodPost, "/h/any", 6)
+	test.matchTrue(http.MethodPut, "/h/any", 6)
+	test.matchTrue(http.MethodPatch, "/h/any", 6)
+	test.matchTrue(http.MethodDelete, "/h/any", 6)
+	test.matchTrue(http.MethodTrace, "/h/any", 6)
+
+	f = test.resource("/f/any")
+	f.AnyFunc(buildFunc(6))
+	test.matchTrue(http.MethodGet, "/f/any", 6)
+	test.matchTrue(http.MethodPost, "/f/any", 6)
+	test.matchTrue(http.MethodPut, "/f/any", 6)
+	test.matchTrue(http.MethodPatch, "/f/any", 6)
+	test.matchTrue(http.MethodDelete, "/f/any", 6)
+	test.matchTrue(http.MethodTrace, "/f/any", 6)
+}
 
 func TestMux_Resource(t *testing.T) {
 	a := assert.New(t)
