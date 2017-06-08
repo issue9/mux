@@ -13,22 +13,17 @@ import (
 	"github.com/issue9/mux/internal/method"
 )
 
-// 一些预定义的处理函数
-var (
-	f1 = func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(1)
-	}
-	f2 = func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(2)
-	}
-	f3 = func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(3)
-	}
+func buildHandler(code int) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(code)
+	})
+}
 
-	h1 = http.HandlerFunc(f1)
-	h2 = http.HandlerFunc(f2)
-	h3 = http.HandlerFunc(f3)
-)
+func buildFunc(code int) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(code)
+	})
+}
 
 func request(a *assert.Assertion, srvmux *Mux, method, url string, status int) {
 	w := httptest.NewRecorder()
@@ -61,12 +56,12 @@ func TestMux_Add_Remove(t *testing.T) {
 	// 添加 GET /api/1
 	// 添加 PUT /api/1
 	// 添加 GET /api/2
-	a.NotError(srvmux.HandleFunc("/api/1", f1, http.MethodGet))
+	a.NotError(srvmux.HandleFunc("/api/1", buildFunc(1), http.MethodGet))
 	a.NotPanic(func() {
-		srvmux.PutFunc("/api/1", f1)
+		srvmux.PutFunc("/api/1", buildFunc(1))
 	})
 	a.NotPanic(func() {
-		srvmux.GetFunc("/api/2", f2)
+		srvmux.GetFunc("/api/2", buildFunc(2))
 	})
 	request(a, srvmux, http.MethodGet, "/api/1", 1)
 	request(a, srvmux, http.MethodPut, "/api/1", 1)
@@ -87,7 +82,7 @@ func TestMux_Add_Remove(t *testing.T) {
 
 	// 添加 POST /api/1
 	a.NotPanic(func() {
-		srvmux.PostFunc("/api/1", f1)
+		srvmux.PostFunc("/api/1", buildFunc(1))
 	})
 	request(a, srvmux, http.MethodPost, "/api/1", 1)
 
@@ -102,12 +97,12 @@ func TestMux_Options(t *testing.T) {
 	a.NotNil(srvmux)
 
 	// 添加 GET /api/1
-	a.NotError(srvmux.Handle("/api/1", h1, http.MethodGet))
+	a.NotError(srvmux.Handle("/api/1", buildHandler(1), http.MethodGet))
 	requestOptions(a, srvmux, "/api/1", http.StatusOK, "GET, OPTIONS")
 
 	// 添加 DELETE /api/1
 	a.NotPanic(func() {
-		srvmux.Delete("/api/1", h1)
+		srvmux.Delete("/api/1", buildHandler(1))
 	})
 	requestOptions(a, srvmux, "/api/1", http.StatusOK, "DELETE, GET, OPTIONS")
 
@@ -121,7 +116,7 @@ func TestMux_Options(t *testing.T) {
 	srvmux.Options("/api/1", "CUSTOM OPTIONS2")
 	requestOptions(a, srvmux, "/api/1", http.StatusOK, "CUSTOM OPTIONS2")
 
-	srvmux.HandleFunc("/api/1", f1, http.MethodOptions)
+	srvmux.HandleFunc("/api/1", buildFunc(1), http.MethodOptions)
 	requestOptions(a, srvmux, "/api/1", 1, "")
 }
 
@@ -177,10 +172,10 @@ func TestMux_ServeHTTP(t *testing.T) {
 	srvmux := New(false, false, nil, nil)
 	a.NotNil(srvmux)
 
-	srvmux.Handle("/posts/{path}.html", h1)
+	srvmux.Handle("/posts/{path}.html", buildHandler(1))
 	request(a, srvmux, http.MethodGet, "/posts/2017/1.html", 1)
 
-	srvmux.Handle("/posts/{path:.+}.html", h2)
+	srvmux.Handle("/posts/{path:.+}.html", buildHandler(2))
 	request(a, srvmux, http.MethodGet, "/posts/2017/1.html", 2)
 }
 
@@ -191,9 +186,9 @@ func TestMux_ServeHTTP_Order(t *testing.T) {
 	serveMux := New(false, false, nil, nil)
 	a.NotNil(serveMux)
 
-	a.NotError(serveMux.GetFunc("/posts/{id}", f3))      // f3
-	a.NotError(serveMux.GetFunc("/posts/{id:\\d+}", f2)) // f2
-	a.NotError(serveMux.GetFunc("/posts/1", f1))         // f1
+	a.NotError(serveMux.GetFunc("/posts/{id}", buildFunc(3)))      // f3
+	a.NotError(serveMux.GetFunc("/posts/{id:\\d+}", buildFunc(2))) // f2
+	a.NotError(serveMux.GetFunc("/posts/1", buildFunc(1)))         // f1
 
 	request(a, serveMux, http.MethodGet, "/posts/1", 1)   // f1 普通路由项完全匹配
 	request(a, serveMux, http.MethodGet, "/posts/2", 2)   // f1 正则路由
@@ -202,8 +197,8 @@ func TestMux_ServeHTTP_Order(t *testing.T) {
 	serveMux = New(false, false, nil, nil)
 	a.NotNil(serveMux)
 
-	a.NotError(serveMux.GetFunc("/p1/{p1}/p2/{p2:\\d+}", f1)) // f1
-	a.NotError(serveMux.GetFunc("/p1/{p1}/p2/{p2:\\w+}", f2)) // f2
+	a.NotError(serveMux.GetFunc("/p1/{p1}/p2/{p2:\\d+}", buildFunc(1))) // f1
+	a.NotError(serveMux.GetFunc("/p1/{p1}/p2/{p2:\\w+}", buildFunc(2))) // f2
 
 	request(a, serveMux, http.MethodGet, "/p1/1/p2/1", 1) // f1
 	request(a, serveMux, http.MethodGet, "/p1/2/p2/s", 2) // f2
@@ -211,8 +206,8 @@ func TestMux_ServeHTTP_Order(t *testing.T) {
 	serveMux = New(false, false, nil, nil)
 	a.NotNil(serveMux)
 
-	a.NotError(serveMux.GetFunc("/posts/{id}/{page}", f2))
-	a.NotError(serveMux.GetFunc("/posts/{id}/1", f1))
+	a.NotError(serveMux.GetFunc("/posts/{id}/{page}", buildFunc(2))) // f2
+	a.NotError(serveMux.GetFunc("/posts/{id}/1", buildFunc(1)))      // f1
 
 	request(a, serveMux, http.MethodGet, "/posts/1/1", 1) // f1 普通路由项完全匹配
 	request(a, serveMux, http.MethodGet, "/posts/2/5", 2) // f2 命名完全匹配
