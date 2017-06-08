@@ -207,10 +207,13 @@ func (n *Node) remove(pattern string, methods ...string) error {
 	}
 
 	if child.handlers == nil {
+		if len(child.children) == 0 {
+			child.parent.children = removeNodes(child.parent.children, child.pattern)
+		}
 		return nil
 	}
 
-	if child.handlers.Remove(methods...) {
+	if child.handlers.Remove(methods...) && len(child.children) == 0 {
 		child.parent.children = removeNodes(child.parent.children, child.pattern)
 	}
 	return nil

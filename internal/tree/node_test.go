@@ -94,6 +94,14 @@ func TestNode_add_remove(t *testing.T) {
 	a.NotError(node.remove("/posts/{id}/author", method.Supported...)) // 删除所有请求方法
 	a.Nil(node.find("/posts/{id}/author"))
 	a.Error(node.remove("/posts/{id}/author", method.Supported...)) // 删除已经不存在的节点
+
+	// 删除父节点的 handlers 并不会让子节点清空
+	node = &Node{}
+	a.NotError(node.add(newSegments(a, "/"), buildHandler(1), http.MethodGet))
+	a.NotError(node.add(newSegments(a, "/posts/{id}"), buildHandler(1), http.MethodGet))
+	a.NotError(node.add(newSegments(a, "/posts/{id}/author"), buildHandler(1), http.MethodGet, http.MethodPut, http.MethodPost))
+	a.NotError(node.remove("/posts/{id}", method.Supported...))
+	a.NotNil(node.find("/posts/{id}/author"))
 }
 
 func TestNode_find(t *testing.T) {
