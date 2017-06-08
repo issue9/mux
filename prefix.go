@@ -6,8 +6,6 @@ package mux
 
 import (
 	"net/http"
-
-	"github.com/issue9/mux/internal/method"
 )
 
 // Prefix 可以将具有统一前缀的路由项集中在一起操作。
@@ -65,7 +63,7 @@ func (p *Prefix) Patch(pattern string, h http.Handler) *Prefix {
 
 // Any 相当于 Mux.Any(prefix+pattern, h) 的简易写法
 func (p *Prefix) Any(pattern string, h http.Handler) *Prefix {
-	return p.handle(pattern, h, method.Default...)
+	return p.handle(pattern, h)
 }
 
 // HandleFunc 功能同 Mux.HandleFunc(prefix+pattern, fun, ...)
@@ -107,7 +105,7 @@ func (p *Prefix) PatchFunc(pattern string, fun http.HandlerFunc) *Prefix {
 
 // AnyFunc 相当于 Mux.AnyFunc(prefix+pattern, func) 的简易写法
 func (p *Prefix) AnyFunc(pattern string, fun http.HandlerFunc) *Prefix {
-	return p.handleFunc(pattern, fun, method.Default...)
+	return p.handleFunc(pattern, fun)
 }
 
 // Remove 删除指定匹配模式的路由项

@@ -76,10 +76,6 @@ func (mux *Mux) Clean() *Mux {
 // 当未指定 methods 时，将删除所有 method 匹配的项。
 // 指定错误的 methods 值，将自动忽略该值。
 func (mux *Mux) Remove(pattern string, methods ...string) *Mux {
-	if len(methods) == 0 {
-		methods = method.Default
-	}
-
 	mux.tree.Remove(pattern, methods...)
 	return mux
 }
@@ -180,7 +176,7 @@ func (mux *Mux) PatchFunc(pattern string, fun http.HandlerFunc) *Mux {
 
 // AnyFunc 相当于 Mux.HandleFunc(pattern, func) 的简易写法
 func (mux *Mux) AnyFunc(pattern string, fun http.HandlerFunc) *Mux {
-	return mux.handleFunc(pattern, fun, method.Default...)
+	return mux.handleFunc(pattern, fun)
 }
 
 func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {

@@ -8,7 +8,6 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/issue9/mux/internal/method"
 	"github.com/issue9/mux/internal/tree"
 )
 
@@ -75,7 +74,7 @@ func (r *Resource) Patch(h http.Handler) *Resource {
 
 // Any 相当于 Mux.Any(pattern, h) 的简易写法
 func (r *Resource) Any(h http.Handler) *Resource {
-	return r.handle(h, method.Default...)
+	return r.handle(h)
 }
 
 // HandleFunc 功能同 Mux.HandleFunc(pattern, fun, ...)
@@ -118,7 +117,7 @@ func (r *Resource) PatchFunc(fun http.HandlerFunc) *Resource {
 
 // AnyFunc 相当于 Mux.AnyFunc(pattern, func) 的简易写法
 func (r *Resource) AnyFunc(fun http.HandlerFunc) *Resource {
-	return r.handleFunc(fun, method.Default...)
+	return r.handleFunc(fun)
 }
 
 // Remove 删除指定匹配模式的路由项
@@ -129,7 +128,7 @@ func (r *Resource) Remove(methods ...string) *Resource {
 
 // Clean 清除当前资源的所有路由项
 func (r *Resource) Clean() *Resource {
-	r.mux.Remove(r.pattern, method.Supported...)
+	r.mux.Remove(r.pattern)
 	r.node = nil
 	return r
 }

@@ -54,6 +54,7 @@ func (tree *Tree) Add(pattern string, h http.Handler, methods ...string) error {
 	if len(methods) == 0 {
 		methods = method.Default
 	}
+
 	return tree.add(ss, h, methods...)
 }
 
@@ -68,7 +69,13 @@ func (tree *Tree) Clean(prefix string) {
 }
 
 // Remove 移除路由项
+//
+// methods 可以为空，表示删除所有内容。
 func (tree *Tree) Remove(pattern string, methods ...string) error {
+	if len(methods) == 0 {
+		methods = method.Supported
+	}
+
 	return tree.remove(pattern, methods...)
 }
 
