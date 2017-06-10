@@ -58,7 +58,7 @@ func (n *nodeTest) paramsTrue(method, path string, code int, params map[string]s
 	n.a.Equal(ps, params)
 }
 
-// 验证 node.url 的正确性
+// 验证 Node.URL 的正确性
 // method+path 用于获取指定的节点
 func (n *nodeTest) urlTrue(method, path string, code int, params map[string]string, url string) {
 	nn := n.matchTrue(method, path, code)
@@ -163,9 +163,24 @@ func TestNode_match(t *testing.T) {
 	test.matchTrue(http.MethodGet, "/posts/2.html/author", 3) // 命名参数
 	test.matchTrue(http.MethodGet, "/page/", 7)
 	test.matchTrue(http.MethodGet, "/posts/2.html/2/author", 8) // 若 {id} 可匹配任意字符，此条也可匹配 3
+
+	// 以斜框结尾，是否能正常访问
+	test = newNodeTest(a)
+	test.add(http.MethodGet, "/posts/{id}/", 1)
+	test.add(http.MethodGet, "/posts/{id}/author", 2)
+	test.matchTrue(http.MethodGet, "/posts/1/", 1)
+	test.matchTrue(http.MethodGet, "/posts/1.html/", 1)
+	test.matchTrue(http.MethodGet, "/posts/1/author", 2)
+
+	// 以 - 作为路径分隔符
+	test = newNodeTest(a)
+	test.add(http.MethodGet, "/posts-{id}", 1)
+	test.add(http.MethodGet, "/posts-{id}-author", 2)
+	test.matchTrue(http.MethodGet, "/posts-1.html", 1)
+	test.matchTrue(http.MethodGet, "/posts-1-author", 2)
 }
 
-func TestNode_params(t *testing.T) {
+func TestNode_Params(t *testing.T) {
 	a := assert.New(t)
 	test := newNodeTest(a)
 
@@ -184,7 +199,7 @@ func TestNode_params(t *testing.T) {
 	test.paramsTrue(http.MethodGet, "/posts/1.html/author/profile/", 2, map[string]string{"id": "1.html", "action": "profile"})
 }
 
-func TestNode_url(t *testing.T) {
+func TestNode_URL(t *testing.T) {
 	a := assert.New(t)
 	test := newNodeTest(a)
 

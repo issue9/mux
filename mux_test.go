@@ -239,26 +239,21 @@ func TestMux_ServeHTTP_Order(t *testing.T) {
 	a.NotError(test.mux.GetFunc("/posts/{id}", buildFunc(3)))      // f3
 	a.NotError(test.mux.GetFunc("/posts/{id:\\d+}", buildFunc(2))) // f2
 	a.NotError(test.mux.GetFunc("/posts/1", buildFunc(1)))         // f1
-
-	test.matchTrue(http.MethodGet, "/posts/1", 1)   // f1 普通路由项完全匹配
-	test.matchTrue(http.MethodGet, "/posts/2", 2)   // f1 正则路由
-	test.matchTrue(http.MethodGet, "/posts/abc", 3) // f3 命名路由
+	test.matchTrue(http.MethodGet, "/posts/1", 1)                  // f1 普通路由项完全匹配
+	test.matchTrue(http.MethodGet, "/posts/2", 2)                  // f1 正则路由
+	test.matchTrue(http.MethodGet, "/posts/abc", 3)                // f3 命名路由
 
 	test = newTester(a, false, false)
-
 	a.NotError(test.mux.GetFunc("/p1/{p1}/p2/{p2:\\d+}", buildFunc(1))) // f1
 	a.NotError(test.mux.GetFunc("/p1/{p1}/p2/{p2:\\w+}", buildFunc(2))) // f2
-
-	test.matchTrue(http.MethodGet, "/p1/1/p2/1", 1) // f1
-	test.matchTrue(http.MethodGet, "/p1/2/p2/s", 2) // f2
+	test.matchTrue(http.MethodGet, "/p1/1/p2/1", 1)                     // f1
+	test.matchTrue(http.MethodGet, "/p1/2/p2/s", 2)                     // f2
 
 	test = newTester(a, false, false)
-
 	a.NotError(test.mux.GetFunc("/posts/{id}/{page}", buildFunc(2))) // f2
 	a.NotError(test.mux.GetFunc("/posts/{id}/1", buildFunc(1)))      // f1
-
-	test.matchTrue(http.MethodGet, "/posts/1/1", 1) // f1 普通路由项完全匹配
-	test.matchTrue(http.MethodGet, "/posts/2/5", 2) // f2 命名完全匹配
+	test.matchTrue(http.MethodGet, "/posts/1/1", 1)                  // f1 普通路由项完全匹配
+	test.matchTrue(http.MethodGet, "/posts/2/5", 2)                  // f2 命名完全匹配
 }
 
 func TestClearPath(t *testing.T) {

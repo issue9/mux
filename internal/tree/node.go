@@ -289,7 +289,6 @@ func (n *Node) Params(path string) map[string]string {
 
 	params := make(map[string]string, len(nodes))
 
-LOOP:
 	for i := len(nodes) - 1; i >= 0; i-- {
 		node := nodes[i]
 		switch node.nodeType {
@@ -298,7 +297,7 @@ LOOP:
 		case ts.TypeNamed:
 			if node.endpoint {
 				params[node.name] = path
-				break LOOP
+				return params
 			}
 
 			index := strings.Index(path, node.suffix)

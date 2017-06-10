@@ -35,7 +35,6 @@ func TestTree_Add_Remove(t *testing.T) {
 	a.NotError(tree.Add("/posts/{id}/author", buildHandler(1), http.MethodGet, http.MethodPut, http.MethodPost))
 	a.NotError(tree.Add("/posts/1/author", buildHandler(1), http.MethodGet))
 	a.NotError(tree.Add("/posts/{id}/{author:\\w+}/profile", buildHandler(1), http.MethodGet))
-	tree.Print()
 
 	a.True(tree.find("/posts/1/author").handlers.Len() > 0)
 	a.NotError(tree.Remove("/posts/1/author", http.MethodGet))
