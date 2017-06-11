@@ -39,17 +39,17 @@ type Node struct {
 	endpoint bool
 
 	// 命名参数特有的参数
-	name   string // 缓存着名称
-	suffix string // 保存着命名之后的字符串内容
+	name   string
+	suffix string
 
-	// 正则特有的参数
+	// 正则参数特有的参数
 	expr       *regexp.Regexp
 	syntaxExpr *syntax.Regexp
 }
 
 // 当前节点的优先级，根据节点类型来判断，
-// 若类型相同时，则有子节点的优先级低一些，但不会超过其它不同类型的节点。
 func (n *Node) priority() int {
+	// 有 children 的，endpoit 必须为 false
 	if len(n.children) > 0 || n.endpoint {
 		return int(n.nodeType) + 1
 	}
@@ -64,13 +64,15 @@ func (n *Node) add(segments []*ts.Segment, h http.Handler, methods ...string) er
 		return err
 	}
 
-	if len(segments) == 1 { // 最后一个节点
-		if child.handlers == nil {
-			child.handlers = handlers.New()
-		}
-		return child.handlers.Add(h, methods...)
+	if len(segments) > 1 {
+		return child.add(segments[1:], h, methods...)
 	}
-	return child.add(segments[1:], h, methods...)
+
+	// 最后一个节点
+	if child.handlers == nil {
+		child.handlers = handlers.New()
+	}
+	return child.handlers.Add(h, methods...)
 }
 
 // 将 ts.Segment 添加到当前节点，并返回新节点
@@ -78,8 +80,9 @@ func (n *Node) addSegment(s *ts.Segment) (*Node, error) {
 	var child *Node // 找到的最匹配节点
 	var l int       // 最大的匹配字符数量
 
-	for _, c := range n.children { // 提取两者的共同前缀
-		if c.endpoint != s.Endpoint {
+	for _, c := range n.children {
+		if c.endpoint != s.Endpoint ||
+			c.nodeType != s.Type {
 			continue
 		}
 
@@ -129,6 +132,7 @@ func (n *Node) newChild(seg *ts.Segment) (*Node, error) {
 		child.endpoint = seg.Endpoint
 	case ts.TypeRegexp:
 		reg := ts.Regexp(seg.Value)
+		// TODO: 如果能保证 seg.Value 是正确的，使用 regexp.MustCompile 更好
 		expr, err := regexp.Compile(reg)
 		if err != nil {
 			return nil, err
@@ -237,9 +241,7 @@ func (n *Node) match(path string) *Node {
 			return nn
 		}
 
-		if len(newPath) == 0 && // 已经到达最终点
-			node.handlers != nil &&
-			node.handlers.Len() > 0 {
+		if len(newPath) == 0 {
 			return node
 		}
 	} // end for
