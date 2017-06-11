@@ -29,7 +29,7 @@ func (p *Prefix) Handle(pattern string, h http.Handler, methods ...string) error
 }
 
 func (p *Prefix) handle(pattern string, h http.Handler, methods ...string) *Prefix {
-	if err := p.mux.Handle(p.prefix+pattern, h, methods...); err != nil {
+	if err := p.Handle(pattern, h, methods...); err != nil {
 		panic(err)
 	}
 
@@ -72,7 +72,7 @@ func (p *Prefix) HandleFunc(pattern string, fun http.HandlerFunc, methods ...str
 }
 
 func (p *Prefix) handleFunc(pattern string, fun http.HandlerFunc, methods ...string) *Prefix {
-	if err := p.mux.HandleFunc(p.prefix+pattern, fun, methods...); err != nil {
+	if err := p.HandleFunc(pattern, fun, methods...); err != nil {
 		panic(err)
 	}
 	return p

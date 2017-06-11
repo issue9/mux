@@ -41,7 +41,7 @@ func (r *Resource) Handle(h http.Handler, methods ...string) error {
 }
 
 func (r *Resource) handle(h http.Handler, methods ...string) *Resource {
-	if err := r.mux.Handle(r.pattern, h, methods...); err != nil {
+	if err := r.Handle(h, methods...); err != nil {
 		panic(err)
 	}
 	return r
@@ -83,7 +83,7 @@ func (r *Resource) HandleFunc(fun http.HandlerFunc, methods ...string) error {
 }
 
 func (r *Resource) handleFunc(fun http.HandlerFunc, methods ...string) *Resource {
-	if err := r.mux.HandleFunc(r.pattern, fun, methods...); err != nil {
+	if err := r.HandleFunc(fun, methods...); err != nil {
 		panic(err)
 	}
 
