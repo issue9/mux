@@ -19,7 +19,7 @@
 //  res := p.Resource("/users/{id\\d+}")
 //  res.Get(h)   // 相当于 m.Get("/api/users/{id}", h)
 //  res.Post(h)  // 相当于 m.Post("/api/users/{id}", h)
-//  res.URL(map[string]string{"id": "5"}, "") // 生成 /users/5
+//  res.URL(map[string]string{"id": "5"}) // 生成 /users/5
 //
 //  http.ListenAndServe(":8080", m)
 //
@@ -38,22 +38,36 @@
 //
 // 若路由字符串中，所有的正则表达式都只有名称部分（没有冒号及之后的内容），
 // 则会被转换成命名参数，因为不需要作正则验证，性能会比较正则稍微好上一些。
-// 命名参数匹配除 / 以外的所有字符。
-//  /posts/{id}                  // 匹配 /posts/1.html
-//  /posts/{id}/{page}           // 匹配 /posts/1/10
-//  /posts/{id}-{page}           // 匹配 /posts/1-10
-//  /posts/{id}/{page}           // 不匹配 /posts/1.html/10
-//
+// 命名参数匹配所有字符。
+//  /posts/{id}.html                  // 匹配 /posts/1.html
+//  /posts-{id}-{page}.html           // 匹配 /posts-1-10.html
 //
 //
 //
 // 通配符
 //
-// 在路由字符串中是以命名参数结尾的，则表示可以匹配之后的任意字符。
+// 在路由字符串中若是以命名参数结尾的，则表示可以匹配之后的任意字符。
 //  /blog/assets/{path}
-//  /blog/{posts}/{path}
 //  /blog/{tags:\\w+}/{path}
 //  /blog/assets{path}
+//
+//
+//
+// 路径匹配规则：
+//
+// 可能会出现多条记录与同一请求都匹配的情况，这种情况下，
+// 系统会找到一条认为最匹配的路由来处理，判断规则如下：
+//  1. 普通路由优先于正则路由；
+//  2. 正则路由优先于命名路由；
+//
+// 比如：
+//  /posts/{id}.html              // 1
+//  /posts/{id:\\d+}.html         // 2
+//  /posts/1.html                 // 3
+//
+//  /posts/1.html      // 匹配 3
+//  /posts/11.html     // 匹配 2
+//  /posts/index.html  // 匹配 1
 //
 //
 //
@@ -65,17 +79,6 @@
 //  id, err := params.Int("id")
 //  // 或是
 //  id := params.MustInt("id", 0) // 0 表示在无法获取 id 参数的默认值
-//
-//
-//
-// 路径匹配规则：
-//
-// 可能会出现多条记录与同一请求都匹配的情况，这种情况下，
-// 系统会找到一条认为最匹配的路由来处理，判断规则如下：
-//  1. 普通路由优先于正则路由；
-//  2. 正则路由优先于命名路由；
-//  3. 完全匹配的路由项优先于有通配符的路由；
-//  4. 带通配符的各类路由，按照 1、2 规则执行。
 //
 //
 //
