@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"regexp"
 	"regexp/syntax"
@@ -241,7 +242,7 @@ func (n *Node) match(path string) *Node {
 			return nn
 		}
 
-		if len(newPath) == 0 {
+		if len(newPath) == 0 { // 没有子节点匹配，才判断是否与当前节点匹配
 			return node
 		}
 	} // end for
@@ -249,7 +250,7 @@ func (n *Node) match(path string) *Node {
 	return nil
 }
 
-// 确定当前节点是否与 path 匹配。
+// 确定当前节点是否与 path 部分匹配。
 func (n *Node) matchCurrent(path string) (bool, string) {
 	switch n.nodeType {
 	case ts.TypeString:
@@ -268,7 +269,7 @@ func (n *Node) matchCurrent(path string) (bool, string) {
 	case ts.TypeRegexp:
 		loc := n.expr.FindStringIndex(path)
 		if loc == nil || loc[0] != 0 { // 不匹配
-			break
+			return false, path
 		}
 
 		if loc[1] == len(path) {
@@ -290,7 +291,6 @@ func (n *Node) Params(path string) map[string]string {
 	defer nodesPool.Put(nodes)
 
 	params := make(map[string]string, len(nodes))
-
 	for i := len(nodes) - 1; i >= 0; i-- {
 		node := nodes[i]
 		switch node.nodeType {
@@ -391,12 +391,12 @@ func (n *Node) Handler(method string) http.Handler {
 	return n.handlers.Handler(method)
 }
 
-// 向客户端打印节点的树状结构
-func (n *Node) print(deep int) {
-	fmt.Println(strings.Repeat(" ", deep*4), n.pattern)
+// 向 w 输出节点的树状结构
+func (n *Node) print(w io.Writer, deep int) {
+	fmt.Sprintln(w, strings.Repeat(" ", deep*4), n.pattern)
 
 	for _, child := range n.children {
-		child.print(deep + 1)
+		child.print(w, deep+1)
 	}
 }
 
@@ -414,6 +414,11 @@ func (n *Node) len() int {
 	return cnt
 }
 
+// 从 nodes 中删除一个 pattern 字段为指定值的元素，
+// 若存在多个同名的，则只删除第一个匹配的元素。
+//
+// NOTE: 实际应该中，理论上不会出现多个相同的元素，
+// 所以此处不作多余的判断。
 func removeNodes(nodes []*Node, pattern string) []*Node {
 	lastIndex := len(nodes) - 1
 	for index, n := range nodes {

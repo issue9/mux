@@ -238,19 +238,25 @@ func TestRemoveNoddes(t *testing.T) {
 
 	n1 := &Node{pattern: "/1"}
 	n2 := &Node{pattern: "/2"}
+	n21 := &Node{pattern: "/2"}
 	n3 := &Node{pattern: "/3"}
 	n4 := &Node{pattern: "/4"}
-	nodes := []*Node{n1, n2, n3, n4}
+
+	nodes := []*Node{n1, n2, n21, n3, n4}
 
 	// 不存在的元素
 	nodes = removeNodes(nodes, "")
-	a.Equal(len(nodes), 4)
+	a.Equal(len(nodes), 5)
 
 	// 删除尾元素
 	nodes = removeNodes(nodes, "/4")
-	a.Equal(len(nodes), 3)
+	a.Equal(len(nodes), 4)
 
 	// 删除中间无素
+	nodes = removeNodes(nodes, "/2")
+	a.Equal(len(nodes), 3)
+
+	// 删除另一个同名元素
 	nodes = removeNodes(nodes, "/2")
 	a.Equal(len(nodes), 2)
 
