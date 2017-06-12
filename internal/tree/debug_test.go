@@ -6,6 +6,7 @@ package tree
 
 import (
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/issue9/assert"
@@ -16,8 +17,8 @@ func TestTree_Trace(t *testing.T) {
 	tree := New()
 
 	a.NotError(tree.Add("/", buildHandler(1), http.MethodGet))
-	a.NotError(tree.Add("/posts/{id}", buildHandler(1), http.MethodGet)) //
+	a.NotError(tree.Add("/posts/{id}/author/profile", buildHandler(1), http.MethodGet))
 
-	a.Equal(tree.Trace("/"), []string{"", "/"})
-	a.Equal(tree.Trace("/posts/1.html/page"), []string{"", "/", "posts/", "{id}"})
+	//tree.Trace(os.Stdout, "/")
+	tree.Trace(os.Stdout, "/posts/1.html/author/profile")
 }

@@ -9,6 +9,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"os"
+
 	"github.com/issue9/assert"
 	"github.com/issue9/mux/internal/method"
 	ts "github.com/issue9/mux/internal/tree/syntax"
@@ -189,6 +191,7 @@ func TestNode_match(t *testing.T) {
 	test.matchTrue(http.MethodGet, "/admin/items/1", 2)
 	test.matchTrue(http.MethodGet, "/admin/items/1/profile", 3)
 	test.matchTrue(http.MethodGet, "/admin/items/1/profile/1", 4)
+	test.n.trace(os.Stdout, 0, "/admin/items/1/profile/1")
 }
 
 func TestNode_Params(t *testing.T) {
