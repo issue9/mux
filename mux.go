@@ -7,7 +7,6 @@ package mux
 import (
 	"context"
 	"net/http"
-	"os"
 	"strings"
 	"sync"
 
@@ -204,11 +203,6 @@ func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.ServeHTTP(w, r)
-}
-
-// Trace d
-func (mux *Mux) Trace(path string) {
-	mux.tree.Trace(os.Stdout, path)
 }
 
 // MethodIsSupported 检测请求方法当前包是否支持
