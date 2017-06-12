@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"regexp"
 	"regexp/syntax"
@@ -389,29 +388,6 @@ func (n *Node) Handler(method string) http.Handler {
 	}
 
 	return n.handlers.Handler(method)
-}
-
-// 向 w 输出节点的树状结构
-func (n *Node) print(w io.Writer, deep int) {
-	fmt.Sprintln(w, strings.Repeat(" ", deep*4), n.pattern)
-
-	for _, child := range n.children {
-		child.print(w, deep+1)
-	}
-}
-
-// 获取路由数量
-func (n *Node) len() int {
-	var cnt int
-	for _, child := range n.children {
-		cnt += child.len()
-	}
-
-	if n.handlers != nil && n.handlers.Len() > 0 {
-		cnt++
-	}
-
-	return cnt
 }
 
 // 从 nodes 中删除一个 pattern 字段为指定值的元素，
