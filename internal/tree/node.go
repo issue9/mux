@@ -274,7 +274,7 @@ func (n *Node) matchCurrent(path string) (bool, string) {
 		if loc[1] == len(path) {
 			return true, path[:0]
 		}
-		return true, path[loc[1]+1:]
+		return true, path[loc[1]:]
 	default: // nodeType 错误，肯定是代码级别的错误，直接 panic
 		panic("无效的 nodeType 值")
 	} // end switch
