@@ -38,11 +38,11 @@ type Node struct {
 	// 且该节点之后不会有子节点。
 	endpoint bool
 
-	// 命名参数特有的参数
+	// 命名参数特有的字段
 	name   string
 	suffix string
 
-	// 正则参数特有的参数
+	// 正则参数特有的字段
 	expr       *regexp.Regexp
 	syntaxExpr *syntax.Regexp
 }
