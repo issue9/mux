@@ -47,7 +47,7 @@ type Node struct {
 	syntaxExpr *syntax.Regexp
 }
 
-// 当前节点的优先级，根据节点类型来判断，
+// 当前节点的优先级。
 func (n *Node) priority() int {
 	// 有 children 的，endpoit 必须为 false
 	if len(n.children) > 0 || n.endpoint {
@@ -119,6 +119,7 @@ func (n *Node) newChild(seg *ts.Segment) (*Node, error) {
 		parent:   n,
 		pattern:  seg.Value,
 		nodeType: seg.Type,
+		endpoint: seg.Endpoint,
 	}
 
 	switch seg.Type {
@@ -129,22 +130,15 @@ func (n *Node) newChild(seg *ts.Segment) (*Node, error) {
 		}
 		child.suffix = seg.Value[endIndex+1:]
 		child.name = seg.Value[1:endIndex]
-		child.endpoint = seg.Endpoint
 	case ts.TypeRegexp:
 		reg := ts.Regexp(seg.Value)
-		// TODO: 如果能保证 seg.Value 是正确的，使用 regexp.MustCompile 更好
-		expr, err := regexp.Compile(reg)
-		if err != nil {
-			return nil, err
-		}
 
 		syntaxExpr, err := syntax.Parse(reg, syntax.Perl)
 		if err != nil {
 			return nil, err
 		}
-		child.expr = expr
+		child.expr = regexp.MustCompile(reg)
 		child.syntaxExpr = syntaxExpr
-		child.endpoint = seg.Endpoint
 	} // end switch
 
 	n.children = append(n.children, child)
