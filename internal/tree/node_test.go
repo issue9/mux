@@ -9,6 +9,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"os"
+
 	"github.com/issue9/assert"
 	"github.com/issue9/mux/internal/method"
 	ts "github.com/issue9/mux/internal/tree/syntax"
@@ -130,13 +132,13 @@ func TestNode_clean(t *testing.T) {
 	a.NotError(node.add(newSegments(a, "/posts/{id}/author"), buildHandler(1), http.MethodGet))
 	a.NotError(node.add(newSegments(a, "/posts/{id}/{author:\\w+}/profile"), buildHandler(1), http.MethodGet))
 
-	a.Equal(node.len(), 5)
+	a.Equal(node.Len(), 5)
 
 	node.clean("/posts/{id")
-	a.Equal(node.len(), 2)
+	a.Equal(node.Len(), 2)
 
 	node.clean("")
-	a.Equal(node.len(), 0)
+	a.Equal(node.Len(), 0)
 }
 
 func TestNode_match(t *testing.T) {
@@ -160,6 +162,7 @@ func TestNode_match(t *testing.T) {
 	test.matchTrue(http.MethodGet, "/posts/2/author", 6)      // 正则
 	test.matchTrue(http.MethodGet, "/posts/1/author", 4)      // 字符串
 	test.matchTrue(http.MethodGet, "/posts/1.html", 2)        // 命名参数
+	test.matchTrue(http.MethodGet, "/posts/1.html/page", 2)   // 命名参数
 	test.matchTrue(http.MethodGet, "/posts/2.html/author", 3) // 命名参数
 	test.matchTrue(http.MethodGet, "/page/", 7)
 	test.matchTrue(http.MethodGet, "/posts/2.html/2/author", 8) // 若 {id} 可匹配任意字符，此条也可匹配 3
@@ -178,6 +181,17 @@ func TestNode_match(t *testing.T) {
 	test.add(http.MethodGet, "/posts-{id}-author", 2)
 	test.matchTrue(http.MethodGet, "/posts-1.html", 1)
 	test.matchTrue(http.MethodGet, "/posts-1-author", 2)
+
+	test = newNodeTest(a)
+	test.add(http.MethodGet, "/admin/{path}", 1)
+	test.add(http.MethodGet, "/admin/items/{id:\\d+}", 2)
+	test.add(http.MethodGet, "/admin/items/{id:\\d+}/profile", 3)
+	test.add(http.MethodGet, "/admin/items/{id:\\d+}/profile/{type:\\d+}", 4)
+	test.matchTrue(http.MethodGet, "/admin/index.html", 1)
+	test.matchTrue(http.MethodGet, "/admin/items/1", 2)
+	test.matchTrue(http.MethodGet, "/admin/items/1/profile", 3)
+	test.matchTrue(http.MethodGet, "/admin/items/1/profile/1", 4)
+	test.n.trace(os.Stdout, 0, "/admin/items/1/profile/1")
 }
 
 func TestNode_Params(t *testing.T) {

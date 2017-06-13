@@ -7,7 +7,6 @@ package tree
 
 import (
 	"fmt"
-	"io"
 	"net/http"
 
 	"github.com/issue9/mux/internal/method"
@@ -78,11 +77,6 @@ func (tree *Tree) Remove(pattern string, methods ...string) error {
 	}
 
 	return tree.remove(pattern, methods...)
-}
-
-// Print 向 w 输出树状结构
-func (tree *Tree) Print(w io.Writer) {
-	tree.print(w, 0)
 }
 
 // GetNode 查找路由项，不存在，则返回一个新建的实例。
