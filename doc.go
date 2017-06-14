@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
-// Package mux 是一个实现了 http.Handler 的中间件，为用户提供了路由匹配等功能。
+// Package mux 是一个提供了路由匹配功能的中间件。
 //
 //  m := mux.New(false, false, nil, nil).
 //      Get("/users/1", h).
@@ -53,7 +53,7 @@
 //
 //
 //
-// 路径匹配规则：
+// 路径匹配规则
 //
 // 可能会出现多条记录与同一请求都匹配的情况，这种情况下，
 // 系统会找到一条认为最匹配的路由来处理，判断规则如下：
@@ -71,7 +71,7 @@
 //
 //
 //
-// 路由参数：
+// 路由参数
 //
 // 通过正则表达式匹配的路由，其中带命名的参数可通过 GetParams() 获取：
 //  params := GetParams(r)

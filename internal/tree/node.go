@@ -49,7 +49,7 @@ type Node struct {
 
 // 当前节点的优先级。
 func (n *Node) priority() int {
-	// 有 children 的，endpoit 必须为 false
+	// 有 children 的，endpoit 必然为 false，两者不可能同时为 true
 	if len(n.children) > 0 || n.endpoint {
 		return int(n.nodeType) + 1
 	}
@@ -125,7 +125,7 @@ func (n *Node) newChild(seg *ts.Segment) (*Node, error) {
 	switch seg.Type {
 	case ts.TypeNamed:
 		endIndex := strings.IndexByte(seg.Value, ts.NameEnd)
-		if endIndex == -1 { // TODO 由 ts.Segment 保证语法是有效的，是否更佳？
+		if endIndex == -1 {
 			return nil, fmt.Errorf("无效的路由语法：%s", seg.Value)
 		}
 		child.suffix = seg.Value[endIndex+1:]
@@ -217,7 +217,9 @@ func (n *Node) remove(pattern string, methods ...string) error {
 	return nil
 }
 
-// 从子节点中查找与当前路径匹配的节点，若找不到，则返回 nil
+// 从子节点中查找与当前路径匹配的节点，若找不到，则返回 nil。
+//
+// NOTE: 此函数与 Node.trace 是一样的，记得同步两边的代码。
 func (n *Node) match(path string) *Node {
 	if len(n.children) == 0 && len(path) == 0 {
 		return n
@@ -355,6 +357,7 @@ func (n *Node) URL(params map[string]string) (string, error) {
 }
 
 // 逐级向上获取父节点，包含当前节点。
+//
 // NOTE: 记得将 []*Node 放回对象池中。
 func (n *Node) getParents() []*Node {
 	nodes := nodesPool.Get().([]*Node)[:0]

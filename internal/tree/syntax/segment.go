@@ -4,7 +4,7 @@
 
 package syntax
 
-// Segment 表示路由中最小的不可分割内容。
+// Segment 表示路由中的分段内容。
 type Segment struct {
 	Value    string
 	Type     Type

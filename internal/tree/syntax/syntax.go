@@ -35,7 +35,7 @@ func Parse(str string) ([]*Segment, error) {
 		return nil, errors.New("参数 str 不能为空")
 	}
 
-	ss := make([]*Segment, 0, strings.Count(str, string(NameStart)))
+	ss := make([]*Segment, 0, strings.Count(str, string(NameStart))+1)
 
 	startIndex := 0
 	endIndex := -10
