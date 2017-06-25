@@ -64,15 +64,11 @@ func (n *Node) getNode(segments []*ts.Segment) (*Node, error) {
 		return nil, err
 	}
 
-	if len(segments) > 1 {
-		return child.getNode(segments[1:])
+	if len(segments) == 1 { // 最后一个节点
+		return child, nil
 	}
 
-	// 最后一个节点
-	if child.handlers == nil {
-		child.handlers = handlers.New()
-	}
-	return child, nil
+	return child.getNode(segments[1:])
 }
 
 // 将 ts.Segment 添加到当前节点，并返回新节点

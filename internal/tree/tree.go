@@ -10,6 +10,7 @@ import (
 	"net/http"
 
 	"github.com/issue9/mux/internal/method"
+	"github.com/issue9/mux/internal/tree/handlers"
 	ts "github.com/issue9/mux/internal/tree/syntax"
 )
 
@@ -58,6 +59,10 @@ func (tree *Tree) Add(pattern string, h http.Handler, methods ...string) error {
 	n, err := tree.getNode(ss)
 	if err != nil {
 		return err
+	}
+
+	if n.handlers == nil {
+		n.handlers = handlers.New()
 	}
 
 	return n.handlers.Add(h, methods...)

@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/issue9/assert"
+	"github.com/issue9/mux/internal/tree/handlers"
 	ts "github.com/issue9/mux/internal/tree/syntax"
 )
 
@@ -32,7 +33,12 @@ func newNodeTest(a *assert.Assertion) *nodeTest {
 func (n *nodeTest) add(method, pattern string, code int) {
 	segs := newSegments(n.a, pattern)
 	nn, err := n.n.getNode(segs)
-	n.a.NotError(err)
+	n.a.NotError(err).NotNil(nn)
+
+	if nn.handlers == nil {
+		nn.handlers = handlers.New()
+	}
+
 	nn.handlers.Add(buildHandler(code), method)
 }
 
@@ -84,6 +90,11 @@ func TestNode_find(t *testing.T) {
 	addNode := func(p string, code int, methods ...string) {
 		nn, err := node.getNode(newSegments(a, p))
 		a.NotError(err).NotNil(nn)
+
+		if nn.handlers == nil {
+			nn.handlers = handlers.New()
+		}
+
 		a.NotError(nn.handlers.Add(buildHandler(code), methods...))
 	}
 
@@ -106,6 +117,11 @@ func TestNode_clean(t *testing.T) {
 	addNode := func(p string, code int, methods ...string) {
 		nn, err := node.getNode(newSegments(a, p))
 		a.NotError(err).NotNil(nn)
+
+		if nn.handlers == nil {
+			nn.handlers = handlers.New()
+		}
+
 		a.NotError(nn.handlers.Add(buildHandler(code), methods...))
 	}
 
