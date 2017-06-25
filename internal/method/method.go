@@ -20,6 +20,7 @@ var (
 		http.MethodPatch,
 		http.MethodOptions,
 		http.MethodHead,
+		http.MethodConnect,
 		http.MethodTrace,
 	}
 
@@ -33,6 +34,7 @@ var (
 		http.MethodPatch,
 		// http.MethodOptions,
 		http.MethodHead,
+		http.MethodConnect,
 		http.MethodTrace,
 	}
 )
