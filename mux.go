@@ -137,7 +137,7 @@ func (mux *Mux) Patch(pattern string, h http.Handler) *Mux {
 
 // Any 相当于 Mux.Handle(pattern, h) 的简易写法
 func (mux *Mux) Any(pattern string, h http.Handler) *Mux {
-	return mux.handle(pattern, h, method.Default...)
+	return mux.handle(pattern, h)
 }
 
 // HandleFunc 功能同 Mux.Handle()，但是将第二个参数从 http.Handler 换成了 http.HandlerFunc
