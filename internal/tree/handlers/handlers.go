@@ -95,7 +95,8 @@ func (hs *Handlers) getOptionsAllow() string {
 	return optionsStrings[index]
 }
 
-// Remove 移除某个请求方法对应的处理函数
+// Remove 移除某个请求方法对应的处理函数。
+// 返回值表示是否已经被清空。
 func (hs *Handlers) Remove(methods ...string) bool {
 	for _, m := range methods {
 		mm := method.Int(m)
