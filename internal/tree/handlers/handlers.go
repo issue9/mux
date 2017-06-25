@@ -45,6 +45,10 @@ func New() *Handlers {
 
 // Add 添加一个处理函数
 func (hs *Handlers) Add(h http.Handler, methods ...string) error {
+	if len(methods) == 0 {
+		methods = method.Any
+	}
+
 	for _, m := range methods {
 		i := method.Int(m)
 		if i == method.None {
@@ -98,6 +102,10 @@ func (hs *Handlers) getOptionsAllow() string {
 // Remove 移除某个请求方法对应的处理函数。
 // 返回值表示是否已经被清空。
 func (hs *Handlers) Remove(methods ...string) bool {
+	if len(methods) == 0 {
+		methods = method.Supported
+	}
+
 	for _, m := range methods {
 		mm := method.Int(m)
 		delete(hs.handlers, mm)

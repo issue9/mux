@@ -9,21 +9,12 @@ import (
 	"testing"
 
 	"github.com/issue9/assert"
-	"github.com/issue9/mux/internal/method"
 )
 
 func buildHandler(code int) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(code)
 	})
-}
-
-func TestTree_Add(t *testing.T) {
-	a := assert.New(t)
-	tree := New()
-
-	a.NotError(tree.Add("/", buildHandler(1)))
-	a.Equal(tree.children[0].handlers.Len(), len(method.Any)+1) // 自动添加 options
 }
 
 func TestTree_Add_Remove(t *testing.T) {

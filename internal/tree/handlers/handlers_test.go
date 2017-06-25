@@ -26,13 +26,13 @@ func TestHandlers_Add(t *testing.T) {
 
 	hs := New()
 	a.NotNil(hs)
-
 	a.NotError(hs.Add(getHandler))
-	a.Equal(hs.Len(), 1) // 还有一个自动生成的 OPTIONS
+	a.Equal(hs.Len(), len(method.Any)+1) // 包含自动生成的 OPTIONS
 
+	hs = New()
+	a.NotNil(hs)
 	a.NotError(hs.Add(getHandler, http.MethodGet, http.MethodPut))
-	a.Equal(hs.Len(), 3)
-
+	a.Equal(hs.Len(), 3) // 包含自动生成的 OPTIONS
 	a.Error(hs.Add(getHandler, "Not Exists"))
 }
 

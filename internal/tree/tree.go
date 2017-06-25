@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/issue9/mux/internal/method"
 	"github.com/issue9/mux/internal/tree/handlers"
 	ts "github.com/issue9/mux/internal/tree/syntax"
 )
@@ -52,10 +51,6 @@ func (tree *Tree) Add(pattern string, h http.Handler, methods ...string) error {
 		return err
 	}
 
-	if len(methods) == 0 {
-		methods = method.Any
-	}
-
 	n, err := tree.getNode(ss)
 	if err != nil {
 		return err
@@ -82,10 +77,6 @@ func (tree *Tree) Clean(prefix string) {
 //
 // methods 可以为空，表示删除所有内容。
 func (tree *Tree) Remove(pattern string, methods ...string) error {
-	if len(methods) == 0 {
-		methods = method.Supported
-	}
-
 	child := tree.find(pattern)
 	if child == nil {
 		return fmt.Errorf("不存在的节点 %v", pattern)
