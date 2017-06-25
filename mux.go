@@ -10,7 +10,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/issue9/mux/internal/method"
 	"github.com/issue9/mux/internal/tree"
 )
 
@@ -203,18 +202,6 @@ func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.ServeHTTP(w, r)
-}
-
-// MethodIsSupported 检测请求方法当前包是否支持
-func MethodIsSupported(m string) bool {
-	return method.IsSupported(m)
-}
-
-// SupportedMethods 返回所有支持的请求方法
-func SupportedMethods() []string {
-	ret := make([]string, len(method.Supported), len(method.Supported))
-	copy(ret, method.Supported)
-	return ret
 }
 
 // 清除路径中的重复的 / 字符

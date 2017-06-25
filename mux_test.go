@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/issue9/assert"
-	"github.com/issue9/mux/internal/method"
 )
 
 func buildHandler(code int) http.Handler {
@@ -271,22 +270,6 @@ func TestClearPath(t *testing.T) {
 	a.Equal(cleanPath("/api/.."), "/api/..")
 	a.Equal(cleanPath("/api/../"), "/api/../")
 	a.Equal(cleanPath("/api/../../"), "/api/../../")
-}
-
-func TestSupportedMethods(t *testing.T) {
-	a := assert.New(t)
-	ms1 := SupportedMethods()
-	a.Equal(method.Supported, ms1)
-
-	// 不应该改变包内部的变量
-	ms1[0] = "abc"
-	a.NotEqual(method.Supported, ms1)
-	a.False(MethodIsSupported("abc"))
-
-	ms2 := SupportedMethods()
-	a.Equal(method.Supported, ms2)
-	ms2[0] = "def"
-	a.NotEqual(ms1, ms2)
 }
 
 func BenchmarkCleanPath(b *testing.B) {

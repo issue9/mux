@@ -42,7 +42,7 @@ func TestTree_Add_Remove(t *testing.T) {
 
 	a.NotError(tree.Remove("/posts/{id}/author", http.MethodGet)) // 只删除 GET
 	a.NotNil(tree.find("/posts/{id}/author"))
-	a.NotError(tree.Remove("/posts/{id}/author", method.Supported...)) // 删除所有请求方法
+	a.NotError(tree.Remove("/posts/{id}/author")) // 删除所有请求方法
 	a.Nil(tree.find("/posts/{id}/author"))
-	a.Error(tree.Remove("/posts/{id}/author", method.Supported...)) // 删除已经不存在的节点
+	a.Error(tree.Remove("/posts/{id}/author")) // 删除已经不存在的节点
 }
