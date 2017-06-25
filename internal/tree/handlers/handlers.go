@@ -9,8 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-
-	"github.com/issue9/mux/internal/method"
 )
 
 type optionsState int8
@@ -24,20 +22,20 @@ const (
 
 // Handlers 用于表示某节点下各个请求方法对应的处理函数。
 type Handlers struct {
-	handlers     map[method.Type]http.Handler // 请求方法及其对应的 http.Handler
-	optionsAllow string                       // 缓存的 OPTIONS 请求头的 allow 报头内容。
-	optionsState optionsState                 // OPTIONS 报头的处理方式
+	handlers     map[methodType]http.Handler // 请求方法及其对应的 http.Handler
+	optionsAllow string                      // 缓存的 OPTIONS 请求头的 allow 报头内容。
+	optionsState optionsState                // OPTIONS 报头的处理方式
 }
 
 // New 声明一个新的 Handlers 实例
 func New() *Handlers {
 	ret := &Handlers{
-		handlers:     make(map[method.Type]http.Handler, 4), // 大部分不会超过 4 条数据
+		handlers:     make(map[methodType]http.Handler, 4), // 大部分不会超过 4 条数据
 		optionsState: optionsStateDefault,
 	}
 
 	// 添加默认的 OPTIONS 请求内容
-	ret.handlers[method.Options] = http.HandlerFunc(ret.optionsServeHTTP)
+	ret.handlers[options] = http.HandlerFunc(ret.optionsServeHTTP)
 	ret.optionsAllow = ret.getOptionsAllow()
 
 	return ret
@@ -46,12 +44,12 @@ func New() *Handlers {
 // Add 添加一个处理函数
 func (hs *Handlers) Add(h http.Handler, methods ...string) error {
 	if len(methods) == 0 {
-		methods = method.Any
+		methods = any
 	}
 
 	for _, m := range methods {
-		i := method.Int(m)
-		if i == method.None {
+		i := methodMap[m]
+		if i == none {
 			return fmt.Errorf("不支持的请求方法 %v", m)
 		}
 
@@ -63,20 +61,20 @@ func (hs *Handlers) Add(h http.Handler, methods ...string) error {
 	return nil
 }
 
-func (hs *Handlers) addSingle(h http.Handler, m method.Type) error {
-	if m == method.Options { // 强制修改 OPTIONS 方法的处理方式
+func (hs *Handlers) addSingle(h http.Handler, m methodType) error {
+	if m == options { // 强制修改 OPTIONS 方法的处理方式
 		if hs.optionsState == optionsStateFixedHandler { // 被强制修改过，不能再受理。
 			return errors.New("该请求方法 OPTIONS 已经存在")
 		}
 
-		hs.handlers[method.Options] = h
+		hs.handlers[options] = h
 		hs.optionsState = optionsStateFixedHandler
 		return nil
 	}
 
 	// 非 OPTIONS 请求
 	if _, found := hs.handlers[m]; found {
-		return fmt.Errorf("该请求方法 %v 已经存在", m.String())
+		return fmt.Errorf("该请求方法 %v 已经存在", methodStringMap[m])
 	}
 	hs.handlers[m] = h
 
@@ -92,7 +90,7 @@ func (hs *Handlers) optionsServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (hs *Handlers) getOptionsAllow() string {
-	var index method.Type
+	var index methodType
 	for method := range hs.handlers {
 		index += method
 	}
@@ -103,13 +101,13 @@ func (hs *Handlers) getOptionsAllow() string {
 // 返回值表示是否已经被清空。
 func (hs *Handlers) Remove(methods ...string) bool {
 	if len(methods) == 0 {
-		methods = method.Supported
+		methods = supported
 	}
 
 	for _, m := range methods {
-		mm := method.Int(m)
+		mm := methodMap[m]
 		delete(hs.handlers, mm)
-		if mm == method.Options { // 明确指出要删除该路由项的 OPTIONS 时，表示禁止
+		if mm == options { // 明确指出要删除该路由项的 OPTIONS 时，表示禁止
 			hs.optionsState = optionsStateDisable
 		}
 	}
@@ -122,9 +120,9 @@ func (hs *Handlers) Remove(methods ...string) bool {
 
 	// 只有一个 OPTIONS 了，且未经外界强制修改，则将其也一并删除。
 	if hs.Len() == 1 &&
-		hs.handlers[method.Options] != nil &&
+		hs.handlers[options] != nil &&
 		hs.optionsState == optionsStateDefault {
-		delete(hs.handlers, method.Options)
+		delete(hs.handlers, options)
 		hs.optionsAllow = ""
 		return true
 	}
@@ -142,8 +140,8 @@ func (hs *Handlers) SetAllow(optionsAllow string) {
 }
 
 // Handler 获取指定方法对应的处理函数
-func (hs *Handlers) Handler(m string) http.Handler {
-	return hs.handlers[method.Int(m)]
+func (hs *Handlers) Handler(method string) http.Handler {
+	return hs.handlers[methodMap[method]]
 }
 
 // Len 获取当前支持请求方法数量
