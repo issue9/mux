@@ -6,7 +6,7 @@ package handlers
 
 import "net/http"
 
-type methodType int
+type methodType int16
 
 // 表示请求方法的常量，必须要与 github.com/issue9/mux/internal/method.Supported
 // 中的各个元素一一对应。

@@ -34,7 +34,7 @@ type Handlers struct {
 // New 声明一个新的 Handlers 实例
 func New() *Handlers {
 	ret := &Handlers{
-		handlers:     make(map[methodType]http.Handler, len(method.Supported)),
+		handlers:     make(map[methodType]http.Handler, 4), // 大部分不会超过 4 条数据
 		optionsState: optionsStateDefault,
 	}
 
