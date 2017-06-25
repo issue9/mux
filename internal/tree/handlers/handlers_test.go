@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/issue9/assert"
+	"github.com/issue9/mux/internal/method"
 )
 
 var getHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -94,9 +95,9 @@ func TestHandlers_optionsAllow(t *testing.T) {
 	test("options")
 	// 强制删除
 	a.False(hs.Remove(http.MethodOptions))
-	a.Nil(hs.handlers[options])
+	a.Nil(hs.handlers[method.Options])
 	hs.SetAllow("set allow") // SetAllow 无法设置值
-	a.Nil(hs.handlers[options])
+	a.Nil(hs.handlers[method.Options])
 	// 只能通过 Add() 再次显示指定
 	a.NotError(hs.Add(optionsHandler, http.MethodOptions))
 	test("options")

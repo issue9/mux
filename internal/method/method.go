@@ -10,6 +10,64 @@ import (
 	"strings"
 )
 
+// Type 以数值的方式表示请求方法的类型
+type Type int16
+
+// 各个主求方法的值
+const (
+	None Type = 0
+	Get  Type = 1 << iota
+	Post
+	Delete
+	Put
+	Patch
+	Options
+	Head
+	Connect
+	Trace
+
+	Max = Trace // 最大值
+	//All = Trace + Connect + Head + Options + Patch + Put + Delete + Post + Get
+)
+
+var (
+	methodMap = map[string]Type{
+		http.MethodGet:     Get,
+		http.MethodPost:    Post,
+		http.MethodDelete:  Delete,
+		http.MethodPut:     Put,
+		http.MethodPatch:   Patch,
+		http.MethodOptions: Options,
+		http.MethodHead:    Head,
+		http.MethodConnect: Connect,
+		http.MethodTrace:   Trace,
+	}
+
+	methodStringMap = map[Type]string{
+		Get:     http.MethodGet,
+		Post:    http.MethodPost,
+		Delete:  http.MethodDelete,
+		Put:     http.MethodPut,
+		Patch:   http.MethodPatch,
+		Options: http.MethodOptions,
+		Head:    http.MethodHead,
+		Connect: http.MethodConnect,
+		Trace:   http.MethodTrace,
+	}
+)
+
+func (t Type) String() string {
+	return methodStringMap[t]
+}
+
+func String(v Type) string {
+	return v.String()
+}
+
+func Int(str string) Type {
+	return methodMap[str]
+}
+
 var (
 	// Supported 支持的请求方法
 	Supported = []string{
@@ -42,11 +100,5 @@ var (
 // IsSupported 是否支持该请求方法
 func IsSupported(method string) bool {
 	method = strings.ToUpper(method)
-	for _, m := range Supported {
-		if m == method {
-			return true
-		}
-	}
-
-	return false
+	return Int(method) != None
 }

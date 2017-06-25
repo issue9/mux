@@ -5,87 +5,44 @@
 package handlers
 
 import (
-	"net/http"
 	"sort"
 	"strings"
 
 	"github.com/issue9/mux/internal/method"
 )
 
-type methodType int16
-
-// 表示请求方法的常量，必须要与 github.com/issue9/mux/internal/method.Supported
-// 中的各个元素一一对应。
-const (
-	get methodType = 1 << iota
-	post
-	del
-	put
-	patch
-	options
-	head
-	connect
-	trace
-
-	all = trace + connect + head + options + patch + put + del + post + get
-)
-
-var methodMap = map[string]methodType{
-	http.MethodGet:     get,
-	http.MethodPost:    post,
-	http.MethodDelete:  del,
-	http.MethodPut:     put,
-	http.MethodPatch:   patch,
-	http.MethodOptions: options,
-	http.MethodHead:    head,
-	http.MethodConnect: connect,
-	http.MethodTrace:   trace,
-}
-
-var methodStringMap = map[methodType]string{
-	get:     http.MethodGet,
-	post:    http.MethodPost,
-	del:     http.MethodDelete,
-	put:     http.MethodPut,
-	patch:   http.MethodPatch,
-	options: http.MethodOptions,
-	head:    http.MethodHead,
-	connect: http.MethodConnect,
-	trace:   http.MethodTrace,
-}
-
 // 所有的 OPTIONS 请求的 allow 报头字符串
-var optionsStrings = make(map[methodType]string, len(method.Supported))
+var optionsStrings = make(map[method.Type]string, len(method.Supported))
 
 func init() {
 	methods := make([]string, 0, len(method.Supported))
-	for i := methodType(0); i < all; i++ {
-		if i&get == get {
-			methods = append(methods, methodStringMap[get])
+	for i := method.Type(0); i <= method.Max; i++ {
+		if i&method.Get == method.Get {
+			methods = append(methods, method.String(method.Get))
 		}
-		if i&post == post {
-			methods = append(methods, methodStringMap[post])
+		if i&method.Post == method.Post {
+			methods = append(methods, method.String(method.Post))
 		}
-		if i&del == del {
-			methods = append(methods, methodStringMap[del])
+		if i&method.Delete == method.Delete {
+			methods = append(methods, method.String(method.Delete))
 		}
-		if i&put == put {
-			methods = append(methods, methodStringMap[put])
+		if i&method.Put == method.Put {
+			methods = append(methods, method.String(method.Put))
 		}
-		if i&patch == patch {
-			methods = append(methods, methodStringMap[patch])
+		if i&method.Patch == method.Patch {
+			methods = append(methods, method.String(method.Patch))
 		}
-		if i&options == options {
-			methods = append(methods, methodStringMap[options])
+		if i&method.Options == method.Options {
+			methods = append(methods, method.String(method.Options))
 		}
-		if i&head == head {
-			methods = append(methods, methodStringMap[head])
+		if i&method.Head == method.Head {
+			methods = append(methods, method.String(method.Head))
 		}
-		if i&connect == connect {
-			methods = append(methods, methodStringMap[connect])
+		if i&method.Connect == method.Connect {
+			methods = append(methods, method.String(method.Connect))
 		}
-		if i&trace == trace {
-			methods = append(methods, methodStringMap[trace])
+		if i&method.Trace == method.Trace {
+			methods = append(methods, method.String(method.Trace))
 		}
 
 		sort.Strings(methods) // 防止每次从 map 中读取的顺序都不一样
