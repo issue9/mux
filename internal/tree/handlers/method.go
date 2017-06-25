@@ -12,7 +12,7 @@ import (
 )
 
 // 所有的 OPTIONS 请求的 allow 报头字符串
-var optionsStrings = make(map[method.Type]string, len(method.Supported))
+var optionsStrings = make(map[method.Type]string, method.Max)
 
 func init() {
 	methods := make([]string, 0, len(method.Supported))

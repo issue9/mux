@@ -59,10 +59,12 @@ func (t Type) String() string {
 	return methodStringMap[t]
 }
 
+// String 将一个 Type 类型转换成相对应的字符串
 func String(v Type) string {
 	return v.String()
 }
 
+// Int 将一个字符串转换成相对应的 Type 数值
 func Int(str string) Type {
 	return methodMap[str]
 }
