@@ -54,15 +54,16 @@ var (
 )
 
 var (
+	// 当前支持的所有请求方法
 	supported = make([]string, 0, len(methodMap))
 
 	// Any 调用 *.Any 时添加所使用的请求方法列表，
-	// 默认为除 http.MethodOptions 之外的所有 Supported 中的元素
+	// 默认为除 http.MethodOptions 之外的所有 supported 中的元素
 	any = make([]string, 0, len(methodMap)-1)
-)
 
-// 所有的 OPTIONS 请求的 allow 报头字符串
-var optionsStrings = make(map[methodType]string, max)
+	// 所有的 OPTIONS 请求的 allow 报头字符串
+	optionsStrings = make(map[methodType]string, max)
+)
 
 func init() {
 	for typ := range methodMap {
@@ -71,9 +72,11 @@ func init() {
 			any = append(any, typ)
 		}
 	}
+
+	makeOptionsStrings()
 }
 
-func init() {
+func makeOptionsStrings() {
 	methods := make([]string, 0, len(supported))
 	for i := methodType(0); i <= max; i++ {
 		if i&get == get {

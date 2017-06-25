@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/issue9/assert"
-	"github.com/issue9/mux/internal/method"
 )
 
 var getHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -27,7 +26,7 @@ func TestHandlers_Add(t *testing.T) {
 	hs := New()
 	a.NotNil(hs)
 	a.NotError(hs.Add(getHandler))
-	a.Equal(hs.Len(), len(method.Any)+1) // 包含自动生成的 OPTIONS
+	a.Equal(hs.Len(), len(any)+1) // 包含自动生成的 OPTIONS
 
 	hs = New()
 	a.NotNil(hs)
