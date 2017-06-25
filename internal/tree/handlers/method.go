@@ -12,7 +12,7 @@ import (
 
 type methodType int16
 
-// 各个主求方法的值
+// 各个请求方法的值
 const (
 	none methodType = 0
 	get  methodType = 1 << iota
@@ -40,24 +40,12 @@ var (
 		http.MethodTrace:   trace,
 	}
 
-	methodStringMap = map[methodType]string{
-		get:     http.MethodGet,
-		post:    http.MethodPost,
-		del:     http.MethodDelete,
-		put:     http.MethodPut,
-		patch:   http.MethodPatch,
-		options: http.MethodOptions,
-		head:    http.MethodHead,
-		connect: http.MethodConnect,
-		trace:   http.MethodTrace,
-	}
-)
+	methodStringMap = make(map[methodType]string, len(methodMap))
 
-var (
 	// 当前支持的所有请求方法
 	supported = make([]string, 0, len(methodMap))
 
-	// Any 调用 *.Any 时添加所使用的请求方法列表，
+	// any 调用 *.Any 时添加所使用的请求方法列表，
 	// 默认为除 http.MethodOptions 之外的所有 supported 中的元素
 	any = make([]string, 0, len(methodMap)-1)
 
@@ -66,6 +54,12 @@ var (
 )
 
 func init() {
+	// 生成 methodStringMap
+	for typ, str := range methodMap {
+		methodStringMap[str] = typ
+	}
+
+	// 生成 supported 和 any
 	for typ := range methodMap {
 		supported = append(supported, typ)
 		if typ != http.MethodOptions {
