@@ -30,6 +30,15 @@ const (
 )
 
 var (
+	// Supported 支持的请求方法
+	Supported = make([]string, 0, len(methodMap))
+
+	// Any 调用 *.Any 时添加所使用的请求方法列表，
+	// 默认为除 http.MethodOptions 之外的所有 Supported 中的元素
+	Any = make([]string, 0, len(methodMap)-1)
+)
+
+var (
 	methodMap = map[string]Type{
 		http.MethodGet:     Get,
 		http.MethodPost:    Post,
@@ -55,6 +64,15 @@ var (
 	}
 )
 
+func init() {
+	for typ := range methodMap {
+		Supported = append(Supported, typ)
+		if typ != http.MethodOptions {
+			Any = append(Any, typ)
+		}
+	}
+}
+
 func (t Type) String() string {
 	return methodStringMap[t]
 }
@@ -68,35 +86,6 @@ func String(v Type) string {
 func Int(str string) Type {
 	return methodMap[str]
 }
-
-var (
-	// Supported 支持的请求方法
-	Supported = []string{
-		http.MethodGet,
-		http.MethodPost,
-		http.MethodDelete,
-		http.MethodPut,
-		http.MethodPatch,
-		http.MethodOptions,
-		http.MethodHead,
-		http.MethodConnect,
-		http.MethodTrace,
-	}
-
-	// Default 调用 *.Any 时添加所使用的请求方法列表，
-	// 默认为除 http.MethodOptions 之外的所有 Supported 中的元素
-	Default = []string{
-		http.MethodGet,
-		http.MethodPost,
-		http.MethodDelete,
-		http.MethodPut,
-		http.MethodPatch,
-		// http.MethodOptions,
-		http.MethodHead,
-		http.MethodConnect,
-		http.MethodTrace,
-	}
-)
 
 // IsSupported 是否支持该请求方法
 func IsSupported(method string) bool {

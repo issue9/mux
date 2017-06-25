@@ -53,7 +53,7 @@ func (tree *Tree) Add(pattern string, h http.Handler, methods ...string) error {
 	}
 
 	if len(methods) == 0 {
-		methods = method.Default
+		methods = method.Any
 	}
 
 	n, err := tree.getNode(ss)

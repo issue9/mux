@@ -23,7 +23,7 @@ func TestTree_Add(t *testing.T) {
 	tree := New()
 
 	a.NotError(tree.Add("/", buildHandler(1)))
-	a.Equal(tree.children[0].handlers.Len(), len(method.Default)+1) // 自动添加 options
+	a.Equal(tree.children[0].handlers.Len(), len(method.Any)+1) // 自动添加 options
 }
 
 func TestTree_Add_Remove(t *testing.T) {

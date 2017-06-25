@@ -17,8 +17,13 @@ func TestIsSupported(t *testing.T) {
 	a.True(IsSupported("POST"))
 	a.False(IsSupported("not exists"))
 
-	// Default 必然属于支付列表中的一员
-	for _, method := range Default {
+	for method := range methodMap {
 		a.True(IsSupported(method))
 	}
+
+	for _, method := range methodStringMap {
+		a.True(IsSupported(method))
+	}
+
+	a.Equal(len(methodMap), len(methodStringMap))
 }
