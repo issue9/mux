@@ -55,7 +55,12 @@ func (tree *Tree) Add(pattern string, h http.Handler, methods ...string) error {
 		methods = method.Default
 	}
 
-	return tree.add(ss, h, methods...)
+	n, err := tree.getNode(ss)
+	if err != nil {
+		return err
+	}
+
+	return n.handlers.Add(h, methods...)
 }
 
 // Match 查找与 path 匹配的节点
@@ -76,29 +81,29 @@ func (tree *Tree) Remove(pattern string, methods ...string) error {
 		methods = method.Supported
 	}
 
-	return tree.remove(pattern, methods...)
+	child := tree.find(pattern)
+	if child == nil {
+		return fmt.Errorf("不存在的节点 %v", pattern)
+	}
+
+	if child.handlers == nil {
+		if len(child.children) == 0 {
+			child.parent.children = removeNodes(child.parent.children, child.pattern)
+		}
+		return nil
+	}
+
+	if child.handlers.Remove(methods...) && len(child.children) == 0 {
+		child.parent.children = removeNodes(child.parent.children, child.pattern)
+	}
+	return nil
 }
 
 // GetNode 查找路由项，不存在，则返回一个新建的实例。
 func (tree *Tree) GetNode(pattern string) (*Node, error) {
-	n := tree.find(pattern)
-	if n != nil {
-		return n, nil
-	}
-
-	// 没有找到，则尝试添加一个空的节点
 	ss, err := ts.Parse(pattern)
 	if err != nil {
 		return nil, err
 	}
-	if err := tree.add(ss, nil); err != nil { // 不添加任何处理方法。
-		return nil, err
-	}
-
-	// 再次查找刚才添加的节点
-	n = tree.find(pattern)
-	if n == nil {
-		panic(fmt.Sprintf("添加了 %s 节点，却无法找到与 %s 相匹配的节点", pattern, pattern))
-	}
-	return n, nil
+	return tree.getNode(ss)
 }

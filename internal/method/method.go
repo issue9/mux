@@ -27,7 +27,6 @@ const (
 	Trace
 
 	Max = Trace // 最大值
-	//All = Trace + Connect + Head + Options + Patch + Put + Delete + Post + Get
 )
 
 var (

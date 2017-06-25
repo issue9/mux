@@ -7,12 +7,10 @@ package tree
 import (
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
-	"os"
-
 	"github.com/issue9/assert"
-	"github.com/issue9/mux/internal/method"
 	ts "github.com/issue9/mux/internal/tree/syntax"
 )
 
@@ -33,7 +31,9 @@ func newNodeTest(a *assert.Assertion) *nodeTest {
 // 测试路由项的 code 需要唯一，之后也是通过此值来判断其命中的路由项。
 func (n *nodeTest) add(method, pattern string, code int) {
 	segs := newSegments(n.a, pattern)
-	n.a.NotError(n.n.add(segs, buildHandler(code), method))
+	nn, err := n.n.getNode(segs)
+	n.a.NotError(err)
+	nn.handlers.Add(buildHandler(code), method)
 }
 
 // 验证指定的路径是否匹配正确的路由项，通过 code 来确定，并返回该节点的实例。
@@ -77,44 +77,21 @@ func newSegments(a *assert.Assertion, pattern string) []*ts.Segment {
 	return ss
 }
 
-func TestNode_add_remove(t *testing.T) {
-	a := assert.New(t)
-	node := &Node{}
-
-	a.NotError(node.add(newSegments(a, "/"), buildHandler(1), http.MethodGet))
-	a.NotError(node.add(newSegments(a, "/posts/{id}"), buildHandler(1), http.MethodGet))
-	a.NotError(node.add(newSegments(a, "/posts/{id}/author"), buildHandler(1), http.MethodGet, http.MethodPut, http.MethodPost))
-	a.NotError(node.add(newSegments(a, "/posts/1/author"), buildHandler(1), http.MethodGet))
-	a.NotError(node.add(newSegments(a, "/posts/{id}/{author:\\w+}/profile"), buildHandler(1), http.MethodGet))
-
-	a.True(node.find("/posts/1/author").handlers.Len() > 0)
-	a.NotError(node.remove("/posts/1/author", http.MethodGet))
-	a.Nil(node.find("/posts/1/author"))
-
-	a.NotError(node.remove("/posts/{id}/author", http.MethodGet)) // 只删除 GET
-	a.NotNil(node.find("/posts/{id}/author"))
-	a.NotError(node.remove("/posts/{id}/author", method.Supported...)) // 删除所有请求方法
-	a.Nil(node.find("/posts/{id}/author"))
-	a.Error(node.remove("/posts/{id}/author", method.Supported...)) // 删除已经不存在的节点
-
-	// 删除父节点的 handlers 并不会让子节点清空
-	node = &Node{}
-	a.NotError(node.add(newSegments(a, "/"), buildHandler(1), http.MethodGet))
-	a.NotError(node.add(newSegments(a, "/posts/{id}"), buildHandler(1), http.MethodGet))
-	a.NotError(node.add(newSegments(a, "/posts/{id}/author"), buildHandler(1), http.MethodGet, http.MethodPut, http.MethodPost))
-	a.NotError(node.remove("/posts/{id}", method.Supported...))
-	a.NotNil(node.find("/posts/{id}/author"))
-}
-
 func TestNode_find(t *testing.T) {
 	a := assert.New(t)
 	node := &Node{}
 
-	a.NotError(node.add(newSegments(a, "/"), buildHandler(1), http.MethodGet))
-	a.NotError(node.add(newSegments(a, "/posts/{id}"), buildHandler(1), http.MethodGet))
-	a.NotError(node.add(newSegments(a, "/posts/{id}/author"), buildHandler(1), http.MethodGet))
-	a.NotError(node.add(newSegments(a, "/posts/1/author"), buildHandler(1), http.MethodGet))
-	a.NotError(node.add(newSegments(a, "/posts/{id}/{author:\\w+}/profile"), buildHandler(1), http.MethodGet))
+	addNode := func(p string, code int, methods ...string) {
+		nn, err := node.getNode(newSegments(a, p))
+		a.NotError(err).NotNil(nn)
+		a.NotError(nn.handlers.Add(buildHandler(code), methods...))
+	}
+
+	addNode("/", 1, http.MethodGet)
+	addNode("/posts/{id}", 1, http.MethodGet)
+	addNode("/posts/{id}/author", 1, http.MethodGet)
+	addNode("/posts/1/author", 1, http.MethodGet)
+	addNode("/posts/{id}/{author:\\w+}/profile", 1, http.MethodGet)
 
 	a.Equal(node.find("/").pattern, "/")
 	a.Equal(node.find("/posts/{id}").pattern, "{id}")
@@ -126,11 +103,17 @@ func TestNode_clean(t *testing.T) {
 	a := assert.New(t)
 	node := &Node{}
 
-	a.NotError(node.add(newSegments(a, "/"), buildHandler(1), http.MethodGet))
-	a.NotError(node.add(newSegments(a, "/posts/1/author"), buildHandler(1), http.MethodGet))
-	a.NotError(node.add(newSegments(a, "/posts/{id}"), buildHandler(1), http.MethodGet))
-	a.NotError(node.add(newSegments(a, "/posts/{id}/author"), buildHandler(1), http.MethodGet))
-	a.NotError(node.add(newSegments(a, "/posts/{id}/{author:\\w+}/profile"), buildHandler(1), http.MethodGet))
+	addNode := func(p string, code int, methods ...string) {
+		nn, err := node.getNode(newSegments(a, p))
+		a.NotError(err).NotNil(nn)
+		a.NotError(nn.handlers.Add(buildHandler(code), methods...))
+	}
+
+	addNode("/", 1, http.MethodGet)
+	addNode("/posts/1/author", 1, http.MethodGet)
+	addNode("/posts/{id}", 1, http.MethodGet)
+	addNode("/posts/{id}/author", 1, http.MethodGet)
+	addNode("/posts/{id}/{author:\\w+}/profile", 1, http.MethodGet)
 
 	a.Equal(node.Len(), 5)
 

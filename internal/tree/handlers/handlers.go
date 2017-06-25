@@ -46,11 +46,12 @@ func New() *Handlers {
 // Add 添加一个处理函数
 func (hs *Handlers) Add(h http.Handler, methods ...string) error {
 	for _, m := range methods {
-		if !method.IsSupported(m) {
+		i := method.Int(m)
+		if i == method.None {
 			return fmt.Errorf("不支持的请求方法 %v", m)
 		}
 
-		if err := hs.addSingle(h, method.Int(m)); err != nil {
+		if err := hs.addSingle(h, i); err != nil {
 			return err
 		}
 	}

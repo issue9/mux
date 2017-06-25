@@ -57,22 +57,22 @@ func (n *Node) priority() int {
 	return int(n.nodeType)
 }
 
-// 添加一条路由。当 methods 为空时，表示仅添加节点，而不添加任何处理函数。
-func (n *Node) add(segments []*ts.Segment, h http.Handler, methods ...string) error {
+// 获取指定路径下的节点，若节点不存在，则添加
+func (n *Node) getNode(segments []*ts.Segment) (*Node, error) {
 	child, err := n.addSegment(segments[0])
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if len(segments) > 1 {
-		return child.add(segments[1:], h, methods...)
+		return child.getNode(segments[1:])
 	}
 
 	// 最后一个节点
 	if child.handlers == nil {
 		child.handlers = handlers.New()
 	}
-	return child.handlers.Add(h, methods...)
+	return child, nil
 }
 
 // 将 ts.Segment 添加到当前节点，并返回新节点
@@ -194,27 +194,6 @@ func (n *Node) clean(prefix string) {
 	for _, del := range dels {
 		n.children = removeNodes(n.children, del)
 	}
-}
-
-// 移除路由项
-func (n *Node) remove(pattern string, methods ...string) error {
-	child := n.find(pattern)
-
-	if child == nil {
-		return fmt.Errorf("不存在的节点 %v", pattern)
-	}
-
-	if child.handlers == nil {
-		if len(child.children) == 0 {
-			child.parent.children = removeNodes(child.parent.children, child.pattern)
-		}
-		return nil
-	}
-
-	if child.handlers.Remove(methods...) && len(child.children) == 0 {
-		child.parent.children = removeNodes(child.parent.children, child.pattern)
-	}
-	return nil
 }
 
 // 从子节点中查找与当前路径匹配的节点，若找不到，则返回 nil。
