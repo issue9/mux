@@ -14,8 +14,7 @@ type methodType int16
 
 // 各个请求方法的值
 const (
-	none methodType = 0
-	get  methodType = 1 << iota
+	get methodType = 1 << iota
 	post
 	del
 	put
@@ -24,7 +23,9 @@ const (
 	head
 	connect
 	trace
-	max = trace // 最大值
+
+	none methodType = 0
+	max             = trace // 最大值
 )
 
 var (
