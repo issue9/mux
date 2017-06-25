@@ -9,8 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"sort"
-	"strings"
 
 	"github.com/issue9/mux/internal/method"
 )
@@ -90,13 +88,11 @@ func (hs *Handlers) optionsServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (hs *Handlers) getOptionsAllow() string {
-	methods := make([]string, 0, len(hs.handlers))
+	var index methodType
 	for method := range hs.handlers {
-		methods = append(methods, methodStringMap[method])
+		index += method
 	}
-
-	sort.Strings(methods) // 防止每次从 map 中读取的顺序都不一样
-	return strings.Join(methods, ", ")
+	return optionsStrings[index]
 }
 
 // Remove 移除某个请求方法对应的处理函数
