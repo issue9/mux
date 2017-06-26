@@ -319,7 +319,7 @@ func (n *Node) URL(params map[string]string) (string, error) {
 
 				param, exists := params[sub.Name]
 				if !exists {
-					return "", fmt.Errorf("未找到参数 %v 的值", sub.Name)
+					return "", fmt.Errorf("未找到参数 %s 的值", sub.Name)
 				}
 				url = strings.Replace(url, sub.String(), param, -1)
 			}
@@ -389,7 +389,7 @@ func splitNode(n *Node, pos int) (*Node, error) {
 
 	p := n.parent
 	if p == nil {
-		return nil, errors.New("split:节点必须要有一个有效的父节点，才能进行拆分")
+		return nil, errors.New("splitNode:节点必须要有一个有效的父节点，才能进行拆分")
 	}
 
 	// 先从父节点中删除老的 n
