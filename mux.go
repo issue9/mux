@@ -11,7 +11,7 @@ import (
 	"sync"
 
 	"github.com/issue9/mux/internal/tree"
-	ps "github.com/issue9/mux/params"
+	"github.com/issue9/mux/params"
 )
 
 var (
@@ -196,8 +196,8 @@ func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if params := node.Params(p); len(params) > 0 {
-		ctx := context.WithValue(r.Context(), ps.ContextKeyParams, ps.Params(params))
+	if ps := node.Params(p); len(ps) > 0 {
+		ctx := context.WithValue(r.Context(), params.ContextKeyParams, ps)
 		r = r.WithContext(ctx)
 	}
 
@@ -205,8 +205,8 @@ func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetParams 获取路由的参数集合
-func GetParams(r *http.Request) ps.Params {
-	return ps.Get(r)
+func GetParams(r *http.Request) params.Params {
+	return params.Get(r)
 }
 
 // 清除路径中的重复的 / 字符
