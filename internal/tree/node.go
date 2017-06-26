@@ -17,6 +17,7 @@ import (
 
 	"github.com/issue9/mux/internal/tree/handlers"
 	ts "github.com/issue9/mux/internal/tree/syntax"
+	"github.com/issue9/mux/params"
 )
 
 var nodesPool = &sync.Pool{
@@ -255,11 +256,11 @@ func (n *Node) matchCurrent(path string) (bool, string) {
 // Params 获取 path 在当前路由节点下的参数。
 //
 // 由调用方确保能正常匹配 path
-func (n *Node) Params(path string) map[string]string {
+func (n *Node) Params(path string) params.Params {
 	nodes := n.getParents()
 	defer nodesPool.Put(nodes)
 
-	params := make(map[string]string, len(nodes))
+	params := make(params.Params, len(nodes))
 	for i := len(nodes) - 1; i >= 0; i-- {
 		node := nodes[i]
 		switch node.nodeType {
