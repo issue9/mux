@@ -93,11 +93,10 @@ func (mux *Mux) Handle(pattern string, h http.Handler, methods ...string) error 
 // 如果想实现对处理方法的自定义，可以显示地调用 Handle 方法:
 //  Mux.Handle("/api/1", handle, http.MethodOptions)
 func (mux *Mux) Options(pattern string, allow string) *Mux {
-	n, err := mux.tree.GetNode(pattern)
+	err := mux.tree.SetAllow(pattern, allow)
 	if err != nil {
 		panic(err)
 	}
-	n.SetAllow(allow)
 
 	return mux
 }

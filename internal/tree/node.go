@@ -34,8 +34,7 @@ type Node struct {
 	handlers *handlers.Handlers
 
 	// 用于表示当前节点是否为终点，仅对 nodeType 为 TypeRegexp 和 TypeNamed 有用。
-	// 此值为 true，该节点的优先级会比同类型的节点低，以便优先对比其它非最终节点，
-	// 且该节点之后不会有子节点。
+	// 此值为 true，该节点的优先级会比同类型的节点低，以便优先对比其它非最终节点。
 	endpoint bool
 
 	// 命名参数特有的字段
@@ -342,15 +341,6 @@ func (n *Node) getParents() []*Node {
 	}
 
 	return nodes
-}
-
-// SetAllow 设置当前节点的 allow 报头
-func (n *Node) SetAllow(allow string) {
-	if n.handlers == nil {
-		n.handlers = handlers.New()
-	}
-
-	n.handlers.SetAllow(allow)
 }
 
 // Handler 获取该节点下与参数相对应的处理函数

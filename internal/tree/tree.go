@@ -95,11 +95,28 @@ func (tree *Tree) Remove(pattern string, methods ...string) error {
 	return nil
 }
 
-// GetNode 查找路由项，不存在，则返回一个新建的实例。
+// GetNode 获取指定的节点，若节点不存在，则在该位置生成一个新节点。
 func (tree *Tree) GetNode(pattern string) (*Node, error) {
 	ss, err := ts.Parse(pattern)
 	if err != nil {
 		return nil, err
 	}
+
 	return tree.getNode(ss)
+}
+
+// SetAllow 设置指定节点的 allow 报头。
+// 若节点不存在，则会自动生成该节点。
+func (tree *Tree) SetAllow(pattern, allow string) error {
+	n, err := tree.GetNode(pattern)
+	if err != nil {
+		return err
+	}
+
+	if n.handlers == nil {
+		n.handlers = handlers.New()
+	}
+
+	n.handlers.SetAllow(allow)
+	return nil
 }

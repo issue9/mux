@@ -63,11 +63,11 @@ func (n *Node) print(w io.Writer, deep int) {
 	}
 }
 
-// Len 获取当前路由下有处理函数的节点数量
-func (n *Node) Len() int {
+// 获取当前路由下有处理函数的节点数量
+func (n *Node) len() int {
 	var cnt int
 	for _, child := range n.children {
-		cnt += child.Len()
+		cnt += child.len()
 	}
 
 	if n.handlers != nil && n.handlers.Len() > 0 {

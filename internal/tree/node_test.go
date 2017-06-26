@@ -131,13 +131,13 @@ func TestNode_clean(t *testing.T) {
 	addNode("/posts/{id}/author", 1, http.MethodGet)
 	addNode("/posts/{id}/{author:\\w+}/profile", 1, http.MethodGet)
 
-	a.Equal(node.Len(), 5)
+	a.Equal(node.len(), 5)
 
 	node.clean("/posts/{id")
-	a.Equal(node.Len(), 2)
+	a.Equal(node.len(), 2)
 
 	node.clean("")
-	a.Equal(node.Len(), 0)
+	a.Equal(node.len(), 0)
 }
 
 func TestNode_match(t *testing.T) {
