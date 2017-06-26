@@ -2,6 +2,7 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
+// Package params 用于处理路由中的参数信息。
 package params
 
 import (
@@ -24,7 +25,7 @@ type Params map[string]string
 // Get 从 r 中获取路由参数。
 //
 // 以下情况两个参数都会返回 nil：
-//  非正则路由；
+//  非正则或命名路由；
 //  正则路由，但是所有匹配参数都是未命名的；
 func Get(r *http.Request) Params {
 	params := r.Context().Value(ContextKeyParams)
