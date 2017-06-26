@@ -22,7 +22,7 @@ func (tree *Tree) Trace(w io.Writer, path string) {
 	tree.trace(w, 0, path)
 }
 
-// NOTE: 此函数与 Node.trace 是一样的，记得同步两边的代码。
+// NOTE: 此函数与 Node.match 是一样的，记得同步两边的代码。
 func (n *Node) trace(w io.Writer, deep int, path string) *Node {
 	if len(n.children) == 0 && len(path) == 0 {
 		fmt.Fprintln(w, strings.Repeat(" ", (deep-1)*4), n.pattern, "---", typeString(n.nodeType), "---", path, "(matched-1)")
