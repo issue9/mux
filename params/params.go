@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
-package mux
+package params
 
 import (
 	"errors"
@@ -12,7 +12,8 @@ import (
 
 type contextKey int
 
-const contextKeyParams contextKey = 0
+// ContextKeyParams 存取路由参数的关键字
+const ContextKeyParams contextKey = 0
 
 // ErrParamNotExists 表示地址参数中并不存在该名称的值。
 var ErrParamNotExists = errors.New("不存在该参数")
@@ -20,13 +21,13 @@ var ErrParamNotExists = errors.New("不存在该参数")
 // Params 用以保存请求地址中的参数内容
 type Params map[string]string
 
-// GetParams 从 r 中获取路由参数。
+// Get 从 r 中获取路由参数。
 //
 // 以下情况两个参数都会返回 nil：
 //  非正则路由；
 //  正则路由，但是所有匹配参数都是未命名的；
-func GetParams(r *http.Request) Params {
-	params := r.Context().Value(contextKeyParams)
+func Get(r *http.Request) Params {
+	params := r.Context().Value(ContextKeyParams)
 	if params == nil {
 		return nil
 	}

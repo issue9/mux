@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
-package mux
+package params
 
 import (
 	"context"
@@ -16,9 +16,9 @@ func getParams(params map[string]string, a *assert.Assertion) Params {
 	r, err := http.NewRequest(http.MethodGet, "/to/path", nil)
 	a.NotError(err).NotNil(r)
 
-	ctx := context.WithValue(r.Context(), contextKeyParams, Params(params))
+	ctx := context.WithValue(r.Context(), ContextKeyParams, Params(params))
 	r = r.WithContext(ctx)
-	return GetParams(r)
+	return Get(r)
 }
 
 func TestGetParams(t *testing.T) {
@@ -26,15 +26,15 @@ func TestGetParams(t *testing.T) {
 
 	r, err := http.NewRequest(http.MethodGet, "/to/path", nil)
 	a.NotError(err).NotNil(r)
-	ps := GetParams(r)
+	ps := Get(r)
 	a.Nil(ps)
 
 	maps := map[string]string{"key1": "1"}
 	r, err = http.NewRequest(http.MethodGet, "/to/path", nil)
 	a.NotError(err).NotNil(r)
-	ctx := context.WithValue(r.Context(), contextKeyParams, Params(maps))
+	ctx := context.WithValue(r.Context(), ContextKeyParams, Params(maps))
 	r = r.WithContext(ctx)
-	ps = GetParams(r)
+	ps = Get(r)
 	a.Equal(ps, maps)
 }
 
