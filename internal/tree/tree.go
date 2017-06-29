@@ -84,13 +84,13 @@ func (tree *Tree) Remove(pattern string, methods ...string) error {
 
 	if child.handlers == nil {
 		if len(child.children) == 0 {
-			child.parent.children = removeNodes(child.parent.children, child.pattern)
+			child.parent.children = removeNodes(child.parent.children, child.seg.Pattern())
 		}
 		return nil
 	}
 
 	if child.handlers.Remove(methods...) && len(child.children) == 0 {
-		child.parent.children = removeNodes(child.parent.children, child.pattern)
+		child.parent.children = removeNodes(child.parent.children, child.seg.Pattern())
 	}
 	return nil
 }

@@ -30,18 +30,17 @@ const (
 )
 
 // Parse 将字符串解析成 Segment 对象数组
-func Parse(str string) ([]*Segment, error) {
+func Parse(str string) ([]Segment, error) {
 	if len(str) == 0 {
 		return nil, errors.New("参数 str 不能为空")
 	}
 
-	ss := make([]*Segment, 0, strings.Count(str, string(NameStart))+1)
+	ss := make([]Segment, 0, strings.Count(str, string(NameStart))+1)
 
 	startIndex := 0
 	endIndex := -10
 	separatorIndex := -10
 
-	nType := TypeString
 	state := NameEnd // 表示当前的状态
 
 	for i := 0; i < len(str); i++ {
@@ -58,14 +57,14 @@ func Parse(str string) ([]*Segment, error) {
 				continue
 			}
 
-			ss = append(ss, &Segment{
-				Value: str[startIndex:i],
-				Type:  nType,
-			})
+			s, err := NewSegment(str[startIndex:i])
+			if err != nil {
+				return nil, err
+			}
+			ss = append(ss, s)
 
 			startIndex = i
 			state = NameStart
-			nType = TypeString // 记录了数据之后，重置为 TypeString
 		case RegexpSeparator:
 			if state != NameStart {
 				return nil, fmt.Errorf("字符(:)只能出现在 %v %v 中间", string(NameStart), string(NameEnd))
@@ -90,12 +89,6 @@ func Parse(str string) ([]*Segment, error) {
 				return nil, errors.New("未指定的正则表达式")
 			}
 
-			if state == NameStart {
-				nType = TypeNamed
-			} else {
-				nType = TypeRegexp
-			}
-
 			state = NameEnd
 			endIndex = i
 		}
@@ -106,26 +99,22 @@ func Parse(str string) ([]*Segment, error) {
 			return nil, fmt.Errorf("缺少 %s 字符", string(NameEnd))
 		}
 
-		ss = append(ss, &Segment{
-			Value:    str[startIndex:],
-			Type:     nType,
-			Endpoint: str[len(str)-1] == NameEnd,
-		})
+		s, err := NewSegment(str[startIndex:])
+		if err != nil {
+			return nil, err
+		}
+		ss = append(ss, s)
 	}
 
 	return ss, nil
 }
 
+// 将路由语法转换成正则表达式语法，比如：
+//  {id:\\d+}/author => (?P<id>\\d+)
+// 需要保证 pattern 的语法正确，此处不再做检测。
 var repl = strings.NewReplacer(string(NameStart), "(?P<",
 	string(RegexpSeparator), ">",
 	string(NameEnd), ")")
-
-// Regexp 将路由语法转换成正则表达式语法，比如：
-//  {id:\\d+}/author => (?P<id>\\d+)
-// 需要保证 pattern 的语法正确，此处不再做检测。
-func Regexp(pattern string) string {
-	return repl.Replace(pattern)
-}
 
 // PrefixLen 判断两个字符串之间共同的开始内容的长度，
 // 不会从{} 中间被分开，正则表达式与之后的内容也不再分隔。

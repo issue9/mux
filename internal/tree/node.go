@@ -7,10 +7,7 @@ package tree
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"net/http"
-	"regexp"
-	"regexp/syntax"
 	"sort"
 	"strings"
 	"sync"
@@ -29,36 +26,23 @@ var nodesPool = &sync.Pool{
 // Node 表示路由中的节点。
 type Node struct {
 	parent   *Node
-	nodeType ts.Type
 	children []*Node
-	pattern  string
 	handlers *handlers.Handlers
-
-	// 用于表示当前节点是否为终点，仅对 nodeType 为 TypeRegexp 和 TypeNamed 有用。
-	// 此值为 true，该节点的优先级会比同类型的节点低，以便优先对比其它非最终节点。
-	endpoint bool
-
-	// 命名参数特有的字段
-	name   string
-	suffix string
-
-	// 正则参数特有的字段
-	expr       *regexp.Regexp
-	syntaxExpr *syntax.Regexp
+	seg      ts.Segment
 }
 
 // 当前节点的优先级。
 func (n *Node) priority() int {
 	// 有 children 的，endpoit 必然为 false，两者不可能同时为 true
-	if len(n.children) > 0 || n.endpoint {
-		return int(n.nodeType) + 1
+	if len(n.children) > 0 || n.seg.Endpoint() {
+		return int(n.seg.Type()) + 1
 	}
 
-	return int(n.nodeType)
+	return int(n.seg.Type())
 }
 
 // 获取指定路径下的节点，若节点不存在，则添加
-func (n *Node) getNode(segments []*ts.Segment) (*Node, error) {
+func (n *Node) getNode(segments []ts.Segment) (*Node, error) {
 	child, err := n.addSegment(segments[0])
 	if err != nil {
 		return nil, err
@@ -72,23 +56,23 @@ func (n *Node) getNode(segments []*ts.Segment) (*Node, error) {
 }
 
 // 将 ts.Segment 添加到当前节点，并返回新节点
-func (n *Node) addSegment(s *ts.Segment) (*Node, error) {
+func (n *Node) addSegment(s ts.Segment) (*Node, error) {
 	var child *Node // 找到的最匹配节点
 	var l int       // 最大的匹配字符数量
 
 	for _, c := range n.children {
-		if c.endpoint != s.Endpoint ||
-			c.nodeType != s.Type {
+		if c.seg.Endpoint() != s.Endpoint() ||
+			c.seg.Type() != s.Type() {
 			continue
 		}
 
-		if c.endpoint == s.Endpoint && // 有完全相同的节点
-			c.pattern == s.Value &&
-			c.nodeType == s.Type {
+		if c.seg.Endpoint() == s.Endpoint() && // 有完全相同的节点
+			c.seg.Pattern() == s.Pattern() &&
+			c.seg.Type() == s.Type() {
 			return c, nil
 		}
 
-		if l1 := ts.PrefixLen(c.pattern, s.Value); l1 > l {
+		if l1 := ts.PrefixLen(c.seg.Pattern(), s.Pattern()); l1 > l {
 			l = l1
 			child = c
 		}
@@ -103,39 +87,23 @@ func (n *Node) addSegment(s *ts.Segment) (*Node, error) {
 		return nil, err
 	}
 
-	if len(s.Value) == l {
+	if len(s.Pattern()) == l {
 		return parent, nil
 	}
-	return parent.addSegment(ts.NewSegment(s.Value[l:]))
+
+	seg, err := ts.NewSegment(s.Pattern()[l:])
+	if err != nil {
+		return nil, err
+	}
+	return parent.addSegment(seg)
 }
 
 // 根据 seg 内容为当前节点产生一个子节点，并返回该新节点。
-func (n *Node) newChild(seg *ts.Segment) (*Node, error) {
+func (n *Node) newChild(seg ts.Segment) (*Node, error) {
 	child := &Node{
-		parent:   n,
-		pattern:  seg.Value,
-		nodeType: seg.Type,
-		endpoint: seg.Endpoint,
+		parent: n,
+		seg:    seg,
 	}
-
-	switch seg.Type {
-	case ts.TypeNamed:
-		endIndex := strings.IndexByte(seg.Value, ts.NameEnd)
-		if endIndex == -1 {
-			return nil, fmt.Errorf("无效的路由语法：%s", seg.Value)
-		}
-		child.suffix = seg.Value[endIndex+1:]
-		child.name = seg.Value[1:endIndex]
-	case ts.TypeRegexp:
-		reg := ts.Regexp(seg.Value)
-
-		syntaxExpr, err := syntax.Parse(reg, syntax.Perl)
-		if err != nil {
-			return nil, err
-		}
-		child.expr = regexp.MustCompile(reg)
-		child.syntaxExpr = syntaxExpr
-	} // end switch
 
 	n.children = append(n.children, child)
 	sort.SliceStable(n.children, func(i, j int) bool {
@@ -148,18 +116,18 @@ func (n *Node) newChild(seg *ts.Segment) (*Node, error) {
 // 查找路由项，不存在返回 nil
 func (n *Node) find(pattern string) *Node {
 	for _, child := range n.children {
-		if len(child.pattern) < len(pattern) {
-			if !strings.HasPrefix(pattern, child.pattern) {
+		if len(child.seg.Pattern()) < len(pattern) {
+			if !strings.HasPrefix(pattern, child.seg.Pattern()) {
 				continue
 			}
 
-			nn := child.find(pattern[len(child.pattern):])
+			nn := child.find(pattern[len(child.seg.Pattern()):])
 			if nn != nil {
 				return nn
 			}
 		}
 
-		if child.pattern == pattern {
+		if child.seg.Pattern() == pattern {
 			return child
 		}
 	} // end for
@@ -176,14 +144,14 @@ func (n *Node) clean(prefix string) {
 
 	dels := make([]string, 0, len(n.children))
 	for _, child := range n.children {
-		if len(child.pattern) < len(prefix) {
-			if strings.HasPrefix(prefix, child.pattern) {
-				child.clean(prefix[len(child.pattern):])
+		if len(child.seg.Pattern()) < len(prefix) {
+			if strings.HasPrefix(prefix, child.seg.Pattern()) {
+				child.clean(prefix[len(child.seg.Pattern()):])
 			}
 		}
 
-		if strings.HasPrefix(child.pattern, prefix) {
-			dels = append(dels, child.pattern)
+		if strings.HasPrefix(child.seg.Pattern(), prefix) {
+			dels = append(dels, child.seg.Pattern())
 		}
 	}
 
@@ -201,7 +169,7 @@ func (n *Node) match(path string) *Node {
 	}
 
 	for _, node := range n.children {
-		matched, newPath := node.matchCurrent(path)
+		matched, newPath := node.seg.Match(path)
 		if !matched {
 			continue
 		}
@@ -220,39 +188,6 @@ func (n *Node) match(path string) *Node {
 	return nil
 }
 
-// 确定当前节点是否与 path 部分匹配。
-func (n *Node) matchCurrent(path string) (bool, string) {
-	switch n.nodeType {
-	case ts.TypeString:
-		if strings.HasPrefix(path, n.pattern) {
-			return true, path[len(n.pattern):]
-		}
-	case ts.TypeNamed:
-		if n.endpoint {
-			return true, path[:0]
-		}
-
-		index := strings.Index(path, n.suffix)
-		if index > 0 { // 为零说明前面没有命名参数，肯定不正确
-			return true, path[index+len(n.suffix):]
-		}
-	case ts.TypeRegexp:
-		loc := n.expr.FindStringIndex(path)
-		if loc == nil || loc[0] != 0 { // 不匹配
-			return false, path
-		}
-
-		if loc[1] == len(path) {
-			return true, path[:0]
-		}
-		return true, path[loc[1]:]
-	default: // nodeType 错误，肯定是代码级别的错误，直接 panic
-		panic("无效的 nodeType 值")
-	} // end switch
-
-	return false, path
-}
-
 // Params 获取 path 在当前路由节点下的参数。
 //
 // 由调用方确保能正常匹配 path
@@ -263,29 +198,11 @@ func (n *Node) Params(path string) params.Params {
 	params := make(params.Params, len(nodes))
 	for i := len(nodes) - 1; i >= 0; i-- {
 		node := nodes[i]
-		switch node.nodeType {
-		case ts.TypeString:
-			path = path[len(node.pattern):]
-		case ts.TypeNamed:
-			if node.endpoint {
-				params[node.name] = path
-				return params
-			}
-
-			index := strings.Index(path, node.suffix)
-			params[node.name] = path[:index]
-			path = path[index+len(node.suffix):]
-		case ts.TypeRegexp:
-			subexps := node.expr.SubexpNames()
-			args := node.expr.FindStringSubmatch(path)
-			for index, name := range subexps {
-				if len(name) > 0 && index < len(args) {
-					params[name] = args[index]
-				}
-			}
-
-			path = path[len(args[0]):]
+		if node.seg == nil {
+			continue
 		}
+
+		path = node.seg.Params(path, params)
 	} // end for LOOP
 
 	return params
@@ -299,32 +216,12 @@ func (n *Node) URL(params map[string]string) (string, error) {
 	buf := new(bytes.Buffer)
 	for i := len(nodes) - 1; i >= 0; i-- {
 		node := nodes[i]
-		switch node.nodeType {
-		case ts.TypeString:
-			buf.WriteString(node.pattern)
-		case ts.TypeNamed:
-			param, exists := params[node.name]
-			if !exists {
-				return "", fmt.Errorf("未找到参数 %s 的值", node.name)
-			}
-			buf.WriteString(param)
-			buf.WriteString(node.suffix) // 如果是 endpoint suffix 肯定为空
-		case ts.TypeRegexp:
-			url := node.syntaxExpr.String()
-			subs := append(node.syntaxExpr.Sub, node.syntaxExpr)
-			for _, sub := range subs {
-				if len(sub.Name) == 0 {
-					continue
-				}
+		if node.seg == nil {
+			continue
+		}
 
-				param, exists := params[sub.Name]
-				if !exists {
-					return "", fmt.Errorf("未找到参数 %s 的值", sub.Name)
-				}
-				url = strings.Replace(url, sub.String(), param, -1)
-			}
-
-			buf.WriteString(url)
+		if err := node.seg.URL(buf, params); err != nil {
+			return "", err
 		}
 	} // end for
 
@@ -361,7 +258,7 @@ func (n *Node) Handler(method string) http.Handler {
 func removeNodes(nodes []*Node, pattern string) []*Node {
 	lastIndex := len(nodes) - 1
 	for index, n := range nodes {
-		if n.pattern != pattern {
+		if n.seg.Pattern() != pattern {
 			continue
 		}
 
@@ -383,7 +280,7 @@ func removeNodes(nodes []*Node, pattern string) []*Node {
 //
 // NOTE: 调用者需确保 pos 位置是可拆分的。
 func splitNode(n *Node, pos int) (*Node, error) {
-	if len(n.pattern) <= pos { // 不需要拆分
+	if len(n.seg.Pattern()) <= pos { // 不需要拆分
 		return n, nil
 	}
 
@@ -393,14 +290,22 @@ func splitNode(n *Node, pos int) (*Node, error) {
 	}
 
 	// 先从父节点中删除老的 n
-	p.children = removeNodes(p.children, n.pattern)
+	p.children = removeNodes(p.children, n.seg.Pattern())
 
-	ret, err := p.newChild(ts.NewSegment(n.pattern[:pos]))
+	seg, err := ts.NewSegment(n.seg.Pattern()[:pos])
+	if err != nil {
+		return nil, err
+	}
+	ret, err := p.newChild(seg)
 	if err != nil {
 		return nil, err
 	}
 
-	c, err := ret.newChild(ts.NewSegment(n.pattern[pos:]))
+	seg, err = ts.NewSegment(n.seg.Pattern()[pos:])
+	if err != nil {
+		return nil, err
+	}
+	c, err := ret.newChild(seg)
 	if err != nil {
 		return nil, err
 	}
