@@ -10,7 +10,7 @@ import (
 	"net/http"
 
 	"github.com/issue9/mux/internal/tree/handlers"
-	ts "github.com/issue9/mux/internal/tree/syntax"
+	"github.com/issue9/mux/internal/tree/segment"
 )
 
 // Tree 以树节点的形式保存的路由。
@@ -46,7 +46,7 @@ func New() *Tree {
 //
 // methods 可以为空，表示添加除 OPTIONS 之外所有支持的请求方法。
 func (tree *Tree) Add(pattern string, h http.Handler, methods ...string) error {
-	ss, err := ts.Parse(pattern)
+	ss, err := segment.Parse(pattern)
 	if err != nil {
 		return err
 	}
@@ -84,20 +84,20 @@ func (tree *Tree) Remove(pattern string, methods ...string) error {
 
 	if child.handlers == nil {
 		if len(child.children) == 0 {
-			child.parent.children = removeNodes(child.parent.children, child.pattern)
+			child.parent.children = removeNodes(child.parent.children, child.seg.Pattern())
 		}
 		return nil
 	}
 
 	if child.handlers.Remove(methods...) && len(child.children) == 0 {
-		child.parent.children = removeNodes(child.parent.children, child.pattern)
+		child.parent.children = removeNodes(child.parent.children, child.seg.Pattern())
 	}
 	return nil
 }
 
 // GetNode 获取指定的节点，若节点不存在，则在该位置生成一个新节点。
 func (tree *Tree) GetNode(pattern string) (*Node, error) {
-	ss, err := ts.Parse(pattern)
+	ss, err := segment.Parse(pattern)
 	if err != nil {
 		return nil, err
 	}

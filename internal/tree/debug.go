@@ -9,7 +9,7 @@ import (
 	"io"
 	"strings"
 
-	ts "github.com/issue9/mux/internal/tree/syntax"
+	"github.com/issue9/mux/internal/tree/segment"
 )
 
 // Print 向 w 输出树状结构
@@ -25,13 +25,13 @@ func (tree *Tree) Trace(w io.Writer, path string) {
 // NOTE: 此函数与 Node.match 是一样的，记得同步两边的代码。
 func (n *Node) trace(w io.Writer, deep int, path string) *Node {
 	if len(n.children) == 0 && len(path) == 0 {
-		fmt.Fprintln(w, strings.Repeat(" ", (deep-1)*4), n.pattern, "---", typeString(n.nodeType), "---", path, "(matched-1)")
+		fmt.Fprintln(w, strings.Repeat(" ", (deep-1)*4), n.seg.Pattern(), "---", typeString(n.seg.Type()), "---", path, "(matched-1)")
 		return n
 	}
 
 	for _, node := range n.children {
-		fmt.Fprint(w, strings.Repeat(" ", deep*4), node.pattern, "---", typeString(node.nodeType), "---", path)
-		matched, newPath := node.matchCurrent(path)
+		fmt.Fprint(w, strings.Repeat(" ", deep*4), node.seg.Pattern(), "---", typeString(node.seg.Type()), "---", path)
+		matched, newPath := node.seg.Match(path)
 		if !matched {
 			fmt.Fprintln(w, "(!matched)")
 			continue
@@ -46,7 +46,7 @@ func (n *Node) trace(w io.Writer, deep int, path string) *Node {
 		}
 
 		if len(newPath) == 0 { // 没有子节点匹配，才判断是否与当前节点匹配
-			fmt.Fprintln(w, node.pattern, "---", typeString(n.nodeType), "---", path, "(matched-2)")
+			fmt.Fprintln(w, node.seg.Pattern(), "---", typeString(n.seg.Type()), "---", path, "(matched-2)")
 			return node
 		}
 	} // end for
@@ -56,7 +56,7 @@ func (n *Node) trace(w io.Writer, deep int, path string) *Node {
 
 // 向 w 输出节点的树状结构
 func (n *Node) print(w io.Writer, deep int) {
-	fmt.Fprintln(w, strings.Repeat(" ", deep*4), n.pattern)
+	fmt.Fprintln(w, strings.Repeat(" ", deep*4), n.seg.Pattern())
 
 	for _, child := range n.children {
 		child.print(w, deep+1)
@@ -77,13 +77,13 @@ func (n *Node) len() int {
 	return cnt
 }
 
-func typeString(t ts.Type) string {
+func typeString(t segment.Type) string {
 	switch t {
-	case ts.TypeNamed:
+	case segment.TypeNamed:
 		return "named"
-	case ts.TypeRegexp:
+	case segment.TypeRegexp:
 		return "regexp"
-	case ts.TypeString:
+	case segment.TypeString:
 		return "string"
 	default:
 		return "<unknown>"

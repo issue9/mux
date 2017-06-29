@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
-package syntax
+package segment
 
 import (
 	"testing"
@@ -12,7 +12,7 @@ import (
 
 func TestParse(t *testing.T) {
 	a := assert.New(t)
-	test := func(str string, isError bool, ss ...*Segment) {
+	test := func(str string, isError bool, ss ...Segment) {
 		s, err := Parse(str)
 		if isError {
 			a.Error(err)
@@ -26,40 +26,43 @@ func TestParse(t *testing.T) {
 		}
 	}
 
-	test("/", false, &Segment{Value: "/", Type: TypeString})
+	test("/", false, &str{pattern: "/"})
 
-	test("/posts/1", false, &Segment{Value: "/posts/1", Type: TypeString})
+	test("/posts/1", false, &str{pattern: "/posts/1"})
 
-	test("{action}/1", false, &Segment{Value: "{action}/1", Type: TypeNamed})
+	test("{action}/1", false, &named{pattern: "{action}/1", endpoint: false, name: "action", suffix: "/1"})
 
 	// 以命名参数开头的
-	test("/{action}", false, &Segment{Value: "/", Type: TypeString},
-		&Segment{Value: "{action}", Type: TypeNamed, Endpoint: true})
+	test("/{action}", false, &str{pattern: "/"},
+		&named{pattern: "{action}", endpoint: true, name: "action"})
 
 	// 以通配符结尾
-	test("/posts/{id}", false, &Segment{Value: "/posts/", Type: TypeString},
-		&Segment{Value: "{id}", Type: TypeNamed, Endpoint: true})
+	test("/posts/{id}", false, &str{pattern: "/posts/"},
+		&named{pattern: "{id}", endpoint: true, name: "id"})
 
-	test("/posts/{id}/author/profile", false, &Segment{Value: "/posts/", Type: TypeString},
-		&Segment{Value: "{id}/author/profile", Type: TypeNamed})
+	test("/posts/{id}/author/profile", false, &str{pattern: "/posts/"},
+		&named{pattern: "{id}/author/profile", name: "id", suffix: "/author/profile"})
 
 	// 以命名参数结尾的
-	test("/posts/{id}/author", false, &Segment{Value: "/posts/", Type: TypeString},
-		&Segment{Value: "{id}/author", Type: TypeNamed})
+	test("/posts/{id}/author", false, &str{pattern: "/posts/"},
+		&named{pattern: "{id}/author", name: "id", suffix: "/author"})
 
 	// 命名参数及通配符
-	test("/posts/{id}/page/{page}", false, &Segment{Value: "/posts/", Type: TypeString},
-		&Segment{Value: "{id}/page/", Type: TypeNamed},
-		&Segment{Value: "{page}", Type: TypeNamed, Endpoint: true})
+	test("/posts/{id}/page/{page}", false, &str{pattern: "/posts/"},
+		&named{pattern: "{id}/page/", name: "id", suffix: "/page/"},
+		&named{pattern: "{page}", name: "page", endpoint: true})
 
 	// 正则
-	test("/posts/{id:\\d+}", false, &Segment{Value: "/posts/", Type: TypeString},
-		&Segment{Value: "{id:\\d+}", Type: TypeRegexp, Endpoint: true})
+	r, err := newReg("{id:\\d+}")
+	a.NotError(err).NotNil(r)
+	test("/posts/{id:\\d+}", false, &str{pattern: "/posts/"},
+		r)
 
 	// 正则，命名参数
-	test("/posts/{id:\\d+}/page/{page}", false, &Segment{Value: "/posts/", Type: TypeString},
-		&Segment{Value: "{id:\\d+}/page/", Type: TypeRegexp},
-		&Segment{Value: "{page}", Type: TypeNamed, Endpoint: true})
+	r, err = newReg("{id:\\d+}/page/")
+	test("/posts/{id:\\d+}/page/{page}", false, &str{pattern: "/posts/"},
+		r,
+		&named{pattern: "{page}", endpoint: true, name: "page"})
 
 	test("", true, nil)
 	test("/posts/{id:}", true, nil)
@@ -72,11 +75,11 @@ func TestParse(t *testing.T) {
 	test("/posts/}/author", true, nil)
 }
 
-func TestRegexp(t *testing.T) {
+func TestRepl(t *testing.T) {
 	a := assert.New(t)
 
-	a.Equal(Regexp("{id:\\d+}"), "(?P<id>\\d+)")
-	a.Equal(Regexp("{id:\\d+}/author"), "(?P<id>\\d+)/author")
+	a.Equal(repl.Replace("{id:\\d+}"), "(?P<id>\\d+)")
+	a.Equal(repl.Replace("{id:\\d+}/author"), "(?P<id>\\d+)/author")
 }
 
 func TestPrefixLen(t *testing.T) {
