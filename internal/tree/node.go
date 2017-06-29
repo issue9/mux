@@ -379,7 +379,7 @@ func removeNodes(nodes []*Node, pattern string) []*Node {
 }
 
 // 将节点 n 从 pos 位置进行拆分。后一段作为当前段的子节点，并返回当前节点。
-// 若 pos 大于或等于 n.pattern 的长度，则直接返回 n 不会拆分。
+// 若 pos 大于或等于 n.pattern 的长度，则直接返回 n 不会拆分，pos 处的字符作为子节点的内容。
 //
 // NOTE: 调用者需确保 pos 位置是可拆分的。
 func splitNode(n *Node, pos int) (*Node, error) {

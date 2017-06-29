@@ -303,6 +303,10 @@ func TestSplitNode(t *testing.T) {
 		Equal(nn.children[0].pattern, "{id}/author")
 	a.Equal(nn.parent, p)
 
+	nn, err = splitNode(node, 18) // 不需要拆分
+	a.NotError(err).NotNil(nn)
+	a.Equal(0, len(nn.children))
+
 	nn, err = splitNode(node, 8) // 从 i 开始拆分
 	a.Error(err).Nil(nn)
 }
