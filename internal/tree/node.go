@@ -33,7 +33,7 @@ type Node struct {
 
 // 当前节点的优先级。
 func (n *Node) priority() int {
-	// 有 children 的，endpoit 必然为 false，两者不可能同时为 true
+	// 有 children 的，Endpoit 必然为 false，两者不可能同时为 true
 	if len(n.children) > 0 || n.seg.Endpoint() {
 		return int(n.seg.Type()) + 1
 	}

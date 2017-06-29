@@ -2,23 +2,13 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
-// Package syntax 处理路由字符串语法。
+// Package segment 处理路由字符串语法。
 package segment
 
 import (
 	"errors"
 	"fmt"
 	"strings"
-)
-
-// Type 表示当前 Segment 的类型
-type Type int8
-
-// 表示 Segment 的类型。
-const (
-	TypeString Type = iota * 10
-	TypeRegexp
-	TypeNamed
 )
 
 // 路由项字符串中的几个特殊字符定义
@@ -107,13 +97,6 @@ func Parse(str string) ([]Segment, error) {
 
 	return ss, nil
 }
-
-// 将路由语法转换成正则表达式语法，比如：
-//  {id:\\d+}/author => (?P<id>\\d+)
-// 需要保证 pattern 的语法正确，此处不再做检测。
-var repl = strings.NewReplacer(string(NameStart), "(?P<",
-	string(RegexpSeparator), ">",
-	string(NameEnd), ")")
 
 // PrefixLen 判断两个字符串之间共同的开始内容的长度，
 // 不会从{} 中间被分开，正则表达式与之后的内容也不再分隔。
