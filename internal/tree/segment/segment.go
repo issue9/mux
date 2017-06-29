@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
-package syntax
+package segment
 
 import (
 	"bytes"
@@ -43,9 +43,9 @@ type reg struct {
 	syntaxExpr *syntax.Regexp
 }
 
-// NewSegment 将字符串转换为一个 Segment 实例。
+// New 将字符串转换为一个 Segment 实例。
 // 调用者需要确保 str 语法正确。
-func NewSegment(str string) (Segment, error) {
+func New(str string) (Segment, error) {
 	typ := stringType(str)
 	switch typ {
 	case TypeNamed:

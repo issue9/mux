@@ -13,7 +13,7 @@ import (
 	"sync"
 
 	"github.com/issue9/mux/internal/tree/handlers"
-	ts "github.com/issue9/mux/internal/tree/syntax"
+	"github.com/issue9/mux/internal/tree/segment"
 	"github.com/issue9/mux/params"
 )
 
@@ -28,7 +28,7 @@ type Node struct {
 	parent   *Node
 	children []*Node
 	handlers *handlers.Handlers
-	seg      ts.Segment
+	seg      segment.Segment
 }
 
 // 当前节点的优先级。
@@ -42,7 +42,7 @@ func (n *Node) priority() int {
 }
 
 // 获取指定路径下的节点，若节点不存在，则添加
-func (n *Node) getNode(segments []ts.Segment) (*Node, error) {
+func (n *Node) getNode(segments []segment.Segment) (*Node, error) {
 	child, err := n.addSegment(segments[0])
 	if err != nil {
 		return nil, err
@@ -55,8 +55,8 @@ func (n *Node) getNode(segments []ts.Segment) (*Node, error) {
 	return child.getNode(segments[1:])
 }
 
-// 将 ts.Segment 添加到当前节点，并返回新节点
-func (n *Node) addSegment(s ts.Segment) (*Node, error) {
+// 将 segment.Segment 添加到当前节点，并返回新节点
+func (n *Node) addSegment(s segment.Segment) (*Node, error) {
 	var child *Node // 找到的最匹配节点
 	var l int       // 最大的匹配字符数量
 
@@ -72,7 +72,7 @@ func (n *Node) addSegment(s ts.Segment) (*Node, error) {
 			return c, nil
 		}
 
-		if l1 := ts.PrefixLen(c.seg.Pattern(), s.Pattern()); l1 > l {
+		if l1 := segment.PrefixLen(c.seg.Pattern(), s.Pattern()); l1 > l {
 			l = l1
 			child = c
 		}
@@ -91,7 +91,7 @@ func (n *Node) addSegment(s ts.Segment) (*Node, error) {
 		return parent, nil
 	}
 
-	seg, err := ts.NewSegment(s.Pattern()[l:])
+	seg, err := segment.New(s.Pattern()[l:])
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +99,7 @@ func (n *Node) addSegment(s ts.Segment) (*Node, error) {
 }
 
 // 根据 seg 内容为当前节点产生一个子节点，并返回该新节点。
-func (n *Node) newChild(seg ts.Segment) (*Node, error) {
+func (n *Node) newChild(seg segment.Segment) (*Node, error) {
 	child := &Node{
 		parent: n,
 		seg:    seg,
@@ -292,7 +292,7 @@ func splitNode(n *Node, pos int) (*Node, error) {
 	// 先从父节点中删除老的 n
 	p.children = removeNodes(p.children, n.seg.Pattern())
 
-	seg, err := ts.NewSegment(n.seg.Pattern()[:pos])
+	seg, err := segment.New(n.seg.Pattern()[:pos])
 	if err != nil {
 		return nil, err
 	}
@@ -301,7 +301,7 @@ func splitNode(n *Node, pos int) (*Node, error) {
 		return nil, err
 	}
 
-	seg, err = ts.NewSegment(n.seg.Pattern()[pos:])
+	seg, err = segment.New(n.seg.Pattern()[pos:])
 	if err != nil {
 		return nil, err
 	}

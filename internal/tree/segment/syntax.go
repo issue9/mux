@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 
 // Package syntax 处理路由字符串语法。
-package syntax
+package segment
 
 import (
 	"errors"
@@ -11,11 +11,10 @@ import (
 	"strings"
 )
 
-// Type 表示路由项的类型
+// Type 表示当前 Segment 的类型
 type Type int8
 
-// 表示某段路由字符串的类型。
-// 同时也会被用于表示节点的匹配优先级。
+// 表示 Segment 的类型。
 const (
 	TypeString Type = iota * 10
 	TypeRegexp
@@ -57,7 +56,7 @@ func Parse(str string) ([]Segment, error) {
 				continue
 			}
 
-			s, err := NewSegment(str[startIndex:i])
+			s, err := New(str[startIndex:i])
 			if err != nil {
 				return nil, err
 			}
@@ -99,7 +98,7 @@ func Parse(str string) ([]Segment, error) {
 			return nil, fmt.Errorf("缺少 %s 字符", string(NameEnd))
 		}
 
-		s, err := NewSegment(str[startIndex:])
+		s, err := New(str[startIndex:])
 		if err != nil {
 			return nil, err
 		}

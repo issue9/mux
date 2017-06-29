@@ -9,7 +9,7 @@ import (
 	"io"
 	"strings"
 
-	ts "github.com/issue9/mux/internal/tree/syntax"
+	"github.com/issue9/mux/internal/tree/segment"
 )
 
 // Print 向 w 输出树状结构
@@ -77,13 +77,13 @@ func (n *Node) len() int {
 	return cnt
 }
 
-func typeString(t ts.Type) string {
+func typeString(t segment.Type) string {
 	switch t {
-	case ts.TypeNamed:
+	case segment.TypeNamed:
 		return "named"
-	case ts.TypeRegexp:
+	case segment.TypeRegexp:
 		return "regexp"
-	case ts.TypeString:
+	case segment.TypeString:
 		return "string"
 	default:
 		return "<unknown>"
