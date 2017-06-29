@@ -204,7 +204,7 @@ func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.ServeHTTP(w, r)
 }
 
-// GetParams 获取路由的参数集合
+// GetParams 获取路由的参数集合。详细情况可参考 params.Get
 func GetParams(r *http.Request) params.Params {
 	return params.Get(r)
 }
