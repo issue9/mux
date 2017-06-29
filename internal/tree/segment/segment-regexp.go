@@ -66,7 +66,7 @@ func (r *reg) Match(path string) (bool, string) {
 	if loc[1] == len(path) {
 		return true, path[:0]
 	}
-	return true, path[loc[1]+1:]
+	return true, path[loc[1]:]
 }
 
 func (r *reg) Params(path string, params map[string]string) string {

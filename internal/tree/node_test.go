@@ -12,7 +12,7 @@ import (
 
 	"github.com/issue9/assert"
 	"github.com/issue9/mux/internal/tree/handlers"
-	ts "github.com/issue9/mux/internal/tree/syntax"
+	"github.com/issue9/mux/internal/tree/segment"
 )
 
 // node 的测试工具
@@ -76,8 +76,8 @@ func (n *nodeTest) urlTrue(method, path string, code int, params map[string]stri
 	n.a.Equal(u, url)
 }
 
-func newSegments(a *assert.Assertion, pattern string) []*ts.Segment {
-	ss, err := ts.Parse(pattern)
+func newSegments(a *assert.Assertion, pattern string) []segment.Segment {
+	ss, err := segment.Parse(pattern)
 	a.NotError(err).NotNil(ss)
 
 	return ss
@@ -104,10 +104,10 @@ func TestNode_find(t *testing.T) {
 	addNode("/posts/1/author", 1, http.MethodGet)
 	addNode("/posts/{id}/{author:\\w+}/profile", 1, http.MethodGet)
 
-	a.Equal(node.find("/").pattern, "/")
-	a.Equal(node.find("/posts/{id}").pattern, "{id}")
-	a.Equal(node.find("/posts/{id}/author").pattern, "author")
-	a.Equal(node.find("/posts/{id}/{author:\\w+}/profile").pattern, "{author:\\w+}/profile")
+	a.Equal(node.find("/").seg.Pattern(), "/")
+	a.Equal(node.find("/posts/{id}").seg.Pattern(), "{id}")
+	a.Equal(node.find("/posts/{id}/author").seg.Pattern(), "author")
+	a.Equal(node.find("/posts/{id}/{author:\\w+}/profile").seg.Pattern(), "{author:\\w+}/profile")
 }
 
 func TestNode_clean(t *testing.T) {
@@ -248,12 +248,17 @@ func TestNode_getParents(t *testing.T) {
 
 func TestRemoveNoddes(t *testing.T) {
 	a := assert.New(t)
+	newNode := func(str string) *Node {
+		seg, err := segment.New(str)
+		a.NotError(err).NotNil(seg)
+		return &Node{seg: seg}
+	}
 
-	n1 := &Node{pattern: "/1"}
-	n2 := &Node{pattern: "/2"}
-	n21 := &Node{pattern: "/2"}
-	n3 := &Node{pattern: "/3"}
-	n4 := &Node{pattern: "/4"}
+	n1 := newNode("/1")
+	n2 := newNode("/2")
+	n21 := newNode("/2")
+	n3 := newNode("/3")
+	n4 := newNode("/4")
 
 	nodes := []*Node{n1, n2, n21, n3, n4}
 
@@ -288,19 +293,26 @@ func TestRemoveNoddes(t *testing.T) {
 
 func TestSplitNode(t *testing.T) {
 	a := assert.New(t)
-	p := &Node{pattern: "/blog"}
+	newNode := func(str string) *Node {
+		seg, err := segment.New(str)
+		a.NotError(err).NotNil(seg)
+		return &Node{seg: seg}
+	}
+	p := newNode("/blog")
 
 	// 没有父节点
 	nn, err := splitNode(p, 1)
 	a.Error(err).Nil(nn)
 
-	node, err := p.newChild(ts.NewSegment("/posts/{id}/author"))
+	seg, err := segment.New("/posts/{id}/author")
+	a.NotError(err).NotNil(seg)
+	node, err := p.newChild(seg)
 	a.NotError(err).NotNil(node)
 
 	nn, err = splitNode(node, 7) // 从 { 开始拆分
 	a.NotError(err).NotNil(nn)
 	a.Equal(len(nn.children), 1).
-		Equal(nn.children[0].pattern, "{id}/author")
+		Equal(nn.children[0].seg.Pattern(), "{id}/author")
 	a.Equal(nn.parent, p)
 
 	nn, err = splitNode(node, 18) // 不需要拆分

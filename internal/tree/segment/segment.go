@@ -47,9 +47,8 @@ func New(str string) (Segment, error) {
 		return newStr(str)
 	case TypeRegexp:
 		return newReg(str)
-	default:
-		return nil, fmt.Errorf("无效的节点类型 %d", typ)
 	}
+	return nil, fmt.Errorf("无效的节点类型 %d", typ)
 }
 
 // 获取字符串的类型。调用者需要确保 str 语法正确。
