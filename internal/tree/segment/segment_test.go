@@ -10,6 +10,10 @@ import (
 	"github.com/issue9/assert"
 )
 
+var _ Segment = str("")
+var _ Segment = &named{}
+var _ Segment = &reg{}
+
 func TestStringType(t *testing.T) {
 	a := assert.New(t)
 
@@ -22,7 +26,16 @@ func TestStringType(t *testing.T) {
 func TestEqaul(t *testing.T) {
 	a := assert.New(t)
 
-	s1 := str("")
-	s2 := &named{}
+	a.False(Equal(str(""), &named{}))
+	a.True(Equal(&named{}, &named{}))
+
+	s1, err := newNamed("{action}")
+	a.NotError(err).NotNil(s1)
+	s2, err := newNamed("{action}")
+	a.NotError(err).NotNil(s2)
+	a.True(Equal(s1, s2))
+
+	s2, err = newNamed("{action}/1")
+	a.NotError(err).NotNil(s2)
 	a.False(Equal(s1, s2))
 }

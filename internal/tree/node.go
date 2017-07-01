@@ -33,12 +33,15 @@ type Node struct {
 
 // 当前节点的优先级。
 func (n *Node) priority() int {
+	// *10 可以保证在当前类型的节点进行加权时，不会超过其它节点。
+	ret := int(n.seg.Type()) * 10
+
 	// 有 children 的，Endpoit 必然为 false，两者不可能同时为 true
 	if len(n.children) > 0 || n.seg.Endpoint() {
-		return int(n.seg.Type()) + 1
+		return ret + 1
 	}
 
-	return int(n.seg.Type())
+	return ret
 }
 
 // 获取指定路径下的节点，若节点不存在，则添加

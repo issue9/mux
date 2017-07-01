@@ -11,10 +11,6 @@ import (
 
 type str string
 
-func newStr(s string) (Segment, error) {
-	return str(s), nil
-}
-
 func (s str) Type() Type {
 	return TypeString
 }

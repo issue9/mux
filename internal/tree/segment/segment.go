@@ -13,8 +13,9 @@ import (
 type Type int8
 
 // 表示 Segment 的类型。
+// 同时也表示各个类型在被匹配时的优先级顺序。
 const (
-	TypeString Type = iota * 10
+	TypeString Type = iota
 	TypeRegexp
 	TypeNamed
 )
@@ -45,15 +46,15 @@ func Equal(s1, s2 Segment) bool {
 
 // New 将字符串转换为一个 Segment 实例。
 // 调用者需要确保 str 语法正确。
-func New(str string) (Segment, error) {
-	typ := stringType(str)
+func New(s string) (Segment, error) {
+	typ := stringType(s)
 	switch typ {
 	case TypeNamed:
-		return newNamed(str)
+		return newNamed(s)
 	case TypeString:
-		return newStr(str)
+		return str(s), nil
 	case TypeRegexp:
-		return newReg(str)
+		return newReg(s)
 	}
 	return nil, fmt.Errorf("无效的节点类型 %d", typ)
 }
