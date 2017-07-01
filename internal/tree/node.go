@@ -241,7 +241,7 @@ func (n *Node) getParents() ([]*Node, int) {
 	size := 0
 
 	for curr := n; curr != nil; curr = curr.parent { // 从尾部向上开始获取节点
-		if curr.seg.Type() != segment.TypeString {
+		if curr.seg != nil && curr.seg.Type() != segment.TypeString {
 			size++
 		}
 		nodes = append(nodes, curr)
