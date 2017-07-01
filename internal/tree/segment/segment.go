@@ -36,6 +36,13 @@ type Segment interface {
 	URL(buf *bytes.Buffer, params map[string]string) error
 }
 
+// Equal 判断内容是否相同
+func Equal(s1, s2 Segment) bool {
+	return s1.Endpoint() == s2.Endpoint() &&
+		s1.Pattern() == s2.Pattern() &&
+		s1.Type() == s2.Type()
+}
+
 // New 将字符串转换为一个 Segment 实例。
 // 调用者需要确保 str 语法正确。
 func New(str string) (Segment, error) {

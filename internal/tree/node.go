@@ -66,9 +66,7 @@ func (n *Node) addSegment(s segment.Segment) (*Node, error) {
 			continue
 		}
 
-		if c.seg.Endpoint() == s.Endpoint() && // 有完全相同的节点
-			c.seg.Pattern() == s.Pattern() &&
-			c.seg.Type() == s.Type() {
+		if segment.Equal(c.seg, s) { // 有完全相同的节点
 			return c, nil
 		}
 

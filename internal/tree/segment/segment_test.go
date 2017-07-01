@@ -18,3 +18,11 @@ func TestStringType(t *testing.T) {
 	a.Equal(stringType("/posts/{id}/author"), TypeNamed)
 	a.Equal(stringType("/posts/{id:\\d+}/author"), TypeRegexp)
 }
+
+func TestEqaul(t *testing.T) {
+	a := assert.New(t)
+
+	s1 := str("")
+	s2 := &named{}
+	a.False(Equal(s1, s2))
+}
