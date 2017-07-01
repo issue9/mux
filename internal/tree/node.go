@@ -126,19 +126,15 @@ func (n *Node) newChild(seg segment.Segment) (*Node, error) {
 // 查找路由项，不存在返回 nil
 func (n *Node) find(pattern string) *Node {
 	for _, child := range n.children {
-		if len(child.seg.Pattern()) < len(pattern) {
-			if !strings.HasPrefix(pattern, child.seg.Pattern()) {
-				continue
-			}
+		if child.seg.Pattern() == pattern {
+			return child
+		}
 
+		if strings.HasPrefix(pattern, child.seg.Pattern()) {
 			nn := child.find(pattern[len(child.seg.Pattern()):])
 			if nn != nil {
 				return nn
 			}
-		}
-
-		if child.seg.Pattern() == pattern {
-			return child
 		}
 	} // end for
 
@@ -174,26 +170,23 @@ func (n *Node) clean(prefix string) {
 //
 // NOTE: 此函数与 Node.trace 是一样的，记得同步两边的代码。
 func (n *Node) match(path string) *Node {
-	if len(n.children) == 0 && len(path) == 0 {
-		return n
-	}
-
+	// 即使 newPath 为空，也有可能子节点正好可以匹配空的内容。
+	// 比如 /posts/{path:\\w*} 后面的 path 即为空节点。所以此处不判断 len(path)
 	for _, node := range n.children {
 		matched, newPath := node.seg.Match(path)
 		if !matched {
 			continue
 		}
 
-		// 即使 newPath 为空，也有可能子节点正好可以匹配空的内容。
-		// 比如 /posts/{path:\\w*} 后面的 path 即为空节点。
 		if nn := node.match(newPath); nn != nil {
 			return nn
 		}
-
-		if len(newPath) == 0 { // 没有子节点匹配，才判断是否与当前节点匹配
-			return node
-		}
 	} // end for
+
+	// 没有子节点匹配，且 len(path)==0，可以判定与当前节点匹配
+	if len(path) == 0 {
+		return n
+	}
 
 	return nil
 }

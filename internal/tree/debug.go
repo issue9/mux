@@ -24,32 +24,26 @@ func (tree *Tree) Trace(w io.Writer, path string) {
 
 // NOTE: 此函数与 Node.match 是一样的，记得同步两边的代码。
 func (n *Node) trace(w io.Writer, deep int, path string) *Node {
-	if len(n.children) == 0 && len(path) == 0 {
-		fmt.Fprintln(w, strings.Repeat(" ", (deep-1)*4), n.seg.Pattern(), "---", typeString(n.seg.Type()), "---", path, "(matched-1)")
-		return n
-	}
-
+	// 即使 newPath 为空，也有可能子节点正好可以匹配空的内容。
+	// 比如 /posts/{path:\\w*} 后面的 path 即为空节点。所以此处不判断 len(path)
 	for _, node := range n.children {
 		fmt.Fprint(w, strings.Repeat(" ", deep*4), node.seg.Pattern(), "---", typeString(node.seg.Type()), "---", path)
 		matched, newPath := node.seg.Match(path)
 		if !matched {
 			fmt.Fprintln(w, "(!matched)")
 			continue
-		} else {
-			fmt.Fprintln(w, "(continue)")
 		}
 
-		// 即使 newPath 为空，也有可能子节点正好可以匹配空的内容。
-		// 比如 /posts/{path:\\w*} 后面的 path 即为空节点。
+		fmt.Fprintln(w, "(continue)")
 		if nn := node.trace(w, deep+1, newPath); nn != nil {
 			return nn
 		}
-
-		if len(newPath) == 0 { // 没有子节点匹配，才判断是否与当前节点匹配
-			fmt.Fprintln(w, node.seg.Pattern(), "---", typeString(n.seg.Type()), "---", path, "(matched-2)")
-			return node
-		}
 	} // end for
+
+	if len(path) == 0 {
+		fmt.Fprintln(w, strings.Repeat(" ", (deep-1)*4), n.seg.Pattern(), "---", typeString(n.seg.Type()), "---", path, "(matched)")
+		return n
+	}
 
 	return nil
 }
