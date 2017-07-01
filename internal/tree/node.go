@@ -29,6 +29,10 @@ type Node struct {
 	children []*Node
 	handlers *handlers.Handlers
 	seg      segment.Segment
+
+	// 从根节点以来，到当前节点为止，所有的参数数量，
+	// 即 seg.Type() 不为 segment.TypeString 的数量。
+	paramsSize int
 }
 
 // 当前节点的优先级。
@@ -102,8 +106,13 @@ func (n *Node) addSegment(s segment.Segment) (*Node, error) {
 // 根据 seg 内容为当前节点产生一个子节点，并返回该新节点。
 func (n *Node) newChild(seg segment.Segment) (*Node, error) {
 	child := &Node{
-		parent: n,
-		seg:    seg,
+		parent:     n,
+		seg:        seg,
+		paramsSize: n.paramsSize,
+	}
+
+	if seg.Type() != segment.TypeString {
+		child.paramsSize++
 	}
 
 	n.children = append(n.children, child)
@@ -193,14 +202,14 @@ func (n *Node) match(path string) *Node {
 //
 // 由调用方确保能正常匹配 path
 func (n *Node) Params(path string) params.Params {
-	nodes, size := n.getParents()
-	defer nodesPool.Put(nodes)
-
-	if size == 0 { // 没有参数
+	if n.paramsSize == 0 { // 没有参数
 		return nil
 	}
 
-	params := make(params.Params, size)
+	nodes := n.getParents()
+	defer nodesPool.Put(nodes)
+
+	params := make(params.Params, n.paramsSize)
 	for i := len(nodes) - 1; i >= 0; i-- {
 		node := nodes[i]
 		if node.seg == nil {
@@ -215,7 +224,7 @@ func (n *Node) Params(path string) params.Params {
 
 // URL 根据参数生成地址
 func (n *Node) URL(params map[string]string) (string, error) {
-	nodes, _ := n.getParents()
+	nodes := n.getParents()
 	defer nodesPool.Put(nodes)
 
 	buf := new(bytes.Buffer)
@@ -236,18 +245,14 @@ func (n *Node) URL(params map[string]string) (string, error) {
 // 逐级向上获取父节点，包含当前节点。
 //
 // NOTE: 记得将 []*Node 放回对象池中。
-func (n *Node) getParents() ([]*Node, int) {
+func (n *Node) getParents() []*Node {
 	nodes := nodesPool.Get().([]*Node)[:0]
-	size := 0
 
 	for curr := n; curr != nil; curr = curr.parent { // 从尾部向上开始获取节点
-		if curr.seg != nil && curr.seg.Type() != segment.TypeString {
-			size++
-		}
 		nodes = append(nodes, curr)
 	}
 
-	return nodes, size
+	return nodes
 }
 
 // Handler 获取该节点下与参数相对应的处理函数
