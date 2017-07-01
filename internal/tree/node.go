@@ -211,12 +211,7 @@ func (n *Node) Params(path string) params.Params {
 
 	params := make(params.Params, n.paramsSize)
 	for i := len(nodes) - 1; i >= 0; i-- {
-		node := nodes[i]
-		if node.seg == nil {
-			continue
-		}
-
-		path = node.seg.Params(path, params)
+		path = nodes[i].seg.Params(path, params)
 	} // end for LOOP
 
 	return params
@@ -229,12 +224,7 @@ func (n *Node) URL(params map[string]string) (string, error) {
 
 	buf := new(bytes.Buffer)
 	for i := len(nodes) - 1; i >= 0; i-- {
-		node := nodes[i]
-		if node.seg == nil {
-			continue
-		}
-
-		if err := node.seg.URL(buf, params); err != nil {
+		if err := nodes[i].seg.URL(buf, params); err != nil {
 			return "", err
 		}
 	} // end for

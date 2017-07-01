@@ -17,6 +17,7 @@ var _ Segment = &reg{}
 func TestStringType(t *testing.T) {
 	a := assert.New(t)
 
+	a.Equal(stringType(""), TypeString)
 	a.Equal(stringType("/posts"), TypeString)
 	a.Equal(stringType("/posts/{id}"), TypeNamed)
 	a.Equal(stringType("/posts/{id}/author"), TypeNamed)

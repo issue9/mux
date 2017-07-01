@@ -22,8 +22,13 @@ type nodeTest struct {
 }
 
 func newNodeTest(a *assert.Assertion) *nodeTest {
+	seg, err := segment.New("")
+	a.NotError(err).NotNil(seg)
+
 	return &nodeTest{
-		n: &Node{},
+		n: &Node{
+			seg: seg,
+		},
 		a: a,
 	}
 }

@@ -37,8 +37,15 @@ type Tree struct {
 
 // New 声明一个 Tree 实例
 func New() *Tree {
+	seg, err := segment.New("")
+	if err != nil {
+		panic("声明根节点出错：" + err.Error())
+	}
+
 	return &Tree{
-		Node: &Node{},
+		Node: &Node{
+			seg: seg,
+		},
 	}
 }
 
