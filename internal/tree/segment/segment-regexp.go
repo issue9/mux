@@ -10,6 +10,8 @@ import (
 	"regexp"
 	"regexp/syntax"
 	"strings"
+
+	"github.com/issue9/mux/params"
 )
 
 // 将路由语法转换成正则表达式语法，比如：
@@ -69,7 +71,7 @@ func (r *reg) Match(path string) (bool, string) {
 	return true, path[loc[1]:]
 }
 
-func (r *reg) Params(path string, params map[string]string) string {
+func (r *reg) Params(path string, params params.Params) string {
 	subexps := r.expr.SubexpNames()
 	args := r.expr.FindStringSubmatch(path)
 	for index, name := range subexps {

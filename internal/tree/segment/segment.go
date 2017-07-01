@@ -7,6 +7,8 @@ package segment
 import (
 	"bytes"
 	"fmt"
+
+	"github.com/issue9/mux/params"
 )
 
 // Type 表示当前 Segment 的类型
@@ -30,9 +32,13 @@ type Segment interface {
 	// 此值为 true，该节点的优先级会比同类型的节点低，以便优先对比其它非最终节点。
 	Endpoint() bool
 
+	// 将当前内容与 path 进行匹配，若成功匹配，
+	// 则返回 true 和去掉匹配内容之后的字符串。
 	Match(path string) (bool, string)
 
-	Params(path string, params map[string]string) string
+	// 从 path 中匹配与当前内容匹配的参数值，
+	// 写入到 params 中，并返回去掉匹配内容之后的字符串。
+	Params(path string, params params.Params) string
 
 	URL(buf *bytes.Buffer, params map[string]string) error
 }

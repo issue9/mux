@@ -7,6 +7,8 @@ package segment
 import (
 	"bytes"
 	"strings"
+
+	"github.com/issue9/mux/params"
 )
 
 type str string
@@ -31,7 +33,7 @@ func (s str) Match(path string) (bool, string) {
 	return false, path
 }
 
-func (s str) Params(path string, params map[string]string) string {
+func (s str) Params(path string, params params.Params) string {
 	return path[len(s):]
 }
 

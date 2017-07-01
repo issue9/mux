@@ -206,28 +206,28 @@ func (n *Node) Params(path string) params.Params {
 		return nil
 	}
 
+	params := make(params.Params, n.paramsSize)
+
 	nodes := n.getParents()
 	defer nodesPool.Put(nodes)
-
-	params := make(params.Params, n.paramsSize)
 	for i := len(nodes) - 1; i >= 0; i-- {
 		path = nodes[i].seg.Params(path, params)
-	} // end for LOOP
+	}
 
 	return params
 }
 
 // URL 根据参数生成地址
 func (n *Node) URL(params map[string]string) (string, error) {
+	buf := new(bytes.Buffer)
+
 	nodes := n.getParents()
 	defer nodesPool.Put(nodes)
-
-	buf := new(bytes.Buffer)
 	for i := len(nodes) - 1; i >= 0; i-- {
 		if err := nodes[i].seg.URL(buf, params); err != nil {
 			return "", err
 		}
-	} // end for
+	}
 
 	return buf.String(), nil
 }

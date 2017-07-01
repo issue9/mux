@@ -26,9 +26,7 @@ func newNodeTest(a *assert.Assertion) *nodeTest {
 	a.NotError(err).NotNil(seg)
 
 	return &nodeTest{
-		n: &Node{
-			seg: seg,
-		},
+		n: New().Node,
 		a: a,
 	}
 }

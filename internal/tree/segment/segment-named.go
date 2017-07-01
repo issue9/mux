@@ -8,6 +8,8 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
+
+	"github.com/issue9/mux/params"
 )
 
 type named struct {
@@ -56,7 +58,7 @@ func (n *named) Match(path string) (bool, string) {
 	return false, path
 }
 
-func (n *named) Params(path string, params map[string]string) string {
+func (n *named) Params(path string, params params.Params) string {
 	if n.Endpoint() {
 		params[n.name] = path
 		return ""
