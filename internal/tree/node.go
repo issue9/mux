@@ -193,10 +193,14 @@ func (n *Node) match(path string) *Node {
 //
 // 由调用方确保能正常匹配 path
 func (n *Node) Params(path string) params.Params {
-	nodes := n.getParents()
+	nodes, size := n.getParents()
 	defer nodesPool.Put(nodes)
 
-	params := make(params.Params, len(nodes))
+	if size == 0 { // 没有参数
+		return nil
+	}
+
+	params := make(params.Params, size)
 	for i := len(nodes) - 1; i >= 0; i-- {
 		node := nodes[i]
 		if node.seg == nil {
@@ -211,7 +215,7 @@ func (n *Node) Params(path string) params.Params {
 
 // URL 根据参数生成地址
 func (n *Node) URL(params map[string]string) (string, error) {
-	nodes := n.getParents()
+	nodes, _ := n.getParents()
 	defer nodesPool.Put(nodes)
 
 	buf := new(bytes.Buffer)
@@ -232,14 +236,18 @@ func (n *Node) URL(params map[string]string) (string, error) {
 // 逐级向上获取父节点，包含当前节点。
 //
 // NOTE: 记得将 []*Node 放回对象池中。
-func (n *Node) getParents() []*Node {
+func (n *Node) getParents() ([]*Node, int) {
 	nodes := nodesPool.Get().([]*Node)[:0]
+	size := 0
 
 	for curr := n; curr != nil; curr = curr.parent { // 从尾部向上开始获取节点
+		if curr.seg.Type() != segment.TypeString {
+			size++
+		}
 		nodes = append(nodes, curr)
 	}
 
-	return nodes
+	return nodes, size
 }
 
 // Handler 获取该节点下与参数相对应的处理函数
