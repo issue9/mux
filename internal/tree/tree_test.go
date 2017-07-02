@@ -177,6 +177,20 @@ func TestTree_URL(t *testing.T) {
 	test.urlTrue(http.MethodGet, "/posts/1.html/author/profile/", 2, map[string]string{"id": "100.htm", "action": "p"}, "/posts/100.htm/author/p/")
 }
 
+func TestTreeCN(t *testing.T) {
+	a := assert.New(t)
+	test := newTester(a)
+
+	// 添加路由项
+	test.add(http.MethodGet, "/posts/{id}", 1) // 命名
+	test.add(http.MethodGet, "/文章/{编号}", 2)    // 中文
+
+	test.matchTrue(http.MethodGet, "/posts/1", 1)
+	test.matchTrue(http.MethodGet, "/文章/1", 2)
+	test.paramsTrue(http.MethodGet, "/文章/1.html", 2, map[string]string{"编号": "1.html"})
+	test.urlTrue(http.MethodGet, "/文章/1.html", 2, map[string]string{"编号": "100.htm"}, "/文章/100.htm")
+}
+
 func TestTree_Clean(t *testing.T) {
 	a := assert.New(t)
 	tree := New()
