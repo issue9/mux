@@ -21,7 +21,7 @@ var repl = strings.NewReplacer(string(NameStart), "(?P<",
 	string(NameEnd), ")")
 
 type reg struct {
-	pattern    string
+	value      string
 	endpoint   bool
 	expr       *regexp.Regexp
 	syntaxExpr *syntax.Regexp
@@ -40,7 +40,7 @@ func newReg(str string) (Segment, error) {
 	}
 
 	return &reg{
-		pattern:    str,
+		value:      str,
 		expr:       expr,
 		syntaxExpr: syntaxExpr,
 		endpoint:   str[len(str)-1] == NameEnd,
@@ -51,8 +51,8 @@ func (r *reg) Type() Type {
 	return TypeRegexp
 }
 
-func (r *reg) Pattern() string {
-	return r.pattern
+func (r *reg) Value() string {
+	return r.value
 }
 
 func (r *reg) Endpoint() bool {

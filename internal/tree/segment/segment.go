@@ -24,9 +24,11 @@ const (
 
 // Segment 表示路由中的分段内容。
 type Segment interface {
+	// 当前内容的类型。
 	Type() Type
 
-	Pattern() string
+	// 当前内容的值
+	Value() string
 
 	// 用于表示当前是否为终点，仅对 Type 为 TypeRegexp 和 TypeNamed 有用。
 	// 此值为 true，该节点的优先级会比同类型的节点低，以便优先对比其它非最终节点。
@@ -40,13 +42,14 @@ type Segment interface {
 	// 写入到 params 中，并返回去掉匹配内容之后的字符串。
 	Params(path string, params params.Params) string
 
+	// 将当前内容写入到 buf 中，若有参数，则参数部分内容从 params。
 	URL(buf *bytes.Buffer, params map[string]string) error
 }
 
 // Equal 判断内容是否相同
 func Equal(s1, s2 Segment) bool {
 	return s1.Endpoint() == s2.Endpoint() &&
-		s1.Pattern() == s2.Pattern() &&
+		s1.Value() == s2.Value() &&
 		s1.Type() == s2.Type()
 }
 

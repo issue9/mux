@@ -17,7 +17,7 @@ func (s str) Type() Type {
 	return TypeString
 }
 
-func (s str) Pattern() string {
+func (s str) Value() string {
 	return string(s)
 }
 

@@ -24,10 +24,10 @@ func (tree *Tree) Trace(w io.Writer, path string) {
 
 // NOTE: 此函数与 Node.match 是一样的，记得同步两边的代码。
 func (n *Node) trace(w io.Writer, deep int, path string) *Node {
-	// 即使 newPath 为空，也有可能子节点正好可以匹配空的内容。
+	// 即使 path 为空，也有可能子节点正好可以匹配空的内容。
 	// 比如 /posts/{path:\\w*} 后面的 path 即为空节点。所以此处不判断 len(path)
 	for _, node := range n.children {
-		fmt.Fprint(w, strings.Repeat(" ", deep*4), node.seg.Pattern(), "---", typeString(node.seg.Type()), "---", path)
+		fmt.Fprint(w, strings.Repeat(" ", deep*4), node.seg.Value(), "---", typeString(node.seg.Type()), "---", path)
 		matched, newPath := node.seg.Match(path)
 		if !matched {
 			fmt.Fprintln(w, "(!matched)")
@@ -41,7 +41,7 @@ func (n *Node) trace(w io.Writer, deep int, path string) *Node {
 	} // end for
 
 	if len(path) == 0 {
-		fmt.Fprintln(w, strings.Repeat(" ", (deep-1)*4), n.seg.Pattern(), "---", typeString(n.seg.Type()), "---", path, "(matched)")
+		fmt.Fprintln(w, strings.Repeat(" ", (deep-1)*4), n.seg.Value(), "---", typeString(n.seg.Type()), "---", path, "(matched)")
 		return n
 	}
 
@@ -50,7 +50,7 @@ func (n *Node) trace(w io.Writer, deep int, path string) *Node {
 
 // 向 w 输出节点的树状结构
 func (n *Node) print(w io.Writer, deep int) {
-	fmt.Fprintln(w, strings.Repeat(" ", deep*4), n.seg.Pattern())
+	fmt.Fprintln(w, strings.Repeat(" ", deep*4), n.seg.Value())
 
 	for _, child := range n.children {
 		child.print(w, deep+1)

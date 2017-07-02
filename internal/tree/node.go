@@ -77,7 +77,7 @@ func (n *Node) addSegment(s segment.Segment) (*Node, error) {
 			return c, nil
 		}
 
-		if l1 := segment.PrefixLen(c.seg.Pattern(), s.Pattern()); l1 > l {
+		if l1 := segment.PrefixLen(c.seg.Value(), s.Value()); l1 > l {
 			l = l1
 			child = c
 		}
@@ -92,11 +92,11 @@ func (n *Node) addSegment(s segment.Segment) (*Node, error) {
 		return nil, err
 	}
 
-	if len(s.Pattern()) == l {
+	if len(s.Value()) == l {
 		return parent, nil
 	}
 
-	seg, err := segment.New(s.Pattern()[l:])
+	seg, err := segment.New(s.Value()[l:])
 	if err != nil {
 		return nil, err
 	}
@@ -126,12 +126,12 @@ func (n *Node) newChild(seg segment.Segment) (*Node, error) {
 // 查找路由项，不存在返回 nil
 func (n *Node) find(pattern string) *Node {
 	for _, child := range n.children {
-		if child.seg.Pattern() == pattern {
+		if child.seg.Value() == pattern {
 			return child
 		}
 
-		if strings.HasPrefix(pattern, child.seg.Pattern()) {
-			nn := child.find(pattern[len(child.seg.Pattern()):])
+		if strings.HasPrefix(pattern, child.seg.Value()) {
+			nn := child.find(pattern[len(child.seg.Value()):])
 			if nn != nil {
 				return nn
 			}
@@ -150,14 +150,14 @@ func (n *Node) clean(prefix string) {
 
 	dels := make([]string, 0, len(n.children))
 	for _, child := range n.children {
-		if len(child.seg.Pattern()) < len(prefix) {
-			if strings.HasPrefix(prefix, child.seg.Pattern()) {
-				child.clean(prefix[len(child.seg.Pattern()):])
+		if len(child.seg.Value()) < len(prefix) {
+			if strings.HasPrefix(prefix, child.seg.Value()) {
+				child.clean(prefix[len(child.seg.Value()):])
 			}
 		}
 
-		if strings.HasPrefix(child.seg.Pattern(), prefix) {
-			dels = append(dels, child.seg.Pattern())
+		if strings.HasPrefix(child.seg.Value(), prefix) {
+			dels = append(dels, child.seg.Value())
 		}
 	}
 
@@ -170,7 +170,7 @@ func (n *Node) clean(prefix string) {
 //
 // NOTE: 此函数与 Node.trace 是一样的，记得同步两边的代码。
 func (n *Node) match(path string) *Node {
-	// 即使 newPath 为空，也有可能子节点正好可以匹配空的内容。
+	// 即使 path 为空，也有可能子节点正好可以匹配空的内容。
 	// 比如 /posts/{path:\\w*} 后面的 path 即为空节点。所以此处不判断 len(path)
 	for _, node := range n.children {
 		matched, newPath := node.seg.Match(path)
@@ -255,7 +255,7 @@ func (n *Node) Handler(method string) http.Handler {
 func removeNodes(nodes []*Node, pattern string) []*Node {
 	lastIndex := len(nodes) - 1
 	for index, n := range nodes {
-		if n.seg.Pattern() != pattern {
+		if n.seg.Value() != pattern {
 			continue
 		}
 
@@ -277,7 +277,7 @@ func removeNodes(nodes []*Node, pattern string) []*Node {
 //
 // NOTE: 调用者需确保 pos 位置是可拆分的。
 func splitNode(n *Node, pos int) (*Node, error) {
-	if len(n.seg.Pattern()) <= pos { // 不需要拆分
+	if len(n.seg.Value()) <= pos { // 不需要拆分
 		return n, nil
 	}
 
@@ -287,9 +287,9 @@ func splitNode(n *Node, pos int) (*Node, error) {
 	}
 
 	// 先从父节点中删除老的 n
-	p.children = removeNodes(p.children, n.seg.Pattern())
+	p.children = removeNodes(p.children, n.seg.Value())
 
-	seg, err := segment.New(n.seg.Pattern()[:pos])
+	seg, err := segment.New(n.seg.Value()[:pos])
 	if err != nil {
 		return nil, err
 	}
@@ -298,7 +298,7 @@ func splitNode(n *Node, pos int) (*Node, error) {
 		return nil, err
 	}
 
-	seg, err = segment.New(n.seg.Pattern()[pos:])
+	seg, err = segment.New(n.seg.Value()[pos:])
 	if err != nil {
 		return nil, err
 	}

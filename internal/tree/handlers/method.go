@@ -25,7 +25,7 @@ const (
 	trace
 
 	none methodType = 0
-	max             = trace // 最大值
+	max             = get + post + del + put + patch + options + head + connect + trace // 最大值
 )
 
 var (

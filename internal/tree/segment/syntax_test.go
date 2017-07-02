@@ -30,27 +30,27 @@ func TestParse(t *testing.T) {
 
 	test("/posts/1", false, str("/posts/1"))
 
-	test("{action}/1", false, &named{pattern: "{action}/1", endpoint: false, name: "action", suffix: "/1"})
+	test("{action}/1", false, &named{value: "{action}/1", endpoint: false, name: "action", suffix: "/1"})
 
 	// 以命名参数开头的
 	test("/{action}", false, str("/"),
-		&named{pattern: "{action}", endpoint: true, name: "action"})
+		&named{value: "{action}", endpoint: true, name: "action"})
 
 	// 以通配符结尾
 	test("/posts/{id}", false, str("/posts/"),
-		&named{pattern: "{id}", endpoint: true, name: "id"})
+		&named{value: "{id}", endpoint: true, name: "id"})
 
 	test("/posts/{id}/author/profile", false, str("/posts/"),
-		&named{pattern: "{id}/author/profile", name: "id", suffix: "/author/profile"})
+		&named{value: "{id}/author/profile", name: "id", suffix: "/author/profile"})
 
 	// 以命名参数结尾的
 	test("/posts/{id}/author", false, str("/posts/"),
-		&named{pattern: "{id}/author", name: "id", suffix: "/author"})
+		&named{value: "{id}/author", name: "id", suffix: "/author"})
 
 	// 命名参数及通配符
 	test("/posts/{id}/page/{page}", false, str("/posts/"),
-		&named{pattern: "{id}/page/", name: "id", suffix: "/page/"},
-		&named{pattern: "{page}", name: "page", endpoint: true})
+		&named{value: "{id}/page/", name: "id", suffix: "/page/"},
+		&named{value: "{page}", name: "page", endpoint: true})
 
 	// 正则
 	r, err := newReg("{id:\\d+}")
@@ -62,7 +62,7 @@ func TestParse(t *testing.T) {
 	r, err = newReg("{id:\\d+}/page/")
 	test("/posts/{id:\\d+}/page/{page}", false, str("/posts/"),
 		r,
-		&named{pattern: "{page}", endpoint: true, name: "page"})
+		&named{value: "{page}", endpoint: true, name: "page"})
 
 	test("", true, nil)
 	test("/posts/{id:}", true, nil)

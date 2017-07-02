@@ -13,7 +13,7 @@ import (
 )
 
 type named struct {
-	pattern  string
+	value    string
 	name     string
 	suffix   string
 	endpoint bool
@@ -26,7 +26,7 @@ func newNamed(str string) (Segment, error) {
 	}
 
 	return &named{
-		pattern:  str,
+		value:    str,
 		endpoint: str[len(str)-1] == NameEnd,
 		name:     str[1:endIndex],
 		suffix:   str[endIndex+1:],
@@ -37,8 +37,8 @@ func (n *named) Type() Type {
 	return TypeNamed
 }
 
-func (n *named) Pattern() string {
-	return n.pattern
+func (n *named) Value() string {
+	return n.value
 }
 
 func (n *named) Endpoint() bool {

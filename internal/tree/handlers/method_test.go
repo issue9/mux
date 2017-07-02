@@ -38,3 +38,15 @@ func TestMethods(t *testing.T) {
 		}
 	}
 }
+
+func TestOptionsStrings(t *testing.T) {
+	a := assert.New(t)
+	test := func(key methodType, str string) {
+		a.Equal(optionsStrings[key], str, "key:%d,str:%s", key, str)
+	}
+
+	test(get+post, "GET, POST")
+	test(get+post+options, "GET, OPTIONS, POST")
+	test(get+post+options+del+trace, "DELETE, GET, OPTIONS, POST, TRACE")
+	test(get+post+options+del+trace+head+patch, "DELETE, GET, HEAD, OPTIONS, PATCH, POST, TRACE")
+}
