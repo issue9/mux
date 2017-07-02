@@ -36,8 +36,8 @@ type Node struct {
 	// 所有节点类型为字符串的子节点，其首字符必定是不同的（相同的都提升到父节点中），
 	// 根据此特性，可以将所有字符串类型的首字符做个索引，这样字符串类型节点的比较，
 	// 可以通过索引排除不必要的比较操作。
-	// indexes 中的 *Node 也同时存在于 children 中。
-	indexes map[byte]*Node
+	// indexes 中保存着 *Node 实例在 children 中的下标。
+	indexes map[byte]int
 
 	// 从根节点以来，到当前节点为止，所有的参数数量，
 	// 即 seg.Type() 不为 segment.TypeString 的数量。
@@ -52,12 +52,12 @@ func (n *Node) buildIndexes() {
 	}
 
 	if n.indexes == nil {
-		n.indexes = make(map[byte]*Node, indexesSize)
+		n.indexes = make(map[byte]int, indexesSize)
 	}
 
-	for _, node := range n.children {
+	for index, node := range n.children {
 		if node.seg.Type() == segment.TypeString {
-			n.indexes[node.seg.Value()[0]] = node
+			n.indexes[node.seg.Value()[0]] = index
 		}
 	}
 }
@@ -200,7 +200,7 @@ func (n *Node) clean(prefix string) {
 // NOTE: 此函数与 Node.trace 是一样的，记得同步两边的代码。
 func (n *Node) match(path string) *Node {
 	if len(n.indexes) > 0 {
-		node := n.indexes[path[0]]
+		node := n.children[n.indexes[path[0]]]
 		if node == nil {
 			goto LOOP
 		}

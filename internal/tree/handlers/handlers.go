@@ -6,7 +6,6 @@
 package handlers
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 )
@@ -23,8 +22,8 @@ const (
 // Handlers 用于表示某节点下各个请求方法对应的处理函数。
 type Handlers struct {
 	handlers     map[methodType]http.Handler // 请求方法及其对应的 http.Handler
-	optionsAllow string                      // 缓存的 OPTIONS 请求头的 allow 报头内容。
-	optionsState optionsState                // OPTIONS 报头的处理方式
+	optionsAllow string                      // 缓存的 OPTIONS 请求的 allow 报头内容。
+	optionsState optionsState                // OPTIONS 请求的处理方式
 }
 
 // New 声明一个新的 Handlers 实例
@@ -64,7 +63,7 @@ func (hs *Handlers) Add(h http.Handler, methods ...string) error {
 func (hs *Handlers) addSingle(h http.Handler, m methodType) error {
 	if m == options { // 强制修改 OPTIONS 方法的处理方式
 		if hs.optionsState == optionsStateFixedHandler { // 被强制修改过，不能再受理。
-			return errors.New("该请求方法 OPTIONS 已经存在")
+			return fmt.Errorf("该请求方法 %s 已经存在", optionsStrings[options])
 		}
 
 		hs.handlers[options] = h
@@ -74,7 +73,7 @@ func (hs *Handlers) addSingle(h http.Handler, m methodType) error {
 
 	// 非 OPTIONS 请求
 	if _, found := hs.handlers[m]; found {
-		return fmt.Errorf("该请求方法 %v 已经存在", optionsStrings[m])
+		return fmt.Errorf("该请求方法 %s 已经存在", optionsStrings[m])
 	}
 	hs.handlers[m] = h
 

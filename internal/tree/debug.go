@@ -25,7 +25,7 @@ func (tree *Tree) Trace(w io.Writer, path string) {
 // NOTE: 此函数与 Node.match 是一样的，记得同步两边的代码。
 func (n *Node) trace(w io.Writer, deep int, path string) *Node {
 	if len(n.indexes) > 0 {
-		node := n.indexes[path[0]]
+		node := n.children[n.indexes[path[0]]]
 		fmt.Fprint(w, strings.Repeat(" ", deep*4), node.seg.Value(), "---", typeString(node.seg.Type()), "---", path)
 
 		if node == nil {
