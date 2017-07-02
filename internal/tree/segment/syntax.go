@@ -56,7 +56,7 @@ func Parse(str string) ([]Segment, error) {
 			state = NameStart
 		case RegexpSeparator:
 			if state != NameStart {
-				return nil, fmt.Errorf("字符(:)只能出现在 %v %v 中间", string(NameStart), string(NameEnd))
+				return nil, fmt.Errorf("字符(:)只能出现在 %s %s 中间", string(NameStart), string(NameEnd))
 			}
 
 			if i == startIndex+1 {
@@ -67,7 +67,7 @@ func Parse(str string) ([]Segment, error) {
 			separatorIndex = i
 		case NameEnd:
 			if state == NameEnd {
-				return nil, fmt.Errorf("%v %v 必须成对出现", string(NameStart), string(NameEnd))
+				return nil, fmt.Errorf("%s %s 必须成对出现", string(NameStart), string(NameEnd))
 			}
 
 			if i == startIndex+1 {

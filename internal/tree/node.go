@@ -17,6 +17,9 @@ import (
 	"github.com/issue9/mux/params"
 )
 
+// Node.children 的数量只有达到此值时，才会为其建立 indexes 索引表。
+const indexesSize = 5
+
 var nodesPool = &sync.Pool{
 	New: func() interface{} {
 		return make([]*Node, 0, 10)
@@ -26,13 +29,37 @@ var nodesPool = &sync.Pool{
 // Node 表示路由中的节点。
 type Node struct {
 	parent   *Node
-	children []*Node
 	handlers *handlers.Handlers
 	seg      segment.Segment
+	children []*Node
+
+	// 所有节点类型为字符串的子节点，其首字符必定是不同的（相同的都提升到父节点中），
+	// 根据此特性，可以将所有字符串类型的首字符做个索引，这样字符串类型节点的比较，
+	// 可以通过索引排除不必要的比较操作。
+	// indexes 中的 *Node 也同时存在于 children 中。
+	indexes map[byte]*Node
 
 	// 从根节点以来，到当前节点为止，所有的参数数量，
 	// 即 seg.Type() 不为 segment.TypeString 的数量。
 	paramsSize int
+}
+
+// 构建当前节点的索引表。
+func (n *Node) buildIndexes() {
+	if len(n.children) < indexesSize {
+		n.indexes = nil
+		return
+	}
+
+	if n.indexes == nil {
+		n.indexes = make(map[byte]*Node, indexesSize)
+	}
+
+	for _, node := range n.children {
+		if node.seg.Type() == segment.TypeString {
+			n.indexes[node.seg.Value()[0]] = node
+		}
+	}
 }
 
 // 当前节点的优先级。
@@ -119,6 +146,7 @@ func (n *Node) newChild(seg segment.Segment) (*Node, error) {
 	sort.SliceStable(n.children, func(i, j int) bool {
 		return n.children[i].priority() < n.children[j].priority()
 	})
+	n.buildIndexes()
 
 	return child, nil
 }
@@ -164,15 +192,35 @@ func (n *Node) clean(prefix string) {
 	for _, del := range dels {
 		n.children = removeNodes(n.children, del)
 	}
+	n.buildIndexes()
 }
 
 // 从子节点中查找与当前路径匹配的节点，若找不到，则返回 nil。
 //
 // NOTE: 此函数与 Node.trace 是一样的，记得同步两边的代码。
 func (n *Node) match(path string) *Node {
+	if len(n.indexes) > 0 {
+		node := n.indexes[path[0]]
+		if node == nil {
+			goto LOOP
+		}
+
+		matched, newPath := node.seg.Match(path)
+		if !matched {
+			goto LOOP
+		}
+
+		if nn := node.match(newPath); nn != nil {
+			return nn
+		}
+	}
+
+LOOP:
 	// 即使 path 为空，也有可能子节点正好可以匹配空的内容。
 	// 比如 /posts/{path:\\w*} 后面的 path 即为空节点。所以此处不判断 len(path)
-	for _, node := range n.children {
+	for i := len(n.indexes); i < len(n.children); i++ {
+		node := n.children[i]
+
 		matched, newPath := node.seg.Match(path)
 		if !matched {
 			continue
@@ -288,6 +336,7 @@ func splitNode(n *Node, pos int) (*Node, error) {
 
 	// 先从父节点中删除老的 n
 	p.children = removeNodes(p.children, n.seg.Value())
+	p.buildIndexes()
 
 	seg, err := segment.New(n.seg.Value()[:pos])
 	if err != nil {
@@ -308,6 +357,7 @@ func splitNode(n *Node, pos int) (*Node, error) {
 	}
 	c.handlers = n.handlers
 	c.children = n.children
+	c.indexes = n.indexes
 	for _, item := range c.children {
 		item.parent = c
 	}

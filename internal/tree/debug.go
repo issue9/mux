@@ -24,9 +24,33 @@ func (tree *Tree) Trace(w io.Writer, path string) {
 
 // NOTE: 此函数与 Node.match 是一样的，记得同步两边的代码。
 func (n *Node) trace(w io.Writer, deep int, path string) *Node {
+	if len(n.indexes) > 0 {
+		node := n.indexes[path[0]]
+		fmt.Fprint(w, strings.Repeat(" ", deep*4), node.seg.Value(), "---", typeString(node.seg.Type()), "---", path)
+
+		if node == nil {
+			fmt.Fprintln(w, "(!matched)")
+			goto LOOP
+		}
+
+		matched, newPath := node.seg.Match(path)
+		if !matched {
+			fmt.Fprintln(w, "(!matched)")
+			goto LOOP
+		}
+
+		fmt.Fprintln(w, "(continue)")
+		if nn := node.match(newPath); nn != nil {
+			return nn
+		}
+	}
+
+LOOP:
 	// 即使 path 为空，也有可能子节点正好可以匹配空的内容。
 	// 比如 /posts/{path:\\w*} 后面的 path 即为空节点。所以此处不判断 len(path)
-	for _, node := range n.children {
+	for i := len(n.indexes); i < len(n.children); i++ {
+		node := n.children[i]
+
 		fmt.Fprint(w, strings.Repeat(" ", deep*4), node.seg.Value(), "---", typeString(node.seg.Type()), "---", path)
 		matched, newPath := node.seg.Match(path)
 		if !matched {
