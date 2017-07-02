@@ -74,11 +74,11 @@ func stringType(str string) Type {
 
 	for i := 0; i < len(str); i++ {
 		switch str[i] {
-		case RegexpSeparator:
+		case regexpSeparator:
 			typ = TypeRegexp
-		case NameStart:
+		case nameStart:
 			typ = TypeNamed
-		case NameEnd:
+		case nameEnd:
 			break
 		}
 	} // end for

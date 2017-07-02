@@ -16,9 +16,9 @@ import (
 
 // 将路由语法转换成正则表达式语法，比如：
 //  {id:\\d+}/author => (?P<id>\\d+)
-var repl = strings.NewReplacer(string(NameStart), "(?P<",
-	string(RegexpSeparator), ">",
-	string(NameEnd), ")")
+var repl = strings.NewReplacer(string(nameStart), "(?P<",
+	string(regexpSeparator), ">",
+	string(nameEnd), ")")
 
 type reg struct {
 	value      string
@@ -43,7 +43,7 @@ func newReg(str string) (Segment, error) {
 		value:      str,
 		expr:       expr,
 		syntaxExpr: syntaxExpr,
-		endpoint:   str[len(str)-1] == NameEnd,
+		endpoint:   str[len(str)-1] == nameEnd,
 	}, nil
 }
 

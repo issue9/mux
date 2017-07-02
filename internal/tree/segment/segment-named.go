@@ -20,14 +20,14 @@ type named struct {
 }
 
 func newNamed(str string) (Segment, error) {
-	endIndex := strings.IndexByte(str, NameEnd)
+	endIndex := strings.IndexByte(str, nameEnd)
 	if endIndex == -1 {
 		return nil, fmt.Errorf("无效的路由语法：%s", str)
 	}
 
 	return &named{
 		value:    str,
-		endpoint: str[len(str)-1] == NameEnd,
+		endpoint: str[len(str)-1] == nameEnd,
 		name:     str[1:endIndex],
 		suffix:   str[endIndex+1:],
 	}, nil
