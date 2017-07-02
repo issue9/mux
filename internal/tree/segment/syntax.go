@@ -18,6 +18,67 @@ const (
 	regexpSeparator byte = ':' // 正则参数中名称和正则的分隔符
 )
 
+type state struct {
+	start     int
+	end       int
+	separator int
+	state     byte
+}
+
+func newState() *state {
+	return &state{
+		start:     0,
+		end:       -10,
+		separator: -10,
+		state:     nameEnd,
+	}
+}
+
+func (s *state) setStart(index int) error {
+	if s.state != nameEnd {
+		return fmt.Errorf("不能嵌套 %s", string(nameStart))
+	}
+	if s.end+1 == index {
+		return errors.New("两个命名参数不能相邻")
+	}
+
+	s.start = index
+	s.state = nameStart
+	return nil
+}
+
+func (s *state) setEnd(index int) error {
+	if s.state == nameEnd {
+		return fmt.Errorf("%s %s 必须成对出现", string(nameStart), string(nameEnd))
+	}
+
+	if index == s.start+1 {
+		return errors.New("未指定参数名称")
+	}
+
+	if index == s.separator+1 {
+		return errors.New("未指定的正则表达式")
+	}
+
+	s.state = nameEnd
+	s.end = index
+	return nil
+}
+
+func (s *state) setSeparator(index int) error {
+	if s.state != nameStart {
+		return fmt.Errorf("字符(:)只能出现在 %s %s 中间", string(nameStart), string(nameEnd))
+	}
+
+	if index == s.start+1 {
+		return errors.New("未指定参数名称")
+	}
+
+	s.state = regexpSeparator
+	s.separator = index
+	return nil
+}
+
 // Parse 将字符串解析成 Segment 对象数组
 func Parse(str string) ([]Segment, error) {
 	if len(str) == 0 {
@@ -25,70 +86,42 @@ func Parse(str string) ([]Segment, error) {
 	}
 
 	ss := make([]Segment, 0, strings.Count(str, string(nameStart))+1)
-
-	startIndex := 0
-	endIndex := -10
-	separatorIndex := -10
-
-	state := nameEnd // 表示当前的状态
+	state := newState()
 
 	for i := 0; i < len(str); i++ {
 		switch str[i] {
 		case nameStart:
-			if state != nameEnd {
-				return nil, fmt.Errorf("不能嵌套 %s", string(nameStart))
+			start := state.start
+			if err := state.setStart(i); err != nil {
+				return nil, err
 			}
-			if endIndex+1 == i {
-				return nil, errors.New("两个命名参数不能相邻")
-			}
-			if startIndex == i {
-				state = nameStart
+
+			if start == i {
 				continue
 			}
 
-			s, err := New(str[startIndex:i])
+			s, err := New(str[start:i])
 			if err != nil {
 				return nil, err
 			}
 			ss = append(ss, s)
-
-			startIndex = i
-			state = nameStart
 		case regexpSeparator:
-			if state != nameStart {
-				return nil, fmt.Errorf("字符(:)只能出现在 %s %s 中间", string(nameStart), string(nameEnd))
+			if err := state.setSeparator(i); err != nil {
+				return nil, err
 			}
-
-			if i == startIndex+1 {
-				return nil, errors.New("未指定参数名称")
-			}
-
-			state = regexpSeparator
-			separatorIndex = i
 		case nameEnd:
-			if state == nameEnd {
-				return nil, fmt.Errorf("%s %s 必须成对出现", string(nameStart), string(nameEnd))
+			if err := state.setEnd(i); err != nil {
+				return nil, err
 			}
-
-			if i == startIndex+1 {
-				return nil, errors.New("未指定参数名称")
-			}
-
-			if i == separatorIndex+1 {
-				return nil, errors.New("未指定的正则表达式")
-			}
-
-			state = nameEnd
-			endIndex = i
 		}
 	}
 
-	if startIndex < len(str) {
-		if state != nameEnd {
+	if state.start < len(str) {
+		if state.state != nameEnd {
 			return nil, fmt.Errorf("缺少 %s 字符", string(nameEnd))
 		}
 
-		s, err := New(str[startIndex:])
+		s, err := New(str[state.start:])
 		if err != nil {
 			return nil, err
 		}
