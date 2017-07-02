@@ -24,8 +24,6 @@ const (
 	connect
 	trace
 
-	none methodType = 0
-
 	// 以上各个值进行组合之后的数量。
 	max = get + post + del + put + patch + options + head + connect + trace + 1
 )

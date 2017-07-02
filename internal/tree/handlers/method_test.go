@@ -40,7 +40,7 @@ func TestOptionsStrings(t *testing.T) {
 		a.Equal(optionsStrings[key], str, "key:%d,str:%s", key, str)
 	}
 
-	test(none, "")
+	test(0, "")
 	test(get, "GET")
 	test(get+post, "GET, POST")
 	test(get+post+options, "GET, OPTIONS, POST")
