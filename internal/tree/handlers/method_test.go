@@ -45,8 +45,11 @@ func TestOptionsStrings(t *testing.T) {
 		a.Equal(optionsStrings[key], str, "key:%d,str:%s", key, str)
 	}
 
+	test(none, "")
+	test(get, "GET")
 	test(get+post, "GET, POST")
 	test(get+post+options, "GET, OPTIONS, POST")
 	test(get+post+options+del+trace, "DELETE, GET, OPTIONS, POST, TRACE")
 	test(get+post+options+del+trace+head+patch, "DELETE, GET, HEAD, OPTIONS, PATCH, POST, TRACE")
+	test(max-1, "CONNECT, DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT, TRACE")
 }

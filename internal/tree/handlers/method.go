@@ -25,7 +25,9 @@ const (
 	trace
 
 	none methodType = 0
-	max             = get + post + del + put + patch + options + head + connect + trace // 最大值
+
+	// 以上各个值进行组合之后的数量。
+	max = get + post + del + put + patch + options + head + connect + trace + 1
 )
 
 var (
@@ -51,7 +53,7 @@ var (
 	any = make([]string, 0, len(methodMap)-1)
 
 	// 所有的 OPTIONS 请求的 allow 报头字符串
-	optionsStrings = make(map[methodType]string, max)
+	optionsStrings = make([]string, max, max)
 )
 
 func init() {
@@ -73,7 +75,7 @@ func init() {
 
 func makeOptionsStrings() {
 	methods := make([]string, 0, len(supported))
-	for i := methodType(0); i <= max; i++ {
+	for i := methodType(0); i < max; i++ {
 		if i&get == get {
 			methods = append(methods, methodStringMap[get])
 		}
