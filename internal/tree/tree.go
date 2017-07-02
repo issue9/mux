@@ -28,9 +28,9 @@ import (
 //     |
 //     +---- {id}/author
 //               |
-//               +---- profile
+//               +---- /profile
 //               |
-//               +---- emails
+//               +---- /emails
 type Tree struct {
 	*Node
 }
