@@ -34,8 +34,7 @@ func newNodeTest(a *assert.Assertion) *nodeTest {
 // 添加一条路由项。code 表示该路由项返回的报头，
 // 测试路由项的 code 需要唯一，之后也是通过此值来判断其命中的路由项。
 func (n *nodeTest) add(method, pattern string, code int) {
-	segs := newSegments(n.a, pattern)
-	nn, err := n.n.getNode(segs)
+	nn, err := n.n.getNode(split(n.a, pattern))
 	n.a.NotError(err).NotNil(nn)
 
 	if nn.handlers == nil {
@@ -79,10 +78,9 @@ func (n *nodeTest) urlTrue(method, path string, code int, params map[string]stri
 	n.a.Equal(u, url)
 }
 
-func newSegments(a *assert.Assertion, pattern string) []segment.Segment {
-	ss, err := segment.Parse(pattern)
+func split(a *assert.Assertion, pattern string) []string {
+	ss, err := segment.Split(pattern)
 	a.NotError(err).NotNil(ss)
-
 	return ss
 }
 
@@ -91,7 +89,7 @@ func TestNode_find(t *testing.T) {
 	node := &Node{}
 
 	addNode := func(p string, code int, methods ...string) {
-		nn, err := node.getNode(newSegments(a, p))
+		nn, err := node.getNode(split(a, p))
 		a.NotError(err).NotNil(nn)
 
 		if nn.handlers == nil {
@@ -118,7 +116,7 @@ func TestNode_clean(t *testing.T) {
 	node := &Node{}
 
 	addNode := func(p string, code int, methods ...string) {
-		nn, err := node.getNode(newSegments(a, p))
+		nn, err := node.getNode(split(a, p))
 		a.NotError(err).NotNil(nn)
 
 		if nn.handlers == nil {
@@ -307,9 +305,7 @@ func TestSplitNode(t *testing.T) {
 	nn, err := splitNode(p, 1)
 	a.Error(err).Nil(nn)
 
-	seg, err := segment.New("/posts/{id}/author")
-	a.NotError(err).NotNil(seg)
-	node, err := p.newChild(seg)
+	node, err := p.newChild("/posts/{id}/author")
 	a.NotError(err).NotNil(node)
 
 	nn, err = splitNode(node, 7) // 从 { 开始拆分

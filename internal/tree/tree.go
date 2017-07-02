@@ -53,7 +53,7 @@ func New() *Tree {
 //
 // methods 可以为空，表示添加除 OPTIONS 之外所有支持的请求方法。
 func (tree *Tree) Add(pattern string, h http.Handler, methods ...string) error {
-	ss, err := segment.Parse(pattern)
+	ss, err := segment.Split(pattern)
 	if err != nil {
 		return err
 	}
@@ -106,7 +106,7 @@ func (tree *Tree) Remove(pattern string, methods ...string) error {
 
 // GetNode 获取指定的节点，若节点不存在，则在该位置生成一个新节点。
 func (tree *Tree) GetNode(pattern string) (*Node, error) {
-	ss, err := segment.Parse(pattern)
+	ss, err := segment.Split(pattern)
 	if err != nil {
 		return nil, err
 	}

@@ -43,7 +43,7 @@ func newReg(str string) (Segment, error) {
 		value:      str,
 		expr:       expr,
 		syntaxExpr: syntaxExpr,
-		endpoint:   str[len(str)-1] == nameEnd,
+		endpoint:   IsEndpoint(str),
 	}, nil
 }
 

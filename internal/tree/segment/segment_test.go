@@ -45,13 +45,7 @@ func TestLongestPrefix(t *testing.T) {
 	a := assert.New(t)
 
 	test := func(s1, s2 string, len int) {
-		seg1, err := New(s1)
-		a.NotError(err).NotNil(seg1)
-
-		seg2, err := New(s2)
-		a.NotError(err).NotNil(seg2)
-
-		a.Equal(LongestPrefix(seg1, seg2), len)
+		a.Equal(LongestPrefix(s1, s2), len)
 	}
 
 	test("", "", 0)

@@ -72,13 +72,13 @@ func (s *state) setSeparator(index int) error {
 	return nil
 }
 
-// Parse 将字符串解析成 Segment 对象数组
-func Parse(str string) ([]Segment, error) {
+// Split 将字符串解析成字符串数组
+func Split(str string) ([]string, error) {
 	if len(str) == 0 {
 		return nil, errors.New("参数 str 不能为空")
 	}
 
-	ss := make([]Segment, 0, strings.Count(str, string(nameStart))+1)
+	ss := make([]string, 0, strings.Count(str, string(nameStart))+1)
 
 	state := newState()
 	for i := 0; i < len(str); i++ {
@@ -93,11 +93,7 @@ func Parse(str string) ([]Segment, error) {
 				continue
 			}
 
-			s, err := New(str[start:i])
-			if err != nil {
-				return nil, err
-			}
-			ss = append(ss, s)
+			ss = append(ss, str[start:i])
 		case regexpSeparator:
 			if err := state.setSeparator(i); err != nil {
 				return nil, err
@@ -114,11 +110,7 @@ func Parse(str string) ([]Segment, error) {
 			return nil, fmt.Errorf("缺少 %s 字符", string(nameEnd))
 		}
 
-		s, err := New(str[state.start:])
-		if err != nil {
-			return nil, err
-		}
-		ss = append(ss, s)
+		ss = append(ss, str[state.start:])
 	}
 
 	return ss, nil

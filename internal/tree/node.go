@@ -76,7 +76,7 @@ func (n *Node) priority() int {
 }
 
 // 获取指定路径下的节点，若节点不存在，则添加
-func (n *Node) getNode(segments []segment.Segment) (*Node, error) {
+func (n *Node) getNode(segments []string) (*Node, error) {
 	child, err := n.addSegment(segments[0])
 	if err != nil {
 		return nil, err
@@ -90,21 +90,21 @@ func (n *Node) getNode(segments []segment.Segment) (*Node, error) {
 }
 
 // 将 segment.Segment 添加到当前节点，并返回新节点
-func (n *Node) addSegment(s segment.Segment) (*Node, error) {
+func (n *Node) addSegment(s string) (*Node, error) {
 	var child *Node // 找到的最匹配节点
 	var l int       // 最大的匹配字符数量
 
 	for _, c := range n.children {
-		if c.seg.Endpoint() != s.Endpoint() ||
-			c.seg.Type() != s.Type() {
+		if c.seg.Endpoint() != segment.IsEndpoint(s) {
 			continue
 		}
 
-		if segment.Equal(c.seg, s) { // 有完全相同的节点
+		if c.seg.Endpoint() == segment.IsEndpoint(s) &&
+			c.seg.Value() == s { // 有完全相同的节点
 			return c, nil
 		}
 
-		if l1 := segment.LongestPrefix(c.seg, s); l1 > l {
+		if l1 := segment.LongestPrefix(c.seg.Value(), s); l1 > l {
 			l = l1
 			child = c
 		}
@@ -119,19 +119,20 @@ func (n *Node) addSegment(s segment.Segment) (*Node, error) {
 		return nil, err
 	}
 
-	if len(s.Value()) == l {
+	if len(s) == l {
 		return parent, nil
 	}
 
-	seg, err := segment.New(s.Value()[l:])
-	if err != nil {
-		return nil, err
-	}
-	return parent.addSegment(seg)
+	return parent.addSegment(s[l:])
 }
 
 // 根据 seg 内容为当前节点产生一个子节点，并返回该新节点。
-func (n *Node) newChild(seg segment.Segment) (*Node, error) {
+func (n *Node) newChild(s string) (*Node, error) {
+	seg, err := segment.New(s)
+	if err != nil {
+		return nil, err
+	}
+
 	child := &Node{
 		parent:     n,
 		seg:        seg,
@@ -338,20 +339,12 @@ func splitNode(n *Node, pos int) (*Node, error) {
 	p.children = removeNodes(p.children, n.seg.Value())
 	p.buildIndexes()
 
-	seg, err := segment.New(n.seg.Value()[:pos])
-	if err != nil {
-		return nil, err
-	}
-	ret, err := p.newChild(seg)
+	ret, err := p.newChild(n.seg.Value()[:pos])
 	if err != nil {
 		return nil, err
 	}
 
-	seg, err = segment.New(n.seg.Value()[pos:])
-	if err != nil {
-		return nil, err
-	}
-	c, err := ret.newChild(seg)
+	c, err := ret.newChild(n.seg.Value()[pos:])
 	if err != nil {
 		return nil, err
 	}

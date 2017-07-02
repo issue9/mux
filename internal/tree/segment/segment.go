@@ -60,6 +60,11 @@ func Equal(s1, s2 Segment) bool {
 		s1.Type() == s2.Type()
 }
 
+// IsEndpoint 判断字符串是否可作为终点。
+func IsEndpoint(str string) bool {
+	return str[len(str)-1] == nameEnd
+}
+
 // New 将字符串转换为一个 Segment 实例。
 // 调用者需要确保 str 语法正确。
 func New(s string) (Segment, error) {
@@ -95,9 +100,7 @@ func stringType(str string) Type {
 
 // LongestPrefix 获取两个 Segment 之间相同的前缀字符串的长度，
 // 不会从 {} 中间被分开，正则表达式与之后的内容也不再分隔。
-func LongestPrefix(seg1, seg2 Segment) int {
-	s1 := seg1.Value()
-	s2 := seg2.Value()
+func LongestPrefix(s1, s2 string) int {
 	l := len(s1)
 	if len(s2) < l {
 		l = len(s2)

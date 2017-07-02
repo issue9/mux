@@ -27,7 +27,7 @@ func newNamed(str string) (Segment, error) {
 
 	return &named{
 		value:    str,
-		endpoint: str[len(str)-1] == nameEnd,
+		endpoint: IsEndpoint(str),
 		name:     str[1:endIndex],
 		suffix:   str[endIndex+1:],
 	}, nil
