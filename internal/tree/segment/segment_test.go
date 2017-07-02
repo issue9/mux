@@ -24,7 +24,7 @@ func TestStringType(t *testing.T) {
 	a.Equal(stringType("/posts/{id:\\d+}/author"), TypeRegexp)
 }
 
-func TestEqaul(t *testing.T) {
+func TestEqual(t *testing.T) {
 	a := assert.New(t)
 
 	a.False(Equal(str(""), &named{}))
@@ -39,4 +39,38 @@ func TestEqaul(t *testing.T) {
 	s2, err = newNamed("{action}/1")
 	a.NotError(err).NotNil(s2)
 	a.False(Equal(s1, s2))
+}
+
+func TestLongestPrefix(t *testing.T) {
+	a := assert.New(t)
+
+	test := func(s1, s2 string, len int) {
+		seg1, err := New(s1)
+		a.NotError(err).NotNil(seg1)
+
+		seg2, err := New(s2)
+		a.NotError(err).NotNil(seg2)
+
+		a.Equal(LongestPrefix(seg1, seg2), len)
+	}
+
+	test("", "", 0)
+	test("/", "", 0)
+	test("/test", "test", 0)
+	test("/test", "/abc", 1)
+	test("/test", "/test", 5)
+	test("/te{st}", "/test", 3)
+	test("/test", "/tes{t}", 4)
+	test("/tes{t:\\d+}", "/tes{t:\\d+}/a", 4) // 不应该包含正则部分
+	test("/tes{t:\\d+}/a", "/tes{t:\\d+}/", 12)
+	test("{t}/a", "{t}/b", 4)
+	test("{t}/abc", "{t}/bbc", 4)
+	test("/tes{t:\\d+}", "/tes{t}", 4)
+}
+
+func TestRepl(t *testing.T) {
+	a := assert.New(t)
+
+	a.Equal(repl.Replace("{id:\\d+}"), "(?P<id>\\d+)")
+	a.Equal(repl.Replace("{id:\\d+}/author"), "(?P<id>\\d+)/author")
 }

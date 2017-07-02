@@ -104,7 +104,7 @@ func (n *Node) addSegment(s segment.Segment) (*Node, error) {
 			return c, nil
 		}
 
-		if l1 := segment.PrefixLen(c.seg.Value(), s.Value()); l1 > l {
+		if l1 := segment.LongestPrefix(c.seg, s); l1 > l {
 			l = l1
 			child = c
 		}

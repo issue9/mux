@@ -75,30 +75,6 @@ func TestParse(t *testing.T) {
 	test("/posts/}/author", true, nil)
 }
 
-func TestRepl(t *testing.T) {
-	a := assert.New(t)
-
-	a.Equal(repl.Replace("{id:\\d+}"), "(?P<id>\\d+)")
-	a.Equal(repl.Replace("{id:\\d+}/author"), "(?P<id>\\d+)/author")
-}
-
-func TestPrefixLen(t *testing.T) {
-	a := assert.New(t)
-
-	a.Equal(PrefixLen("", ""), 0)
-	a.Equal(PrefixLen("/", ""), 0)
-	a.Equal(PrefixLen("/test", "test"), 0)
-	a.Equal(PrefixLen("/test", "/abc"), 1)
-	a.Equal(PrefixLen("/test", "/test"), 5)
-	a.Equal(PrefixLen("/te{st", "/test"), 3)
-	a.Equal(PrefixLen("/test", "/tes{t"), 4)
-	a.Equal(PrefixLen("/tes{t:\\d+}", "/tes{t:\\d+}/a"), 4) // 不应该包含正则部分
-	a.Equal(PrefixLen("/tes{t:\\d+}/a", "/tes{t:\\d+}/"), 12)
-	a.Equal(PrefixLen("{t}/a", "{t}/b"), 4)
-	a.Equal(PrefixLen("{t}/abc", "{t}/bbc"), 4)
-	a.Equal(PrefixLen("/tes{t:\\d+}", "/tes{t}"), 4)
-}
-
 func BenchmarkParse(b *testing.B) {
 	patterns := []string{
 		"/",

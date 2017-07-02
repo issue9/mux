@@ -11,6 +11,13 @@ import (
 	"github.com/issue9/mux/params"
 )
 
+// 路由项字符串中的几个特殊字符定义
+const (
+	nameStart       byte = '{' // 命名或是正则参数的起始字符
+	nameEnd         byte = '}' // 命名或是正则参数的结束字符
+	regexpSeparator byte = ':' // 正则参数中名称和正则的分隔符
+)
+
 // Type 表示当前 Segment 的类型
 type Type int8
 
@@ -84,4 +91,45 @@ func stringType(str string) Type {
 	} // end for
 
 	return typ
+}
+
+// LongestPrefix 获取两个 Segment 之间相同的前缀字符串的长度，
+// 不会从 {} 中间被分开，正则表达式与之后的内容也不再分隔。
+func LongestPrefix(seg1, seg2 Segment) int {
+	s1 := seg1.Value()
+	s2 := seg2.Value()
+	l := len(s1)
+	if len(s2) < l {
+		l = len(s2)
+	}
+
+	startIndex := -10
+	endIndex := -10
+	state := nameEnd
+	for i := 0; i < l; i++ {
+		switch s1[i] {
+		case nameStart:
+			startIndex = i
+			state = nameStart
+		case nameEnd:
+			state = nameEnd
+			endIndex = i
+		}
+
+		if s1[i] != s2[i] {
+			if state != nameEnd { // 不从命名参数中间分隔
+				return startIndex
+			}
+			if endIndex == i { // 命名参数之后必须要有一个或以上的普通字符
+				return startIndex
+			}
+			return i
+		}
+	} // end for
+
+	if endIndex == l-1 {
+		return startIndex
+	}
+
+	return l
 }

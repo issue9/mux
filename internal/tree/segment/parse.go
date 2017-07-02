@@ -11,13 +11,6 @@ import (
 	"strings"
 )
 
-// 路由项字符串中的几个特殊字符定义
-const (
-	nameStart       byte = '{' // 命名或是正则参数的起始字符
-	nameEnd         byte = '}' // 命名或是正则参数的结束字符
-	regexpSeparator byte = ':' // 正则参数中名称和正则的分隔符
-)
-
 type state struct {
 	start     int
 	end       int
@@ -86,8 +79,8 @@ func Parse(str string) ([]Segment, error) {
 	}
 
 	ss := make([]Segment, 0, strings.Count(str, string(nameStart))+1)
-	state := newState()
 
+	state := newState()
 	for i := 0; i < len(str); i++ {
 		switch str[i] {
 		case nameStart:
@@ -114,7 +107,7 @@ func Parse(str string) ([]Segment, error) {
 				return nil, err
 			}
 		}
-	}
+	} // end for
 
 	if state.start < len(str) {
 		if state.state != nameEnd {
@@ -129,43 +122,4 @@ func Parse(str string) ([]Segment, error) {
 	}
 
 	return ss, nil
-}
-
-// PrefixLen 判断两个字符串之间共同的开始内容的长度，
-// 不会从 {} 中间被分开，正则表达式与之后的内容也不再分隔。
-func PrefixLen(s1, s2 string) int {
-	l := len(s1)
-	if len(s2) < l {
-		l = len(s2)
-	}
-
-	startIndex := -10
-	endIndex := -10
-	state := nameEnd
-	for i := 0; i < l; i++ {
-		switch s1[i] {
-		case nameStart:
-			startIndex = i
-			state = nameStart
-		case nameEnd:
-			state = nameEnd
-			endIndex = i
-		}
-
-		if s1[i] != s2[i] {
-			if state != nameEnd { // 不从命名参数中间分隔
-				return startIndex
-			}
-			if endIndex == i { // 命名参数之后必须要有一个或以上的普通字符
-				return startIndex
-			}
-			return i
-		}
-	} // end for
-
-	if endIndex == l-1 {
-		return startIndex
-	}
-
-	return l
 }
