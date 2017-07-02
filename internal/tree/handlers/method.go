@@ -43,8 +43,6 @@ var (
 		http.MethodTrace:   trace,
 	}
 
-	methodStringMap = make(map[methodType]string, len(methodMap))
-
 	// 当前支持的所有请求方法
 	supported = make([]string, 0, len(methodMap))
 
@@ -57,11 +55,6 @@ var (
 )
 
 func init() {
-	// 生成 methodStringMap
-	for typ, str := range methodMap {
-		methodStringMap[str] = typ
-	}
-
 	// 生成 supported 和 any
 	for typ := range methodMap {
 		supported = append(supported, typ)
@@ -77,31 +70,31 @@ func makeOptionsStrings() {
 	methods := make([]string, 0, len(supported))
 	for i := methodType(0); i < max; i++ {
 		if i&get == get {
-			methods = append(methods, methodStringMap[get])
+			methods = append(methods, http.MethodGet)
 		}
 		if i&post == post {
-			methods = append(methods, methodStringMap[post])
+			methods = append(methods, http.MethodPost)
 		}
 		if i&del == del {
-			methods = append(methods, methodStringMap[del])
+			methods = append(methods, http.MethodDelete)
 		}
 		if i&put == put {
-			methods = append(methods, methodStringMap[put])
+			methods = append(methods, http.MethodPut)
 		}
 		if i&patch == patch {
-			methods = append(methods, methodStringMap[patch])
+			methods = append(methods, http.MethodPatch)
 		}
 		if i&options == options {
-			methods = append(methods, methodStringMap[options])
+			methods = append(methods, http.MethodOptions)
 		}
 		if i&head == head {
-			methods = append(methods, methodStringMap[head])
+			methods = append(methods, http.MethodHead)
 		}
 		if i&connect == connect {
-			methods = append(methods, methodStringMap[connect])
+			methods = append(methods, http.MethodConnect)
 		}
 		if i&trace == trace {
-			methods = append(methods, methodStringMap[trace])
+			methods = append(methods, http.MethodTrace)
 		}
 
 		sort.Strings(methods) // 防止每次从 map 中读取的顺序都不一样

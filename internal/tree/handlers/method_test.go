@@ -13,12 +13,6 @@ import (
 func TestMethods(t *testing.T) {
 	a := assert.New(t)
 
-	// methodMap、methodStringMap
-	for typ, method := range methodMap {
-		a.Equal(typ, methodStringMap[method])
-	}
-	a.Equal(len(methodMap), len(methodStringMap))
-
 	// supported、any
 	for _, m := range any {
 		for _, mm := range supported {
@@ -29,7 +23,11 @@ func TestMethods(t *testing.T) {
 		a.False(false, "supported 中 未包含 any 中的 %s", m)
 	}
 
-	// optionsString
+}
+
+func TestOptionsStrings(t *testing.T) {
+	a := assert.New(t)
+
 	for index, allow := range optionsStrings {
 		if index == 0 {
 			a.Empty(allow)
@@ -37,10 +35,7 @@ func TestMethods(t *testing.T) {
 			a.NotEmpty(allow, "索引 %d 的值为空", index)
 		}
 	}
-}
 
-func TestOptionsStrings(t *testing.T) {
-	a := assert.New(t)
 	test := func(key methodType, str string) {
 		a.Equal(optionsStrings[key], str, "key:%d,str:%s", key, str)
 	}

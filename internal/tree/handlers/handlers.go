@@ -74,7 +74,7 @@ func (hs *Handlers) addSingle(h http.Handler, m methodType) error {
 
 	// 非 OPTIONS 请求
 	if _, found := hs.handlers[m]; found {
-		return fmt.Errorf("该请求方法 %v 已经存在", methodStringMap[m])
+		return fmt.Errorf("该请求方法 %v 已经存在", optionsStrings[m])
 	}
 	hs.handlers[m] = h
 
