@@ -201,7 +201,7 @@ func (n *Node) Params(path string) params.Params {
 
 	params := make(params.Params, n.paramsSize)
 
-	nodes := n.getParents()
+	nodes := n.parents()
 	defer nodesPool.Put(nodes)
 	for i := len(nodes) - 1; i >= 0; i-- {
 		path = nodes[i].seg.Params(path, params)
@@ -214,7 +214,7 @@ func (n *Node) Params(path string) params.Params {
 func (n *Node) URL(params map[string]string) (string, error) {
 	buf := new(bytes.Buffer)
 
-	nodes := n.getParents()
+	nodes := n.parents()
 	defer nodesPool.Put(nodes)
 	for i := len(nodes) - 1; i >= 0; i-- {
 		if err := nodes[i].seg.URL(buf, params); err != nil {
@@ -228,10 +228,10 @@ func (n *Node) URL(params map[string]string) (string, error) {
 // 逐级向上获取父节点，包含当前节点。
 //
 // NOTE: 记得将 []*Node 放回对象池中。
-func (n *Node) getParents() []*Node {
+func (n *Node) parents() []*Node {
 	nodes := nodesPool.Get().([]*Node)[:0]
 
-	for curr := n; curr != nil; curr = curr.parent { // 从尾部向上开始获取节点
+	for curr := n; curr.parent != nil; curr = curr.parent { // 从尾部向上开始获取节点
 		nodes = append(nodes, curr)
 	}
 

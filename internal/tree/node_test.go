@@ -245,8 +245,8 @@ func TestNode_getParents(t *testing.T) {
 		parent: n2,
 	}
 
-	a.Equal(n3.getParents(), []*Node{n3, n2, n1})
-	a.Equal(n2.getParents(), []*Node{n2, n1})
+	a.Equal(n3.parents(), []*Node{n3, n2})
+	a.Equal(n2.parents(), []*Node{n2})
 }
 
 func TestRemoveNoddes(t *testing.T) {
