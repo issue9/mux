@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"fmt"
 	"regexp"
-	"regexp/syntax"
 	"strings"
 
 	"github.com/issue9/mux/params"
@@ -21,11 +20,10 @@ var repl = strings.NewReplacer(string(nameStart), "(?P<",
 	string(nameEnd), ")")
 
 type reg struct {
-	name       string
-	value      string
-	endpoint   bool
-	expr       *regexp.Regexp
-	syntaxExpr *syntax.Regexp
+	name     string
+	value    string
+	endpoint bool
+	expr     *regexp.Regexp
 }
 
 func newReg(str string) (Segment, error) {
@@ -37,17 +35,11 @@ func newReg(str string) (Segment, error) {
 		return nil, err
 	}
 
-	syntaxExpr, err := syntax.Parse(r, syntax.Perl)
-	if err != nil {
-		return nil, err
-	}
-
 	return &reg{
-		value:      str,
-		name:       str[1:index],
-		expr:       expr,
-		syntaxExpr: syntaxExpr,
-		endpoint:   IsEndpoint(str),
+		value:    str,
+		name:     str[1:index],
+		expr:     expr,
+		endpoint: IsEndpoint(str),
 	}, nil
 }
 
