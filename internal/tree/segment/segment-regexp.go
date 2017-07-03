@@ -69,6 +69,7 @@ func (r *reg) Match(path string, params params.Params) (bool, string) {
 		return false, path
 	}
 
+	// 计算参数
 	subexps := r.expr.SubexpNames()
 	args := r.expr.FindStringSubmatch(path)
 	for index, name := range subexps {
@@ -76,9 +77,7 @@ func (r *reg) Match(path string, params params.Params) (bool, string) {
 			params[name] = args[index]
 		}
 	}
-	if loc[1] == len(path) {
-		return true, path[:0]
-	}
+
 	return true, path[loc[1]:]
 }
 

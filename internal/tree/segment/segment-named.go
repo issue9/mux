@@ -52,7 +52,7 @@ func (n *named) Match(path string, params params.Params) (bool, string) {
 	}
 
 	index := strings.Index(path, n.suffix)
-	if index > 0 { // 为零说明前面没有命名参数，肯定不正确
+	if index > 0 { // 为零说明前面没有命名参数，肯定不能与当前内容匹配
 		params[n.name] = path[:index]
 		return true, path[index+len(n.suffix):]
 	}
