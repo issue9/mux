@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/issue9/assert"
+	"github.com/issue9/mux/params"
 )
 
 var _ Segment = str("")
@@ -66,4 +67,19 @@ func TestRepl(t *testing.T) {
 
 	a.Equal(repl.Replace("{id:\\d+}"), "(?P<id>\\d+)")
 	a.Equal(repl.Replace("{id:\\d+}/author"), "(?P<id>\\d+)/author")
+}
+
+func BenchmarkStr_Match(b *testing.B) {
+	a := assert.New(b)
+
+	r, err := newReg("{id:\\d+}/author")
+	a.NotError(err).NotNil(r)
+
+	ps := make(params.Params, 1)
+
+	for i := 0; i < b.N; i++ {
+		if ok, _ := r.Match("5/author", ps); !ok {
+			b.Error("BenchmarkStr_Match")
+		}
+	}
 }

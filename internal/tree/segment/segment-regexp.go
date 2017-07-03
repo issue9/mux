@@ -64,21 +64,13 @@ func (r *reg) Endpoint() bool {
 }
 
 func (r *reg) Match(path string, params params.Params) (bool, string) {
-	loc := r.expr.FindStringIndex(path)
-	if loc == nil || loc[0] != 0 { // 不匹配
+	locs := r.expr.FindStringSubmatchIndex(path)
+	if locs == nil || locs[0] != 0 { // 不匹配
 		return false, path
 	}
 
-	// 计算参数
-	subexps := r.expr.SubexpNames()
-	args := r.expr.FindStringSubmatch(path)
-	for index, name := range subexps {
-		if len(name) > 0 && index < len(args) {
-			params[name] = args[index]
-		}
-	}
-
-	return true, path[loc[1]:]
+	params[r.name] = path[:locs[3]]
+	return true, path[locs[1]:]
 }
 
 func (r *reg) DeleteParams(params params.Params) {
