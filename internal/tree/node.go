@@ -75,7 +75,8 @@ func (n *Node) priority() int {
 	return ret
 }
 
-// 获取指定路径下的节点，若节点不存在，则添加
+// 获取指定路径下的节点，若节点不存在，则添加。
+// segments 为被 segment.Split 拆分之后的字符串数组。
 func (n *Node) getNode(segments []string) (*Node, error) {
 	child, err := n.addSegment(segments[0])
 	if err != nil {
@@ -89,29 +90,28 @@ func (n *Node) getNode(segments []string) (*Node, error) {
 	return child.getNode(segments[1:])
 }
 
-// 将 segment.Segment 添加到当前节点，并返回新节点
-func (n *Node) addSegment(s string) (*Node, error) {
+// 将 seg 添加到当前节点，并返回新节点
+func (n *Node) addSegment(seg string) (*Node, error) {
 	var child *Node // 找到的最匹配节点
 	var l int       // 最大的匹配字符数量
 
 	for _, c := range n.children {
-		if c.seg.Endpoint() != segment.IsEndpoint(s) {
+		if c.seg.Endpoint() != segment.IsEndpoint(seg) {
 			continue
 		}
 
-		if c.seg.Endpoint() == segment.IsEndpoint(s) &&
-			c.seg.Value() == s { // 有完全相同的节点
+		if c.seg.Value() == seg { // 有完全相同的节点
 			return c, nil
 		}
 
-		if l1 := segment.LongestPrefix(c.seg.Value(), s); l1 > l {
+		if l1 := segment.LongestPrefix(c.seg.Value(), seg); l1 > l {
 			l = l1
 			child = c
 		}
 	}
 
 	if l <= 0 { // 没有共同前缀，声明一个新的加入到当前节点
-		return n.newChild(s)
+		return n.newChild(seg)
 	}
 
 	parent, err := splitNode(child, l)
@@ -119,14 +119,14 @@ func (n *Node) addSegment(s string) (*Node, error) {
 		return nil, err
 	}
 
-	if len(s) == l {
+	if len(seg) == l {
 		return parent, nil
 	}
 
-	return parent.addSegment(s[l:])
+	return parent.addSegment(seg[l:])
 }
 
-// 根据 seg 内容为当前节点产生一个子节点，并返回该新节点。
+// 根据 s 内容为当前节点产生一个子节点，并返回该新节点。
 func (n *Node) newChild(s string) (*Node, error) {
 	seg, err := segment.New(s)
 	if err != nil {
@@ -138,7 +138,6 @@ func (n *Node) newChild(s string) (*Node, error) {
 		seg:        seg,
 		paramsSize: n.paramsSize,
 	}
-
 	if seg.Type() != segment.TypeString {
 		child.paramsSize++
 	}
