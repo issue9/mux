@@ -86,18 +86,6 @@ func (r *reg) DeleteParams(params params.Params) {
 	delete(params, r.name)
 }
 
-func (r *reg) Params(path string, params params.Params) string {
-	subexps := r.expr.SubexpNames()
-	args := r.expr.FindStringSubmatch(path)
-	for index, name := range subexps {
-		if len(name) > 0 && index < len(args) {
-			params[name] = args[index]
-		}
-	}
-
-	return path[len(args[0]):]
-}
-
 func (r *reg) URL(buf *bytes.Buffer, params map[string]string) error {
 	url := r.syntaxExpr.String()
 	subs := append(r.syntaxExpr.Sub, r.syntaxExpr)

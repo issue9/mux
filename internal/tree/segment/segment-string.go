@@ -36,10 +36,6 @@ func (s str) Match(path string, params params.Params) (bool, string) {
 func (s str) DeleteParams(params params.Params) {
 }
 
-func (s str) Params(path string, params params.Params) string {
-	return path[len(s):]
-}
-
 func (s str) URL(buf *bytes.Buffer, params map[string]string) error {
 	buf.WriteString(string(s))
 	return nil

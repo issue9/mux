@@ -38,10 +38,6 @@ type Node struct {
 	// 可以通过索引排除不必要的比较操作。
 	// indexes 中保存着 *Node 实例在 children 中的下标。
 	indexes map[byte]int
-
-	// 从根节点以来，到当前节点为止，所有的参数数量，
-	// 即 seg.Type() 不为 segment.TypeString 的数量。
-	paramsSize int
 }
 
 // 构建当前节点的索引表。
@@ -134,12 +130,8 @@ func (n *Node) newChild(s string) (*Node, error) {
 	}
 
 	child := &Node{
-		parent:     n,
-		seg:        seg,
-		paramsSize: n.paramsSize,
-	}
-	if seg.Type() != segment.TypeString {
-		child.paramsSize++
+		parent: n,
+		seg:    seg,
 	}
 
 	n.children = append(n.children, child)
@@ -240,25 +232,6 @@ LOOP:
 	}
 
 	return nil
-}
-
-// Params 获取 path 在当前路由节点下的参数。
-//
-// 由调用方确保能正常匹配 path
-func (n *Node) Params(path string) params.Params {
-	if n.paramsSize == 0 { // 没有参数
-		return nil
-	}
-
-	params := make(params.Params, n.paramsSize)
-
-	nodes := n.parents()
-	defer nodesPool.Put(nodes)
-	for i := len(nodes) - 1; i >= 0; i-- {
-		path = nodes[i].seg.Params(path, params)
-	}
-
-	return params
 }
 
 // URL 根据参数生成地址

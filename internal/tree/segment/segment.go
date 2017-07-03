@@ -45,13 +45,10 @@ type Segment interface {
 	// 则返回 true 和去掉匹配内容之后的字符串。
 	Match(path string, params params.Params) (bool, string)
 
-	// 从 path 中匹配与当前内容匹配的参数值，
-	// 写入到 params 中，并返回去掉匹配内容之后的字符串。
-	Params(path string, params params.Params) string
-
 	// 将当前内容写入到 buf 中，若有参数，则参数部分内容从 params。
 	URL(buf *bytes.Buffer, params map[string]string) error
 
+	// 从 params 中删除当前的内容对应的名称。
 	DeleteParams(params params.Params)
 }
 
