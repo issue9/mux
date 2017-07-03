@@ -21,6 +21,7 @@ var repl = strings.NewReplacer(string(nameStart), "(?P<",
 	string(nameEnd), ")")
 
 type reg struct {
+	name       string
 	value      string
 	endpoint   bool
 	expr       *regexp.Regexp
@@ -28,6 +29,8 @@ type reg struct {
 }
 
 func newReg(str string) (Segment, error) {
+	index := strings.IndexByte(str, regexpSeparator)
+
 	r := repl.Replace(str)
 	expr, err := regexp.Compile(r)
 	if err != nil {
@@ -41,6 +44,7 @@ func newReg(str string) (Segment, error) {
 
 	return &reg{
 		value:      str,
+		name:       str[1:index],
 		expr:       expr,
 		syntaxExpr: syntaxExpr,
 		endpoint:   IsEndpoint(str),
@@ -59,19 +63,12 @@ func (r *reg) Endpoint() bool {
 	return r.endpoint
 }
 
-func (r *reg) Match(path string) (bool, string) {
+func (r *reg) Match(path string, params params.Params) (bool, string) {
 	loc := r.expr.FindStringIndex(path)
 	if loc == nil || loc[0] != 0 { // 不匹配
 		return false, path
 	}
 
-	if loc[1] == len(path) {
-		return true, path[:0]
-	}
-	return true, path[loc[1]:]
-}
-
-func (r *reg) Params(path string, params params.Params) string {
 	subexps := r.expr.SubexpNames()
 	args := r.expr.FindStringSubmatch(path)
 	for index, name := range subexps {
@@ -79,8 +76,14 @@ func (r *reg) Params(path string, params params.Params) string {
 			params[name] = args[index]
 		}
 	}
+	if loc[1] == len(path) {
+		return true, path[:0]
+	}
+	return true, path[loc[1]:]
+}
 
-	return path[len(args[0]):]
+func (r *reg) DeleteParams(params params.Params) {
+	delete(params, r.name)
 }
 
 func (r *reg) URL(buf *bytes.Buffer, params map[string]string) error {

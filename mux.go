@@ -184,7 +184,7 @@ func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		p = cleanPath(p)
 	}
 
-	node := mux.tree.Match(p)
+	node, ps := mux.tree.Match(p)
 	if node == nil {
 		mux.notFound(w, r)
 		return
@@ -196,7 +196,7 @@ func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if ps := node.Params(p); len(ps) > 0 {
+	if len(ps) > 0 {
 		ctx := context.WithValue(r.Context(), params.ContextKeyParams, ps)
 		r = r.WithContext(ctx)
 	}

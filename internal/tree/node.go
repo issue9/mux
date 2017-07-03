@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"sort"
 	"strings"
-	"sync"
 
 	"github.com/issue9/mux/internal/tree/handlers"
 	"github.com/issue9/mux/internal/tree/segment"
@@ -19,12 +18,6 @@ import (
 
 // Node.children 的数量只有达到此值时，才会为其建立 indexes 索引表。
 const indexesSize = 5
-
-var nodesPool = &sync.Pool{
-	New: func() interface{} {
-		return make([]*Node, 0, 10)
-	},
-}
 
 // Node 表示路由中的节点。
 type Node struct {
@@ -38,10 +31,6 @@ type Node struct {
 	// 可以通过索引排除不必要的比较操作。
 	// indexes 中保存着 *Node 实例在 children 中的下标。
 	indexes map[byte]int
-
-	// 从根节点以来，到当前节点为止，所有的参数数量，
-	// 即 seg.Type() 不为 segment.TypeString 的数量。
-	paramsSize int
 }
 
 // 构建当前节点的索引表。
@@ -134,12 +123,8 @@ func (n *Node) newChild(s string) (*Node, error) {
 	}
 
 	child := &Node{
-		parent:     n,
-		seg:        seg,
-		paramsSize: n.paramsSize,
-	}
-	if seg.Type() != segment.TypeString {
-		child.paramsSize++
+		parent: n,
+		seg:    seg,
 	}
 
 	n.children = append(n.children, child)
@@ -198,19 +183,19 @@ func (n *Node) clean(prefix string) {
 // 从子节点中查找与当前路径匹配的节点，若找不到，则返回 nil。
 //
 // NOTE: 此函数与 Node.trace 是一样的，记得同步两边的代码。
-func (n *Node) match(path string) *Node {
+func (n *Node) match(path string, params params.Params) *Node {
 	if len(n.indexes) > 0 {
 		node := n.children[n.indexes[path[0]]]
 		if node == nil {
 			goto LOOP
 		}
 
-		matched, newPath := node.seg.Match(path)
+		matched, newPath := node.seg.Match(path, params)
 		if !matched {
 			goto LOOP
 		}
 
-		if nn := node.match(newPath); nn != nil {
+		if nn := node.match(newPath, params); nn != nil {
 			return nn
 		}
 	}
@@ -221,14 +206,17 @@ LOOP:
 	for i := len(n.indexes); i < len(n.children); i++ {
 		node := n.children[i]
 
-		matched, newPath := node.seg.Match(path)
+		matched, newPath := node.seg.Match(path, params)
 		if !matched {
 			continue
 		}
 
-		if nn := node.match(newPath); nn != nil {
+		if nn := node.match(newPath, params); nn != nil {
 			return nn
 		}
+
+		// 不匹配，则删除 seg 写入的参数
+		node.seg.DeleteParams(params)
 	} // end for
 
 	// 没有子节点匹配，且 len(path)==0，可以判定与当前节点匹配
@@ -239,31 +227,14 @@ LOOP:
 	return nil
 }
 
-// Params 获取 path 在当前路由节点下的参数。
-//
-// 由调用方确保能正常匹配 path
-func (n *Node) Params(path string) params.Params {
-	if n.paramsSize == 0 { // 没有参数
-		return nil
-	}
-
-	params := make(params.Params, n.paramsSize)
-
-	nodes := n.parents()
-	defer nodesPool.Put(nodes)
-	for i := len(nodes) - 1; i >= 0; i-- {
-		path = nodes[i].seg.Params(path, params)
-	}
-
-	return params
-}
-
 // URL 根据参数生成地址
 func (n *Node) URL(params map[string]string) (string, error) {
-	buf := new(bytes.Buffer)
+	nodes := make([]*Node, 0, 5)
+	for curr := n; curr.parent != nil; curr = curr.parent { // 从尾部向上开始获取节点
+		nodes = append(nodes, curr)
+	}
 
-	nodes := n.parents()
-	defer nodesPool.Put(nodes)
+	buf := new(bytes.Buffer)
 	for i := len(nodes) - 1; i >= 0; i-- {
 		if err := nodes[i].seg.URL(buf, params); err != nil {
 			return "", err
@@ -271,19 +242,6 @@ func (n *Node) URL(params map[string]string) (string, error) {
 	}
 
 	return buf.String(), nil
-}
-
-// 逐级向上获取父节点，包含当前节点。
-//
-// NOTE: 记得将 []*Node 放回对象池中。
-func (n *Node) parents() []*Node {
-	nodes := nodesPool.Get().([]*Node)[:0]
-
-	for curr := n; curr.parent != nil; curr = curr.parent { // 从尾部向上开始获取节点
-		nodes = append(nodes, curr)
-	}
-
-	return nodes
 }
 
 // Handler 获取该节点下与参数相对应的处理函数
