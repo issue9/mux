@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
-// Package params 用于处理路由中的参数信息。
+// Package params 获取和转换路由中的参数信息。
 package params
 
 import (
@@ -19,10 +19,10 @@ const ContextKeyParams contextKey = 0
 // ErrParamNotExists 表示地址参数中并不存在该名称的值。
 var ErrParamNotExists = errors.New("不存在该参数")
 
-// Params 用以保存请求地址中的参数内容
+// Params 获取和转换路由中的参数信息。
 type Params map[string]string
 
-// Get 从 r 中获取路由参数。
+// Get 获得一个 Params 实例。
 //
 // 以下情况两个参数都会返回 nil：
 //  非正则和命名路由；

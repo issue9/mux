@@ -83,7 +83,6 @@ func (n *Node) getNode(segments []string) (*Node, error) {
 func (n *Node) addSegment(seg string) (*Node, error) {
 	var child *Node // 找到的最匹配节点
 	var l int       // 最大的匹配字符数量
-
 	for _, c := range n.children {
 		if c.seg.Endpoint() != segment.IsEndpoint(seg) {
 			continue
