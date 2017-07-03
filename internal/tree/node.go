@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"sort"
 	"strings"
-	"sync"
 
 	"github.com/issue9/mux/internal/tree/handlers"
 	"github.com/issue9/mux/internal/tree/segment"
@@ -19,12 +18,6 @@ import (
 
 // Node.children 的数量只有达到此值时，才会为其建立 indexes 索引表。
 const indexesSize = 5
-
-var nodesPool = &sync.Pool{
-	New: func() interface{} {
-		return make([]*Node, 0, 10)
-	},
-}
 
 // Node 表示路由中的节点。
 type Node struct {
@@ -236,10 +229,12 @@ LOOP:
 
 // URL 根据参数生成地址
 func (n *Node) URL(params map[string]string) (string, error) {
-	buf := new(bytes.Buffer)
+	nodes := make([]*Node, 0, 5)
+	for curr := n; curr.parent != nil; curr = curr.parent { // 从尾部向上开始获取节点
+		nodes = append(nodes, curr)
+	}
 
-	nodes := n.parents()
-	defer nodesPool.Put(nodes)
+	buf := new(bytes.Buffer)
 	for i := len(nodes) - 1; i >= 0; i-- {
 		if err := nodes[i].seg.URL(buf, params); err != nil {
 			return "", err
@@ -247,19 +242,6 @@ func (n *Node) URL(params map[string]string) (string, error) {
 	}
 
 	return buf.String(), nil
-}
-
-// 逐级向上获取父节点，包含当前节点。
-//
-// NOTE: 记得将 []*Node 放回对象池中。
-func (n *Node) parents() []*Node {
-	nodes := nodesPool.Get().([]*Node)[:0]
-
-	for curr := n; curr.parent != nil; curr = curr.parent { // 从尾部向上开始获取节点
-		nodes = append(nodes, curr)
-	}
-
-	return nodes
 }
 
 // Handler 获取该节点下与参数相对应的处理函数
