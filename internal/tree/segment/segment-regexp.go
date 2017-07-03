@@ -78,19 +78,13 @@ func (r *reg) DeleteParams(params params.Params) {
 }
 
 func (r *reg) URL(buf *bytes.Buffer, params map[string]string) error {
-	url := r.syntaxExpr.String()
-	subs := append(r.syntaxExpr.Sub, r.syntaxExpr)
-	for _, sub := range subs {
-		if len(sub.Name) == 0 {
-			continue
-		}
-
-		param, exists := params[sub.Name]
-		if !exists {
-			return fmt.Errorf("未找到参数 %v 的值", sub.Name)
-		}
-		url = strings.Replace(url, sub.String(), param, -1)
+	param, found := params[r.name]
+	if !found {
+		return fmt.Errorf("缺少参数 %s", r.name)
 	}
+
+	index := strings.IndexByte(r.value, nameEnd)
+	url := strings.Replace(r.value, r.value[:index+1], param, 1)
 
 	_, err := buf.WriteString(url)
 	return err
