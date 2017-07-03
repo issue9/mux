@@ -11,6 +11,7 @@ import (
 
 	"github.com/issue9/mux/internal/tree/handlers"
 	"github.com/issue9/mux/internal/tree/segment"
+	"github.com/issue9/mux/params"
 )
 
 // Tree 以树节点的形式保存的路由。
@@ -71,8 +72,10 @@ func (tree *Tree) Add(pattern string, h http.Handler, methods ...string) error {
 }
 
 // Match 查找与 path 匹配的节点
-func (tree *Tree) Match(path string) *Node {
-	return tree.match(path)
+func (tree *Tree) Match(path string) (*Node, params.Params) {
+	ps := make(params.Params, 5)
+	node := tree.match(path, ps)
+	return node, ps
 }
 
 // Clean 清除路由项

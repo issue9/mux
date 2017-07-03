@@ -198,19 +198,19 @@ func (n *Node) clean(prefix string) {
 // 从子节点中查找与当前路径匹配的节点，若找不到，则返回 nil。
 //
 // NOTE: 此函数与 Node.trace 是一样的，记得同步两边的代码。
-func (n *Node) match(path string) *Node {
+func (n *Node) match(path string, params params.Params) *Node {
 	if len(n.indexes) > 0 {
 		node := n.children[n.indexes[path[0]]]
 		if node == nil {
 			goto LOOP
 		}
 
-		matched, newPath := node.seg.Match(path)
+		matched, newPath := node.seg.Match(path, params)
 		if !matched {
 			goto LOOP
 		}
 
-		if nn := node.match(newPath); nn != nil {
+		if nn := node.match(newPath, params); nn != nil {
 			return nn
 		}
 	}
@@ -221,14 +221,17 @@ LOOP:
 	for i := len(n.indexes); i < len(n.children); i++ {
 		node := n.children[i]
 
-		matched, newPath := node.seg.Match(path)
+		matched, newPath := node.seg.Match(path, params)
 		if !matched {
 			continue
 		}
 
-		if nn := node.match(newPath); nn != nil {
+		if nn := node.match(newPath, params); nn != nil {
 			return nn
 		}
+
+		// 不匹配，则删除 seg 写入的参数
+		node.seg.DeleteParams(params)
 	} // end for
 
 	// 没有子节点匹配，且 len(path)==0，可以判定与当前节点匹配

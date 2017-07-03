@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/issue9/mux/internal/tree/segment"
+	"github.com/issue9/mux/params"
 )
 
 // Print 向 w 输出树状结构
@@ -19,11 +20,12 @@ func (tree *Tree) Print(w io.Writer) {
 
 // Trace 向 w 输出详细的节点匹配过程
 func (tree *Tree) Trace(w io.Writer, path string) {
-	tree.trace(w, 0, path)
+	params := make(params.Params, 10)
+	tree.trace(w, 0, path, params)
 }
 
 // NOTE: 此函数与 Node.match 是一样的，记得同步两边的代码。
-func (n *Node) trace(w io.Writer, deep int, path string) *Node {
+func (n *Node) trace(w io.Writer, deep int, path string, params params.Params) *Node {
 	if len(n.indexes) > 0 {
 		node := n.children[n.indexes[path[0]]]
 		fmt.Fprint(w, strings.Repeat(" ", deep*4), node.seg.Value(), "---", typeString(node.seg.Type()), "---", path)
@@ -33,14 +35,14 @@ func (n *Node) trace(w io.Writer, deep int, path string) *Node {
 			goto LOOP
 		}
 
-		matched, newPath := node.seg.Match(path)
+		matched, newPath := node.seg.Match(path, params)
 		if !matched {
 			fmt.Fprintln(w, "(!matched)")
 			goto LOOP
 		}
 
 		fmt.Fprintln(w, "(continue)")
-		if nn := node.match(newPath); nn != nil {
+		if nn := node.match(newPath, params); nn != nil {
 			return nn
 		}
 	}
@@ -52,14 +54,14 @@ LOOP:
 		node := n.children[i]
 
 		fmt.Fprint(w, strings.Repeat(" ", deep*4), node.seg.Value(), "---", typeString(node.seg.Type()), "---", path)
-		matched, newPath := node.seg.Match(path)
+		matched, newPath := node.seg.Match(path, params)
 		if !matched {
 			fmt.Fprintln(w, "(!matched)")
 			continue
 		}
 
 		fmt.Fprintln(w, "(continue)")
-		if nn := node.trace(w, deep+1, newPath); nn != nil {
+		if nn := node.trace(w, deep+1, newPath, params); nn != nil {
 			return nn
 		}
 	} // end for

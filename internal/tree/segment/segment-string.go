@@ -25,12 +25,15 @@ func (s str) Endpoint() bool {
 	return false
 }
 
-func (s str) Match(path string) (bool, string) {
+func (s str) Match(path string, params params.Params) (bool, string) {
 	if strings.HasPrefix(path, string(s)) {
 		return true, path[len(s):]
 	}
 
 	return false, path
+}
+
+func (s str) DeleteParams(params params.Params) {
 }
 
 func (s str) Params(path string, params params.Params) string {

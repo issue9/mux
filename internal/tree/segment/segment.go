@@ -43,7 +43,7 @@ type Segment interface {
 
 	// 将当前内容与 path 进行匹配，若成功匹配，
 	// 则返回 true 和去掉匹配内容之后的字符串。
-	Match(path string) (bool, string)
+	Match(path string, params params.Params) (bool, string)
 
 	// 从 path 中匹配与当前内容匹配的参数值，
 	// 写入到 params 中，并返回去掉匹配内容之后的字符串。
@@ -51,6 +51,8 @@ type Segment interface {
 
 	// 将当前内容写入到 buf 中，若有参数，则参数部分内容从 params。
 	URL(buf *bytes.Buffer, params map[string]string) error
+
+	DeleteParams(params params.Params)
 }
 
 // Equal 判断内容是否相同
