@@ -13,6 +13,7 @@ import (
 	"github.com/issue9/assert"
 	"github.com/issue9/mux/internal/tree/handlers"
 	"github.com/issue9/mux/internal/tree/segment"
+	"github.com/issue9/mux/params"
 )
 
 func buildHandler(code int) http.Handler {
@@ -28,8 +29,8 @@ func split(a *assert.Assertion, pattern string) []string {
 }
 
 type tester struct {
-	n *Tree
-	a *assert.Assertion
+	tree *Tree
+	a    *assert.Assertion
 }
 
 func newTester(a *assert.Assertion) *tester {
@@ -37,15 +38,15 @@ func newTester(a *assert.Assertion) *tester {
 	a.NotError(err).NotNil(seg)
 
 	return &tester{
-		n: New(),
-		a: a,
+		tree: New(),
+		a:    a,
 	}
 }
 
 // 添加一条路由项。code 表示该路由项返回的报头，
 // 测试路由项的 code 需要唯一，之后也是通过此值来判断其命中的路由项。
 func (n *tester) add(method, pattern string, code int) {
-	nn, err := n.n.getNode(split(n.a, pattern))
+	nn, err := n.tree.getNode(split(n.a, pattern))
 	n.a.NotError(err).NotNil(nn)
 
 	if nn.handlers == nil {
@@ -55,9 +56,10 @@ func (n *tester) add(method, pattern string, code int) {
 	nn.handlers.Add(buildHandler(code), method)
 }
 
-// 验证指定的路径是否匹配正确的路由项，通过 code 来确定，并返回该节点的实例。
-func (n *tester) matchTrue(method, path string, code int) *Node {
-	nn := n.n.match(path)
+// 验证按照指定的 method 和 path 访问，是否会返回相同的 code 值，
+// 若是，则返回该节点以及对应的参数。
+func (n *tester) match(method, path string, code int) (*Node, params.Params) {
+	nn, ps := n.tree.Match(path)
 	n.a.NotNil(nn)
 
 	h := nn.Handler(method)
@@ -68,21 +70,25 @@ func (n *tester) matchTrue(method, path string, code int) *Node {
 	h.ServeHTTP(w, r)
 	n.a.Equal(w.Code, code)
 
-	return nn
+	return nn, ps
+}
+
+// 验证指定的路径是否匹配正确的路由项，通过 code 来确定，并返回该节点的实例。
+func (n *tester) matchTrue(method, path string, code int) {
+	nn, _ := n.match(method, path, code)
+	n.a.NotNil(nn)
 }
 
 // 验证指定的路径返回的参数是否正确
 func (n *tester) paramsTrue(method, path string, code int, params map[string]string) {
-	nn := n.matchTrue(method, path, code)
-
-	ps := nn.Params(path)
+	_, ps := n.match(method, path, code)
 	n.a.Equal(ps, params)
 }
 
 // 验证 Node.URL 的正确性
 // method+path 用于获取指定的节点
 func (n *tester) urlTrue(method, path string, code int, params map[string]string, url string) {
-	nn := n.matchTrue(method, path, code)
+	nn, _ := n.match(method, path, code)
 
 	u, err := nn.URL(params)
 	n.a.NotError(err)
@@ -139,7 +145,7 @@ func TestTree_match(t *testing.T) {
 	test.matchTrue(http.MethodGet, "/admin/items/1", 2)
 	test.matchTrue(http.MethodGet, "/admin/items/1/profile", 3)
 	test.matchTrue(http.MethodGet, "/admin/items/1/profile/1", 4)
-	test.n.trace(os.Stdout, 0, "/admin/items/1/profile/1")
+	test.tree.Trace(os.Stdout, "/admin/items/1/profile/1")
 }
 
 func TestTree_Params(t *testing.T) {

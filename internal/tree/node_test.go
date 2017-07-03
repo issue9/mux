@@ -40,24 +40,6 @@ func TestNode_find(t *testing.T) {
 	a.Equal(node.find("/posts/{id}/{author:\\w+}/profile").seg.Value(), "{author:\\w+}/profile")
 }
 
-func TestNode_parents(t *testing.T) {
-	a := assert.New(t)
-
-	n1 := &Node{
-		children: make([]*Node, 0, 1),
-	}
-	n2 := &Node{
-		children: make([]*Node, 0, 1),
-		parent:   n1,
-	}
-	n3 := &Node{
-		parent: n2,
-	}
-
-	a.Equal(n3.parents(), []*Node{n3, n2})
-	a.Equal(n2.parents(), []*Node{n2})
-}
-
 func TestRemoveNoddes(t *testing.T) {
 	a := assert.New(t)
 	newNode := func(str string) *Node {
