@@ -129,22 +129,10 @@ func (r *Resource) Clean() *Resource {
 	return r
 }
 
-// Name 给当前资源一个名称，不能与已有名称相同。
-// 命名的资源会保存在 Mux 中，之后可以通过过 Mux.Name() 找到该资源。
+// Name 为一条路由项命名。
+// URL 可以通过此属性来生成地址。
 func (r *Resource) Name(name string) error {
-	r.mux.resourcesMu.RLock()
-	_, exists := r.mux.resources[name]
-	r.mux.resourcesMu.RUnlock()
-
-	if exists {
-		return ErrResourceNameExists
-	}
-
-	r.mux.resourcesMu.Lock()
-	r.mux.resources[name] = r
-	r.mux.resourcesMu.Unlock()
-
-	return nil
+	return r.mux.Name(name, r.pattern)
 }
 
 // URL 根据参数构建一条 URL。
@@ -157,20 +145,7 @@ func (r *Resource) Name(name string) error {
 //  res, := m.Resource("/posts/{id}/{path}")
 //  res.URL(map[string]string{"id": "1","path":"author/profile"}) // /posts/1/author/profile
 func (r *Resource) URL(params map[string]string) (string, error) {
-	node, err := r.mux.tree.GetNode(r.pattern)
-	if err != nil {
-		return "", err
-	}
-	return node.URL(params)
-}
-
-// Name 返回指定名称的 *Resource 实例，如果不存在返回 nil。
-func (mux *Mux) Name(name string) *Resource {
-	mux.resourcesMu.RLock()
-	r := mux.resources[name]
-	mux.resourcesMu.RUnlock()
-
-	return r
+	return r.mux.URL(r.pattern, params)
 }
 
 // Resource 创建一个资源路由项。

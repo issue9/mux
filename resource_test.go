@@ -83,27 +83,7 @@ func TestMux_Resource(t *testing.T) {
 	a.False(r1 == r2) // 不是同一个 *Resource
 }
 
-func TestResource_Name(t *testing.T) {
-	a := assert.New(t)
-	srvmux := New(false, false, nil, nil)
-	a.NotNil(srvmux)
-
-	res := srvmux.Resource("/posts/{id}")
-	a.NotNil(res)
-	a.NotError(res.Name("post"))
-	// 应该是同一个
-	a.Equal(srvmux.Name("post"), res)
-
-	// 未指定名称，不存在
-	a.Nil(srvmux.Name("author"))
-
-	res = srvmux.Resource("/posts/{id}/author")
-	a.NotNil(res)
-	// 同名
-	a.Error(res.Name("post"))
-}
-
-func TestResource_URL(t *testing.T) {
+func TestResource_Name_URL(t *testing.T) {
 	a := assert.New(t)
 	srvmux := New(false, false, nil, nil)
 	a.NotNil(srvmux)
@@ -128,4 +108,8 @@ func TestResource_URL(t *testing.T) {
 	// 缺少参数
 	url, err = res.URL(map[string]string{"id": "1"})
 	a.Error(err).Equal(url, "")
+
+	a.NotError(res.Name("action"))
+	url, err = res.Mux().URL("action", map[string]string{"id": "1", "action": "blog"})
+	a.NotError(err).Equal(url, "/api/blog/1")
 }
