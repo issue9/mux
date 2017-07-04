@@ -18,9 +18,6 @@ var ErrResourceNameExists = errors.New("存在相同名称的资源")
 //  r.Get(h)  // 相当于 srv.Get("/api/users/{id}")
 //  r.Post(h) // 相当于 srv.Post("/api/users/{id}")
 //  url := r.URL(map[string]string{"id":5}) // 获得 /api/users/5
-//
-//  r.Name("user")             // 以 user 为名保存此实例，方便之后调用
-//  srv.Name("user").URL(...)  // 调用名为 user 的 *Resource 实例
 type Resource struct {
 	mux     *Mux
 	pattern string

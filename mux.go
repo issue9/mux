@@ -46,9 +46,9 @@ type Mux struct {
 // New 声明一个新的 Mux。
 //
 // disableOptions 是否禁用自动生成 OPTIONS 功能；
-// skipCleanPath 是否不对对访问路径作处理，比如 "//api" ==> "/api"；
-// notFound 404 页面的处理方式，为 nil 时会调用 defaultNotFound 进行处理；
-// methodNotAllowed 405 页面的处理方式，为 nil 时会调用 defaultMethodNotAllowed 进行处理。
+// skipCleanPath 是否不对访问路径作处理，比如 "//api" ==> "/api"；
+// notFound 404 页面的处理方式，为 nil 时会调用默认的方式进行处理；
+// methodNotAllowed 405 页面的处理方式，为 nil 时会调用默认的方式进行处理。
 func New(disableOptions, skipCleanPath bool, notFound, methodNotAllowed http.HandlerFunc) *Mux {
 	if notFound == nil {
 		notFound = defaultNotFound

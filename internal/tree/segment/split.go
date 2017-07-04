@@ -2,7 +2,6 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
-// Package segment 处理路由字符串语法。
 package segment
 
 import (
