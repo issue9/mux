@@ -132,27 +132,36 @@ func (n *Node) newChild(s string) (*Node, error) {
 		parent:   n,
 		pattern:  s,
 		endpoint: segment.IsEndpoint(s),
-		nodeType: segment.TypeString,
+		nodeType: segment.StringType(s),
 	}
-	if strings.IndexByte(s, '{') > -1 {
-		child.nodeType = segment.TypeNamed
-		endIndex := strings.IndexByte(s, '}')
+
+	if child.nodeType == segment.TypeNamed {
+		endIndex := strings.IndexByte(s, segment.NameEnd)
 		if endIndex == -1 {
 			return nil, fmt.Errorf("无效的路由语法：%s", s)
 		}
 		child.name = s[1:endIndex]
 		child.suffix = s[endIndex+1:]
 	}
-	if strings.IndexByte(s, ':') > -1 {
-		child.nodeType = segment.TypeRegexp
-		index := strings.IndexByte(s, ':')
+
+	if child.nodeType == segment.TypeRegexp {
+		index := strings.IndexByte(s, segment.RegexpSeparator)
+		if index == -1 {
+			return nil, fmt.Errorf("无效的路由语法：%s", s)
+		}
 
 		expr, err := regexp.Compile(segment.Regexp(s))
 		if err != nil {
 			return nil, err
 		}
-		child.name = s[1:index]
 		child.expr = expr
+		child.name = s[1:index]
+
+		index = strings.IndexByte(s, segment.NameEnd)
+		if index == -1 {
+			return nil, fmt.Errorf("无效的路由语法：%s", s)
+		}
+		child.suffix = s[index+1:]
 	}
 
 	n.children = append(n.children, child)
@@ -255,9 +264,12 @@ LOOP:
 	return nil
 }
 
-// fun
 func (n *Node) matchCurrent(path string, params params.Params) (bool, string) {
 	switch n.nodeType {
+	case segment.TypeString:
+		if strings.HasPrefix(path, n.pattern) {
+			return true, path[len(n.pattern):]
+		}
 	case segment.TypeNamed:
 		if n.endpoint {
 			params[n.name] = path
@@ -277,10 +289,6 @@ func (n *Node) matchCurrent(path string, params params.Params) (bool, string) {
 
 		params[n.name] = path[:locs[3]]
 		return true, path[locs[1]:]
-	case segment.TypeString:
-		if strings.HasPrefix(path, n.pattern) {
-			return true, path[len(n.pattern):]
-		}
 	}
 
 	return false, path
@@ -297,29 +305,17 @@ func (n *Node) URL(params map[string]string) (string, error) {
 	for i := len(nodes) - 1; i >= 0; i-- {
 		node := nodes[i]
 		switch node.nodeType {
-		case segment.TypeNamed:
+		case segment.TypeString:
+			buf.WriteString(string(node.pattern))
+		case segment.TypeNamed, segment.TypeRegexp:
 			param, exists := params[node.name]
 			if !exists {
 				return "", fmt.Errorf("未找到参数 %s 的值", node.name)
 			}
 			buf.WriteString(param)
 			buf.WriteString(node.suffix) // 如果是 endpoint suffix 肯定为空
-		case segment.TypeRegexp:
-			param, found := params[node.name]
-			if !found {
-				return "", fmt.Errorf("缺少参数 %s", n.name)
-			}
-
-			index := strings.IndexByte(node.pattern, '}')
-			url := strings.Replace(node.pattern, node.pattern[:index+1], param, 1)
-
-			if _, err := buf.WriteString(url); err != nil {
-				return "", err
-			}
-		case segment.TypeString:
-			buf.WriteString(string(node.pattern))
-		}
-	}
+		} // end switch
+	} // end for
 
 	return buf.String(), nil
 }

@@ -31,9 +31,19 @@ func TestLongestPrefix(t *testing.T) {
 	test("/tes{t:\\d+}", "/tes{t}", 4)
 }
 
-func TestRepl(t *testing.T) {
+func TestRegexp(t *testing.T) {
 	a := assert.New(t)
 
-	a.Equal(repl.Replace("{id:\\d+}"), "(?P<id>\\d+)")
-	a.Equal(repl.Replace("{id:\\d+}/author"), "(?P<id>\\d+)/author")
+	a.Equal(Regexp("{id:\\d+}"), "(?P<id>\\d+)")
+	a.Equal(Regexp("{id:\\d+}/author"), "(?P<id>\\d+)/author")
+}
+
+func TestStringType(t *testing.T) {
+	a := assert.New(t)
+
+	a.Equal(StringType(""), TypeString)
+	a.Equal(StringType("/posts"), TypeString)
+	a.Equal(StringType("/posts/{id}"), TypeNamed)
+	a.Equal(StringType("/posts/{id}/author"), TypeNamed)
+	a.Equal(StringType("/posts/{id:\\d+}/author"), TypeRegexp)
 }

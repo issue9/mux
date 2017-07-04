@@ -8,9 +8,9 @@ import "strings"
 
 // 路由项字符串中的几个特殊字符定义
 const (
-	nameStart       byte = '{' // 命名或是正则参数的起始字符
-	nameEnd         byte = '}' // 命名或是正则参数的结束字符
-	regexpSeparator byte = ':' // 正则参数中名称和正则的分隔符
+	NameStart       byte = '{' // 命名或是正则参数的起始字符
+	NameEnd         byte = '}' // 命名或是正则参数的结束字符
+	RegexpSeparator byte = ':' // 正则参数中名称和正则的分隔符
 )
 
 // Type 表示当前 Segment 的类型
@@ -37,7 +37,7 @@ func Regexp(str string) string {
 
 // IsEndpoint 判断字符串是否可作为终点。
 func IsEndpoint(str string) bool {
-	return str[len(str)-1] == nameEnd
+	return str[len(str)-1] == NameEnd
 }
 
 // LongestPrefix 获取两个字符串之间相同的前缀字符串的长度，
@@ -50,19 +50,19 @@ func LongestPrefix(s1, s2 string) int {
 
 	startIndex := -10
 	endIndex := -10
-	state := nameEnd
+	state := NameEnd
 	for i := 0; i < l; i++ {
 		switch s1[i] {
-		case nameStart:
+		case NameStart:
 			startIndex = i
-			state = nameStart
-		case nameEnd:
-			state = nameEnd
+			state = NameStart
+		case NameEnd:
+			state = NameEnd
 			endIndex = i
 		}
 
 		if s1[i] != s2[i] {
-			if state != nameEnd { // 不从命名参数中间分隔
+			if state != NameEnd { // 不从命名参数中间分隔
 				return startIndex
 			}
 			if endIndex == i { // 命名参数之后必须要有一个或以上的普通字符
@@ -77,4 +77,22 @@ func LongestPrefix(s1, s2 string) int {
 	}
 
 	return l
+}
+
+// StringType 获取字符串的类型。调用者需要确保 str 语法正确。
+func StringType(str string) Type {
+	typ := TypeString
+
+	for i := 0; i < len(str); i++ {
+		switch str[i] {
+		case RegexpSeparator:
+			typ = TypeRegexp
+		case NameStart:
+			typ = TypeNamed
+		case NameEnd:
+			break
+		}
+	} // end for
+
+	return typ
 }
