@@ -7,7 +7,6 @@ package tree
 import (
 	"errors"
 	"fmt"
-	"regexp"
 	"strings"
 )
 
@@ -18,53 +17,14 @@ const (
 	regexpSeparator byte = ':' // 正则参数中名称和正则的分隔符
 )
 
-func isEndpoint(s string) bool {
-	return s[len(s)-1] == nameEnd
-}
-
 // 将路由语法转换成正则表达式语法，比如：
 //  {id:\\d+}/author => (?P<id>\\d+)
 var repl = strings.NewReplacer(string("{"), "(?P<",
 	string(":"), ">",
 	string("}"), ")")
 
-// 根据 s 内容为当前节点产生一个子节点，并返回该新节点。
-func newNode(s string) (*Node, error) {
-	n := &Node{
-		pattern:  s,
-		endpoint: isEndpoint(s),
-		nodeType: stringType(s),
-	}
-
-	switch n.nodeType {
-	case nodeTypeNamed:
-		index := strings.IndexByte(s, nameEnd)
-		if index == -1 {
-			return nil, fmt.Errorf("无效的路由语法：%s", s)
-		}
-		n.name = s[1:index]
-		n.suffix = s[index+1:]
-	case nodeTypeRegexp:
-		index := strings.IndexByte(s, regexpSeparator)
-		if index == -1 {
-			return nil, fmt.Errorf("无效的路由语法：%s", s)
-		}
-
-		expr, err := regexp.Compile(repl.Replace(s))
-		if err != nil {
-			return nil, err
-		}
-		n.expr = expr
-		n.name = s[1:index]
-
-		index = strings.IndexByte(s, nameEnd)
-		if index == -1 {
-			return nil, fmt.Errorf("无效的路由语法：%s", s)
-		}
-		n.suffix = s[index+1:]
-	}
-
-	return n, nil
+func isEndpoint(s string) bool {
+	return s[len(s)-1] == nameEnd
 }
 
 // 获取两个字符串之间相同的前缀字符串的长度，
@@ -109,7 +69,6 @@ func longestPrefix(s1, s2 string) int {
 // 获取字符串的类型。调用者需要确保 str 语法正确。
 func stringType(str string) nodeType {
 	typ := nodeTypeString
-
 	for i := 0; i < len(str); i++ {
 		switch str[i] {
 		case regexpSeparator:

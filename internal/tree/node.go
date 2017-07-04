@@ -126,7 +126,7 @@ func (n *Node) addSegment(seg string) (*Node, error) {
 	}
 
 	if l <= 0 { // 没有共同前缀，声明一个新的加入到当前节点
-		return n.newChild(seg)
+		return n.newChild(seg), nil
 	}
 
 	parent, err := splitNode(child, l)
@@ -142,20 +142,33 @@ func (n *Node) addSegment(seg string) (*Node, error) {
 }
 
 // 根据 s 内容为当前节点产生一个子节点，并返回该新节点。
-func (n *Node) newChild(s string) (*Node, error) {
-	child, err := newNode(s)
-	if err != nil {
-		return nil, err
+// 由调用方确保 s 的语法正确性，否则可能 panic。
+func (n *Node) newChild(s string) *Node {
+	child := &Node{
+		parent:   n,
+		pattern:  s,
+		endpoint: isEndpoint(s),
+		nodeType: stringType(s),
 	}
 
-	child.parent = n
+	switch child.nodeType {
+	case nodeTypeNamed:
+		index := strings.IndexByte(s, nameEnd)
+		child.name = s[1:index]
+		child.suffix = s[index+1:]
+	case nodeTypeRegexp:
+		child.expr = regexp.MustCompile(repl.Replace(s))
+		child.name = s[1:strings.IndexByte(s, regexpSeparator)]
+		child.suffix = s[strings.IndexByte(s, nameEnd)+1:]
+	}
+
 	n.children = append(n.children, child)
 	sort.SliceStable(n.children, func(i, j int) bool {
 		return n.children[i].priority() < n.children[j].priority()
 	})
 	n.buildIndexes()
 
-	return child, nil
+	return child
 }
 
 // 查找路由项，不存在返回 nil
@@ -342,7 +355,7 @@ func removeNodes(nodes []*Node, pattern string) []*Node {
 // 将节点 n 从 pos 位置进行拆分。后一段作为当前段的子节点，并返回当前节点。
 // 若 pos 大于或等于 n.pattern 的长度，则直接返回 n 不会拆分，pos 处的字符作为子节点的内容。
 //
-// NOTE: 调用者需确保 pos 位置是可拆分的。
+// NOTE: 调用者需确保 pos 位置是可拆分的，否则将 panic。
 func splitNode(n *Node, pos int) (*Node, error) {
 	if len(n.pattern) <= pos { // 不需要拆分
 		return n, nil
@@ -357,15 +370,8 @@ func splitNode(n *Node, pos int) (*Node, error) {
 	p.children = removeNodes(p.children, n.pattern)
 	p.buildIndexes()
 
-	ret, err := p.newChild(n.pattern[:pos])
-	if err != nil {
-		return nil, err
-	}
-
-	c, err := ret.newChild(n.pattern[pos:])
-	if err != nil {
-		return nil, err
-	}
+	ret := p.newChild(n.pattern[:pos])
+	c := ret.newChild(n.pattern[pos:])
 	c.handlers = n.handlers
 	c.children = n.children
 	c.indexes = n.indexes

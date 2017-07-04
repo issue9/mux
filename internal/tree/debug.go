@@ -96,6 +96,7 @@ func (n *Node) len() int {
 	return cnt
 }
 
+// 仅上面的 trace 用到
 func (t nodeType) String() string {
 	switch t {
 	case nodeTypeNamed:

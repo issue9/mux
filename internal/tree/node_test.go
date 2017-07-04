@@ -95,8 +95,8 @@ func TestSplitNode(t *testing.T) {
 	nn, err := splitNode(p, 1)
 	a.Error(err).Nil(nn)
 
-	node, err := p.newChild("/posts/{id}/author")
-	a.NotError(err).NotNil(node)
+	node := p.newChild("/posts/{id}/author")
+	a.NotNil(node)
 
 	nn, err = splitNode(node, 7) // 从 { 开始拆分
 	a.NotError(err).NotNil(nn)
@@ -108,6 +108,5 @@ func TestSplitNode(t *testing.T) {
 	a.NotError(err).NotNil(nn)
 	a.Equal(0, len(nn.children))
 
-	nn, err = splitNode(node, 8) // 从 i 开始拆分
-	a.Error(err).Nil(nn)
+	a.Panic(func() { splitNode(node, 8) }) // 从 i 开始拆分，不可拆分
 }

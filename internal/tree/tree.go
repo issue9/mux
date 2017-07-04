@@ -46,12 +46,7 @@ func New() *Tree {
 //
 // methods 可以为空，表示添加除 OPTIONS 之外所有支持的请求方法。
 func (tree *Tree) Add(pattern string, h http.Handler, methods ...string) error {
-	ss, err := split(pattern)
-	if err != nil {
-		return err
-	}
-
-	n, err := tree.getNode(ss)
+	n, err := tree.GetNode(pattern)
 	if err != nil {
 		return err
 	}
