@@ -25,18 +25,24 @@ const indexesSize = 5
 type Node struct {
 	parent   *Node
 	handlers *handlers.Handlers
+	children []*Node
 	pattern  string
 	nodeType segment.Type
-	children []*Node
 
-	// 用于表示当前是否为终点，仅对 Type 为 TypeRegexp 和 TypeNamed 有用。
-	// 此值为 true，该节点的优先级会比同类型的节点低，以便优先对比其它非最终节点。
+	// 用于表示当前是否为终点，仅对非字符串节点有用。此值为 true，
+	// 该节点的优先级会比同类型的节点低，以便优先对比其它非最终节点。
 	endpoint bool
 
-	// 参数名称，仅对 Type 为 TypeRegexp 和 TypeNamed 有用。
-	name   string
+	// 当前节点的参数名称，比如 "{id}/author"，
+	// 则此值为 "id"，仅非字符串节点有用。
+	name string
+
+	// 保存参数名之后的字符串，比如 "{id}/author" 此值为 "/author"，
+	// 仅对非字符串节点有效果，若 endpoint 为 false，则此值也不空。
 	suffix string
-	expr   *regexp.Regexp
+
+	// 正则表达式特有参数，用于缓存当前节点的正则编译结果。
+	expr *regexp.Regexp
 
 	// 所有节点类型为字符串的子节点，其首字符必定是不同的（相同的都提升到父节点中），
 	// 根据此特性，可以将所有字符串类型的首字符做个索引，这样字符串类型节点的比较，
