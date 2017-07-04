@@ -9,7 +9,6 @@ import (
 	"io"
 	"strings"
 
-	"github.com/issue9/mux/internal/tree/syntax"
 	"github.com/issue9/mux/params"
 )
 
@@ -28,7 +27,7 @@ func (tree *Tree) Trace(w io.Writer, path string) {
 func (n *Node) trace(w io.Writer, deep int, path string, params params.Params) *Node {
 	if len(n.indexes) > 0 {
 		node := n.children[n.indexes[path[0]]]
-		fmt.Fprint(w, strings.Repeat(" ", deep*4), node.pattern, "---", typeString(node.nodeType), "---", path)
+		fmt.Fprint(w, strings.Repeat(" ", deep*4), node.pattern, "---", node.nodeType, "---", path)
 
 		if node == nil {
 			fmt.Fprintln(w, "(!matched)")
@@ -53,7 +52,7 @@ LOOP:
 	for i := len(n.indexes); i < len(n.children); i++ {
 		node := n.children[i]
 
-		fmt.Fprint(w, strings.Repeat(" ", deep*4), node.pattern, "---", typeString(node.nodeType), "---", path)
+		fmt.Fprint(w, strings.Repeat(" ", deep*4), node.pattern, "---", node.nodeType, "---", path)
 		matched, newPath := node.matchCurrent(path, params)
 		if !matched {
 			fmt.Fprintln(w, "(!matched)")
@@ -67,7 +66,7 @@ LOOP:
 	} // end for
 
 	if len(path) == 0 {
-		fmt.Fprintln(w, strings.Repeat(" ", (deep-1)*4), n.pattern, "---", typeString(n.nodeType), "---", path, "(matched)")
+		fmt.Fprintln(w, strings.Repeat(" ", (deep-1)*4), n.pattern, "---", n.nodeType, "---", path, "(matched)")
 		return n
 	}
 
@@ -97,13 +96,13 @@ func (n *Node) len() int {
 	return cnt
 }
 
-func typeString(t syntax.Type) string {
+func (t nodeType) String() string {
 	switch t {
-	case syntax.TypeNamed:
+	case nodeTypeNamed:
 		return "named"
-	case syntax.TypeRegexp:
+	case nodeTypeRegexp:
 		return "regexp"
-	case syntax.TypeString:
+	case nodeTypeString:
 		return "string"
 	default:
 		return "<unknown>"

@@ -12,7 +12,6 @@ import (
 
 	"github.com/issue9/assert"
 	"github.com/issue9/mux/internal/tree/handlers"
-	"github.com/issue9/mux/internal/tree/syntax"
 	"github.com/issue9/mux/params"
 )
 
@@ -23,7 +22,7 @@ func buildHandler(code int) http.Handler {
 }
 
 func split(a *assert.Assertion, pattern string) []string {
-	ss, err := syntax.Split(pattern)
+	ss, err := Split(pattern)
 	a.NotError(err).NotNil(ss)
 	return ss
 }
