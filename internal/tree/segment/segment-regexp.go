@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"fmt"
 	"regexp"
-	"regexp/syntax"
 	"strings"
 
 	"github.com/issue9/mux/params"
@@ -21,11 +20,10 @@ var repl = strings.NewReplacer(string(nameStart), "(?P<",
 	string(nameEnd), ")")
 
 type reg struct {
-	name       string
-	value      string
-	endpoint   bool
-	expr       *regexp.Regexp
-	syntaxExpr *syntax.Regexp
+	name     string
+	value    string
+	endpoint bool
+	expr     *regexp.Regexp
 }
 
 func newReg(str string) (Segment, error) {
@@ -37,17 +35,11 @@ func newReg(str string) (Segment, error) {
 		return nil, err
 	}
 
-	syntaxExpr, err := syntax.Parse(r, syntax.Perl)
-	if err != nil {
-		return nil, err
-	}
-
 	return &reg{
-		value:      str,
-		name:       str[1:index],
-		expr:       expr,
-		syntaxExpr: syntaxExpr,
-		endpoint:   IsEndpoint(str),
+		value:    str,
+		name:     str[1:index],
+		expr:     expr,
+		endpoint: IsEndpoint(str),
 	}, nil
 }
 
@@ -64,22 +56,13 @@ func (r *reg) Endpoint() bool {
 }
 
 func (r *reg) Match(path string, params params.Params) (bool, string) {
-	loc := r.expr.FindStringIndex(path)
-	if loc == nil || loc[0] != 0 { // 不匹配
+	locs := r.expr.FindStringSubmatchIndex(path)
+	if locs == nil || locs[0] != 0 { // 不匹配
 		return false, path
 	}
 
-	subexps := r.expr.SubexpNames()
-	args := r.expr.FindStringSubmatch(path)
-	for index, name := range subexps {
-		if len(name) > 0 && index < len(args) {
-			params[name] = args[index]
-		}
-	}
-	if loc[1] == len(path) {
-		return true, path[:0]
-	}
-	return true, path[loc[1]:]
+	params[r.name] = path[:locs[3]]
+	return true, path[locs[1]:]
 }
 
 func (r *reg) DeleteParams(params params.Params) {
@@ -87,19 +70,13 @@ func (r *reg) DeleteParams(params params.Params) {
 }
 
 func (r *reg) URL(buf *bytes.Buffer, params map[string]string) error {
-	url := r.syntaxExpr.String()
-	subs := append(r.syntaxExpr.Sub, r.syntaxExpr)
-	for _, sub := range subs {
-		if len(sub.Name) == 0 {
-			continue
-		}
-
-		param, exists := params[sub.Name]
-		if !exists {
-			return fmt.Errorf("未找到参数 %v 的值", sub.Name)
-		}
-		url = strings.Replace(url, sub.String(), param, -1)
+	param, found := params[r.name]
+	if !found {
+		return fmt.Errorf("缺少参数 %s", r.name)
 	}
+
+	index := strings.IndexByte(r.value, nameEnd)
+	url := strings.Replace(r.value, r.value[:index+1], param, 1)
 
 	_, err := buf.WriteString(url)
 	return err

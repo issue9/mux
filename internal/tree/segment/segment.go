@@ -48,15 +48,14 @@ type Segment interface {
 	// 将当前内容写入到 buf 中，若有参数，则参数部分内容从 params。
 	URL(buf *bytes.Buffer, params map[string]string) error
 
-	// 从 params 中删除当前的内容对应的名称。
+	// 从 params 中删除当前的内容对应的参数。
 	DeleteParams(params params.Params)
 }
 
 // Equal 判断内容是否相同
 func Equal(s1, s2 Segment) bool {
 	return s1.Endpoint() == s2.Endpoint() &&
-		s1.Value() == s2.Value() &&
-		s1.Type() == s2.Type()
+		s1.Value() == s2.Value() // 值相同，类型值肯定相同
 }
 
 // IsEndpoint 判断字符串是否可作为终点。
@@ -97,7 +96,7 @@ func stringType(str string) Type {
 	return typ
 }
 
-// LongestPrefix 获取两个 Segment 之间相同的前缀字符串的长度，
+// LongestPrefix 获取两个字符串之间相同的前缀字符串的长度，
 // 不会从 {} 中间被分开，正则表达式与之后的内容也不再分隔。
 func LongestPrefix(s1, s2 string) int {
 	l := len(s1)

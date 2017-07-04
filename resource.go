@@ -7,8 +7,6 @@ package mux
 import (
 	"errors"
 	"net/http"
-
-	"github.com/issue9/mux/internal/tree"
 )
 
 // ErrResourceNameExists 当为一个资源命名时，若存在相同名称的，
@@ -26,7 +24,6 @@ var ErrResourceNameExists = errors.New("存在相同名称的资源")
 type Resource struct {
 	mux     *Mux
 	pattern string
-	node    *tree.Node
 }
 
 // Options 手动指定 OPTIONS 请求方法的值。具体说明可参考 Mux.Options 方法。
@@ -129,26 +126,13 @@ func (r *Resource) Remove(methods ...string) *Resource {
 // Clean 清除当前资源的所有路由项
 func (r *Resource) Clean() *Resource {
 	r.mux.Remove(r.pattern)
-	r.node = nil
 	return r
 }
 
-// Name 给当前资源一个名称，不能与已有名称相同。
-// 命名的资源会保存在 Mux 中，之后可以通过过 Mux.Name() 找到该资源。
+// Name 为一条路由项命名。
+// URL 可以通过此属性来生成地址。
 func (r *Resource) Name(name string) error {
-	r.mux.resourcesMu.RLock()
-	_, exists := r.mux.resources[name]
-	r.mux.resourcesMu.RUnlock()
-
-	if exists {
-		return ErrResourceNameExists
-	}
-
-	r.mux.resourcesMu.Lock()
-	r.mux.resources[name] = r
-	r.mux.resourcesMu.Unlock()
-
-	return nil
+	return r.mux.Name(name, r.pattern)
 }
 
 // URL 根据参数构建一条 URL。
@@ -161,25 +145,16 @@ func (r *Resource) Name(name string) error {
 //  res, := m.Resource("/posts/{id}/{path}")
 //  res.URL(map[string]string{"id": "1","path":"author/profile"}) // /posts/1/author/profile
 func (r *Resource) URL(params map[string]string) (string, error) {
-	return r.node.URL(params)
-}
-
-// Name 返回指定名称的 *Resource 实例，如果不存在返回 nil。
-func (mux *Mux) Name(name string) *Resource {
-	mux.resourcesMu.RLock()
-	r := mux.resources[name]
-	mux.resourcesMu.RUnlock()
-
-	return r
+	return r.mux.URL(r.pattern, params)
 }
 
 // Resource 创建一个资源路由项。
-func (mux *Mux) Resource(pattern string) (*Resource, error) {
+func (mux *Mux) Resource(pattern string) *Resource {
 	return newResource(mux, pattern)
 }
 
 // Resource 创建一个资源路由项。
-func (p *Prefix) Resource(pattern string) (*Resource, error) {
+func (p *Prefix) Resource(pattern string) *Resource {
 	return newResource(p.mux, p.prefix+pattern)
 }
 
@@ -188,15 +163,9 @@ func (r *Resource) Mux() *Mux {
 	return r.mux
 }
 
-func newResource(mux *Mux, pattern string) (*Resource, error) {
-	n, err := mux.tree.GetNode(pattern)
-	if err != nil {
-		return nil, err
-	}
-
+func newResource(mux *Mux, pattern string) *Resource {
 	return &Resource{
 		mux:     mux,
 		pattern: pattern,
-		node:    n,
-	}, nil
+	}
 }

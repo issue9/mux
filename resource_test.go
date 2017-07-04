@@ -12,9 +12,8 @@ import (
 )
 
 func (t *tester) resource(p string) *Resource {
-	r, err := t.mux.Resource(p)
-
-	t.a.NotError(err).NotNil(r)
+	r := t.mux.Resource(p)
+	t.a.NotNil(r)
 	return r
 }
 
@@ -74,60 +73,43 @@ func TestMux_Resource(t *testing.T) {
 	srvmux := New(false, false, nil, nil)
 	a.NotNil(srvmux)
 
-	r1, err := srvmux.Resource("/abc/1")
-	a.NotError(err).NotNil(r1)
+	r1 := srvmux.Resource("/abc/1")
+	a.NotNil(r1)
 	a.Equal(r1.Mux(), srvmux)
 	a.Equal(r1.pattern, "/abc/1")
 
-	r2, err := srvmux.Resource("/abc/1")
-	a.NotError(err).NotNil(r2)
-	a.False(r1 == r2)          // 不是同一个 *Resource
-	a.True(r1.node == r2.node) // 但应该指向同一个 node.Entry 实例
+	r2 := srvmux.Resource("/abc/1")
+	a.NotNil(r2)
+	a.False(r1 == r2) // 不是同一个 *Resource
 }
 
-func TestResource_Name(t *testing.T) {
-	a := assert.New(t)
-	srvmux := New(false, false, nil, nil)
-	a.NotNil(srvmux)
-
-	res, err := srvmux.Resource("/posts/{id}")
-	a.NotError(err).NotNil(res)
-	a.NotError(res.Name("post"))
-	// 应该是同一个
-	a.Equal(srvmux.Name("post"), res)
-
-	// 未指定名称，不存在
-	a.Nil(srvmux.Name("author"))
-
-	res, err = srvmux.Resource("/posts/{id}/author")
-	a.NotError(err).NotNil(res)
-	// 同名
-	a.Error(res.Name("post"))
-}
-
-func TestResource_URL(t *testing.T) {
+func TestResource_Name_URL(t *testing.T) {
 	a := assert.New(t)
 	srvmux := New(false, false, nil, nil)
 	a.NotNil(srvmux)
 
 	// 非正则
-	res, err := srvmux.Resource("/api/v1")
-	a.NotError(err).NotNil(res)
+	res := srvmux.Resource("/api/v1")
+	a.NotNil(res)
 	url, err := res.URL(map[string]string{"id": "1"})
 	a.NotError(err).Equal(url, "/api/v1")
 
 	// 正常的单个参数
-	res, err = srvmux.Resource("/api/{id:\\d+}/{path}")
-	a.NotError(err).NotNil(res)
+	res = srvmux.Resource("/api/{id:\\d+}/{path}")
+	a.NotNil(res)
 	url, err = res.URL(map[string]string{"id": "1", "path": "p1"})
 	a.NotError(err).Equal(url, "/api/1/p1")
 
 	// 多个参数
-	res, err = srvmux.Resource("/api/{action}/{id:\\d+}")
-	a.NotError(err).NotNil(res)
+	res = srvmux.Resource("/api/{action}/{id:\\d+}")
+	a.NotNil(res)
 	url, err = res.URL(map[string]string{"id": "1", "action": "blog"})
 	a.NotError(err).Equal(url, "/api/blog/1")
 	// 缺少参数
 	url, err = res.URL(map[string]string{"id": "1"})
 	a.Error(err).Equal(url, "")
+
+	a.NotError(res.Name("action"))
+	url, err = res.Mux().URL("action", map[string]string{"id": "1", "action": "blog"})
+	a.NotError(err).Equal(url, "/api/blog/1")
 }

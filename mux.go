@@ -6,6 +6,7 @@ package mux
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strings"
 	"sync"
@@ -38,8 +39,8 @@ type Mux struct {
 	notFound         http.HandlerFunc
 	methodNotAllowed http.HandlerFunc
 
-	resources   map[string]*Resource
-	resourcesMu sync.RWMutex
+	names   map[string]string
+	namesMu sync.RWMutex
 }
 
 // New 声明一个新的 Mux。
@@ -58,7 +59,7 @@ func New(disableOptions, skipCleanPath bool, notFound, methodNotAllowed http.Han
 
 	return &Mux{
 		tree:             tree.New(),
-		resources:        make(map[string]*Resource, 500),
+		names:            make(map[string]string, 50),
 		skipCleanPath:    skipCleanPath,
 		notFound:         notFound,
 		methodNotAllowed: methodNotAllowed,
@@ -202,6 +203,38 @@ func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.ServeHTTP(w, r)
+}
+
+// Name 为一条路由项命名。
+// URL 可以通过此属性来生成地址。
+func (mux *Mux) Name(name, pattern string) error {
+	mux.namesMu.Lock()
+	defer mux.namesMu.Unlock()
+
+	if _, found := mux.names[name]; found {
+		return errors.New("已经存在相同名称的路由项")
+	}
+
+	mux.names[name] = pattern
+	return nil
+}
+
+// URL 根据参数生成地址。
+// name 为路由的名称，或是直接为路由项的定义内容；
+// params 为路由项中的参数，键名为参数名，键值为参数值。
+func (mux *Mux) URL(name string, params map[string]string) (string, error) {
+	mux.namesMu.RLock()
+	pattern, found := mux.names[name]
+	mux.namesMu.RUnlock()
+
+	if !found {
+		pattern = name
+	}
+	node, err := mux.tree.GetNode(pattern)
+	if err != nil {
+		return "", err
+	}
+	return node.URL(params)
 }
 
 // GetParams 获取路由的参数集合。详细情况可参考 params.Get

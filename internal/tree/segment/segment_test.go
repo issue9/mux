@@ -27,7 +27,6 @@ func TestStringType(t *testing.T) {
 func TestEqual(t *testing.T) {
 	a := assert.New(t)
 
-	a.False(Equal(str(""), &named{}))
 	a.True(Equal(&named{}, &named{}))
 
 	s1, err := newNamed("{action}")

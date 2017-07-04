@@ -62,22 +62,3 @@ func TestSplit(t *testing.T) {
 	test("/posts/{id}/{author", true)
 	test("/posts/}/author", true)
 }
-
-func BenchmarkParse(b *testing.B) {
-	patterns := []string{
-		"/",
-		"/posts/1",
-		"/posts/{id}",
-		"/posts/{id}/author/profile",
-		"/posts/{id}/author",
-	}
-
-	for i := 0; i < b.N; i++ {
-		for index, pattern := range patterns {
-			v, _ := Split(pattern)
-			if v == nil {
-				b.Errorf("BenchmarkParse: %d", index)
-			}
-		}
-	}
-}
