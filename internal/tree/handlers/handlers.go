@@ -16,7 +16,7 @@ const (
 	optionsStateDefault      optionsState = iota // 默认情况
 	optionsStateFixedString                      // 设置为固定的字符串
 	optionsStateFixedHandler                     // 设置为固定的 http.Handler
-	optionsStateDisable                          // 禁用
+	optionsStateDisable                          // 禁用，不会自动生 optionAllow 的值
 )
 
 // Handlers 用于表示某节点下各个请求方法对应的处理函数。
@@ -27,15 +27,20 @@ type Handlers struct {
 }
 
 // New 声明一个新的 Handlers 实例
-func New() *Handlers {
+func New(disableOptions bool) *Handlers {
 	ret := &Handlers{
 		handlers:     make(map[methodType]http.Handler, 4), // 大部分不会超过 4 条数据
 		optionsState: optionsStateDefault,
 	}
 
-	// 添加默认的 OPTIONS 请求内容
-	ret.handlers[options] = http.HandlerFunc(ret.optionsServeHTTP)
-	ret.optionsAllow = ret.getOptionsAllow()
+	if disableOptions {
+		ret.optionsState = optionsStateDisable
+	}
+
+	if !disableOptions {
+		ret.handlers[options] = http.HandlerFunc(ret.optionsServeHTTP)
+		ret.optionsAllow = ret.getOptionsAllow()
+	}
 
 	return ret
 }
@@ -134,6 +139,9 @@ func (hs *Handlers) Remove(methods ...string) bool {
 
 // SetAllow 设置 Options 请求头的 Allow 报头。
 func (hs *Handlers) SetAllow(optionsAllow string) {
+	if hs.optionsState == optionsStateDisable {
+		hs.handlers[options] = http.HandlerFunc(hs.optionsServeHTTP)
+	}
 	hs.optionsAllow = optionsAllow
 	hs.optionsState = optionsStateFixedString
 }

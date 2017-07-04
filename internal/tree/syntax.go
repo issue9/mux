@@ -2,13 +2,86 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
-package segment
+package tree
 
 import (
 	"errors"
 	"fmt"
 	"strings"
 )
+
+// 路由项字符串中的几个特殊字符定义
+const (
+	nameStart       byte = '{' // 命名或是正则参数的起始字符
+	nameEnd         byte = '}' // 命名或是正则参数的结束字符
+	regexpSeparator byte = ':' // 正则参数中名称和正则的分隔符
+)
+
+// 将路由语法转换成正则表达式语法，比如：
+//  {id:\\d+}/author => (?P<id>\\d+)
+var repl = strings.NewReplacer(string("{"), "(?P<",
+	string(":"), ">",
+	string("}"), ")")
+
+func isEndpoint(s string) bool {
+	return s[len(s)-1] == nameEnd
+}
+
+// 获取两个字符串之间相同的前缀字符串的长度，
+// 不会从 {} 中间被分开，正则表达式与之后的内容也不再分隔。
+func longestPrefix(s1, s2 string) int {
+	l := len(s1)
+	if len(s2) < l {
+		l = len(s2)
+	}
+
+	startIndex := -10
+	endIndex := -10
+	state := nameEnd
+	for i := 0; i < l; i++ {
+		switch s1[i] {
+		case nameStart:
+			startIndex = i
+			state = nameStart
+		case nameEnd:
+			state = nameEnd
+			endIndex = i
+		}
+
+		if s1[i] != s2[i] {
+			if state != nameEnd { // 不从命名参数中间分隔
+				return startIndex
+			}
+			if endIndex == i { // 命名参数之后必须要有一个或以上的普通字符
+				return startIndex
+			}
+			return i
+		}
+	} // end for
+
+	if endIndex == l-1 {
+		return startIndex
+	}
+
+	return l
+}
+
+// 获取字符串的类型。调用者需要确保 str 语法正确。
+func stringType(str string) nodeType {
+	typ := nodeTypeString
+	for i := 0; i < len(str); i++ {
+		switch str[i] {
+		case regexpSeparator:
+			typ = nodeTypeRegexp
+		case nameStart:
+			typ = nodeTypeNamed
+		case nameEnd:
+			break
+		}
+	} // end for
+
+	return typ
+}
 
 type state struct {
 	start     int
@@ -71,8 +144,8 @@ func (s *state) setSeparator(index int) error {
 	return nil
 }
 
-// Split 将字符串解析成字符串数组
-func Split(str string) ([]string, error) {
+// split 将字符串解析成字符串数组
+func split(str string) ([]string, error) {
 	if len(str) == 0 {
 		return nil, errors.New("参数 str 不能为空")
 	}

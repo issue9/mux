@@ -10,7 +10,6 @@ import (
 	"net/http"
 
 	"github.com/issue9/mux/internal/tree/handlers"
-	"github.com/issue9/mux/internal/tree/segment"
 	"github.com/issue9/mux/params"
 )
 
@@ -34,19 +33,14 @@ import (
 //               +---- /emails
 type Tree struct {
 	*Node
+	disableOptions bool
 }
 
 // New 声明一个 Tree 实例
-func New() *Tree {
-	seg, err := segment.New("")
-	if err != nil {
-		panic("声明根节点出错：" + err.Error())
-	}
-
+func New(disableOptions bool) *Tree {
 	return &Tree{
-		Node: &Node{
-			seg: seg,
-		},
+		Node:           &Node{},
+		disableOptions: disableOptions,
 	}
 }
 
@@ -54,18 +48,13 @@ func New() *Tree {
 //
 // methods 可以为空，表示添加除 OPTIONS 之外所有支持的请求方法。
 func (tree *Tree) Add(pattern string, h http.Handler, methods ...string) error {
-	ss, err := segment.Split(pattern)
-	if err != nil {
-		return err
-	}
-
-	n, err := tree.getNode(ss)
+	n, err := tree.GetNode(pattern)
 	if err != nil {
 		return err
 	}
 
 	if n.handlers == nil {
-		n.handlers = handlers.New()
+		n.handlers = handlers.New(tree.disableOptions)
 	}
 
 	return n.handlers.Add(h, methods...)
@@ -94,14 +83,14 @@ func (tree *Tree) Remove(pattern string, methods ...string) error {
 
 	if child.handlers == nil {
 		if len(child.children) == 0 {
-			child.parent.children = removeNodes(child.parent.children, child.seg.Value())
+			child.parent.children = removeNodes(child.parent.children, child.pattern)
 			child.parent.buildIndexes()
 		}
 		return nil
 	}
 
 	if child.handlers.Remove(methods...) && len(child.children) == 0 {
-		child.parent.children = removeNodes(child.parent.children, child.seg.Value())
+		child.parent.children = removeNodes(child.parent.children, child.pattern)
 		child.parent.buildIndexes()
 	}
 	return nil
@@ -109,7 +98,7 @@ func (tree *Tree) Remove(pattern string, methods ...string) error {
 
 // GetNode 获取指定的节点，若节点不存在，则在该位置生成一个新节点。
 func (tree *Tree) GetNode(pattern string) (*Node, error) {
-	ss, err := segment.Split(pattern)
+	ss, err := split(pattern)
 	if err != nil {
 		return nil, err
 	}
@@ -126,9 +115,19 @@ func (tree *Tree) SetAllow(pattern, allow string) error {
 	}
 
 	if n.handlers == nil {
-		n.handlers = handlers.New()
+		n.handlers = handlers.New(tree.disableOptions)
 	}
 
 	n.handlers.SetAllow(allow)
 	return nil
+}
+
+// URL 根据参数生成地址。
+// 若节点不存在，则会自动生成。
+func (tree *Tree) URL(pattern string, params map[string]string) (string, error) {
+	node, err := tree.GetNode(pattern)
+	if err != nil {
+		return "", err
+	}
+	return node.url(params)
 }

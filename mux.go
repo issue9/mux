@@ -58,7 +58,7 @@ func New(disableOptions, skipCleanPath bool, notFound, methodNotAllowed http.Han
 	}
 
 	return &Mux{
-		tree:             tree.New(),
+		tree:             tree.New(disableOptions),
 		names:            make(map[string]string, 50),
 		skipCleanPath:    skipCleanPath,
 		notFound:         notFound,
@@ -230,11 +230,8 @@ func (mux *Mux) URL(name string, params map[string]string) (string, error) {
 	if !found {
 		pattern = name
 	}
-	node, err := mux.tree.GetNode(pattern)
-	if err != nil {
-		return "", err
-	}
-	return node.URL(params)
+
+	return mux.tree.URL(pattern, params)
 }
 
 // GetParams 获取路由的参数集合。详细情况可参考 params.Get

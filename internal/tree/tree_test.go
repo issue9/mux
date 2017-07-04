@@ -12,7 +12,6 @@ import (
 
 	"github.com/issue9/assert"
 	"github.com/issue9/mux/internal/tree/handlers"
-	"github.com/issue9/mux/internal/tree/segment"
 	"github.com/issue9/mux/params"
 )
 
@@ -22,23 +21,14 @@ func buildHandler(code int) http.Handler {
 	})
 }
 
-func split(a *assert.Assertion, pattern string) []string {
-	ss, err := segment.Split(pattern)
-	a.NotError(err).NotNil(ss)
-	return ss
-}
-
 type tester struct {
 	tree *Tree
 	a    *assert.Assertion
 }
 
 func newTester(a *assert.Assertion) *tester {
-	seg, err := segment.New("")
-	a.NotError(err).NotNil(seg)
-
 	return &tester{
-		tree: New(),
+		tree: New(false),
 		a:    a,
 	}
 }
@@ -46,11 +36,13 @@ func newTester(a *assert.Assertion) *tester {
 // 添加一条路由项。code 表示该路由项返回的报头，
 // 测试路由项的 code 需要唯一，之后也是通过此值来判断其命中的路由项。
 func (n *tester) add(method, pattern string, code int) {
-	nn, err := n.tree.getNode(split(n.a, pattern))
+	segs, err := split(pattern)
+	n.a.NotError(err).NotNil(segs)
+	nn, err := n.tree.getNode(segs)
 	n.a.NotError(err).NotNil(nn)
 
 	if nn.handlers == nil {
-		nn.handlers = handlers.New()
+		nn.handlers = handlers.New(false)
 	}
 
 	nn.handlers.Add(buildHandler(code), method)
@@ -90,7 +82,7 @@ func (n *tester) paramsTrue(method, path string, code int, params map[string]str
 func (n *tester) urlTrue(method, path string, code int, params map[string]string, url string) {
 	nn, _ := n.match(method, path, code)
 
-	u, err := nn.URL(params)
+	u, err := nn.url(params)
 	n.a.NotError(err)
 	n.a.Equal(u, url)
 }
@@ -199,14 +191,14 @@ func TestTreeCN(t *testing.T) {
 
 func TestTree_Clean(t *testing.T) {
 	a := assert.New(t)
-	tree := New()
+	tree := New(false)
 
 	addNode := func(p string, code int, methods ...string) {
 		nn, err := tree.GetNode(p)
 		a.NotError(err).NotNil(nn)
 
 		if nn.handlers == nil {
-			nn.handlers = handlers.New()
+			nn.handlers = handlers.New(false)
 		}
 
 		a.NotError(nn.handlers.Add(buildHandler(code), methods...))
@@ -229,7 +221,7 @@ func TestTree_Clean(t *testing.T) {
 
 func TestTree_Add_Remove(t *testing.T) {
 	a := assert.New(t)
-	tree := New()
+	tree := New(false)
 
 	a.NotError(tree.Add("/", buildHandler(1), http.MethodGet))
 	a.NotError(tree.Add("/posts/{id}", buildHandler(1), http.MethodGet))

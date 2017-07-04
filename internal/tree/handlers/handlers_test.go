@@ -20,15 +20,29 @@ var optionsHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Reques
 	w.Header().Set("Allow", "options")
 })
 
+func TestNew(t *testing.T) {
+	a := assert.New(t)
+
+	hs := New(true)
+	a.NotNil(hs)
+	a.NotError(hs.Add(getHandler, http.MethodGet))
+	a.Equal(hs.Len(), 1) // 不包含自动生成的 OPTIONS
+
+	hs.SetAllow("123")
+	a.Equal(hs.Len(), 2). // 有 OPTIONS
+				NotNil(hs.Handler(http.MethodGet)).
+				NotNil(hs.Handler(http.MethodOptions))
+}
+
 func TestHandlers_Add(t *testing.T) {
 	a := assert.New(t)
 
-	hs := New()
+	hs := New(false)
 	a.NotNil(hs)
 	a.NotError(hs.Add(getHandler))
 	a.Equal(hs.Len(), len(any)+1) // 包含自动生成的 OPTIONS
 
-	hs = New()
+	hs = New(false)
 	a.NotNil(hs)
 	a.NotError(hs.Add(getHandler, http.MethodGet, http.MethodPut))
 	a.Equal(hs.Len(), 3) // 包含自动生成的 OPTIONS
@@ -38,7 +52,7 @@ func TestHandlers_Add(t *testing.T) {
 func TestHandlers_Add_Remove(t *testing.T) {
 	a := assert.New(t)
 
-	hs := New()
+	hs := New(false)
 	a.NotNil(hs)
 
 	a.NotError(hs.Add(getHandler, http.MethodGet, http.MethodPost))
@@ -60,13 +74,15 @@ func TestHandlers_Add_Remove(t *testing.T) {
 func TestHandlers_optionsAllow(t *testing.T) {
 	a := assert.New(t)
 
-	hs := New()
+	hs := New(false)
 	a.NotNil(hs)
 
 	test := func(allow string) {
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest("OPTIONS", "/empty", nil)
-		hs.Handler(http.MethodOptions).ServeHTTP(w, r)
+		h := hs.Handler(http.MethodOptions)
+		a.NotNil(h)
+		h.ServeHTTP(w, r)
 		a.Equal(w.Header().Get("Allow"), allow)
 	}
 
@@ -96,8 +112,7 @@ func TestHandlers_optionsAllow(t *testing.T) {
 	a.False(hs.Remove(http.MethodOptions))
 	a.Nil(hs.handlers[options])
 	hs.SetAllow("set allow") // SetAllow 无法设置值
-	a.Nil(hs.handlers[options])
-	// 只能通过 Add() 再次显示指定
-	a.NotError(hs.Add(optionsHandler, http.MethodOptions))
+	a.NotNil(hs.handlers[options])
+	a.NotError(hs.Add(optionsHandler, http.MethodOptions)) // 通过 Add() 再次显示指定
 	test("options")
 }
