@@ -14,7 +14,7 @@ import (
 	"strings"
 
 	"github.com/issue9/mux/internal/tree/handlers"
-	"github.com/issue9/mux/internal/tree/segment"
+	"github.com/issue9/mux/internal/tree/syntax"
 	"github.com/issue9/mux/params"
 )
 
@@ -27,7 +27,7 @@ type Node struct {
 	handlers *handlers.Handlers
 	children []*Node
 	pattern  string
-	nodeType segment.Type
+	nodeType syntax.Type
 
 	// 用于表示当前是否为终点，仅对非字符串节点有用。此值为 true，
 	// 该节点的优先级会比同类型的节点低，以便优先对比其它非最终节点。
@@ -63,7 +63,7 @@ func (n *Node) buildIndexes() {
 	}
 
 	for index, node := range n.children {
-		if node.nodeType == segment.TypeString {
+		if node.nodeType == syntax.TypeString {
 			n.indexes[node.pattern[0]] = index
 		}
 	}
@@ -74,7 +74,7 @@ func (n *Node) priority() int {
 	// *10 可以保证在当前类型的节点进行加权时，不会超过其它节点。
 	ret := int(n.nodeType) * 10
 
-	// 有 children 的，Endpoit 必然为 false，两者不可能同时为 true
+	// 有 children 的，endpoit 必然为 false，两者不可能同时为 true
 	if len(n.children) > 0 || n.endpoint {
 		return ret + 1
 	}
@@ -83,7 +83,7 @@ func (n *Node) priority() int {
 }
 
 // 获取指定路径下的节点，若节点不存在，则添加。
-// segments 为被 segment.Split 拆分之后的字符串数组。
+// segments 为被 syntax.Split 拆分之后的字符串数组。
 func (n *Node) getNode(segments []string) (*Node, error) {
 	child, err := n.addSegment(segments[0])
 	if err != nil {
@@ -102,7 +102,7 @@ func (n *Node) addSegment(seg string) (*Node, error) {
 	var child *Node // 找到的最匹配节点
 	var l int       // 最大的匹配字符数量
 	for _, c := range n.children {
-		if c.endpoint != segment.IsEndpoint(seg) {
+		if c.endpoint != syntax.IsEndpoint(seg) {
 			continue
 		}
 
@@ -110,7 +110,7 @@ func (n *Node) addSegment(seg string) (*Node, error) {
 			return c, nil
 		}
 
-		if l1 := segment.LongestPrefix(c.pattern, seg); l1 > l {
+		if l1 := syntax.LongestPrefix(c.pattern, seg); l1 > l {
 			l = l1
 			child = c
 		}
@@ -137,33 +137,32 @@ func (n *Node) newChild(s string) (*Node, error) {
 	child := &Node{
 		parent:   n,
 		pattern:  s,
-		endpoint: segment.IsEndpoint(s),
-		nodeType: segment.StringType(s),
+		endpoint: syntax.IsEndpoint(s),
+		nodeType: syntax.StringType(s),
 	}
 
-	if child.nodeType == segment.TypeNamed {
-		endIndex := strings.IndexByte(s, segment.NameEnd)
-		if endIndex == -1 {
+	switch child.nodeType {
+	case syntax.TypeNamed:
+		index := strings.IndexByte(s, syntax.NameEnd)
+		if index == -1 {
 			return nil, fmt.Errorf("无效的路由语法：%s", s)
 		}
-		child.name = s[1:endIndex]
-		child.suffix = s[endIndex+1:]
-	}
-
-	if child.nodeType == segment.TypeRegexp {
-		index := strings.IndexByte(s, segment.RegexpSeparator)
+		child.name = s[1:index]
+		child.suffix = s[index+1:]
+	case syntax.TypeRegexp:
+		index := strings.IndexByte(s, syntax.RegexpSeparator)
 		if index == -1 {
 			return nil, fmt.Errorf("无效的路由语法：%s", s)
 		}
 
-		expr, err := regexp.Compile(segment.Regexp(s))
+		expr, err := regexp.Compile(syntax.Regexp(s))
 		if err != nil {
 			return nil, err
 		}
 		child.expr = expr
 		child.name = s[1:index]
 
-		index = strings.IndexByte(s, segment.NameEnd)
+		index = strings.IndexByte(s, syntax.NameEnd)
 		if index == -1 {
 			return nil, fmt.Errorf("无效的路由语法：%s", s)
 		}
@@ -272,11 +271,11 @@ LOOP:
 
 func (n *Node) matchCurrent(path string, params params.Params) (bool, string) {
 	switch n.nodeType {
-	case segment.TypeString:
+	case syntax.TypeString:
 		if strings.HasPrefix(path, n.pattern) {
 			return true, path[len(n.pattern):]
 		}
-	case segment.TypeNamed:
+	case syntax.TypeNamed:
 		if n.endpoint {
 			params[n.name] = path
 			return true, path[:0]
@@ -287,7 +286,7 @@ func (n *Node) matchCurrent(path string, params params.Params) (bool, string) {
 			params[n.name] = path[:index]
 			return true, path[index+len(n.suffix):]
 		}
-	case segment.TypeRegexp:
+	case syntax.TypeRegexp:
 		locs := n.expr.FindStringSubmatchIndex(path)
 		if locs == nil || locs[0] != 0 { // 不匹配
 			return false, path
@@ -311,9 +310,9 @@ func (n *Node) URL(params map[string]string) (string, error) {
 	for i := len(nodes) - 1; i >= 0; i-- {
 		node := nodes[i]
 		switch node.nodeType {
-		case segment.TypeString:
+		case syntax.TypeString:
 			buf.WriteString(string(node.pattern))
-		case segment.TypeNamed, segment.TypeRegexp:
+		case syntax.TypeNamed, syntax.TypeRegexp:
 			param, exists := params[node.name]
 			if !exists {
 				return "", fmt.Errorf("未找到参数 %s 的值", node.name)

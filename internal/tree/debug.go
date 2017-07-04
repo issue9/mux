@@ -9,7 +9,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/issue9/mux/internal/tree/segment"
+	"github.com/issue9/mux/internal/tree/syntax"
 	"github.com/issue9/mux/params"
 )
 
@@ -97,13 +97,13 @@ func (n *Node) len() int {
 	return cnt
 }
 
-func typeString(t segment.Type) string {
+func typeString(t syntax.Type) string {
 	switch t {
-	case segment.TypeNamed:
+	case syntax.TypeNamed:
 		return "named"
-	case segment.TypeRegexp:
+	case syntax.TypeRegexp:
 		return "regexp"
-	case segment.TypeString:
+	case syntax.TypeString:
 		return "string"
 	default:
 		return "<unknown>"
