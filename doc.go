@@ -89,7 +89,7 @@
 // 或是直接使用 *.Handle() 指定一个自定义的实现方式。
 //
 // 如果不需要的话，也可以在 New() 中将 disableOptions 设置为 true。
-// 通过 *.Add 和 *.Remove 来显示的指定或是删除 OPTIONS，不受是否禁用的影响。
+// 显示设定 OPTIONS，不受 disableOptions 的影响。
 //  m := mux.New(...)
 //  m.Get("/posts/{id}", nil)     // 默认情况下， OPTIONS 的报头为 GET, OPTIONS
 //  m.Options("/posts/{id}", "*") // 强制改成 *

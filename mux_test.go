@@ -170,6 +170,13 @@ func TestMux_Options(t *testing.T) {
 
 	test.mux.HandleFunc("/api/1", buildFunc(1), http.MethodOptions)
 	test.optionsTrue("/api/1", 1, "")
+
+	// disableOptions 为 true
+	test = newTester(a, true, false)
+	a.NotNil(test)
+	test.optionsTrue("/api/1", http.StatusNotFound, "")
+	test.mux.Options("/api/1", "CUSTOM OPTIONS1") // 显示指定
+	test.optionsTrue("/api/1", http.StatusOK, "CUSTOM OPTIONS1")
 }
 
 func TestMux_Params(t *testing.T) {

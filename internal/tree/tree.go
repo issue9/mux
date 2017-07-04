@@ -33,12 +33,14 @@ import (
 //               +---- /emails
 type Tree struct {
 	*Node
+	disableOptions bool
 }
 
 // New 声明一个 Tree 实例
-func New() *Tree {
+func New(disableOptions bool) *Tree {
 	return &Tree{
-		Node: &Node{},
+		Node:           &Node{},
+		disableOptions: disableOptions,
 	}
 }
 
@@ -52,7 +54,7 @@ func (tree *Tree) Add(pattern string, h http.Handler, methods ...string) error {
 	}
 
 	if n.handlers == nil {
-		n.handlers = handlers.New()
+		n.handlers = handlers.New(tree.disableOptions)
 	}
 
 	return n.handlers.Add(h, methods...)
@@ -113,7 +115,7 @@ func (tree *Tree) SetAllow(pattern, allow string) error {
 	}
 
 	if n.handlers == nil {
-		n.handlers = handlers.New()
+		n.handlers = handlers.New(tree.disableOptions)
 	}
 
 	n.handlers.SetAllow(allow)

@@ -58,7 +58,7 @@ func New(disableOptions, skipCleanPath bool, notFound, methodNotAllowed http.Han
 	}
 
 	return &Mux{
-		tree:             tree.New(),
+		tree:             tree.New(disableOptions),
 		names:            make(map[string]string, 50),
 		skipCleanPath:    skipCleanPath,
 		notFound:         notFound,
