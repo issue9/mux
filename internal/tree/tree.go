@@ -38,15 +38,8 @@ type Tree struct {
 
 // New 声明一个 Tree 实例
 func New() *Tree {
-	seg, err := segment.New("")
-	if err != nil {
-		panic("声明根节点出错：" + err.Error())
-	}
-
 	return &Tree{
-		Node: &Node{
-			seg: seg,
-		},
+		Node: &Node{},
 	}
 }
 
@@ -94,14 +87,14 @@ func (tree *Tree) Remove(pattern string, methods ...string) error {
 
 	if child.handlers == nil {
 		if len(child.children) == 0 {
-			child.parent.children = removeNodes(child.parent.children, child.seg.Value())
+			child.parent.children = removeNodes(child.parent.children, child.pattern)
 			child.parent.buildIndexes()
 		}
 		return nil
 	}
 
 	if child.handlers.Remove(methods...) && len(child.children) == 0 {
-		child.parent.children = removeNodes(child.parent.children, child.seg.Value())
+		child.parent.children = removeNodes(child.parent.children, child.pattern)
 		child.parent.buildIndexes()
 	}
 	return nil

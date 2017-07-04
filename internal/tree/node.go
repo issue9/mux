@@ -7,7 +7,9 @@ package tree
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"net/http"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -23,7 +25,6 @@ const indexesSize = 5
 type Node struct {
 	parent   *Node
 	handlers *handlers.Handlers
-	seg      segment.Segment
 	children []*Node
 
 	// 所有节点类型为字符串的子节点，其首字符必定是不同的（相同的都提升到父节点中），
@@ -31,6 +32,13 @@ type Node struct {
 	// 可以通过索引排除不必要的比较操作。
 	// indexes 中保存着 *Node 实例在 children 中的下标。
 	indexes map[byte]int
+
+	pattern  string
+	name     string
+	suffix   string
+	expr     *regexp.Regexp
+	endpoint bool
+	nodeType segment.Type
 }
 
 // 构建当前节点的索引表。
@@ -45,8 +53,8 @@ func (n *Node) buildIndexes() {
 	}
 
 	for index, node := range n.children {
-		if node.seg.Type() == segment.TypeString {
-			n.indexes[node.seg.Value()[0]] = index
+		if node.nodeType == segment.TypeString {
+			n.indexes[node.pattern[0]] = index
 		}
 	}
 }
@@ -54,10 +62,10 @@ func (n *Node) buildIndexes() {
 // 当前节点的优先级。
 func (n *Node) priority() int {
 	// *10 可以保证在当前类型的节点进行加权时，不会超过其它节点。
-	ret := int(n.seg.Type()) * 10
+	ret := int(n.nodeType) * 10
 
 	// 有 children 的，Endpoit 必然为 false，两者不可能同时为 true
-	if len(n.children) > 0 || n.seg.Endpoint() {
+	if len(n.children) > 0 || n.endpoint {
 		return ret + 1
 	}
 
@@ -84,15 +92,15 @@ func (n *Node) addSegment(seg string) (*Node, error) {
 	var child *Node // 找到的最匹配节点
 	var l int       // 最大的匹配字符数量
 	for _, c := range n.children {
-		if c.seg.Endpoint() != segment.IsEndpoint(seg) {
+		if c.endpoint != segment.IsEndpoint(seg) {
 			continue
 		}
 
-		if c.seg.Value() == seg { // 有完全相同的节点
+		if c.pattern == seg { // 有完全相同的节点
 			return c, nil
 		}
 
-		if l1 := segment.LongestPrefix(c.seg.Value(), seg); l1 > l {
+		if l1 := segment.LongestPrefix(c.pattern, seg); l1 > l {
 			l = l1
 			child = c
 		}
@@ -114,16 +122,38 @@ func (n *Node) addSegment(seg string) (*Node, error) {
 	return parent.addSegment(seg[l:])
 }
 
+var repl = strings.NewReplacer(string("{"), "(?P<",
+	string(":"), ">",
+	string("}"), ")")
+
 // 根据 s 内容为当前节点产生一个子节点，并返回该新节点。
 func (n *Node) newChild(s string) (*Node, error) {
-	seg, err := segment.New(s)
-	if err != nil {
-		return nil, err
-	}
-
 	child := &Node{
-		parent: n,
-		seg:    seg,
+		parent:   n,
+		pattern:  s,
+		endpoint: segment.IsEndpoint(s),
+		nodeType: segment.TypeString,
+	}
+	if strings.IndexByte(s, '{') > -1 {
+		child.nodeType = segment.TypeNamed
+		endIndex := strings.IndexByte(s, '}')
+		if endIndex == -1 {
+			return nil, fmt.Errorf("无效的路由语法：%s", s)
+		}
+		child.name = s[1:endIndex]
+		child.suffix = s[endIndex+1:]
+	}
+	if strings.IndexByte(s, ':') > -1 {
+		child.nodeType = segment.TypeRegexp
+		index := strings.IndexByte(s, ':')
+
+		r := repl.Replace(s)
+		expr, err := regexp.Compile(r)
+		if err != nil {
+			return nil, err
+		}
+		child.name = s[1:index]
+		child.expr = expr
 	}
 
 	n.children = append(n.children, child)
@@ -138,12 +168,12 @@ func (n *Node) newChild(s string) (*Node, error) {
 // 查找路由项，不存在返回 nil
 func (n *Node) find(pattern string) *Node {
 	for _, child := range n.children {
-		if child.seg.Value() == pattern {
+		if child.pattern == pattern {
 			return child
 		}
 
-		if strings.HasPrefix(pattern, child.seg.Value()) {
-			nn := child.find(pattern[len(child.seg.Value()):])
+		if strings.HasPrefix(pattern, child.pattern) {
+			nn := child.find(pattern[len(child.pattern):])
 			if nn != nil {
 				return nn
 			}
@@ -162,14 +192,14 @@ func (n *Node) clean(prefix string) {
 
 	dels := make([]string, 0, len(n.children))
 	for _, child := range n.children {
-		if len(child.seg.Value()) < len(prefix) {
-			if strings.HasPrefix(prefix, child.seg.Value()) {
-				child.clean(prefix[len(child.seg.Value()):])
+		if len(child.pattern) < len(prefix) {
+			if strings.HasPrefix(prefix, child.pattern) {
+				child.clean(prefix[len(child.pattern):])
 			}
 		}
 
-		if strings.HasPrefix(child.seg.Value(), prefix) {
-			dels = append(dels, child.seg.Value())
+		if strings.HasPrefix(child.pattern, prefix) {
+			dels = append(dels, child.pattern)
 		}
 	}
 
@@ -189,7 +219,7 @@ func (n *Node) match(path string, params params.Params) *Node {
 			goto LOOP
 		}
 
-		matched, newPath := node.seg.Match(path, params)
+		matched, newPath := node.MatchCurrent(path, params)
 		if !matched {
 			goto LOOP
 		}
@@ -205,7 +235,7 @@ LOOP:
 	for i := len(n.indexes); i < len(n.children); i++ {
 		node := n.children[i]
 
-		matched, newPath := node.seg.Match(path, params)
+		matched, newPath := node.MatchCurrent(path, params)
 		if !matched {
 			continue
 		}
@@ -215,7 +245,7 @@ LOOP:
 		}
 
 		// 不匹配，则删除 seg 写入的参数
-		node.seg.DeleteParams(params)
+		node.DeleteParams(params)
 	} // end for
 
 	// 没有子节点匹配，且 len(path)==0，可以判定与当前节点匹配
@@ -224,6 +254,48 @@ LOOP:
 	}
 
 	return nil
+}
+
+// fun
+func (n *Node) DeleteParams(params params.Params) {
+	switch n.nodeType {
+	case segment.TypeNamed:
+		delete(params, n.name)
+	case segment.TypeRegexp:
+		delete(params, n.name)
+	case segment.TypeString:
+	}
+}
+
+// fun
+func (n *Node) MatchCurrent(path string, params params.Params) (bool, string) {
+	switch n.nodeType {
+	case segment.TypeNamed:
+		if n.endpoint {
+			params[n.name] = path
+			return true, path[:0]
+		}
+
+		// 为零说明前面没有命名参数，肯定不能与当前内容匹配
+		if index := strings.Index(path, n.suffix); index > 0 {
+			params[n.name] = path[:index]
+			return true, path[index+len(n.suffix):]
+		}
+	case segment.TypeRegexp:
+		locs := n.expr.FindStringSubmatchIndex(path)
+		if locs == nil || locs[0] != 0 { // 不匹配
+			return false, path
+		}
+
+		params[n.name] = path[:locs[3]]
+		return true, path[locs[1]:]
+	case segment.TypeString:
+		if strings.HasPrefix(path, n.pattern) {
+			return true, path[len(n.pattern):]
+		}
+	}
+
+	return false, path
 }
 
 // URL 根据参数生成地址
@@ -235,8 +307,29 @@ func (n *Node) URL(params map[string]string) (string, error) {
 
 	buf := new(bytes.Buffer)
 	for i := len(nodes) - 1; i >= 0; i-- {
-		if err := nodes[i].seg.URL(buf, params); err != nil {
-			return "", err
+		node := nodes[i]
+		switch node.nodeType {
+		case segment.TypeNamed:
+			param, exists := params[node.name]
+			if !exists {
+				return "", fmt.Errorf("未找到参数 %s 的值", node.name)
+			}
+			buf.WriteString(param)
+			buf.WriteString(node.suffix) // 如果是 endpoint suffix 肯定为空
+		case segment.TypeRegexp:
+			param, found := params[node.name]
+			if !found {
+				return "", fmt.Errorf("缺少参数 %s", n.name)
+			}
+
+			index := strings.IndexByte(node.pattern, '}')
+			url := strings.Replace(node.pattern, node.pattern[:index+1], param, 1)
+
+			if _, err := buf.WriteString(url); err != nil {
+				return "", err
+			}
+		case segment.TypeString:
+			buf.WriteString(string(node.pattern))
 		}
 	}
 
@@ -260,7 +353,7 @@ func (n *Node) Handler(method string) http.Handler {
 func removeNodes(nodes []*Node, pattern string) []*Node {
 	lastIndex := len(nodes) - 1
 	for index, n := range nodes {
-		if n.seg.Value() != pattern {
+		if n.pattern != pattern {
 			continue
 		}
 
@@ -282,7 +375,7 @@ func removeNodes(nodes []*Node, pattern string) []*Node {
 //
 // NOTE: 调用者需确保 pos 位置是可拆分的。
 func splitNode(n *Node, pos int) (*Node, error) {
-	if len(n.seg.Value()) <= pos { // 不需要拆分
+	if len(n.pattern) <= pos { // 不需要拆分
 		return n, nil
 	}
 
@@ -292,15 +385,15 @@ func splitNode(n *Node, pos int) (*Node, error) {
 	}
 
 	// 先从父节点中删除老的 n
-	p.children = removeNodes(p.children, n.seg.Value())
+	p.children = removeNodes(p.children, n.pattern)
 	p.buildIndexes()
 
-	ret, err := p.newChild(n.seg.Value()[:pos])
+	ret, err := p.newChild(n.pattern[:pos])
 	if err != nil {
 		return nil, err
 	}
 
-	c, err := ret.newChild(n.seg.Value()[pos:])
+	c, err := ret.newChild(n.pattern[pos:])
 	if err != nil {
 		return nil, err
 	}

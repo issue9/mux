@@ -28,14 +28,14 @@ func (tree *Tree) Trace(w io.Writer, path string) {
 func (n *Node) trace(w io.Writer, deep int, path string, params params.Params) *Node {
 	if len(n.indexes) > 0 {
 		node := n.children[n.indexes[path[0]]]
-		fmt.Fprint(w, strings.Repeat(" ", deep*4), node.seg.Value(), "---", typeString(node.seg.Type()), "---", path)
+		fmt.Fprint(w, strings.Repeat(" ", deep*4), node.pattern, "---", typeString(node.nodeType), "---", path)
 
 		if node == nil {
 			fmt.Fprintln(w, "(!matched)")
 			goto LOOP
 		}
 
-		matched, newPath := node.seg.Match(path, params)
+		matched, newPath := node.MatchCurrent(path, params)
 		if !matched {
 			fmt.Fprintln(w, "(!matched)")
 			goto LOOP
@@ -53,8 +53,8 @@ LOOP:
 	for i := len(n.indexes); i < len(n.children); i++ {
 		node := n.children[i]
 
-		fmt.Fprint(w, strings.Repeat(" ", deep*4), node.seg.Value(), "---", typeString(node.seg.Type()), "---", path)
-		matched, newPath := node.seg.Match(path, params)
+		fmt.Fprint(w, strings.Repeat(" ", deep*4), node.pattern, "---", typeString(node.nodeType), "---", path)
+		matched, newPath := node.MatchCurrent(path, params)
 		if !matched {
 			fmt.Fprintln(w, "(!matched)")
 			continue
@@ -67,7 +67,7 @@ LOOP:
 	} // end for
 
 	if len(path) == 0 {
-		fmt.Fprintln(w, strings.Repeat(" ", (deep-1)*4), n.seg.Value(), "---", typeString(n.seg.Type()), "---", path, "(matched)")
+		fmt.Fprintln(w, strings.Repeat(" ", (deep-1)*4), n.pattern, "---", typeString(n.nodeType), "---", path, "(matched)")
 		return n
 	}
 
@@ -76,7 +76,7 @@ LOOP:
 
 // 向 w 输出节点的树状结构
 func (n *Node) print(w io.Writer, deep int) {
-	fmt.Fprintln(w, strings.Repeat(" ", deep*4), n.seg.Value())
+	fmt.Fprintln(w, strings.Repeat(" ", deep*4), n.pattern)
 
 	for _, child := range n.children {
 		child.print(w, deep+1)
