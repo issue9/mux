@@ -126,12 +126,6 @@ func (n *Node) addSegment(seg string) (*Node, error) {
 	return parent.addSegment(seg[l:])
 }
 
-// 将路由语法转换成正则表达式语法，比如：
-//  {id:\\d+}/author => (?P<id>\\d+)
-var repl = strings.NewReplacer(string("{"), "(?P<",
-	string(":"), ">",
-	string("}"), ")")
-
 // 根据 s 内容为当前节点产生一个子节点，并返回该新节点。
 func (n *Node) newChild(s string) (*Node, error) {
 	child := &Node{
@@ -153,8 +147,7 @@ func (n *Node) newChild(s string) (*Node, error) {
 		child.nodeType = segment.TypeRegexp
 		index := strings.IndexByte(s, ':')
 
-		r := repl.Replace(s)
-		expr, err := regexp.Compile(r)
+		expr, err := regexp.Compile(segment.Regexp(s))
 		if err != nil {
 			return nil, err
 		}

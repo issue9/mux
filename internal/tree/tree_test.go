@@ -34,9 +34,6 @@ type tester struct {
 }
 
 func newTester(a *assert.Assertion) *tester {
-	seg, err := segment.New("")
-	a.NotError(err).NotNil(seg)
-
 	return &tester{
 		tree: New(),
 		a:    a,

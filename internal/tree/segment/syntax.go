@@ -4,6 +4,8 @@
 
 package segment
 
+import "strings"
+
 // 路由项字符串中的几个特殊字符定义
 const (
 	nameStart       byte = '{' // 命名或是正则参数的起始字符
@@ -21,6 +23,17 @@ const (
 	TypeRegexp
 	TypeNamed
 )
+
+// 将路由语法转换成正则表达式语法，比如：
+//  {id:\\d+}/author => (?P<id>\\d+)
+var repl = strings.NewReplacer(string("{"), "(?P<",
+	string(":"), ">",
+	string("}"), ")")
+
+// Regexp 将 str 转换成一条正常表达式字符串
+func Regexp(str string) string {
+	return repl.Replace(str)
+}
 
 // IsEndpoint 判断字符串是否可作为终点。
 func IsEndpoint(str string) bool {
