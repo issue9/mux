@@ -143,11 +143,8 @@ func (p *Prefix) URL(name string, params map[string]string) (string, error) {
 	if !found {
 		pattern = p.prefix + name
 	}
-	node, err := p.mux.tree.GetNode(pattern)
-	if err != nil {
-		return "", err
-	}
-	return node.URL(params)
+
+	return p.mux.tree.URL(pattern, params)
 }
 
 // Prefix 在现在有 Prefix 的基础上声明一个新的 Prefix 实例。

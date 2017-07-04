@@ -293,7 +293,7 @@ func (n *Node) matchCurrent(path string, params params.Params) (bool, string) {
 }
 
 // URL 根据参数生成地址
-func (n *Node) URL(params map[string]string) (string, error) {
+func (n *Node) url(params map[string]string) (string, error) {
 	nodes := make([]*Node, 0, 5)
 	for curr := n; curr.parent != nil; curr = curr.parent { // 从尾部向上开始获取节点
 		nodes = append(nodes, curr)

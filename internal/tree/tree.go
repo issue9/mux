@@ -121,3 +121,13 @@ func (tree *Tree) SetAllow(pattern, allow string) error {
 	n.handlers.SetAllow(allow)
 	return nil
 }
+
+// URL 根据参数生成地址。
+// 若节点不存在，则会自动生成。
+func (tree *Tree) URL(pattern string, params map[string]string) (string, error) {
+	node, err := tree.GetNode(pattern)
+	if err != nil {
+		return "", err
+	}
+	return node.url(params)
+}

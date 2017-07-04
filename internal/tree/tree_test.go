@@ -82,7 +82,7 @@ func (n *tester) paramsTrue(method, path string, code int, params map[string]str
 func (n *tester) urlTrue(method, path string, code int, params map[string]string, url string) {
 	nn, _ := n.match(method, path, code)
 
-	u, err := nn.URL(params)
+	u, err := nn.url(params)
 	n.a.NotError(err)
 	n.a.Equal(u, url)
 }
