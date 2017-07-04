@@ -14,7 +14,7 @@ func TestLongestPrefix(t *testing.T) {
 	a := assert.New(t)
 
 	test := func(s1, s2 string, len int) {
-		a.Equal(LongestPrefix(s1, s2), len)
+		a.Equal(longestPrefix(s1, s2), len)
 	}
 
 	test("", "", 0)
@@ -41,17 +41,17 @@ func TestRegexp(t *testing.T) {
 func TestStringType(t *testing.T) {
 	a := assert.New(t)
 
-	a.Equal(StringType(""), nodeTypeString)
-	a.Equal(StringType("/posts"), nodeTypeString)
-	a.Equal(StringType("/posts/{id}"), nodeTypeNamed)
-	a.Equal(StringType("/posts/{id}/author"), nodeTypeNamed)
-	a.Equal(StringType("/posts/{id:\\d+}/author"), nodeTypeRegexp)
+	a.Equal(stringType(""), nodeTypeString)
+	a.Equal(stringType("/posts"), nodeTypeString)
+	a.Equal(stringType("/posts/{id}"), nodeTypeNamed)
+	a.Equal(stringType("/posts/{id}/author"), nodeTypeNamed)
+	a.Equal(stringType("/posts/{id:\\d+}/author"), nodeTypeRegexp)
 }
 
 func TestSplit(t *testing.T) {
 	a := assert.New(t)
 	test := func(str string, isError bool, ss ...string) {
-		s, err := Split(str)
+		s, err := split(str)
 		if isError {
 			a.Error(err)
 			return

@@ -111,7 +111,7 @@ func (n *Node) addSegment(seg string) (*Node, error) {
 	var child *Node // 找到的最匹配节点
 	var l int       // 最大的匹配字符数量
 	for _, c := range n.children {
-		if c.endpoint != IsEndpoint(seg) {
+		if c.endpoint != isEndpoint(seg) {
 			continue
 		}
 
@@ -119,7 +119,7 @@ func (n *Node) addSegment(seg string) (*Node, error) {
 			return c, nil
 		}
 
-		if l1 := LongestPrefix(c.pattern, seg); l1 > l {
+		if l1 := longestPrefix(c.pattern, seg); l1 > l {
 			l = l1
 			child = c
 		}
@@ -143,41 +143,12 @@ func (n *Node) addSegment(seg string) (*Node, error) {
 
 // 根据 s 内容为当前节点产生一个子节点，并返回该新节点。
 func (n *Node) newChild(s string) (*Node, error) {
-	child := &Node{
-		parent:   n,
-		pattern:  s,
-		endpoint: IsEndpoint(s),
-		nodeType: StringType(s),
+	child, err := newNode(s)
+	if err != nil {
+		return nil, err
 	}
 
-	switch child.nodeType {
-	case nodeTypeNamed:
-		index := strings.IndexByte(s, nameEnd)
-		if index == -1 {
-			return nil, fmt.Errorf("无效的路由语法：%s", s)
-		}
-		child.name = s[1:index]
-		child.suffix = s[index+1:]
-	case nodeTypeRegexp:
-		index := strings.IndexByte(s, regexpSeparator)
-		if index == -1 {
-			return nil, fmt.Errorf("无效的路由语法：%s", s)
-		}
-
-		expr, err := regexp.Compile(repl.Replace(s))
-		if err != nil {
-			return nil, err
-		}
-		child.expr = expr
-		child.name = s[1:index]
-
-		index = strings.IndexByte(s, nameEnd)
-		if index == -1 {
-			return nil, fmt.Errorf("无效的路由语法：%s", s)
-		}
-		child.suffix = s[index+1:]
-	}
-
+	child.parent = n
 	n.children = append(n.children, child)
 	sort.SliceStable(n.children, func(i, j int) bool {
 		return n.children[i].priority() < n.children[j].priority()

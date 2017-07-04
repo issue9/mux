@@ -7,6 +7,7 @@ package tree
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 )
 
@@ -17,20 +18,58 @@ const (
 	regexpSeparator byte = ':' // 正则参数中名称和正则的分隔符
 )
 
+func isEndpoint(s string) bool {
+	return s[len(s)-1] == nameEnd
+}
+
 // 将路由语法转换成正则表达式语法，比如：
 //  {id:\\d+}/author => (?P<id>\\d+)
 var repl = strings.NewReplacer(string("{"), "(?P<",
 	string(":"), ">",
 	string("}"), ")")
 
-// IsEndpoint 判断字符串是否可作为终点。
-func IsEndpoint(str string) bool {
-	return str[len(str)-1] == nameEnd
+// 根据 s 内容为当前节点产生一个子节点，并返回该新节点。
+func newNode(s string) (*Node, error) {
+	n := &Node{
+		pattern:  s,
+		endpoint: isEndpoint(s),
+		nodeType: stringType(s),
+	}
+
+	switch n.nodeType {
+	case nodeTypeNamed:
+		index := strings.IndexByte(s, nameEnd)
+		if index == -1 {
+			return nil, fmt.Errorf("无效的路由语法：%s", s)
+		}
+		n.name = s[1:index]
+		n.suffix = s[index+1:]
+	case nodeTypeRegexp:
+		index := strings.IndexByte(s, regexpSeparator)
+		if index == -1 {
+			return nil, fmt.Errorf("无效的路由语法：%s", s)
+		}
+
+		expr, err := regexp.Compile(repl.Replace(s))
+		if err != nil {
+			return nil, err
+		}
+		n.expr = expr
+		n.name = s[1:index]
+
+		index = strings.IndexByte(s, nameEnd)
+		if index == -1 {
+			return nil, fmt.Errorf("无效的路由语法：%s", s)
+		}
+		n.suffix = s[index+1:]
+	}
+
+	return n, nil
 }
 
-// LongestPrefix 获取两个字符串之间相同的前缀字符串的长度，
+// 获取两个字符串之间相同的前缀字符串的长度，
 // 不会从 {} 中间被分开，正则表达式与之后的内容也不再分隔。
-func LongestPrefix(s1, s2 string) int {
+func longestPrefix(s1, s2 string) int {
 	l := len(s1)
 	if len(s2) < l {
 		l = len(s2)
@@ -67,8 +106,8 @@ func LongestPrefix(s1, s2 string) int {
 	return l
 }
 
-// StringType 获取字符串的类型。调用者需要确保 str 语法正确。
-func StringType(str string) nodeType {
+// 获取字符串的类型。调用者需要确保 str 语法正确。
+func stringType(str string) nodeType {
 	typ := nodeTypeString
 
 	for i := 0; i < len(str); i++ {
@@ -146,8 +185,8 @@ func (s *state) setSeparator(index int) error {
 	return nil
 }
 
-// Split 将字符串解析成字符串数组
-func Split(str string) ([]string, error) {
+// split 将字符串解析成字符串数组
+func split(str string) ([]string, error) {
 	if len(str) == 0 {
 		return nil, errors.New("参数 str 不能为空")
 	}

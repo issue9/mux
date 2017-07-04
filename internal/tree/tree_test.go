@@ -21,12 +21,6 @@ func buildHandler(code int) http.Handler {
 	})
 }
 
-func split(a *assert.Assertion, pattern string) []string {
-	ss, err := Split(pattern)
-	a.NotError(err).NotNil(ss)
-	return ss
-}
-
 type tester struct {
 	tree *Tree
 	a    *assert.Assertion
@@ -42,7 +36,9 @@ func newTester(a *assert.Assertion) *tester {
 // 添加一条路由项。code 表示该路由项返回的报头，
 // 测试路由项的 code 需要唯一，之后也是通过此值来判断其命中的路由项。
 func (n *tester) add(method, pattern string, code int) {
-	nn, err := n.tree.getNode(split(n.a, pattern))
+	segs, err := split(pattern)
+	n.a.NotError(err).NotNil(segs)
+	nn, err := n.tree.getNode(segs)
 	n.a.NotError(err).NotNil(nn)
 
 	if nn.handlers == nil {

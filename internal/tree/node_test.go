@@ -17,7 +17,9 @@ func TestNode_find(t *testing.T) {
 	node := &Node{}
 
 	addNode := func(p string, code int, methods ...string) {
-		nn, err := node.getNode(split(a, p))
+		segs, err := split(p)
+		a.NotError(err).NotNil(segs)
+		nn, err := node.getNode(segs)
 		a.NotError(err).NotNil(nn)
 
 		if nn.handlers == nil {
