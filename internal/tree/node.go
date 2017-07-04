@@ -25,20 +25,24 @@ const indexesSize = 5
 type Node struct {
 	parent   *Node
 	handlers *handlers.Handlers
+	pattern  string
+	nodeType segment.Type
 	children []*Node
+
+	// 用于表示当前是否为终点，仅对 Type 为 TypeRegexp 和 TypeNamed 有用。
+	// 此值为 true，该节点的优先级会比同类型的节点低，以便优先对比其它非最终节点。
+	endpoint bool
+
+	// 参数名称，仅对 Type 为 TypeRegexp 和 TypeNamed 有用。
+	name   string
+	suffix string
+	expr   *regexp.Regexp
 
 	// 所有节点类型为字符串的子节点，其首字符必定是不同的（相同的都提升到父节点中），
 	// 根据此特性，可以将所有字符串类型的首字符做个索引，这样字符串类型节点的比较，
 	// 可以通过索引排除不必要的比较操作。
 	// indexes 中保存着 *Node 实例在 children 中的下标。
 	indexes map[byte]int
-
-	pattern  string
-	name     string
-	suffix   string
-	expr     *regexp.Regexp
-	endpoint bool
-	nodeType segment.Type
 }
 
 // 构建当前节点的索引表。
@@ -122,6 +126,8 @@ func (n *Node) addSegment(seg string) (*Node, error) {
 	return parent.addSegment(seg[l:])
 }
 
+// 将路由语法转换成正则表达式语法，比如：
+//  {id:\\d+}/author => (?P<id>\\d+)
 var repl = strings.NewReplacer(string("{"), "(?P<",
 	string(":"), ">",
 	string("}"), ")")
@@ -219,7 +225,7 @@ func (n *Node) match(path string, params params.Params) *Node {
 			goto LOOP
 		}
 
-		matched, newPath := node.MatchCurrent(path, params)
+		matched, newPath := node.matchCurrent(path, params)
 		if !matched {
 			goto LOOP
 		}
@@ -235,7 +241,7 @@ LOOP:
 	for i := len(n.indexes); i < len(n.children); i++ {
 		node := n.children[i]
 
-		matched, newPath := node.MatchCurrent(path, params)
+		matched, newPath := node.matchCurrent(path, params)
 		if !matched {
 			continue
 		}
@@ -244,8 +250,8 @@ LOOP:
 			return nn
 		}
 
-		// 不匹配，则删除 seg 写入的参数
-		node.DeleteParams(params)
+		// 不匹配，则删除写入的参数
+		delete(params, n.name)
 	} // end for
 
 	// 没有子节点匹配，且 len(path)==0，可以判定与当前节点匹配
@@ -257,18 +263,7 @@ LOOP:
 }
 
 // fun
-func (n *Node) DeleteParams(params params.Params) {
-	switch n.nodeType {
-	case segment.TypeNamed:
-		delete(params, n.name)
-	case segment.TypeRegexp:
-		delete(params, n.name)
-	case segment.TypeString:
-	}
-}
-
-// fun
-func (n *Node) MatchCurrent(path string, params params.Params) (bool, string) {
+func (n *Node) matchCurrent(path string, params params.Params) (bool, string) {
 	switch n.nodeType {
 	case segment.TypeNamed:
 		if n.endpoint {
