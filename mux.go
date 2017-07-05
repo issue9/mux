@@ -185,13 +185,12 @@ func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		p = cleanPath(p)
 	}
 
-	node, ps := mux.tree.Match(p)
-	if node == nil {
+	h, ps := mux.tree.Handler(p, r.Method)
+	if ps == nil {
 		mux.notFound(w, r)
 		return
 	}
 
-	h := node.Handler(r.Method)
 	if h == nil {
 		mux.methodNotAllowed(w, r)
 		return

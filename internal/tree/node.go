@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"net/http"
 	"regexp"
 	"sort"
 	"strings"
@@ -316,15 +315,6 @@ func (n *Node) url(params map[string]string) (string, error) {
 	} // end for
 
 	return buf.String(), nil
-}
-
-// Handler 获取该节点下与参数相对应的处理函数
-func (n *Node) Handler(method string) http.Handler {
-	if n.handlers == nil {
-		return nil
-	}
-
-	return n.handlers.Handler(method)
 }
 
 // 从 nodes 中删除一个 pattern 字段为指定值的元素，
