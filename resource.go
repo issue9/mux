@@ -5,13 +5,8 @@
 package mux
 
 import (
-	"errors"
 	"net/http"
 )
-
-// ErrResourceNameExists 当为一个资源命名时，若存在相同名称的，
-// 则返回此错误信息。
-var ErrResourceNameExists = errors.New("存在相同名称的资源")
 
 // Resource 以资源地址为对象的路由配置。
 //  r, _ := srv.Resource("/api/users/{id}")
@@ -147,22 +142,21 @@ func (r *Resource) URL(params map[string]string) (string, error) {
 
 // Resource 创建一个资源路由项。
 func (mux *Mux) Resource(pattern string) *Resource {
-	return newResource(mux, pattern)
+	return &Resource{
+		mux:     mux,
+		pattern: pattern,
+	}
 }
 
 // Resource 创建一个资源路由项。
 func (p *Prefix) Resource(pattern string) *Resource {
-	return newResource(p.mux, p.prefix+pattern)
+	return &Resource{
+		mux:     p.mux,
+		pattern: p.prefix + pattern,
+	}
 }
 
 // Mux 返回与当前资源关联的 *Mux 实例
 func (r *Resource) Mux() *Mux {
 	return r.mux
-}
-
-func newResource(mux *Mux, pattern string) *Resource {
-	return &Resource{
-		mux:     mux,
-		pattern: pattern,
-	}
 }

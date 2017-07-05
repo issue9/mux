@@ -268,8 +268,9 @@ func TestClearPath(t *testing.T) {
 	a.Equal(cleanPath(""), "/")
 
 	a.Equal(cleanPath("/api//"), "/api/")
-	a.Equal(cleanPath("api//"), "/api/")
-	a.Equal(cleanPath("//api//"), "/api/")
+	a.Equal(cleanPath("api/"), "/api/")
+	a.Equal(cleanPath("api/////"), "/api/")
+	a.Equal(cleanPath("//api/////1"), "/api/1")
 
 	a.Equal(cleanPath("/api/"), "/api/")
 	a.Equal(cleanPath("/api/./"), "/api/./")

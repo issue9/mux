@@ -239,7 +239,6 @@ LOOP:
 	// 比如 /posts/{path:\\w*} 后面的 path 即为空节点。所以此处不判断 len(path)
 	for i := len(n.indexes); i < len(n.children); i++ {
 		node := n.children[i]
-
 		matched, newPath := node.matchCurrent(path, params)
 		if !matched {
 			continue

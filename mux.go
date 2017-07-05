@@ -25,6 +25,9 @@ var (
 	}
 )
 
+// ErrNameExists 当为一个路由项命名时，若存在相同名称的，则返回此错误信息。
+var ErrNameExists = errors.New("存在相同名称的路由项")
+
 // Mux 提供了强大的路由匹配功能，可以对路径按正则或是请求方法进行匹配。
 //
 // 用法如下：
@@ -211,7 +214,7 @@ func (mux *Mux) Name(name, pattern string) error {
 	defer mux.namesMu.Unlock()
 
 	if _, found := mux.names[name]; found {
-		return errors.New("已经存在相同名称的路由项")
+		return ErrNameExists
 	}
 
 	mux.names[name] = pattern
@@ -253,12 +256,11 @@ func cleanPath(p string) string {
 		return p
 	}
 
-	pp := make([]byte, 0, len(p))
-	pp = append(pp, p[:index+1]...)
-	slash := true
+	pp := make([]byte, index+1, len(p))
+	copy(pp, p[:index+1])
 
-	p = p[index+2:]
-	for i := 0; i < len(p); i++ {
+	slash := true
+	for i := index + 2; i < len(p); i++ {
 		if p[i] == '/' {
 			if slash {
 				continue
