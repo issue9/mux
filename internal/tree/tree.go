@@ -48,7 +48,7 @@ func New(disableOptions bool) *Tree {
 //
 // methods 可以为空，表示添加除 OPTIONS 之外所有支持的请求方法。
 func (tree *Tree) Add(pattern string, h http.Handler, methods ...string) error {
-	n, err := tree.GetNode(pattern)
+	n, err := tree.getNode(pattern)
 	if err != nil {
 		return err
 	}
@@ -89,20 +89,20 @@ func (tree *Tree) Remove(pattern string, methods ...string) error {
 	return nil
 }
 
-// GetNode 获取指定的节点，若节点不存在，则在该位置生成一个新节点。
-func (tree *Tree) GetNode(pattern string) (*node, error) {
+// 获取指定的节点，若节点不存在，则在该位置生成一个新节点。
+func (tree *Tree) getNode(pattern string) (*node, error) {
 	ss, err := split(pattern)
 	if err != nil {
 		return nil, err
 	}
 
-	return tree.getNode(ss)
+	return tree.node.getNode(ss)
 }
 
 // SetAllow 设置指定节点的 allow 报头。
 // 若节点不存在，则会自动生成该节点。
 func (tree *Tree) SetAllow(pattern, allow string) error {
-	n, err := tree.GetNode(pattern)
+	n, err := tree.getNode(pattern)
 	if err != nil {
 		return err
 	}
@@ -118,7 +118,7 @@ func (tree *Tree) SetAllow(pattern, allow string) error {
 // URL 根据参数生成地址。
 // 若节点不存在，则会自动生成。
 func (tree *Tree) URL(pattern string, params map[string]string) (string, error) {
-	node, err := tree.GetNode(pattern)
+	node, err := tree.getNode(pattern)
 	if err != nil {
 		return "", err
 	}
