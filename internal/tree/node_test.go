@@ -14,7 +14,7 @@ import (
 
 func TestNode_find(t *testing.T) {
 	a := assert.New(t)
-	node := &Node{}
+	node := &node{}
 
 	addNode := func(p string, code int, methods ...string) {
 		segs, err := split(p)
@@ -43,8 +43,8 @@ func TestNode_find(t *testing.T) {
 
 func TestRemoveNoddes(t *testing.T) {
 	a := assert.New(t)
-	newNode := func(str string) *Node {
-		return &Node{pattern: str}
+	newNode := func(str string) *node {
+		return &node{pattern: str}
 	}
 
 	n1 := newNode("/1")
@@ -53,7 +53,7 @@ func TestRemoveNoddes(t *testing.T) {
 	n3 := newNode("/3")
 	n4 := newNode("/4")
 
-	nodes := []*Node{n1, n2, n21, n3, n4}
+	nodes := []*node{n1, n2, n21, n3, n4}
 
 	// 不存在的元素
 	nodes = removeNodes(nodes, "")
@@ -86,8 +86,8 @@ func TestRemoveNoddes(t *testing.T) {
 
 func TestSplitNode(t *testing.T) {
 	a := assert.New(t)
-	newNode := func(str string) *Node {
-		return &Node{pattern: str}
+	newNode := func(str string) *node {
+		return &node{pattern: str}
 	}
 	p := newNode("/blog")
 

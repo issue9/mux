@@ -74,7 +74,7 @@ func (n *tester) paramsTrue(method, path string, code int, params map[string]str
 	n.a.Equal(ps, params)
 }
 
-// 验证 Node.URL 的正确性
+// 验证 node.URL 的正确性
 func (n *tester) urlTrue(pattern string, params map[string]string, url string) {
 	node := n.tree.find(pattern)
 	n.a.NotNil(node)

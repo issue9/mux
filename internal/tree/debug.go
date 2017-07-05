@@ -23,8 +23,8 @@ func (tree *Tree) Trace(w io.Writer, path string) {
 	tree.trace(w, 0, path, params)
 }
 
-// NOTE: 此函数与 Node.match 是一样的，记得同步两边的代码。
-func (n *Node) trace(w io.Writer, deep int, path string, params params.Params) *Node {
+// NOTE: 此函数与 node.match 是一样的，记得同步两边的代码。
+func (n *node) trace(w io.Writer, deep int, path string, params params.Params) *node {
 	if len(n.indexes) > 0 {
 		node := n.children[n.indexes[path[0]]]
 		fmt.Fprint(w, strings.Repeat(" ", deep*4), node.pattern, "---", node.nodeType, "---", path)
@@ -74,7 +74,7 @@ LOOP:
 }
 
 // 向 w 输出节点的树状结构
-func (n *Node) print(w io.Writer, deep int) {
+func (n *node) print(w io.Writer, deep int) {
 	fmt.Fprintln(w, strings.Repeat(" ", deep*4), n.pattern)
 
 	for _, child := range n.children {
@@ -83,7 +83,7 @@ func (n *Node) print(w io.Writer, deep int) {
 }
 
 // 获取当前路由下有处理函数的节点数量
-func (n *Node) len() int {
+func (n *node) len() int {
 	var cnt int
 	for _, child := range n.children {
 		cnt += child.len()

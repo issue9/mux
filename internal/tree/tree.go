@@ -32,14 +32,14 @@ import (
 //               |
 //               +---- /emails
 type Tree struct {
-	Node
+	node
 	disableOptions bool
 }
 
 // New 声明一个 Tree 实例
 func New(disableOptions bool) *Tree {
 	return &Tree{
-		Node:           Node{},
+		node:           node{},
 		disableOptions: disableOptions,
 	}
 }
@@ -90,7 +90,7 @@ func (tree *Tree) Remove(pattern string, methods ...string) error {
 }
 
 // GetNode 获取指定的节点，若节点不存在，则在该位置生成一个新节点。
-func (tree *Tree) GetNode(pattern string) (*Node, error) {
+func (tree *Tree) GetNode(pattern string) (*node, error) {
 	ss, err := split(pattern)
 	if err != nil {
 		return nil, err

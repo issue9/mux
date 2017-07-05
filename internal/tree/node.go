@@ -16,7 +16,7 @@ import (
 	"github.com/issue9/mux/params"
 )
 
-// Node.children 的数量只有达到此值时，才会为其建立 indexes 索引表。
+// node.children 的数量只有达到此值时，才会为其建立 indexes 索引表。
 const indexesSize = 5
 
 type nodeType int8
@@ -29,11 +29,11 @@ const (
 	nodeTypeNamed
 )
 
-// Node 表示路由中的节点。
-type Node struct {
-	parent   *Node
+// 表示路由中的节点。
+type node struct {
+	parent   *node
 	handlers *handlers.Handlers
-	children []*Node
+	children []*node
 	pattern  string
 	nodeType nodeType
 
@@ -55,12 +55,12 @@ type Node struct {
 	// 所有节点类型为字符串的子节点，其首字符必定是不同的（相同的都提升到父节点中），
 	// 根据此特性，可以将所有字符串类型的首字符做个索引，这样字符串类型节点的比较，
 	// 可以通过索引排除不必要的比较操作。
-	// indexes 中保存着 *Node 实例在 children 中的下标。
+	// indexes 中保存着 *node 实例在 children 中的下标。
 	indexes map[byte]int
 }
 
 // 构建当前节点的索引表。
-func (n *Node) buildIndexes() {
+func (n *node) buildIndexes() {
 	if len(n.children) < indexesSize {
 		n.indexes = nil
 		return
@@ -78,7 +78,7 @@ func (n *Node) buildIndexes() {
 }
 
 // 当前节点的优先级。
-func (n *Node) priority() int {
+func (n *node) priority() int {
 	// *10 可以保证在当前类型的节点进行加权时，不会超过其它节点。
 	ret := int(n.nodeType) * 10
 
@@ -92,7 +92,7 @@ func (n *Node) priority() int {
 
 // 获取指定路径下的节点，若节点不存在，则添加。
 // segments 为被 split 拆分之后的字符串数组。
-func (n *Node) getNode(segments []string) (*Node, error) {
+func (n *node) getNode(segments []string) (*node, error) {
 	child, err := n.addSegment(segments[0])
 	if err != nil {
 		return nil, err
@@ -106,8 +106,8 @@ func (n *Node) getNode(segments []string) (*Node, error) {
 }
 
 // 将 seg 添加到当前节点，并返回新节点
-func (n *Node) addSegment(seg string) (*Node, error) {
-	var child *Node // 找到的最匹配节点
+func (n *node) addSegment(seg string) (*node, error) {
+	var child *node // 找到的最匹配节点
 	var l int       // 最大的匹配字符数量
 	for _, c := range n.children {
 		if c.endpoint != isEndpoint(seg) {
@@ -142,8 +142,8 @@ func (n *Node) addSegment(seg string) (*Node, error) {
 
 // 根据 s 内容为当前节点产生一个子节点，并返回该新节点。
 // 由调用方确保 s 的语法正确性，否则可能 panic。
-func (n *Node) newChild(s string) *Node {
-	child := &Node{
+func (n *node) newChild(s string) *node {
+	child := &node{
 		parent:   n,
 		pattern:  s,
 		endpoint: isEndpoint(s),
@@ -171,7 +171,7 @@ func (n *Node) newChild(s string) *Node {
 }
 
 // 查找路由项，不存在返回 nil
-func (n *Node) find(pattern string) *Node {
+func (n *node) find(pattern string) *node {
 	for _, child := range n.children {
 		if child.pattern == pattern {
 			return child
@@ -189,7 +189,7 @@ func (n *Node) find(pattern string) *Node {
 }
 
 // 清除路由项
-func (n *Node) clean(prefix string) {
+func (n *node) clean(prefix string) {
 	if len(prefix) == 0 {
 		n.children = n.children[:0]
 		return
@@ -216,8 +216,8 @@ func (n *Node) clean(prefix string) {
 
 // 从子节点中查找与当前路径匹配的节点，若找不到，则返回 nil。
 //
-// NOTE: 此函数与 Node.trace 是一样的，记得同步两边的代码。
-func (n *Node) match(path string, params params.Params) *Node {
+// NOTE: 此函数与 node.trace 是一样的，记得同步两边的代码。
+func (n *node) match(path string, params params.Params) *node {
 	if len(n.indexes) > 0 {
 		node := n.children[n.indexes[path[0]]]
 		if node == nil {
@@ -261,7 +261,7 @@ LOOP:
 	return nil
 }
 
-func (n *Node) matchCurrent(path string, params params.Params) (bool, string) {
+func (n *node) matchCurrent(path string, params params.Params) (bool, string) {
 	switch n.nodeType {
 	case nodeTypeString:
 		if strings.HasPrefix(path, n.pattern) {
@@ -292,8 +292,8 @@ func (n *Node) matchCurrent(path string, params params.Params) (bool, string) {
 }
 
 // URL 根据参数生成地址
-func (n *Node) url(params map[string]string) (string, error) {
-	nodes := make([]*Node, 0, 5)
+func (n *node) url(params map[string]string) (string, error) {
+	nodes := make([]*node, 0, 5)
 	for curr := n; curr.parent != nil; curr = curr.parent { // 从尾部向上开始获取节点
 		nodes = append(nodes, curr)
 	}
@@ -322,7 +322,7 @@ func (n *Node) url(params map[string]string) (string, error) {
 //
 // NOTE: 实际应该中，理论上不会出现多个相同的元素，
 // 所以此处不作多余的判断。
-func removeNodes(nodes []*Node, pattern string) []*Node {
+func removeNodes(nodes []*node, pattern string) []*node {
 	lastIndex := len(nodes) - 1
 	for index, n := range nodes {
 		if n.pattern != pattern {
@@ -346,7 +346,7 @@ func removeNodes(nodes []*Node, pattern string) []*Node {
 // 若 pos 大于或等于 n.pattern 的长度，则直接返回 n 不会拆分，pos 处的字符作为子节点的内容。
 //
 // NOTE: 调用者需确保 pos 位置是可拆分的，否则将 panic。
-func splitNode(n *Node, pos int) (*Node, error) {
+func splitNode(n *node, pos int) (*node, error) {
 	if len(n.pattern) <= pos { // 不需要拆分
 		return n, nil
 	}
