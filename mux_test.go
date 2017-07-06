@@ -7,6 +7,7 @@ package mux
 import (
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/issue9/assert"
@@ -38,12 +39,12 @@ func newTester(a *assert.Assertion, disableOptions, skipClean bool) *tester {
 }
 
 // 确保能正常匹配到指定的 URL
-func (t *tester) matchTrue(method, url string, code int) {
+func (t *tester) matchTrue(method, path string, code int) {
 	w := httptest.NewRecorder()
 	t.a.NotNil(w)
 
-	r, err := http.NewRequest(method, url, nil)
-	t.a.NotError(err).NotNil(r)
+	r := &http.Request{URL: &url.URL{Path: path}, Body: nil, Method: method}
+	t.a.NotNil(r)
 
 	t.mux.ServeHTTP(w, r)
 	t.a.Equal(w.Code, code)
@@ -65,6 +66,12 @@ func (t *tester) optionsTrue(url string, code int, allow string) {
 func TestMux(t *testing.T) {
 	a := assert.New(t)
 	test := newTester(a, false, false)
+
+	// 测试 / 和 "" 是否访问同一地址
+	test.mux.Get("/", buildHandler(1))
+	test.matchTrue(http.MethodGet, "", 1)
+	test.matchTrue(http.MethodGet, "/", 1)
+	test.matchTrue(http.MethodGet, "/abc", http.StatusNotFound)
 
 	test.mux.Get("/h/1", buildHandler(1))
 	test.matchTrue(http.MethodGet, "/h/1", 1)

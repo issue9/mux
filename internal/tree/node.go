@@ -110,7 +110,7 @@ func (n *node) addSegment(seg string) (*node, error) {
 	var child *node // 找到的最匹配节点
 	var l int       // 最大的匹配字符数量
 	for _, c := range n.children {
-		if c.endpoint != isEndpoint(seg) {
+		if c.endpoint != isEndpoint(seg) { // 完全不同的节点
 			continue
 		}
 
@@ -218,7 +218,7 @@ func (n *node) clean(prefix string) {
 //
 // NOTE: 此函数与 node.trace 是一样的，记得同步两边的代码。
 func (n *node) match(path string, params params.Params) *node {
-	if len(n.indexes) > 0 {
+	if len(n.indexes) > 0 && len(path) > 0 {
 		node := n.children[n.indexes[path[0]]]
 		if node == nil {
 			goto LOOP
