@@ -194,7 +194,7 @@ func TestMux_Params(t *testing.T) {
 
 	buildParamsHandler := func() http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ps := GetParams(r)
+			ps := Params(r)
 			a.NotNil(ps)
 			params = ps
 		})

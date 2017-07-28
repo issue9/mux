@@ -236,8 +236,8 @@ func (mux *Mux) URL(name string, params map[string]string) (string, error) {
 	return mux.tree.URL(pattern, params)
 }
 
-// GetParams 获取路由的参数集合。详细情况可参考 params.Get
-func GetParams(r *http.Request) params.Params {
+// Params 获取路由的参数集合。详细情况可参考 params.Get
+func Params(r *http.Request) params.Params {
 	return params.Get(r)
 }
 
