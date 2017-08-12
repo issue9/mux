@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"testing"
 
 	"github.com/issue9/assert"
@@ -36,6 +37,10 @@ func newTester(a *assert.Assertion, disableOptions, skipClean bool) *tester {
 		a:   a,
 		mux: New(disableOptions, skipClean, nil, nil),
 	}
+}
+
+func (t *tester) printTree(path string) {
+	t.mux.tree.Trace(os.Stderr, path)
 }
 
 // 确保能正常匹配到指定的 URL
@@ -267,6 +272,14 @@ func TestMux_ServeHTTP_Order(t *testing.T) {
 	a.NotError(test.mux.GetFunc("/posts/{id}/1", buildFunc(1)))      // f1
 	test.matchTrue(http.MethodGet, "/posts/1/1", 1)                  // f1 普通路由项完全匹配
 	test.matchTrue(http.MethodGet, "/posts/2/5", 2)                  // f2 命名完全匹配
+
+	test = newTester(a, false, false)
+	a.NotError(test.mux.GetFunc("/tags/{id}.html", buildFunc(1))) // f1
+	a.NotError(test.mux.GetFunc("/tags.html", buildFunc(2)))      // f2
+	a.NotError(test.mux.GetFunc("/{path}", buildFunc(3)))         // f3
+	test.matchTrue(http.MethodGet, "/tags", 3)                    // f3 // 正好与 f1 的第一个节点匹配
+	test.matchTrue(http.MethodGet, "/tags/1.html", 1)             // f1
+	test.matchTrue(http.MethodGet, "/tags.html", 2)               // f2
 }
 
 func TestClearPath(t *testing.T) {
