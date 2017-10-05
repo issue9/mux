@@ -42,6 +42,9 @@ type Mux struct {
 	notFound         http.HandlerFunc
 	methodNotAllowed http.HandlerFunc
 
+	// names 保存着路由项与其名称的对应关系，默认情况下，
+	// 路由项不存在名称，但可以通过 Mux.Name() 为其指定一个名称，
+	// 之后即可以在 Mux.URL() 使用名称来查找路由项。
 	names   map[string]string
 	namesMu sync.RWMutex
 }
