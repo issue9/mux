@@ -41,7 +41,7 @@ func TestNode_find(t *testing.T) {
 	a.Equal(node.find("/posts/{id}/{author:\\w+}/profile").pattern, "{author:\\w+}/profile")
 }
 
-func TestRemoveNoddes(t *testing.T) {
+func TestRemoveNodes(t *testing.T) {
 	a := assert.New(t)
 	newNode := func(str string) *node {
 		return &node{pattern: str}
