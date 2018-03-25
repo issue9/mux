@@ -13,6 +13,5 @@ go:
 install:
   - go get github.com/issue9/assert
   - go get github.com/dimfeld/httptreemux
-  - go get github.com/pressly/chi
 
 script: go test -race -v ./...

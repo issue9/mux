@@ -13,13 +13,11 @@ import (
 	"testing"
 
 	"github.com/dimfeld/httptreemux"
-	"github.com/pressly/chi"
 )
 
 var (
 	issue9Mux   *Mux
 	httpTreeMux *httptreemux.TreeMux
-	chiMux      *chi.Mux
 )
 
 func init() {
@@ -51,30 +49,6 @@ func init() {
 		httpTreeMux = httptreemux.New()
 		for _, api := range apis {
 			httpTreeMux.Handle(api.method, api.colonPattern, h)
-		}
-	})
-
-	calcMemStats("chiMux", func() {
-		h := func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte(r.URL.Path))
-		}
-
-		chiMux = chi.NewRouter()
-		for _, api := range apis {
-			switch api.method {
-			case http.MethodGet:
-				chiMux.Get(api.colonPattern, h)
-			case http.MethodDelete:
-				chiMux.Delete(api.colonPattern, h)
-			case http.MethodPut:
-				chiMux.Put(api.colonPattern, h)
-			case http.MethodPost:
-				chiMux.Post(api.colonPattern, h)
-			case http.MethodOptions:
-				chiMux.Options(api.colonPattern, h)
-			case http.MethodPatch:
-				chiMux.Patch(api.colonPattern, h)
-			}
 		}
 	})
 }
@@ -117,10 +91,6 @@ func BenchmarkGithubAPI_mux(b *testing.B) {
 
 func BenchmarkGithubAPI_httptreemux(b *testing.B) {
 	benchGithubAPI("httptreemux", b, httpTreeMux)
-}
-
-func BenchmarkGithubAPI_chi(b *testing.B) {
-	benchGithubAPI("chi", b, chiMux)
 }
 
 type api struct {
