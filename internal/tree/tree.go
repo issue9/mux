@@ -126,20 +126,12 @@ func (tree *Tree) URL(pattern string, params map[string]string) (string, error) 
 	return node.url(params)
 }
 
-// Handler 找到与当前内容匹配的处理函数。
-//
-// 返回参数中：
-// 第一个参数为 nil，表示有节点但没有该请求方法对应的处理函数，一般表示 405 错误；
-// 第二个参数为 nil，表示未找到节点，或是节点上没有任何处理函数，一般表示 404 错误。
+// Handler 找到与当前内容匹配的 handlers.Handlers 实例。
 func (tree *Tree) Handler(path string) (*handlers.Handlers, params.Params) {
 	ps := make(params.Params, 5)
 	node := tree.match(path, ps)
 
-	if node == nil {
-		return nil, nil
-	}
-
-	if node.handlers == nil || node.handlers.Len() == 0 {
+	if node == nil || node.handlers == nil || node.handlers.Len() == 0 {
 		return nil, nil
 	}
 
