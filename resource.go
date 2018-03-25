@@ -4,9 +4,7 @@
 
 package mux
 
-import (
-	"net/http"
-)
+import "net/http"
 
 // Resource 以资源地址为对象的路由配置。
 //  r, _ := srv.Resource("/api/users/{id}")

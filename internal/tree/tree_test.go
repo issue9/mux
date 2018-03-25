@@ -49,8 +49,11 @@ func (n *tester) add(method, pattern string, code int) {
 // 验证按照指定的 method 和 path 访问，是否会返回相同的 code 值，
 // 若是，则返回该节点以及对应的参数。
 func (n *tester) handler(method, path string, code int) (http.Handler, params.Params) {
-	h, ps := n.tree.Handler(path, method)
-	n.a.NotNil(ps).NotNil(h)
+	hs, ps := n.tree.Handler(path)
+	n.a.NotNil(ps).NotNil(hs)
+
+	h := hs.Handler(method)
+	n.a.NotNil(h)
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(method, path, nil)

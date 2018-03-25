@@ -191,13 +191,16 @@ func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		p = cleanPath(p)
 	}
 
-	h, ps := mux.tree.Handler(p, r.Method)
-	if ps == nil {
+	hs, ps := mux.tree.Handler(p)
+	if hs == nil {
 		mux.notFound(w, r)
 		return
 	}
 
+	h := hs.Handler(r.Method)
 	if h == nil {
+		opt := hs.Options()
+		w.Header().Set("Allow", opt)
 		mux.methodNotAllowed(w, r)
 		return
 	}

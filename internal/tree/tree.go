@@ -116,6 +116,7 @@ func (tree *Tree) SetAllow(pattern, allow string) error {
 }
 
 // URL 根据参数生成地址。
+//
 // 若节点不存在，则会自动生成。
 func (tree *Tree) URL(pattern string, params map[string]string) (string, error) {
 	node, err := tree.getNode(pattern)
@@ -125,10 +126,12 @@ func (tree *Tree) URL(pattern string, params map[string]string) (string, error) 
 	return node.url(params)
 }
 
-// Handler 找到与当前内容匹配的处理函数。返回参数中：
+// Handler 找到与当前内容匹配的处理函数。
+//
+// 返回参数中：
 // 第一个参数为 nil，表示有节点但没有该请求方法对应的处理函数，一般表示 405 错误；
 // 第二个参数为 nil，表示未找到节点，或是节点上没有任何处理函数，一般表示 404 错误。
-func (tree *Tree) Handler(path, method string) (http.Handler, params.Params) {
+func (tree *Tree) Handler(path string) (*handlers.Handlers, params.Params) {
 	ps := make(params.Params, 5)
 	node := tree.match(path, ps)
 
@@ -140,5 +143,5 @@ func (tree *Tree) Handler(path, method string) (http.Handler, params.Params) {
 		return nil, nil
 	}
 
-	return node.handlers.Handler(method), ps
+	return node.handlers, ps
 }

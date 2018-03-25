@@ -151,6 +151,11 @@ func (hs *Handlers) Handler(method string) http.Handler {
 	return hs.handlers[methodMap[method]]
 }
 
+// Options 获取当前支持的请求方法列表字符串
+func (hs *Handlers) Options() string {
+	return hs.optionsAllow
+}
+
 // Len 获取当前支持请求方法数量
 func (hs *Handlers) Len() int {
 	return len(hs.handlers)
