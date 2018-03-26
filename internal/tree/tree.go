@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/issue9/mux/internal/tree/handlers"
+	"github.com/issue9/mux/internal/handlers"
 	"github.com/issue9/mux/params"
 )
 
