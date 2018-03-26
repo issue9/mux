@@ -322,26 +322,15 @@ func (n *node) url(params map[string]string) (string, error) {
 }
 
 // 从 nodes 中删除一个 pattern 字段为指定值的元素，
-// 若存在多个同名的，则只删除第一个匹配的元素。
 //
 // NOTE: 实际应该中，理论上不会出现多个相同的元素，
 // 所以此处不作多余的判断。
 func removeNodes(nodes []*node, pattern string) []*node {
-	lastIndex := len(nodes) - 1
 	for index, n := range nodes {
-		if n.pattern != pattern {
-			continue
-		}
-
-		switch {
-		case len(nodes) == 1: // 只有一个元素
-			return nodes[:0]
-		case index == lastIndex: // 最后一个元素
-			return nodes[:lastIndex]
-		default:
+		if n.pattern == pattern {
 			return append(nodes[:index], nodes[index+1:]...)
 		}
-	} // end for
+	}
 
 	return nodes
 }

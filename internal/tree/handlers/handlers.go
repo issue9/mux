@@ -54,7 +54,7 @@ func (hs *Handlers) Add(h http.Handler, methods ...string) error {
 	for _, m := range methods {
 		i, found := methodMap[m]
 		if !found {
-			return fmt.Errorf("不支持的请求方法 %v", m)
+			return fmt.Errorf("不支持的请求方法 %s", m)
 		}
 
 		if err := hs.addSingle(h, i); err != nil {

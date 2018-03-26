@@ -12,7 +12,8 @@ import (
 
 type methodType int16
 
-// 各个请求方法的值
+// 各个请求方法的值。
+// NOTE: 值类型为 methodType 的实际类型，不要溢出了。
 const (
 	get methodType = 1 << iota
 	post
@@ -44,8 +45,7 @@ var (
 	// 当前支持的所有请求方法
 	supported = make([]string, 0, len(methodMap))
 
-	// any 调用 *.Any 时添加所使用的请求方法列表，
-	// 默认为除 http.MethodOptions 之外的所有 supported 中的元素
+	// 除 http.MethodOptions 之外的所有 supported 中的元素
 	any = make([]string, 0, len(methodMap)-1)
 
 	// 所有的 OPTIONS 请求的 allow 报头字符串
@@ -53,7 +53,7 @@ var (
 )
 
 func init() {
-	// 生成 supported 和 any
+	// 生成 supported 和 any，any 比 supported 少一个 http.MethodOptions。
 	for typ := range methodMap {
 		supported = append(supported, typ)
 		if typ != http.MethodOptions {
@@ -95,7 +95,7 @@ func makeOptionsStrings() {
 			methods = append(methods, http.MethodTrace)
 		}
 
-		sort.Strings(methods) // 防止每次从 map 中读取的顺序都不一样
+		sort.Strings(methods) // 统一的排序，方便测试使用
 		optionsStrings[i] = strings.Join(methods, ", ")
 		methods = methods[:0]
 	}
