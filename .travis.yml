@@ -7,11 +7,11 @@ os:
 go:
   - tip
   - "1.10"
-  - 1.9
-  - 1.8
 
 install:
   - go get github.com/issue9/assert
   - go get github.com/dimfeld/httptreemux
 
-script: go test -race -v ./...
+script: go test -race -v -coverprofile=coverage.txt -covermode=atomic $(go list ./...| grep -v /vendor/)
+
+after_success: bash <(curl -s https://codecov.io/bash)

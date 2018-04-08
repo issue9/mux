@@ -1,6 +1,7 @@
 mux [![Build Status](https://travis-ci.org/issue9/mux.svg?branch=master)](https://travis-ci.org/issue9/mux)
 [![Go version](https://img.shields.io/badge/Go-1.8-brightgreen.svg?style=flat)](https://golang.org)
 [![Go Report Card](https://goreportcard.com/badge/github.com/issue9/mux)](https://goreportcard.com/report/github.com/issue9/mux)
+[![codecov](https://codecov.io/gh/issue9/mux/branch/master/graph/badge.svg)](https://codecov.io/gh/issue9/mux)
 ======
 
 mux 是一个实现了 [http.Handler](https://godoc.org/net/http#Handler) 的中间件，为用户提供了以下功能：
