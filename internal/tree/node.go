@@ -346,7 +346,7 @@ func splitNode(n *node, pos int) (*node, error) {
 
 	p := n.parent
 	if p == nil {
-		return nil, errors.New("splitNode:节点必须要有一个有效的父节点，才能进行拆分")
+		return nil, errors.New("节点必须要有一个有效的父节点，才能进行拆分")
 	}
 
 	// 先从父节点中删除老的 n

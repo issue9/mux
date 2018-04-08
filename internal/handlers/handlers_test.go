@@ -68,7 +68,9 @@ func TestHandlers_Add_Remove(t *testing.T) {
 	a.NotError(hs.Add(getHandler, http.MethodOptions))
 
 	// 删除不存在的内容
-	hs.Remove("not exists")
+	a.False(hs.Remove("not exists"))
+
+	a.True(hs.Remove())
 }
 
 func TestHandlers_optionsAllow(t *testing.T) {
@@ -87,15 +89,16 @@ func TestHandlers_optionsAllow(t *testing.T) {
 	}
 
 	// 默认
-	a.Equal(hs.optionsAllow, "OPTIONS")
+	a.Equal(hs.Options(), "OPTIONS")
 
 	a.NotError(hs.Add(getHandler, http.MethodGet))
 	test("GET, OPTIONS")
+	a.Equal(hs.Options(), "GET, OPTIONS")
 
 	a.NotError(hs.Add(getHandler, http.MethodPost))
 	test("GET, OPTIONS, POST")
 
-	// 显式调用 SetAllow() 之后，不再改变 optionsallow
+	// 显式调用 SetAllow() 之后，不再改变 optionsAllow
 	hs.SetAllow("TEST,TEST1")
 	test("TEST,TEST1")
 	a.NotError(hs.Add(getHandler, http.MethodDelete))

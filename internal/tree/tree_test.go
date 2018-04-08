@@ -77,10 +77,7 @@ func (n *tester) paramsTrue(method, path string, code int, params map[string]str
 
 // 验证 node.URL 的正确性
 func (n *tester) urlTrue(pattern string, params map[string]string, url string) {
-	node := n.tree.find(pattern)
-	n.a.NotNil(node)
-
-	u, err := node.url(params)
+	u, err := n.tree.URL(pattern, params)
 	n.a.NotError(err)
 	n.a.Equal(u, url)
 }
@@ -236,4 +233,22 @@ func TestTree_Add_Remove(t *testing.T) {
 	a.NotError(tree.Remove("/posts/{id}/author")) // 删除所有请求方法
 	a.Nil(tree.find("/posts/{id}/author"))
 	a.Error(tree.Remove("/posts/{id}/author")) // 删除已经不存在的节点
+}
+
+func TestTree_SetAllow(t *testing.T) {
+	a := assert.New(t)
+	tree := New(false)
+
+	a.NotError(tree.Add("/options", buildHandler(1), http.MethodGet, http.MethodDelete, http.MethodPatch))
+	tree.SetAllow("/options", "TEST1,TEST2")
+	n, err := tree.getNode("/options")
+	a.NotError(err).NotNil(n)
+	a.Equal(n.handlers.Options(), "TEST1,TEST2")
+
+	tree.Remove("/options", http.MethodGet)
+	a.Equal(n.handlers.Options(), "TEST1,TEST2")
+
+	// 删除完之后，清空 allow
+	tree.Remove("/options")
+	a.Equal(n.handlers.Options(), "")
 }
