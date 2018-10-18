@@ -11,14 +11,9 @@ import (
 	"runtime"
 	"strings"
 	"testing"
-
-	"github.com/dimfeld/httptreemux"
 )
 
-var (
-	issue9Mux   *Mux
-	httpTreeMux *httptreemux.TreeMux
-)
+var issue9Mux *Mux
 
 func init() {
 	for _, api := range apis {
@@ -38,17 +33,6 @@ func init() {
 			if err := issue9Mux.HandleFunc(api.bracePattern, h, api.method); err != nil {
 				fmt.Println("calcMemStats:", err)
 			}
-		}
-	})
-
-	calcMemStats("httptreemux", func() {
-		h := func(w http.ResponseWriter, r *http.Request, _ map[string]string) {
-			w.Write([]byte(r.URL.Path))
-		}
-
-		httpTreeMux = httptreemux.New()
-		for _, api := range apis {
-			httpTreeMux.Handle(api.method, api.colonPattern, h)
 		}
 	})
 }
@@ -87,10 +71,6 @@ func benchGithubAPI(name string, b *testing.B, srv http.Handler) {
 
 func BenchmarkGithubAPI_mux(b *testing.B) {
 	benchGithubAPI("Issue9Mux", b, issue9Mux)
-}
-
-func BenchmarkGithubAPI_httptreemux(b *testing.B) {
-	benchGithubAPI("httptreemux", b, httpTreeMux)
 }
 
 type api struct {
