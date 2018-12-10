@@ -55,6 +55,20 @@ func (t *tester) matchTrue(method, path string, code int) {
 	t.a.Equal(w.Code, code)
 }
 
+// 确保能正常匹配到指定的 URL
+func (t *tester) matchContent(method, path string, code int, content string) {
+	w := httptest.NewRecorder()
+	t.a.NotNil(w)
+
+	r := &http.Request{URL: &url.URL{Path: path}, Body: nil, Method: method}
+	t.a.NotNil(r)
+
+	t.mux.ServeHTTP(w, r)
+
+	t.a.Equal(w.Code, code)
+	t.a.Equal(w.Body.String(), content)
+}
+
 // 确保能正确匹配地址，且拿到正确的 options 报头
 func (t *tester) optionsTrue(url string, code int, allow string) {
 	w := httptest.NewRecorder()
@@ -119,6 +133,42 @@ func TestMux(t *testing.T) {
 	test.matchTrue(http.MethodPatch, "/f/any", 6)
 	test.matchTrue(http.MethodDelete, "/f/any", 6)
 	test.matchTrue(http.MethodTrace, "/f/any", 6)
+}
+
+func TestMux_Middlewares(t *testing.T) {
+	a := assert.New(t)
+
+	test := newTester(a, false, false)
+	test.mux.AddMiddlewares(func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("m1"))
+			h.ServeHTTP(w, r)
+		})
+	})
+	a.NotError(test.mux.HandleFunc("/api/1", buildFunc(1), http.MethodGet))
+	test.matchContent(http.MethodGet, "/api/1", 200, "m1") // 中间件有输出，将状态码改为 200
+
+	// 执行过程中添加中间件
+	test.mux.AddMiddlewares(func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("m2"))
+			h.ServeHTTP(w, r)
+		})
+	})
+	test.matchContent(http.MethodGet, "/api/1", 200, "m2m1") // 中间件有输出，将状态码改为 200
+
+	// 重置中间件。同时状态码输出也改为 1
+	test.mux.ResetMiddlewares()
+	test.matchContent(http.MethodGet, "/api/1", 1, "")
+
+	// 执行过程中添加中间件
+	test.mux.AddMiddlewares(func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("m2"))
+			h.ServeHTTP(w, r)
+		})
+	})
+	test.matchContent(http.MethodGet, "/api/1", 200, "m2") // 中间件有输出，将状态码改为 200
 }
 
 func TestMux_Add_Remove(t *testing.T) {

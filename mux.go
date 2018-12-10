@@ -11,6 +11,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/issue9/middleware"
+
 	"github.com/issue9/mux/internal/tree"
 	"github.com/issue9/mux/params"
 )
@@ -37,6 +39,10 @@ var ErrNameExists = errors.New("存在相同名称的路由项")
 //    Handle("/api/{version:\\d+}",h3, http.MethodGet, http.MethodPost) // 只匹配 GET 和 POST
 //  http.ListenAndServe(m)
 type Mux struct {
+	h           *muxHandler
+	middlewares []middleware.Middleware
+	handler     http.Handler
+
 	tree             *tree.Tree
 	skipCleanPath    bool
 	notFound         http.HandlerFunc
@@ -47,6 +53,10 @@ type Mux struct {
 	// 之后即可以在 Mux.URL() 使用名称来查找路由项。
 	names   map[string]string
 	namesMu sync.RWMutex
+}
+
+type muxHandler struct {
+	mux *Mux
 }
 
 // New 声明一个新的 Mux。
@@ -64,13 +74,18 @@ func New(disableOptions, skipCleanPath bool, notFound, methodNotAllowed http.Han
 		methodNotAllowed = defaultMethodNotAllowed
 	}
 
-	return &Mux{
+	mux := &Mux{
 		tree:             tree.New(disableOptions),
 		names:            make(map[string]string, 50),
 		skipCleanPath:    skipCleanPath,
 		notFound:         notFound,
 		methodNotAllowed: methodNotAllowed,
+		middlewares:      make([]middleware.Middleware, 0, 10),
 	}
+	mux.h = &muxHandler{mux: mux}
+	mux.handler = mux.h
+
+	return mux
 }
 
 // Clean 清除所有的路由项
@@ -186,22 +201,40 @@ func (mux *Mux) AnyFunc(pattern string, fun http.HandlerFunc) *Mux {
 	return mux.handleFunc(pattern, fun)
 }
 
+// AddMiddlewares 设置中间件，可多次调用。
+func (mux *Mux) AddMiddlewares(m ...middleware.Middleware) *Mux {
+	mux.middlewares = append(mux.middlewares, m...)
+	mux.handler = middleware.Handler(mux.h, mux.middlewares...)
+	return mux
+}
+
+// ResetMiddlewares 清除中间件。
+func (mux *Mux) ResetMiddlewares() *Mux {
+	mux.middlewares = mux.middlewares[:0]
+	mux.handler = mux.h
+	return mux
+}
+
 func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	mux.handler.ServeHTTP(w, r)
+}
+
+func (mh *muxHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	p := r.URL.Path
-	if !mux.skipCleanPath {
+	if !mh.mux.skipCleanPath {
 		p = cleanPath(p)
 	}
 
-	hs, ps := mux.tree.Handler(p)
+	hs, ps := mh.mux.tree.Handler(p)
 	if hs == nil {
-		mux.notFound(w, r)
+		mh.mux.notFound(w, r)
 		return
 	}
 
 	h := hs.Handler(r.Method)
 	if h == nil {
 		w.Header().Set("Allow", hs.Options())
-		mux.methodNotAllowed(w, r)
+		mh.mux.methodNotAllowed(w, r)
 		return
 	}
 
