@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/issue9/assert"
+	"github.com/issue9/middleware"
 )
 
 func buildHandler(code int) http.Handler {
@@ -24,6 +25,15 @@ func buildFunc(code int) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(code)
 	})
+}
+
+func buildMiddleware(text string) middleware.Middleware {
+	return func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte(text))
+			h.ServeHTTP(w, r)
+		})
+	}
 }
 
 // mux 的测试工具
@@ -139,35 +149,21 @@ func TestMux_AppendMiddlewares(t *testing.T) {
 	a := assert.New(t)
 
 	test := newTester(a, false, false)
-	test.mux.AddMiddlewares(func(h http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("m1"))
-			h.ServeHTTP(w, r)
-		})
-	})
+	test.mux.AddMiddlewares(buildMiddleware("m1"))
 	a.NotError(test.mux.HandleFunc("/api/1", buildFunc(1), http.MethodGet))
 	test.matchContent(http.MethodGet, "/api/1", 200, "m1") // 中间件有输出，将状态码改为 200
 
 	// 执行过程中添加中间件
-	test.mux.AddMiddlewares(func(h http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("m2"))
-			h.ServeHTTP(w, r)
-		})
-	})
-	test.matchContent(http.MethodGet, "/api/1", 200, "m2m1") // 中间件有输出，将状态码改为 200
+	test.mux.AddMiddlewares(buildMiddleware("m2"), buildMiddleware("m3"))
+	test.mux.AddMiddlewares(buildMiddleware("m4"), buildMiddleware("m5"))
+	test.matchContent(http.MethodGet, "/api/1", 200, "m5m4m3m2m1") // 中间件有输出，将状态码改为 200
 
 	// 重置中间件。同时状态码输出也改为 1
 	test.mux.ResetMiddlewares()
 	test.matchContent(http.MethodGet, "/api/1", 1, "")
 
 	// 执行过程中添加中间件
-	test.mux.AddMiddlewares(func(h http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("m2"))
-			h.ServeHTTP(w, r)
-		})
-	})
+	test.mux.AddMiddlewares(buildMiddleware("m2"))
 	test.matchContent(http.MethodGet, "/api/1", 200, "m2") // 中间件有输出，将状态码改为 200
 }
 
@@ -175,35 +171,21 @@ func TestMux_UnshiftMiddlewares(t *testing.T) {
 	a := assert.New(t)
 
 	test := newTester(a, false, false)
-	test.mux.UnshiftMiddlewares(func(h http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("m1"))
-			h.ServeHTTP(w, r)
-		})
-	})
+	test.mux.UnshiftMiddlewares(buildMiddleware("m1"))
 	a.NotError(test.mux.HandleFunc("/api/1", buildFunc(1), http.MethodGet))
 	test.matchContent(http.MethodGet, "/api/1", 200, "m1") // 中间件有输出，将状态码改为 200
 
 	// 执行过程中添加中间件
-	test.mux.UnshiftMiddlewares(func(h http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("m2"))
-			h.ServeHTTP(w, r)
-		})
-	})
-	test.matchContent(http.MethodGet, "/api/1", 200, "m1m2") // 中间件有输出，将状态码改为 200
+	test.mux.UnshiftMiddlewares(buildMiddleware("m2"), buildMiddleware("m3"))
+	test.mux.UnshiftMiddlewares(buildMiddleware("m4"), buildMiddleware("m5"))
+	test.matchContent(http.MethodGet, "/api/1", 200, "m1m3m2m5m4") // 中间件有输出，将状态码改为 200
 
 	// 重置中间件。同时状态码输出也改为 1
 	test.mux.ResetMiddlewares()
 	test.matchContent(http.MethodGet, "/api/1", 1, "")
 
 	// 执行过程中添加中间件
-	test.mux.UnshiftMiddlewares(func(h http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("m2"))
-			h.ServeHTTP(w, r)
-		})
-	})
+	test.mux.UnshiftMiddlewares(buildMiddleware("m2"))
 	test.matchContent(http.MethodGet, "/api/1", 200, "m2") // 中间件有输出，将状态码改为 200
 }
 

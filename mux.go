@@ -209,6 +209,8 @@ func (mux *Mux) AddMiddlewares(m ...middleware.Middleware) *Mux {
 }
 
 // AppendMiddlewares 添加中间件，可多次调用。
+//
+// 后添加的先输出。
 func (mux *Mux) AppendMiddlewares(m ...middleware.Middleware) *Mux {
 	mux.middlewares = append(mux.middlewares, m...)
 	mux.handler = middleware.Handler(mux.h, mux.middlewares...)
@@ -216,6 +218,8 @@ func (mux *Mux) AppendMiddlewares(m ...middleware.Middleware) *Mux {
 }
 
 // UnshiftMiddlewares 前排插入中间件。可多次调用
+//
+// 后添加的后输出。
 func (mux *Mux) UnshiftMiddlewares(m ...middleware.Middleware) *Mux {
 	ms := make([]middleware.Middleware, len(m)+len(mux.middlewares))
 	ms = append(ms, m...)
