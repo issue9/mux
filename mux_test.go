@@ -189,6 +189,18 @@ func TestMux_UnshiftMiddlewares(t *testing.T) {
 	test.matchContent(http.MethodGet, "/api/1", 200, "m2") // 中间件有输出，将状态码改为 200
 }
 
+func TestMux_Middlewares(t *testing.T) {
+	a := assert.New(t)
+
+	test := newTester(a, false, false)
+	a.NotError(test.mux.HandleFunc("/api/1", buildFunc(1), http.MethodGet))
+
+	test.mux.UnshiftMiddlewares(buildMiddleware("m1"), buildMiddleware("m2"))
+	test.mux.UnshiftMiddlewares(buildMiddleware("m3"), buildMiddleware("m4"))
+	test.mux.AppendMiddlewares(buildMiddleware("m5"), buildMiddleware("m6"))
+	test.matchContent(http.MethodGet, "/api/1", 200, "m6m5m2m1m4m3") // 中间件有输出，将状态码改为 200
+}
+
 func TestMux_Add_Remove(t *testing.T) {
 	a := assert.New(t)
 	test := newTester(a, false, false)
