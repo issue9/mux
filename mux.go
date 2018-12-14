@@ -201,9 +201,26 @@ func (mux *Mux) AnyFunc(pattern string, fun http.HandlerFunc) *Mux {
 	return mux.handleFunc(pattern, fun)
 }
 
-// AddMiddlewares 设置中间件，可多次调用。
+// AddMiddlewares 添加中间件，可多次调用。
+//
+// Deprecated: 采用 AppendMiddlewares 代替
 func (mux *Mux) AddMiddlewares(m ...middleware.Middleware) *Mux {
+	return mux.AppendMiddlewares(m...)
+}
+
+// AppendMiddlewares 添加中间件，可多次调用。
+func (mux *Mux) AppendMiddlewares(m ...middleware.Middleware) *Mux {
 	mux.middlewares = append(mux.middlewares, m...)
+	mux.handler = middleware.Handler(mux.h, mux.middlewares...)
+	return mux
+}
+
+// UnshiftMiddlewares 前排插入中间件。可多次调用
+func (mux *Mux) UnshiftMiddlewares(m ...middleware.Middleware) *Mux {
+	ms := make([]middleware.Middleware, len(m)+len(mux.middlewares))
+	ms = append(ms, m...)
+	ms = append(ms, mux.middlewares...)
+	mux.middlewares = ms
 	mux.handler = middleware.Handler(mux.h, mux.middlewares...)
 	return mux
 }

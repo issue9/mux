@@ -135,7 +135,7 @@ func TestMux(t *testing.T) {
 	test.matchTrue(http.MethodTrace, "/f/any", 6)
 }
 
-func TestMux_Middlewares(t *testing.T) {
+func TestMux_AppendMiddlewares(t *testing.T) {
 	a := assert.New(t)
 
 	test := newTester(a, false, false)
@@ -163,6 +163,42 @@ func TestMux_Middlewares(t *testing.T) {
 
 	// 执行过程中添加中间件
 	test.mux.AddMiddlewares(func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("m2"))
+			h.ServeHTTP(w, r)
+		})
+	})
+	test.matchContent(http.MethodGet, "/api/1", 200, "m2") // 中间件有输出，将状态码改为 200
+}
+
+func TestMux_UnshiftMiddlewares(t *testing.T) {
+	a := assert.New(t)
+
+	test := newTester(a, false, false)
+	test.mux.UnshiftMiddlewares(func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("m1"))
+			h.ServeHTTP(w, r)
+		})
+	})
+	a.NotError(test.mux.HandleFunc("/api/1", buildFunc(1), http.MethodGet))
+	test.matchContent(http.MethodGet, "/api/1", 200, "m1") // 中间件有输出，将状态码改为 200
+
+	// 执行过程中添加中间件
+	test.mux.UnshiftMiddlewares(func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("m2"))
+			h.ServeHTTP(w, r)
+		})
+	})
+	test.matchContent(http.MethodGet, "/api/1", 200, "m1m2") // 中间件有输出，将状态码改为 200
+
+	// 重置中间件。同时状态码输出也改为 1
+	test.mux.ResetMiddlewares()
+	test.matchContent(http.MethodGet, "/api/1", 1, "")
+
+	// 执行过程中添加中间件
+	test.mux.UnshiftMiddlewares(func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte("m2"))
 			h.ServeHTTP(w, r)
