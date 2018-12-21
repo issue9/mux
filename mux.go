@@ -39,6 +39,10 @@ var ErrNameExists = errors.New("存在相同名称的路由项")
 //    Handle("/api/{version:\\d+}",h3, http.MethodGet, http.MethodPost) // 只匹配 GET 和 POST
 //  http.ListenAndServe(m)
 type Mux struct {
+	// 路由相关的字段
+	// middlewares 表示附加在 Mux 上的中间件，仅作为缓存用，
+	// 每次添加新的中间件，都会重新用 middlewards 和 h
+	// 生成新的 http.Handler 实例，保存在 handler 字段中。
 	h           *muxHandler
 	middlewares []middleware.Middleware
 	handler     http.Handler
