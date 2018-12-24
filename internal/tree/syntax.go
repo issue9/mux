@@ -145,6 +145,7 @@ func (s *state) setSeparator(index int) error {
 }
 
 // split 将字符串解析成字符串数组
+// 以 { 为分界线进行分割。
 func split(str string) ([]string, error) {
 	if len(str) == 0 {
 		return nil, errors.New("参数 str 不能为空")
