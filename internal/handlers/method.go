@@ -26,7 +26,7 @@ const (
 	trace
 
 	// 以上各个值进行组合之后的数量。
-	max = get + post + del + put + patch + options + head + connect + trace + 1
+	max = get + post + del + put + patch + options + head + connect + trace
 )
 
 var (
@@ -42,31 +42,43 @@ var (
 		http.MethodTrace:   trace,
 	}
 
-	// 当前支持的所有请求方法
-	supported = make([]string, 0, len(methodMap))
+	// 当前支持的所有请求方法，在 Remove 方法中用到。
+	removeAll = []string{
+		http.MethodGet,
+		http.MethodPost,
+		http.MethodDelete,
+		http.MethodPut,
+		http.MethodPatch,
+		http.MethodOptions,
+		http.MethodHead,
+		http.MethodConnect,
+		http.MethodTrace,
+	}
 
 	// 除 http.MethodOptions 之外的所有 supported 中的元素
-	any = make([]string, 0, len(methodMap)-1)
+	// 在 Add 方法中用到。
+	addAny = []string{
+		http.MethodGet,
+		http.MethodPost,
+		http.MethodDelete,
+		http.MethodPut,
+		http.MethodPatch,
+		http.MethodHead,
+		http.MethodConnect,
+		http.MethodTrace,
+	}
 
 	// 所有的 OPTIONS 请求的 allow 报头字符串
-	optionsStrings = make([]string, max, max)
+	optionsStrings = make([]string, max+1, max+1)
 )
 
 func init() {
-	// 生成 supported 和 any，any 比 supported 少一个 http.MethodOptions。
-	for typ := range methodMap {
-		supported = append(supported, typ)
-		if typ != http.MethodOptions {
-			any = append(any, typ)
-		}
-	}
-
 	makeOptionsStrings()
 }
 
 func makeOptionsStrings() {
-	methods := make([]string, 0, len(supported))
-	for i := methodType(0); i < max; i++ {
+	methods := make([]string, 0, len(methodMap))
+	for i := methodType(0); i <= max; i++ {
 		if i&get == get {
 			methods = append(methods, http.MethodGet)
 		}

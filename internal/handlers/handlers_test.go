@@ -40,7 +40,7 @@ func TestHandlers_Add(t *testing.T) {
 	hs := New(false)
 	a.NotNil(hs)
 	a.NotError(hs.Add(getHandler))
-	a.Equal(hs.Len(), len(any)+1) // 包含自动生成的 OPTIONS
+	a.Equal(hs.Len(), len(addAny)+1) // 包含自动生成的 OPTIONS
 
 	hs = New(false)
 	a.NotNil(hs)

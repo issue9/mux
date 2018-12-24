@@ -13,16 +13,24 @@ import (
 func TestMethods(t *testing.T) {
 	a := assert.New(t)
 
-	// supported、any
-	for _, m := range any {
-		for _, mm := range supported {
-			if mm == m {
-				continue
-			}
-		}
-		a.False(false, "supported 中 未包含 any 中的 %s", m)
+	// 检测 methodMap 是否完整
+	var val methodType
+	for _, v := range methodMap {
+		val += v
+	}
+	a.Equal(max, val, "methodMap 中的值与 max 不相同！")
+
+	// removeAll 的内容是否都存在于 mehtodMap
+	for _, m := range removeAll {
+		_, found := methodMap[m]
+		a.True(found)
 	}
 
+	// addAny 的内容是否都存在于 mehtodMap
+	for _, m := range addAny {
+		_, found := methodMap[m]
+		a.True(found)
+	}
 }
 
 func TestOptionsStrings(t *testing.T) {
@@ -46,5 +54,5 @@ func TestOptionsStrings(t *testing.T) {
 	test(get+post+options, "GET, OPTIONS, POST")
 	test(get+post+options+del+trace, "DELETE, GET, OPTIONS, POST, TRACE")
 	test(get+post+options+del+trace+head+patch, "DELETE, GET, HEAD, OPTIONS, PATCH, POST, TRACE")
-	test(max-1, "CONNECT, DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT, TRACE")
+	test(max, "CONNECT, DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT, TRACE")
 }

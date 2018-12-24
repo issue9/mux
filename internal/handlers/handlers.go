@@ -47,7 +47,7 @@ func New(disableOptions bool) *Handlers {
 // Add 添加一个处理函数
 func (hs *Handlers) Add(h http.Handler, methods ...string) error {
 	if len(methods) == 0 {
-		methods = any
+		methods = addAny
 	}
 
 	for _, m := range methods {
@@ -104,13 +104,15 @@ func (hs *Handlers) getOptionsAllow() string {
 // 返回值表示是否已经被清空。
 func (hs *Handlers) Remove(methods ...string) bool {
 	if len(methods) == 0 {
-		methods = supported
+		methods = removeAll
 	}
 
 	for _, m := range methods {
 		mm := methodMap[m]
 		delete(hs.handlers, mm)
-		if mm == options { // 明确指出要删除该路由项的 OPTIONS 时，表示禁止
+
+		// 明确指出要删除该路由项的 OPTIONS 时，将其 optionsState 转为禁止使用
+		if mm == options {
 			hs.optionsState = optionsStateDisable
 		}
 	}
