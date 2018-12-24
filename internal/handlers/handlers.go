@@ -12,6 +12,7 @@ import (
 
 type optionsState int8
 
+// 表示对 OPTIONAL 请求中，Allow 报头中输出内容的处理方式。
 const (
 	optionsStateDefault      optionsState = iota // 默认情况
 	optionsStateFixedString                      // 设置为固定的字符串
@@ -35,9 +36,7 @@ func New(disableOptions bool) *Handlers {
 
 	if disableOptions {
 		ret.optionsState = optionsStateDisable
-	}
-
-	if !disableOptions {
+	} else {
 		ret.handlers[options] = http.HandlerFunc(ret.optionsServeHTTP)
 		ret.optionsAllow = ret.getOptionsAllow()
 	}
