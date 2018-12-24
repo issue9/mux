@@ -34,13 +34,15 @@ import (
 type Tree struct {
 	node
 	disableOptions bool
+	autoHead       bool
 }
 
 // New 声明一个 Tree 实例
-func New(disableOptions bool) *Tree {
+func New(disableOptions, autoHead bool) *Tree {
 	return &Tree{
 		node:           node{},
 		disableOptions: disableOptions,
+		autoHead:       autoHead,
 	}
 }
 
@@ -54,7 +56,7 @@ func (tree *Tree) Add(pattern string, h http.Handler, methods ...string) error {
 	}
 
 	if n.handlers == nil {
-		n.handlers = handlers.New(tree.disableOptions)
+		n.handlers = handlers.New(tree.disableOptions, tree.autoHead)
 	}
 
 	return n.handlers.Add(h, methods...)
@@ -108,7 +110,7 @@ func (tree *Tree) SetAllow(pattern, allow string) error {
 	}
 
 	if n.handlers == nil {
-		n.handlers = handlers.New(tree.disableOptions)
+		n.handlers = handlers.New(tree.disableOptions, tree.autoHead)
 	}
 
 	n.handlers.SetAllow(allow)

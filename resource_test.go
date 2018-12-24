@@ -19,7 +19,7 @@ func (t *tester) resource(p string) *Resource {
 
 func TestResource(t *testing.T) {
 	a := assert.New(t)
-	test := newTester(a, false, false)
+	test := newTester(a, false, false, false)
 	h := test.resource("/h/1")
 	f := test.resource("/f/1")
 
@@ -70,7 +70,7 @@ func TestResource(t *testing.T) {
 
 func TestMux_Resource(t *testing.T) {
 	a := assert.New(t)
-	srvmux := New(false, false, nil, nil)
+	srvmux := New(false, false, false, nil, nil)
 	a.NotNil(srvmux)
 
 	r1 := srvmux.Resource("/abc/1")
@@ -85,7 +85,7 @@ func TestMux_Resource(t *testing.T) {
 
 func TestResource_Name_URL(t *testing.T) {
 	a := assert.New(t)
-	srvmux := New(false, false, nil, nil)
+	srvmux := New(false, false, false, nil, nil)
 	a.NotNil(srvmux)
 
 	// 非正则

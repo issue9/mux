@@ -70,7 +70,7 @@ type muxHandler struct {
 // notFound 404 页面的处理方式，为 nil 时会调用默认的方式进行处理；
 // methodNotAllowed 405 页面的处理方式，为 nil 时会调用默认的方式进行处理，
 // 调用此方法前，会设置 Allow 报头，如果不需要，则要在 methodNotAllowed 中去掉。
-func New(disableOptions, skipCleanPath bool, notFound, methodNotAllowed http.HandlerFunc) *Mux {
+func New(disableOptions, skipCleanPath, autoHead bool, notFound, methodNotAllowed http.HandlerFunc) *Mux {
 	if notFound == nil {
 		notFound = defaultNotFound
 	}
@@ -79,7 +79,7 @@ func New(disableOptions, skipCleanPath bool, notFound, methodNotAllowed http.Han
 	}
 
 	mux := &Mux{
-		tree:             tree.New(disableOptions),
+		tree:             tree.New(disableOptions, autoHead),
 		names:            make(map[string]string, 50),
 		skipCleanPath:    skipCleanPath,
 		notFound:         notFound,

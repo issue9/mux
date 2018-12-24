@@ -14,6 +14,7 @@ import (
 
 var getHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
+	w.Write([]byte("hello"))
 })
 
 var optionsHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -23,7 +24,7 @@ var optionsHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Reques
 func TestNew(t *testing.T) {
 	a := assert.New(t)
 
-	hs := New(true)
+	hs := New(true, false)
 	a.NotNil(hs)
 	a.NotError(hs.Add(getHandler, http.MethodGet))
 	a.Equal(hs.Len(), 1) // 不包含自动生成的 OPTIONS
@@ -37,35 +38,58 @@ func TestNew(t *testing.T) {
 func TestHandlers_Add(t *testing.T) {
 	a := assert.New(t)
 
-	hs := New(false)
+	hs := New(false, false)
 	a.NotNil(hs)
 	a.NotError(hs.Add(getHandler))
 	a.Equal(hs.Len(), len(addAny)+1) // 包含自动生成的 OPTIONS
 
-	hs = New(false)
+	hs = New(false, false)
 	a.NotNil(hs)
 	a.NotError(hs.Add(getHandler, http.MethodGet, http.MethodPut))
 	a.Equal(hs.Len(), 3) // 包含自动生成的 OPTIONS
 	a.Error(hs.Add(getHandler, "Not Exists"))
+
+	// head
+	hs = New(false, true)
+	a.NotNil(hs)
+	a.NotError(hs.Add(getHandler, http.MethodGet, http.MethodPut))
+	a.Equal(hs.Len(), 4) // 包含自动生成的 OPTIONS 和 HEAD
+	a.Equal(hs.headState, headStateAuto)
+	// 特意指定 head
+	a.NotError(hs.Add(getHandler, http.MethodHead))
+	a.Equal(hs.Len(), 4) // 不会变多
+	a.Equal(hs.headState, headStateFixed)
+	a.Error(hs.Add(getHandler, http.MethodHead)) // 多次添加
 }
 
 func TestHandlers_Add_Remove(t *testing.T) {
 	a := assert.New(t)
 
-	hs := New(false)
+	hs := New(false, true)
 	a.NotNil(hs)
 
-	a.NotError(hs.Add(getHandler, http.MethodGet, http.MethodPost))
+	a.NotError(hs.Add(getHandler, http.MethodDelete, http.MethodPost))
 	a.Error(hs.Add(getHandler, http.MethodPost)) // 存在相同的
 	a.False(hs.Remove(http.MethodPost))
-	a.True(hs.Remove(http.MethodGet))
-	a.True(hs.Remove(http.MethodGet))
+	a.True(hs.Remove(http.MethodDelete))
+	a.True(hs.Remove(http.MethodDelete))
 
 	// OPTIONS
 	a.NotError(hs.Add(getHandler, http.MethodOptions))
 	a.Error(hs.Add(getHandler, http.MethodOptions))
 	a.NotError(hs.Remove(http.MethodOptions))
 	a.NotError(hs.Add(getHandler, http.MethodOptions))
+
+	// HEAD，和 GET 一起删除
+	a.NotError(hs.Add(getHandler, http.MethodGet))
+	a.False(hs.Remove(http.MethodGet))
+	a.Equal(hs.headState, headStateAuto)
+	a.Nil(hs.handlers[head])
+
+	// HEAD 特意添加 HEAD
+	a.NotError(hs.Add(getHandler, http.MethodGet))
+	a.NotError(hs.Add(getHandler, http.MethodHead))
+	a.Equal(hs.headState, headStateFixed)
 
 	// 删除不存在的内容
 	a.False(hs.Remove("not exists"))
@@ -76,7 +100,7 @@ func TestHandlers_Add_Remove(t *testing.T) {
 func TestHandlers_optionsAllow(t *testing.T) {
 	a := assert.New(t)
 
-	hs := New(false)
+	hs := New(false, false)
 	a.NotNil(hs)
 
 	test := func(allow string) {
@@ -118,4 +142,28 @@ func TestHandlers_optionsAllow(t *testing.T) {
 	a.NotNil(hs.handlers[options])
 	a.NotError(hs.Add(optionsHandler, http.MethodOptions)) // 通过 Add() 再次显示指定
 	test("options")
+}
+
+func TestHandlers_head(t *testing.T) {
+	a := assert.New(t)
+
+	hs := New(false, true)
+	a.NotNil(hs)
+
+	test := func(val string) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest("HEAD", "/empty", nil)
+		h := hs.Handler(http.MethodHead)
+		a.NotNil(h)
+		h.ServeHTTP(w, r)
+		a.Equal(w.Body.String(), val)
+	}
+
+	// 通过 Get 获取的 Head
+	a.NotError(hs.Add(getHandler, http.MethodGet))
+	test("")
+
+	a.NotError(hs.Add(getHandler, http.MethodHead))
+	test("hello")
+
 }

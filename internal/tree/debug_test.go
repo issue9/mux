@@ -14,7 +14,7 @@ import (
 
 func TestTree_Trace(t *testing.T) {
 	a := assert.New(t)
-	tree := New(false)
+	tree := New(false, false)
 
 	a.NotError(tree.Add("/", buildHandler(1), http.MethodGet))
 	a.NotError(tree.Add("/posts/{id}/author/profile", buildHandler(1), http.MethodGet))

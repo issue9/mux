@@ -28,7 +28,7 @@ type tester struct {
 
 func newTester(a *assert.Assertion) *tester {
 	return &tester{
-		tree: New(false),
+		tree: New(false, false),
 		a:    a,
 	}
 }
@@ -40,7 +40,7 @@ func (n *tester) add(method, pattern string, code int) {
 	n.a.NotError(err).NotNil(nn)
 
 	if nn.handlers == nil {
-		nn.handlers = handlers.New(false)
+		nn.handlers = handlers.New(false, false)
 	}
 
 	nn.handlers.Add(buildHandler(code), method)
@@ -186,14 +186,14 @@ func TestTreeCN(t *testing.T) {
 
 func TestTree_Clean(t *testing.T) {
 	a := assert.New(t)
-	tree := New(false)
+	tree := New(false, false)
 
 	addNode := func(p string, code int, methods ...string) {
 		nn, err := tree.getNode(p)
 		a.NotError(err).NotNil(nn)
 
 		if nn.handlers == nil {
-			nn.handlers = handlers.New(false)
+			nn.handlers = handlers.New(false, false)
 		}
 
 		a.NotError(nn.handlers.Add(buildHandler(code), methods...))
@@ -216,7 +216,7 @@ func TestTree_Clean(t *testing.T) {
 
 func TestTree_Add_Remove(t *testing.T) {
 	a := assert.New(t)
-	tree := New(false)
+	tree := New(false, false)
 
 	a.NotError(tree.Add("/", buildHandler(1), http.MethodGet))
 	a.NotError(tree.Add("/posts/{id}", buildHandler(1), http.MethodGet))
@@ -237,7 +237,7 @@ func TestTree_Add_Remove(t *testing.T) {
 
 func TestTree_SetAllow(t *testing.T) {
 	a := assert.New(t)
-	tree := New(false)
+	tree := New(false, false)
 
 	a.NotError(tree.Add("/options", buildHandler(1), http.MethodGet, http.MethodDelete, http.MethodPatch))
 	tree.SetAllow("/options", "TEST1,TEST2")

@@ -20,18 +20,35 @@ const (
 	optionsStateDisable                          // 禁用，不会自动生 optionAllow 的值
 )
 
+type headState int8
+
+const (
+	headStateDefault headState = iota // 不作任何额外操作
+	headStateAuto                     // 自动生成，有 GET 就生成，作为默认值
+	headStateFixed                    // 有固定的 Handler
+)
+
 // Handlers 用于表示某节点下各个请求方法对应的处理函数。
 type Handlers struct {
-	handlers     map[methodType]http.Handler // 请求方法及其对应的 http.Handler
-	optionsAllow string                      // 缓存的 OPTIONS 请求的 allow 报头内容。
-	optionsState optionsState                // OPTIONS 请求的处理方式
+	handlers map[methodType]http.Handler // 请求方法及其对应的 http.Handler
+
+	optionsAllow string       // 缓存的 OPTIONS 请求的 allow 报头内容。
+	optionsState optionsState // OPTIONS 请求的处理方式
+
+	headState headState
 }
 
 // New 声明一个新的 Handlers 实例
-func New(disableOptions bool) *Handlers {
+// autoHead 是否自动和忝 HEAD 请求内容。
+func New(disableOptions, autoHead bool) *Handlers {
 	ret := &Handlers{
 		handlers:     make(map[methodType]http.Handler, 4), // 大部分不会超过 4 条数据
 		optionsState: optionsStateDefault,
+		headState:    headStateDefault,
+	}
+
+	if autoHead {
+		ret.headState = headStateAuto
 	}
 
 	if disableOptions {
@@ -75,11 +92,25 @@ func (hs *Handlers) addSingle(h http.Handler, m methodType) error {
 		return nil
 	}
 
-	// 非 OPTIONS 请求
+	if m == head {
+		if hs.headState == headStateFixed {
+			return fmt.Errorf("该请求方法 %s 已经存在", optionsStrings[m])
+		}
+		hs.handlers[head] = h
+		hs.headState = headStateFixed
+		return nil
+	}
+
+	// 非 OPTIONS、HEAD 请求
 	if _, found := hs.handlers[m]; found {
 		return fmt.Errorf("该请求方法 %s 已经存在", optionsStrings[m])
 	}
 	hs.handlers[m] = h
+
+	// GET 请求，且状态为 Auto 的时候，可以自动添加
+	if m == get && hs.headState == headStateAuto {
+		hs.handlers[head] = hs.headServeHTTP(h)
+	}
 
 	// 重新生成 optionsAllow 字符串
 	if hs.optionsState == optionsStateDefault {
@@ -90,6 +121,12 @@ func (hs *Handlers) addSingle(h http.Handler, m methodType) error {
 
 func (hs *Handlers) optionsServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Allow", hs.optionsAllow)
+}
+
+func (hs *Handlers) headServeHTTP(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h.ServeHTTP(&response{ResponseWriter: w}, r)
+	})
 }
 
 func (hs *Handlers) getOptionsAllow() string {
@@ -114,6 +151,11 @@ func (hs *Handlers) Remove(methods ...string) bool {
 		// 明确指出要删除该路由项的 OPTIONS 时，将其 optionsState 转为禁止使用
 		if mm == options {
 			hs.optionsState = optionsStateDisable
+		}
+
+		// 跟随 get 一起删除
+		if mm == get && hs.headState == headStateAuto {
+			delete(hs.handlers, head)
 		}
 	}
 
