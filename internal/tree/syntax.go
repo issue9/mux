@@ -5,10 +5,19 @@
 package tree
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 )
+
+// SyntaxError 表示路由项的语法错误
+type SyntaxError struct {
+	Value   string
+	Message string
+}
+
+func (err *SyntaxError) Error() string {
+	return err.Message
+}
 
 // 路由项字符串中的几个特殊字符定义
 const (
@@ -99,12 +108,12 @@ func newState() *state {
 	}
 }
 
-func (s *state) setStart(index int) error {
+func (s *state) setStart(index int) *SyntaxError {
 	if s.state != nameEnd {
-		return fmt.Errorf("不能嵌套 %s", string(nameStart))
+		return &SyntaxError{Message: fmt.Sprintf("不能嵌套 %s", string(nameStart))}
 	}
 	if s.end+1 == index {
-		return errors.New("两个命名参数不能相邻")
+		return &SyntaxError{Message: "两个命名参数不能相邻"}
 	}
 
 	s.start = index
@@ -112,17 +121,18 @@ func (s *state) setStart(index int) error {
 	return nil
 }
 
-func (s *state) setEnd(index int) error {
+func (s *state) setEnd(index int) *SyntaxError {
 	if s.state == nameEnd {
-		return fmt.Errorf("%s %s 必须成对出现", string(nameStart), string(nameEnd))
+		msg := fmt.Sprintf("%s %s 必须成对出现", string(nameStart), string(nameEnd))
+		return &SyntaxError{Message: msg}
 	}
 
 	if index == s.start+1 {
-		return errors.New("未指定参数名称")
+		return &SyntaxError{Message: "未指定参数名称"}
 	}
 
 	if index == s.separator+1 {
-		return errors.New("未指定的正则表达式")
+		return &SyntaxError{Message: "未指定的正则表达式"}
 	}
 
 	s.state = nameEnd
@@ -130,13 +140,14 @@ func (s *state) setEnd(index int) error {
 	return nil
 }
 
-func (s *state) setSeparator(index int) error {
+func (s *state) setSeparator(index int) *SyntaxError {
 	if s.state != nameStart {
-		return fmt.Errorf("字符(:)只能出现在 %s %s 中间", string(nameStart), string(nameEnd))
+		msg := fmt.Sprintf("字符(:)只能出现在 %s %s 中间", string(nameStart), string(nameEnd))
+		return &SyntaxError{Message: msg}
 	}
 
 	if index == s.start+1 {
-		return errors.New("未指定参数名称")
+		return &SyntaxError{Message: "未指定参数名称"}
 	}
 
 	s.state = regexpSeparator
@@ -148,7 +159,7 @@ func (s *state) setSeparator(index int) error {
 // 以 { 为分界线进行分割。
 func split(str string) ([]string, error) {
 	if len(str) == 0 {
-		return nil, errors.New("参数 str 不能为空")
+		return nil, &SyntaxError{Message: "参数 str 不能为空", Value: str}
 	}
 
 	ss := make([]string, 0, strings.Count(str, string(nameStart))+1)
@@ -159,6 +170,7 @@ func split(str string) ([]string, error) {
 		case nameStart:
 			start := state.start
 			if err := state.setStart(i); err != nil {
+				err.Value = str
 				return nil, err
 			}
 
@@ -169,10 +181,12 @@ func split(str string) ([]string, error) {
 			ss = append(ss, str[start:i])
 		case regexpSeparator:
 			if err := state.setSeparator(i); err != nil {
+				err.Value = str
 				return nil, err
 			}
 		case nameEnd:
 			if err := state.setEnd(i); err != nil {
+				err.Value = str
 				return nil, err
 			}
 		}
@@ -180,7 +194,8 @@ func split(str string) ([]string, error) {
 
 	if state.start < len(str) {
 		if state.state != nameEnd {
-			return nil, fmt.Errorf("缺少 %s 字符", string(nameEnd))
+			msg := fmt.Sprintf("缺少 %s 字符", string(nameEnd))
+			return nil, &SyntaxError{Message: msg, Value: str}
 		}
 
 		ss = append(ss, str[state.start:])

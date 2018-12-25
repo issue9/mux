@@ -225,14 +225,14 @@ func TestTree_Add_Remove(t *testing.T) {
 	a.NotError(tree.Add("/posts/{id}/{author:\\w+}/profile", buildHandler(1), http.MethodGet))
 
 	a.True(tree.find("/posts/1/author").handlers.Len() > 0)
-	a.NotError(tree.Remove("/posts/1/author", http.MethodGet))
+	tree.Remove("/posts/1/author", http.MethodGet)
 	a.Nil(tree.find("/posts/1/author"))
 
-	a.NotError(tree.Remove("/posts/{id}/author", http.MethodGet)) // 只删除 GET
+	tree.Remove("/posts/{id}/author", http.MethodGet) // 只删除 GET
 	a.NotNil(tree.find("/posts/{id}/author"))
-	a.NotError(tree.Remove("/posts/{id}/author")) // 删除所有请求方法
+	tree.Remove("/posts/{id}/author") // 删除所有请求方法
 	a.Nil(tree.find("/posts/{id}/author"))
-	a.Error(tree.Remove("/posts/{id}/author")) // 删除已经不存在的节点
+	tree.Remove("/posts/{id}/author") // 删除已经不存在的节点，不会报错，不发生任何事情
 }
 
 func TestTree_SetAllow(t *testing.T) {

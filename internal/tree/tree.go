@@ -6,7 +6,6 @@
 package tree
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/issue9/mux/internal/handlers"
@@ -70,10 +69,10 @@ func (tree *Tree) Clean(prefix string) {
 // Remove 移除路由项
 //
 // methods 可以为空，表示删除所有内容。
-func (tree *Tree) Remove(pattern string, methods ...string) error {
+func (tree *Tree) Remove(pattern string, methods ...string) {
 	child := tree.find(pattern)
 	if child == nil {
-		return fmt.Errorf("不存在的节点 %v", pattern)
+		return
 	}
 
 	if child.handlers == nil {
@@ -81,14 +80,12 @@ func (tree *Tree) Remove(pattern string, methods ...string) error {
 			child.parent.children = removeNodes(child.parent.children, child.pattern)
 			child.parent.buildIndexes()
 		}
-		return nil
 	}
 
 	if child.handlers.Remove(methods...) && len(child.children) == 0 {
 		child.parent.children = removeNodes(child.parent.children, child.pattern)
 		child.parent.buildIndexes()
 	}
-	return nil
 }
 
 // 获取指定的节点，若节点不存在，则在该位置生成一个新节点。

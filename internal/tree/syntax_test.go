@@ -10,6 +10,8 @@ import (
 	"github.com/issue9/assert"
 )
 
+var _ error = &SyntaxError{}
+
 func TestLongestPrefix(t *testing.T) {
 	a := assert.New(t)
 
