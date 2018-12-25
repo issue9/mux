@@ -163,6 +163,7 @@ func TestHandlers_head(t *testing.T) {
 	a.NotError(hs.Add(getHandler, http.MethodGet))
 	test("")
 
+	// 主动添加
 	a.NotError(hs.Add(getHandler, http.MethodHead))
 	test("hello")
 
