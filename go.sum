@@ -1,6 +1,6 @@
 github.com/bradfitz/gomemcache v0.0.0-20180710155616-bc664df96737/go.mod h1:PmM6Mmwb0LSuEubjR8N7PtNe1KxZLtOUHtbeikc5h60=
 github.com/issue9/assert v1.0.0 h1:NkLKrreEZgOdyl0aHlF8Yq2+Id7GsfEtU0rTK8nsN4E=
 github.com/issue9/assert v1.0.0/go.mod h1:KLwR3U/5rbCxqwAnV3aCr+dz07aoIyIfk2lefIVr2BA=
-github.com/issue9/middleware v1.0.0 h1:yLYpv6cJ9hFvoG1zHTIXCdcVyGMicc3YC3iZCZy+C7U=
-github.com/issue9/middleware v1.0.0/go.mod h1:gmx9k2nnC1O4yg9xK3liaanThZedNw37ci4UnCzm6vE=
+github.com/issue9/middleware v1.3.0 h1:tfsISHB6sxf3bUOuV3KIiEXQYWZusAjAhxM9w8tEHX0=
+github.com/issue9/middleware v1.3.0/go.mod h1:gmx9k2nnC1O4yg9xK3liaanThZedNw37ci4UnCzm6vE=
 github.com/issue9/utils v1.0.0/go.mod h1:M/m1msOXz9GHESoAvzxpBe4jar/QGDKcGXDhKsZJAKE=
