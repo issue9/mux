@@ -7,7 +7,6 @@ package mux
 import (
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"os"
 	"testing"
 
@@ -58,8 +57,8 @@ func (t *tester) matchTrue(method, path string, code int) {
 	w := httptest.NewRecorder()
 	t.a.NotNil(w)
 
-	r := &http.Request{URL: &url.URL{Path: path}, Body: nil, Method: method}
-	t.a.NotNil(r)
+	r, err := http.NewRequest(method, path, nil)
+	t.a.NotError(err).NotNil(r)
 
 	t.mux.ServeHTTP(w, r)
 	t.a.Equal(w.Code, code)
@@ -70,8 +69,8 @@ func (t *tester) matchContent(method, path string, code int, content string) {
 	w := httptest.NewRecorder()
 	t.a.NotNil(w)
 
-	r := &http.Request{URL: &url.URL{Path: path}, Body: nil, Method: method}
-	t.a.NotNil(r)
+	r, err := http.NewRequest(method, path, nil)
+	t.a.NotError(err).NotNil(r)
 
 	t.mux.ServeHTTP(w, r)
 
