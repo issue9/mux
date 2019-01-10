@@ -99,6 +99,7 @@ func TestMux(t *testing.T) {
 	test.mux.Get("/", buildHandler(1))
 	test.matchTrue(http.MethodGet, "", 1)
 	test.matchTrue(http.MethodGet, "/", 1)
+	test.matchTrue(http.MethodHead, "/", http.StatusMethodNotAllowed) // 未启用 autoHead
 	test.matchTrue(http.MethodGet, "/abc", http.StatusNotFound)
 
 	test.mux.Get("/h/1", buildHandler(1))
@@ -137,6 +138,48 @@ func TestMux(t *testing.T) {
 
 	test.mux.AnyFunc("/f/any", buildFunc(6))
 	test.matchTrue(http.MethodGet, "/f/any", 6)
+	test.matchTrue(http.MethodPost, "/f/any", 6)
+	test.matchTrue(http.MethodPut, "/f/any", 6)
+	test.matchTrue(http.MethodPatch, "/f/any", 6)
+	test.matchTrue(http.MethodDelete, "/f/any", 6)
+	test.matchTrue(http.MethodTrace, "/f/any", 6)
+}
+
+func TestMux_Head(t *testing.T) {
+	a := assert.New(t)
+	test := newTester(a, false, false, true)
+
+	test.mux.Get("/", buildHandler(1))
+	test.matchTrue(http.MethodGet, "", 1)
+	test.matchTrue(http.MethodGet, "/", 1)
+	test.matchTrue(http.MethodHead, "", 1)
+	test.matchTrue(http.MethodHead, "/", 1)
+	test.matchContent(http.MethodHead, "/", 1, "")
+
+	test.mux.Get("/h/1", buildHandler(1))
+	test.matchTrue(http.MethodGet, "/h/1", 1)
+	test.matchTrue(http.MethodHead, "/h/1", 1)
+	test.mux.GetFunc("/f/1", buildFunc(1))
+	test.matchTrue(http.MethodGet, "/f/1", 1)
+	test.matchTrue(http.MethodHead, "/f/1", 1)
+
+	test.mux.Post("/h/post", buildHandler(2))
+	test.matchTrue(http.MethodPost, "/h/post", 2)
+	test.matchTrue(http.MethodHead, "/h/post", http.StatusMethodNotAllowed)
+
+	// Any
+	test.mux.Any("/h/any", buildHandler(6))
+	test.matchTrue(http.MethodGet, "/h/any", 6)
+	test.matchTrue(http.MethodHead, "/h/any", 6)
+	test.matchTrue(http.MethodPost, "/h/any", 6)
+	test.matchTrue(http.MethodPut, "/h/any", 6)
+	test.matchTrue(http.MethodPatch, "/h/any", 6)
+	test.matchTrue(http.MethodDelete, "/h/any", 6)
+	test.matchTrue(http.MethodTrace, "/h/any", 6)
+
+	test.mux.AnyFunc("/f/any", buildFunc(6))
+	test.matchTrue(http.MethodGet, "/f/any", 6)
+	test.matchTrue(http.MethodHead, "/f/any", 6)
 	test.matchTrue(http.MethodPost, "/f/any", 6)
 	test.matchTrue(http.MethodPut, "/f/any", 6)
 	test.matchTrue(http.MethodPatch, "/f/any", 6)
