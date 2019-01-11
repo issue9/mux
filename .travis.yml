@@ -13,3 +13,7 @@ script:
   - GO111MODULE=on go test -race -v -coverprofile=coverage.txt -covermode=atomic ./...
 
 after_success: bash <(curl -s https://codecov.io/bash)
+
+matrix:
+  allow_failures:
+    - go: tip
