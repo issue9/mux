@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/issue9/assert"
-	"github.com/issue9/mux/internal/handlers"
+	"github.com/issue9/mux/v2/internal/handlers"
 )
 
 func TestNode_find(t *testing.T) {

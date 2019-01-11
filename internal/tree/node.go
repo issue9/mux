@@ -12,8 +12,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/issue9/mux/internal/handlers"
-	"github.com/issue9/mux/params"
+	"github.com/issue9/mux/v2/internal/handlers"
+	"github.com/issue9/mux/v2/params"
 )
 
 // node.children 的数量只有达到此值时，才会为其建立 indexes 索引表。

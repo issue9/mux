@@ -9,7 +9,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/issue9/mux/params"
+	"github.com/issue9/mux/v2/params"
 )
 
 // Print 向 w 输出树状结构

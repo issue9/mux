@@ -13,8 +13,8 @@ import (
 
 	"github.com/issue9/middleware"
 
-	"github.com/issue9/mux/internal/tree"
-	"github.com/issue9/mux/params"
+	"github.com/issue9/mux/v2/internal/tree"
+	"github.com/issue9/mux/v2/params"
 )
 
 var (
