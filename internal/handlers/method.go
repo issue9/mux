@@ -4,11 +4,7 @@
 
 package handlers
 
-import (
-	"net/http"
-	"sort"
-	"strings"
-)
+import "net/http"
 
 type methodType int16
 
@@ -67,48 +63,4 @@ var (
 		http.MethodConnect,
 		http.MethodTrace,
 	}
-
-	// 所有的 OPTIONS 请求的 allow 报头字符串
-	optionsStrings = make([]string, max+1, max+1)
 )
-
-func init() {
-	makeOptionsStrings()
-}
-
-func makeOptionsStrings() {
-	methods := make([]string, 0, len(methodMap))
-	for i := methodType(0); i <= max; i++ {
-		if i&get == get {
-			methods = append(methods, http.MethodGet)
-		}
-		if i&post == post {
-			methods = append(methods, http.MethodPost)
-		}
-		if i&del == del {
-			methods = append(methods, http.MethodDelete)
-		}
-		if i&put == put {
-			methods = append(methods, http.MethodPut)
-		}
-		if i&patch == patch {
-			methods = append(methods, http.MethodPatch)
-		}
-		if i&options == options {
-			methods = append(methods, http.MethodOptions)
-		}
-		if i&head == head {
-			methods = append(methods, http.MethodHead)
-		}
-		if i&connect == connect {
-			methods = append(methods, http.MethodConnect)
-		}
-		if i&trace == trace {
-			methods = append(methods, http.MethodTrace)
-		}
-
-		sort.Strings(methods) // 统一的排序，方便测试使用
-		optionsStrings[i] = strings.Join(methods, ", ")
-		methods = methods[:0]
-	}
-}
