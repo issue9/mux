@@ -11,6 +11,7 @@ mux 是一个实现了 [http.Handler](https://godoc.org/net/http#Handler) 的中
 1. 正则路由；
 1. 路由参数；
 1. 丰富的 OPTIONS 请求处理方式；
+1. 自动生成 HEAD 请求内容；
 1. 根据路由生成地址。
 
 
@@ -23,7 +24,7 @@ mux 本身就是一个实现了 [http.Handler](https://godoc.org/net/http#Handle
 
 
 ```go
-m := mux.New(false, false, nil, nil).
+m := mux.New(false, false, false, nil, nil).
     Get("/users/1", h).             // GET /user/1
     Post("/login", h).              // POST /api/login
     Get("/posts/{id:\\d+}", h).     // GET /blog/post/{id:\\d+} 正则路由
