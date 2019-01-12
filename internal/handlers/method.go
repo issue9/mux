@@ -20,9 +20,6 @@ const (
 	head
 	connect
 	trace
-
-	// 以上各个值进行组合之后的数量。
-	max = get + post + del + put + patch + options + head + connect + trace
 )
 
 var (

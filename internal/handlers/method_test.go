@@ -10,6 +10,9 @@ import (
 	"github.com/issue9/assert"
 )
 
+// 以上各个值进行组合之后的数量。
+const max = get + post + del + put + patch + options + head + connect + trace
+
 func TestMethods(t *testing.T) {
 	a := assert.New(t)
 
