@@ -21,6 +21,7 @@ const (
 	fileheader  = "// 该文件由 make.go 产生，不需要手动修改！\n\n"
 	filename    = "./options_table.go"
 	packagename = "handlers"
+	varname     = "optionsStrings"
 )
 
 func main() {
@@ -38,9 +39,16 @@ func main() {
 
 	buf := new(bytes.Buffer)
 
-	buf.WriteString(fileheader)
-	fmt.Fprintf(buf, "package %s\n\n", packagename)
-	fmt.Fprintln(buf, "var optionsStrings = []string{")
+	ws := func(format string, v ...interface{}) {
+		_, err := fmt.Fprintf(buf, format, v...)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	ws(fileheader)
+	ws("package %s\n\n", packagename)
+	ws("var %s = []string{\n", varname)
 
 	methods := make([]string, 0, len(items))
 	for i := int16(0); i <= size; i++ {
@@ -51,11 +59,11 @@ func main() {
 		}
 
 		sort.Strings(methods) // 统一的排序，方便测试使用
-		fmt.Fprintf(buf, "\"%s\",\n", strings.Join(methods, ", "))
+		ws("\"%s\",\n", strings.Join(methods, ", "))
 		methods = methods[:0]
 	} // end for
 
-	buf.WriteByte('}')
+	ws("}")
 
 	data, err := format.Source(buf.Bytes())
 	if err != nil {
