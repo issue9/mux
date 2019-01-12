@@ -28,7 +28,7 @@ func init() {
 			w.Write([]byte(r.URL.Path))
 		}
 
-		issue9Mux = New(false, false, false, nil, nil)
+		issue9Mux = New(false, true, false, nil, nil)
 		for _, api := range apis {
 			if err := issue9Mux.HandleFunc(api.bracePattern, h, api.method); err != nil {
 				fmt.Println("calcMemStats:", err)

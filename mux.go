@@ -66,12 +66,12 @@ type muxHandler struct {
 // New 声明一个新的 Mux。
 //
 // disableOptions 是否禁用自动生成 OPTIONS 功能；
+// disableHead 是否根据 Get 请求自动生成 HEAD 请求；
 // skipCleanPath 是否不对访问路径作处理，比如 "//api" ==> "/api"；
-// autoHead 是否根据 Get 请求自动生成 HEAD 请求；
 // notFound 404 页面的处理方式，为 nil 时会调用默认的方式进行处理；
 // methodNotAllowed 405 页面的处理方式，为 nil 时会调用默认的方式进行处理，
 // 调用此方法前，会设置 Allow 报头，如果不需要，则要在 methodNotAllowed 中去掉。
-func New(disableOptions, skipCleanPath, autoHead bool, notFound, methodNotAllowed http.HandlerFunc) *Mux {
+func New(disableOptions, disableHead, skipCleanPath bool, notFound, methodNotAllowed http.HandlerFunc) *Mux {
 	if notFound == nil {
 		notFound = defaultNotFound
 	}
@@ -80,7 +80,7 @@ func New(disableOptions, skipCleanPath, autoHead bool, notFound, methodNotAllowe
 	}
 
 	mux := &Mux{
-		tree:             tree.New(disableOptions, autoHead),
+		tree:             tree.New(disableOptions, disableHead),
 		names:            make(map[string]string, 50),
 		skipCleanPath:    skipCleanPath,
 		notFound:         notFound,

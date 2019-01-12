@@ -39,15 +39,15 @@ type Handlers struct {
 }
 
 // New 声明一个新的 Handlers 实例
-// autoHead 是否自动和忝 HEAD 请求内容。
-func New(disableOptions, autoHead bool) *Handlers {
+// disableHead 是否自动添加 HEAD 请求内容。
+func New(disableOptions, disableHead bool) *Handlers {
 	ret := &Handlers{
 		handlers:     make(map[methodType]http.Handler, 4), // 大部分不会超过 4 条数据
 		optionsState: optionsStateDefault,
 		headState:    headStateDefault,
 	}
 
-	if autoHead {
+	if !disableHead {
 		ret.headState = headStateAuto
 	}
 

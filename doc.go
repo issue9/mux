@@ -4,7 +4,7 @@
 
 // Package mux 是一个提供了路由匹配功能的中间件。
 //
-//  m := mux.New(false, false, nil, nil).
+//  m := mux.New(false, false, false, nil, nil).
 //      Get("/users/1", h).
 //      Post("/login", h).
 //      Get("/posts/{id:\\d+}", h).  // 正则路由

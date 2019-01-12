@@ -17,7 +17,7 @@ func (t *tester) prefix(p string) *Prefix {
 
 func TestPrefix(t *testing.T) {
 	a := assert.New(t)
-	test := newTester(a, false, false, false)
+	test := newTester(a, false, true, false)
 	p := test.prefix("/p")
 
 	p.Get("/h/1", buildHandler(1))
@@ -65,7 +65,7 @@ func TestPrefix(t *testing.T) {
 
 func TestMux_Prefix(t *testing.T) {
 	a := assert.New(t)
-	srvmux := New(false, false, false, nil, nil)
+	srvmux := New(false, true, false, nil, nil)
 	a.NotNil(srvmux)
 
 	p := srvmux.Prefix("/abc")
@@ -78,7 +78,7 @@ func TestMux_Prefix(t *testing.T) {
 
 func TestPrefix_Prefix(t *testing.T) {
 	a := assert.New(t)
-	srvmux := New(false, false, false, nil, nil)
+	srvmux := New(false, true, false, nil, nil)
 	a.NotNil(srvmux)
 
 	p := srvmux.Prefix("/abc")

@@ -24,7 +24,7 @@ var optionsHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Reques
 func TestNew(t *testing.T) {
 	a := assert.New(t)
 
-	hs := New(true, false)
+	hs := New(true, true)
 	a.NotNil(hs)
 	a.NotError(hs.Add(getHandler, http.MethodGet))
 	a.Equal(hs.Len(), 1) // 不包含自动生成的 OPTIONS
@@ -38,19 +38,19 @@ func TestNew(t *testing.T) {
 func TestHandlers_Add(t *testing.T) {
 	a := assert.New(t)
 
-	hs := New(false, false)
+	hs := New(false, true)
 	a.NotNil(hs)
 	a.NotError(hs.Add(getHandler))
 	a.Equal(hs.Len(), len(addAny)+1) // 包含自动生成的 OPTIONS
 
-	hs = New(false, false)
+	hs = New(false, true)
 	a.NotNil(hs)
 	a.NotError(hs.Add(getHandler, http.MethodGet, http.MethodPut))
 	a.Equal(hs.Len(), 3) // 包含自动生成的 OPTIONS
 	a.Error(hs.Add(getHandler, "Not Exists"))
 
 	// head
-	hs = New(false, true)
+	hs = New(false, false)
 	a.NotNil(hs)
 	a.NotError(hs.Add(getHandler, http.MethodGet, http.MethodPut))
 	a.Equal(hs.Len(), 4) // 包含自动生成的 OPTIONS 和 HEAD
@@ -65,7 +65,7 @@ func TestHandlers_Add(t *testing.T) {
 func TestHandlers_Add_Remove(t *testing.T) {
 	a := assert.New(t)
 
-	hs := New(false, true)
+	hs := New(false, false)
 	a.NotNil(hs)
 
 	a.NotError(hs.Add(getHandler, http.MethodDelete, http.MethodPost))
@@ -100,7 +100,7 @@ func TestHandlers_Add_Remove(t *testing.T) {
 func TestHandlers_optionsAllow(t *testing.T) {
 	a := assert.New(t)
 
-	hs := New(false, false)
+	hs := New(false, true)
 	a.NotNil(hs)
 
 	test := func(allow string) {
@@ -147,7 +147,7 @@ func TestHandlers_optionsAllow(t *testing.T) {
 func TestHandlers_head(t *testing.T) {
 	a := assert.New(t)
 
-	hs := New(false, true)
+	hs := New(false, false)
 	a.NotNil(hs)
 
 	test := func(val string) {
