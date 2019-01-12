@@ -45,12 +45,6 @@ http.ListenAndServe(":8080", m)
 ```
 
 
-### 安装
-
-```shell
-go get github.com/issue9/mux
-```
-
 
 ### 文档
 
