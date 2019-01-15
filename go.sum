@@ -1,9 +1,2 @@
-github.com/bradfitz/gomemcache v0.0.0-20180710155616-bc664df96737/go.mod h1:PmM6Mmwb0LSuEubjR8N7PtNe1KxZLtOUHtbeikc5h60=
 github.com/issue9/assert v1.1.0 h1:vRl4oP7O7EfYpfXwVfC7kjo7cwzs+NsiAJDg1oyU2Fk=
 github.com/issue9/assert v1.1.0/go.mod h1:KLwR3U/5rbCxqwAnV3aCr+dz07aoIyIfk2lefIVr2BA=
-github.com/issue9/autoinc v1.0.4/go.mod h1:cWddUuBa//znV0hUWG2gitAYT7GOLg7kw5bBDn9DBP8=
-github.com/issue9/middleware v1.4.1 h1:mLRSx2vzwxMIkjskEAeRWaFilUfmyRNpR80tk/iF3i4=
-github.com/issue9/middleware v1.4.1/go.mod h1:ANSG+TJZvF8ykbXOdSzIZJO4/xvJyGQD08Blb2gPT6Q=
-github.com/issue9/rands v1.1.1/go.mod h1:+34JYQL1EcxK79SFD3wOJklufb2967Tl9iom5jE1LF4=
-github.com/issue9/unique v1.1.2/go.mod h1:UvlxShawUjjO07PJIU6qS9aHq/q+c6pnKkJQfmKWuy8=
-github.com/issue9/utils v1.0.1/go.mod h1:fpWGqXMwgL6HQKtqT2ZMPBrdTSyxnyHONy54BSCGOyI=
