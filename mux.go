@@ -206,13 +206,6 @@ func (mux *Mux) AnyFunc(pattern string, fun http.HandlerFunc) *Mux {
 	return mux.handleFunc(pattern, fun)
 }
 
-// AddMiddlewares 添加中间件，可多次调用。
-//
-// Deprecated: 采用 AppendMiddlewares 代替
-func (mux *Mux) AddMiddlewares(m ...middleware.Middleware) *Mux {
-	return mux.AppendMiddlewares(m...)
-}
-
 // AppendMiddlewares 添加中间件，可多次调用。
 //
 // 后添加的先输出。
