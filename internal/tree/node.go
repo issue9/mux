@@ -307,7 +307,7 @@ func (n *node) url(params map[string]string) (string, error) {
 		node := nodes[i]
 		switch node.nodeType {
 		case nodeTypeString:
-			buf.WriteString(string(node.pattern))
+			buf.WriteString(node.pattern)
 		case nodeTypeNamed, nodeTypeRegexp:
 			param, exists := params[node.name]
 			if !exists {
