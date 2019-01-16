@@ -6,6 +6,7 @@
 package host
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"sort"
@@ -46,42 +47,28 @@ func New(disableOptions, disableHead, skipCleanPath bool) *Hosts {
 
 // Add 添加路由项
 func (hs *Hosts) Add(pattern string, h http.Handler, method ...string) error {
-	tree, err := hs.getTree(pattern)
-	if err != nil {
-		return err
-	}
-
-	return tree.Add(pattern, h, method...)
+	return hs.getTree(pattern).Add(pattern, h, method...)
 }
 
 // SetAllow 设置 Options 的 allow 报头值
 func (hs *Hosts) SetAllow(pattern string, allow string) error {
-	tree, err := hs.getTree(pattern)
-	if err != nil {
-		return err
-	}
-
-	return tree.SetAllow(pattern, allow)
+	return hs.getTree(pattern).SetAllow(pattern, allow)
 }
 
 // Remove 移除指定的路由项。
 func (hs *Hosts) Remove(pattern string, method ...string) {
-	tree, err := hs.findTree(pattern)
-	if err != nil {
-		panic(err)
+	if tree := hs.findTree(pattern); tree != nil {
+		tree.Remove(pattern, method...)
 	}
-
-	tree.Remove(pattern, method...)
 }
 
 // URL 根据参数生成地址。
 func (hs *Hosts) URL(pattern string, params map[string]string) (string, error) {
-	tree, err := hs.findTree(pattern)
-	if err != nil {
-		return "", err
+	if tree := hs.findTree(pattern); tree != nil {
+		return tree.URL(pattern, params)
 	}
 
-	return tree.URL(pattern, params)
+	return "", errors.New("不存在")
 }
 
 // CleanAll 清除所有的路由项
@@ -140,51 +127,51 @@ func (hs *Hosts) Handler(r *http.Request) (*handlers.Handlers, params.Params) {
 }
 
 // 获取指定路由项对应的 tree.Tree 实例，如果不存在，则返回空值。
-func (hs *Hosts) findTree(pattern string) (*tree.Tree, error) {
+func (hs *Hosts) findTree(pattern string) *tree.Tree {
 	if pattern == "" {
 		panic("路由项地址不能为空")
 	}
 
 	if pattern[0] == '/' {
-		return hs.tree, nil
+		return hs.tree
 	}
 
 	index := strings.IndexByte(pattern, '/')
 	if index < 0 {
-		return nil, fmt.Errorf("%s 不能只指定域名部分", pattern)
+		panic(fmt.Errorf("%s 不能只指定域名部分", pattern))
 	}
 
 	domain := pattern[:index]
 
 	for _, host := range hs.hosts {
 		if host.raw == domain {
-			return host.tree, nil
+			return host.tree
 		}
 	}
 
-	return nil, nil
+	return nil
 }
 
 // 获取指定路由项对应的 tree.Tree 实例，如果不存在，则添加并返回。
-func (hs *Hosts) getTree(pattern string) (*tree.Tree, error) {
+func (hs *Hosts) getTree(pattern string) *tree.Tree {
 	if pattern == "" {
 		panic("路由项地址不能为空")
 	}
 
 	if pattern[0] == '/' {
-		return hs.tree, nil
+		return hs.tree
 	}
 
 	index := strings.IndexByte(pattern, '/')
 	if index < 0 {
-		return nil, fmt.Errorf("%s 不能只指定域名部分", pattern)
+		panic(fmt.Errorf("%s 不能只指定域名部分", pattern))
 	}
 
 	domain := pattern[:index]
 
 	for _, host := range hs.hosts {
 		if host.raw == domain {
-			return host.tree, nil
+			return host.tree
 		}
 	}
 
@@ -215,5 +202,5 @@ func (hs *Hosts) getTree(pattern string) (*tree.Tree, error) {
 		}
 	})
 
-	return host.tree, nil
+	return host.tree
 }
