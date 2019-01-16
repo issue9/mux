@@ -41,43 +41,43 @@ func New(disableOptions, disableHead bool) *Hosts {
 }
 
 // Add 添加路由项
-func (hs *Hosts) Add(path string, h http.Handler, method ...string) error {
-	tree, err := hs.getTree(path)
+func (hs *Hosts) Add(pattern string, h http.Handler, method ...string) error {
+	tree, err := hs.getTree(pattern)
 	if err != nil {
 		return err
 	}
 
-	return tree.Add(path, h, method...)
+	return tree.Add(pattern, h, method...)
 }
 
 // SetAllow 设置 Options 的 allow 报头值
-func (hs *Hosts) SetAllow(path string, allow string) error {
-	tree, err := hs.getTree(path)
+func (hs *Hosts) SetAllow(pattern string, allow string) error {
+	tree, err := hs.getTree(pattern)
 	if err != nil {
 		return err
 	}
 
-	return tree.SetAllow(path, allow)
+	return tree.SetAllow(pattern, allow)
 }
 
 // Remove 移除指定的路由项。
-func (hs *Hosts) Remove(path string, method ...string) {
-	tree, err := hs.getTree(path)
+func (hs *Hosts) Remove(pattern string, method ...string) {
+	tree, err := hs.getTree(pattern)
 	if err != nil {
 		panic(err)
 	}
 
-	tree.Remove(path, method...)
+	tree.Remove(pattern, method...)
 }
 
 // URL 根据参数生成地址。
-func (hs *Hosts) URL(path string, params map[string]string) (string, error) {
-	tree, err := hs.getTree(path)
+func (hs *Hosts) URL(pattern string, params map[string]string) (string, error) {
+	tree, err := hs.getTree(pattern)
 	if err != nil {
 		return "", err
 	}
 
-	return tree.URL(path, params)
+	return tree.URL(pattern, params)
 }
 
 // CleanAll 清除所有的路由项
@@ -88,21 +88,21 @@ func (hs *Hosts) CleanAll() {
 	hs.tree.Clean("")
 }
 
-func (hs *Hosts) getTree(path string) (*tree.Tree, error) {
-	if path == "" {
+func (hs *Hosts) getTree(pattern string) (*tree.Tree, error) {
+	if pattern == "" {
 		panic("路由项地址不能为空")
 	}
 
-	if path[0] == '/' {
+	if pattern[0] == '/' {
 		return hs.tree, nil
 	}
 
-	index := strings.IndexByte(path, '/')
+	index := strings.IndexByte(pattern, '/')
 	if index < 0 {
-		return nil, fmt.Errorf("%s 不能只指定域名部分", path)
+		return nil, fmt.Errorf("%s 不能只指定域名部分", pattern)
 	}
 
-	domain := path[:index]
+	domain := pattern[:index]
 
 	for _, host := range hs.hosts {
 		if host.raw == domain {
@@ -137,4 +137,38 @@ func (hs *Hosts) getTree(path string) (*tree.Tree, error) {
 	})
 
 	return host.tree, nil
+}
+
+// 清除路径中的重复的 / 字符
+func cleanPath(p string) string {
+	if p == "" {
+		return "/"
+	}
+
+	if p[0] != '/' {
+		p = "/" + p
+	}
+
+	index := strings.Index(p, "//")
+	if index == -1 {
+		return p
+	}
+
+	pp := make([]byte, index+1, len(p))
+	copy(pp, p[:index+1])
+
+	slash := true
+	for i := index + 2; i < len(p); i++ {
+		if p[i] == '/' {
+			if slash {
+				continue
+			}
+			slash = true
+		} else {
+			slash = false
+		}
+		pp = append(pp, p[i])
+	}
+
+	return string(pp)
 }
