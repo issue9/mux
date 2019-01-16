@@ -7,7 +7,6 @@ package mux
 import (
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/issue9/assert"
@@ -36,10 +35,6 @@ func newTester(a *assert.Assertion, disableOptions, disableHead, skipClean bool)
 		a:   a,
 		mux: New(disableOptions, disableHead, skipClean, nil, nil),
 	}
-}
-
-func (t *tester) printTree(path string) {
-	t.mux.tree.Trace(os.Stderr, path)
 }
 
 // 确保能正常匹配到指定的 URL
@@ -336,49 +331,4 @@ func TestMux_ServeHTTP_Order(t *testing.T) {
 	test.matchTrue(http.MethodGet, "/tags", 3)                    // f3 // 正好与 f1 的第一个节点匹配
 	test.matchTrue(http.MethodGet, "/tags/1.html", 1)             // f1
 	test.matchTrue(http.MethodGet, "/tags.html", 2)               // f2
-}
-
-func TestClearPath(t *testing.T) {
-	a := assert.New(t)
-
-	a.Equal(cleanPath(""), "/")
-
-	a.Equal(cleanPath("/api//"), "/api/")
-	a.Equal(cleanPath("api/"), "/api/")
-	a.Equal(cleanPath("api/////"), "/api/")
-	a.Equal(cleanPath("//api/////1"), "/api/1")
-
-	a.Equal(cleanPath("/api/"), "/api/")
-	a.Equal(cleanPath("/api/./"), "/api/./")
-
-	a.Equal(cleanPath("/api/.."), "/api/..")
-	a.Equal(cleanPath("/api/../"), "/api/../")
-	a.Equal(cleanPath("/api/../../"), "/api/../../")
-}
-
-func BenchmarkCleanPath(b *testing.B) {
-	a := assert.New(b)
-
-	paths := []string{
-		"",
-		"/api//",
-		"/api////users/1",
-		"//api/users/1",
-		"api///users////1",
-		"api//",
-		"/api/",
-		"/api/./",
-		"/api/..",
-		"/api//../",
-		"/api/..//../",
-		"/api../",
-		"api../",
-	}
-
-	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		ret := cleanPath(paths[i%len(paths)])
-		a.True(len(ret) > 0)
-	}
 }
