@@ -73,8 +73,8 @@
 //
 // 路由参数
 //
-// 通过正则表达式匹配的路由，其中带命名的参数可通过 GetParams() 获取：
-//  params := GetParams(r)
+// 通过正则表达式匹配的路由，其中带命名的参数可通过 Params() 获取：
+//  params := Params(r)
 //
 //  id, err := params.Int("id")
 //  // 或是
