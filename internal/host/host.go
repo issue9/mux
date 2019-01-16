@@ -172,6 +172,7 @@ func (hs *Hosts) getTree(pattern string) (*tree.Tree, error) {
 		host.domain = domain[1:] // 保留 . 符号
 	}
 
+	// 对域名列表进行排序，非通配符版本在前面
 	hs.hosts = append(hs.hosts, host)
 	sort.SliceStable(hs.hosts, func(i, j int) bool {
 		ii := hs.hosts[i]
