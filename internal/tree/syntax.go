@@ -158,8 +158,8 @@ func (s *state) setSeparator(index int) *SyntaxError {
 // split 将字符串解析成字符串数组
 // 以 { 为分界线进行分割。
 func split(str string) ([]string, error) {
-	if len(str) == 0 {
-		return nil, &SyntaxError{Message: "参数 str 不能为空", Value: str}
+	if str == "" { // 由调用方保证不会出现此错误，所以直接 panic
+		panic("参数 str 不能为空")
 	}
 
 	ss := make([]string, 0, strings.Count(str, string(nameStart))+1)

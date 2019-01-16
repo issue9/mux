@@ -92,7 +92,6 @@ func TestSplit(t *testing.T) {
 	// 正则，命名参数
 	test("/posts/{id:\\d+}/page/{page}", false, "/posts/", "{id:\\d+}/page/", "{page}")
 
-	test("", true)
 	test("/posts/{id:}", true)
 	test("/posts/{{id:\\d+}/author", true)
 	test("/posts/{:\\d+}/author", true)
@@ -101,4 +100,8 @@ func TestSplit(t *testing.T) {
 	test("/posts/:id/author", true)
 	test("/posts/{id}/{author", true)
 	test("/posts/}/author", true)
+
+	a.Panic(func() {
+		split("")
+	})
 }
