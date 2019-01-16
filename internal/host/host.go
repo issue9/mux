@@ -11,7 +11,9 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/issue9/mux/v2/internal/handlers"
 	"github.com/issue9/mux/v2/internal/tree"
+	"github.com/issue9/mux/v2/params"
 )
 
 type host struct {
@@ -26,15 +28,17 @@ type host struct {
 type Hosts struct {
 	disableOptions bool
 	disableHead    bool
+	skipCleanPath  bool
 	hosts          []*host
 	tree           *tree.Tree // 非域名限定的路由项
 }
 
 // New 声明新的 Host 变量
-func New(disableOptions, disableHead bool) *Hosts {
+func New(disableOptions, disableHead, skipCleanPath bool) *Hosts {
 	return &Hosts{
 		disableHead:    disableHead,
 		disableOptions: disableOptions,
+		skipCleanPath:  skipCleanPath,
 		hosts:          make([]*host, 0, 10),
 		tree:           tree.New(disableOptions, disableHead),
 	}
@@ -86,6 +90,53 @@ func (hs *Hosts) CleanAll() {
 		host.tree.Clean("")
 	}
 	hs.tree.Clean("")
+}
+
+// Clean 消除指定前缀的路由项
+func (hs *Hosts) Clean(prefix string) {
+	if prefix == "" {
+		hs.CleanAll()
+		return
+	}
+
+	if prefix[0] == '/' {
+		hs.tree.Clean(prefix)
+		return
+	}
+
+	index := strings.IndexByte(prefix, '/')
+	if index < 0 {
+		panic(fmt.Errorf("%s 不能只指定域名部分", prefix))
+	}
+
+	domain := prefix[:index]
+
+	for _, host := range hs.hosts {
+		if host.raw == domain {
+			host.tree.Clean(prefix[index:])
+			return
+		}
+	}
+}
+
+// Handler 获取匹配的路由项
+func (hs *Hosts) Handler(r *http.Request) (*handlers.Handlers, params.Params) {
+	p := r.URL.Path
+	if !hs.skipCleanPath {
+		p = cleanPath(p)
+	}
+
+	for _, host := range hs.hosts {
+		if host.wildcard && strings.HasSuffix(r.Host, host.domain) {
+			return host.tree.Handler(p)
+		}
+
+		if r.Host == host.domain {
+			return host.tree.Handler(p)
+		}
+	}
+
+	return hs.tree.Handler(p)
 }
 
 func (hs *Hosts) getTree(pattern string) (*tree.Tree, error) {

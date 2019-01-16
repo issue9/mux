@@ -8,10 +8,9 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"strings"
 	"sync"
 
-	"github.com/issue9/mux/v2/internal/tree"
+	"github.com/issue9/mux/v2/internal/host"
 	"github.com/issue9/mux/v2/params"
 )
 
@@ -37,7 +36,7 @@ var ErrNameExists = errors.New("存在相同名称的路由项")
 //    Handle("/api/{version:\\d+}",h3, http.MethodGet, http.MethodPost) // 只匹配 GET 和 POST
 //  http.ListenAndServe(m)
 type Mux struct {
-	tree             *tree.Tree
+	hosts            *host.Hosts
 	skipCleanPath    bool
 	notFound         http.HandlerFunc
 	methodNotAllowed http.HandlerFunc
@@ -66,7 +65,7 @@ func New(disableOptions, disableHead, skipCleanPath bool, notFound, methodNotAll
 	}
 
 	mux := &Mux{
-		tree:             tree.New(disableOptions, disableHead),
+		hosts:            host.New(disableOptions, disableHead, skipCleanPath),
 		names:            make(map[string]string, 50),
 		skipCleanPath:    skipCleanPath,
 		notFound:         notFound,
@@ -78,7 +77,7 @@ func New(disableOptions, disableHead, skipCleanPath bool, notFound, methodNotAll
 
 // Clean 清除所有的路由项
 func (mux *Mux) Clean() *Mux {
-	mux.tree.Clean("")
+	mux.hosts.CleanAll()
 	return mux
 }
 
@@ -87,7 +86,7 @@ func (mux *Mux) Clean() *Mux {
 // 当未指定 methods 时，将删除所有 method 匹配的项。
 // 指定错误的 methods 值，将自动忽略该值。
 func (mux *Mux) Remove(pattern string, methods ...string) *Mux {
-	mux.tree.Remove(pattern, methods...)
+	mux.hosts.Remove(pattern, methods...)
 	return mux
 }
 
@@ -96,7 +95,7 @@ func (mux *Mux) Remove(pattern string, methods ...string) *Mux {
 // pattern 为路由匹配模式，可以是正则匹配也可以是字符串匹配；
 // methods 该路由项对应的请求方法，可通过 SupportedMethods() 获得当前支持的请求方法。
 func (mux *Mux) Handle(pattern string, h http.Handler, methods ...string) error {
-	return mux.tree.Add(pattern, h, methods...)
+	return mux.hosts.Add(pattern, h, methods...)
 }
 
 // Options 将 OPTIONS 请求方法的报头 allow 值固定为指定的值。
@@ -105,7 +104,7 @@ func (mux *Mux) Handle(pattern string, h http.Handler, methods ...string) error 
 // 如果想实现对处理方法的自定义，可以显示地调用 Handle 方法:
 //  Mux.Handle("/api/1", handle, http.MethodOptions)
 func (mux *Mux) Options(pattern string, allow string) *Mux {
-	err := mux.tree.SetAllow(pattern, allow)
+	err := mux.hosts.SetAllow(pattern, allow)
 	if err != nil {
 		panic(err)
 	}
@@ -190,12 +189,7 @@ func (mux *Mux) AnyFunc(pattern string, fun http.HandlerFunc) *Mux {
 }
 
 func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	p := r.URL.Path
-	if !mux.skipCleanPath {
-		p = cleanPath(p)
-	}
-
-	hs, ps := mux.tree.Handler(p)
+	hs, ps := mux.hosts.Handler(r)
 	if hs == nil {
 		mux.notFound(w, r)
 		return
@@ -242,44 +236,10 @@ func (mux *Mux) URL(name string, params map[string]string) (string, error) {
 		pattern = name
 	}
 
-	return mux.tree.URL(pattern, params)
+	return mux.hosts.URL(pattern, params)
 }
 
 // Params 获取路由的参数集合。详细情况可参考 params.Get
 func Params(r *http.Request) params.Params {
 	return params.Get(r)
-}
-
-// 清除路径中的重复的 / 字符
-func cleanPath(p string) string {
-	if p == "" {
-		return "/"
-	}
-
-	if p[0] != '/' {
-		p = "/" + p
-	}
-
-	index := strings.Index(p, "//")
-	if index == -1 {
-		return p
-	}
-
-	pp := make([]byte, index+1, len(p))
-	copy(pp, p[:index+1])
-
-	slash := true
-	for i := index + 2; i < len(p); i++ {
-		if p[i] == '/' {
-			if slash {
-				continue
-			}
-			slash = true
-		} else {
-			slash = false
-		}
-		pp = append(pp, p[i])
-	}
-
-	return string(pp)
 }

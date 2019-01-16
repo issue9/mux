@@ -7,7 +7,6 @@ package mux
 import (
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/issue9/assert"
@@ -36,10 +35,6 @@ func newTester(a *assert.Assertion, disableOptions, disableHead, skipClean bool)
 		a:   a,
 		mux: New(disableOptions, disableHead, skipClean, nil, nil),
 	}
-}
-
-func (t *tester) printTree(path string) {
-	t.mux.tree.Trace(os.Stderr, path)
 }
 
 // 确保能正常匹配到指定的 URL
