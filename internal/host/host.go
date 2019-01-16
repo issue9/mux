@@ -17,6 +17,8 @@ import (
 	"github.com/issue9/mux/v2/params"
 )
 
+var errPatternNotFound = errors.New("pattern 不存在")
+
 type host struct {
 	raw      string // 域名的原始值，非通配符版本，与 domain 相同
 	domain   string // 域名
@@ -68,7 +70,7 @@ func (hs *Hosts) URL(pattern string, params map[string]string) (string, error) {
 		return tree.URL(pattern, params)
 	}
 
-	return "", errors.New("不存在")
+	return "", errPatternNotFound
 }
 
 // CleanAll 清除所有的路由项
@@ -76,6 +78,8 @@ func (hs *Hosts) CleanAll() {
 	for _, host := range hs.hosts {
 		host.tree.Clean("")
 	}
+	hs.hosts = hs.hosts[:0]
+
 	hs.tree.Clean("")
 }
 
@@ -92,15 +96,15 @@ func (hs *Hosts) Clean(prefix string) {
 	}
 
 	index := strings.IndexByte(prefix, '/')
-	if index < 0 {
-		panic(fmt.Errorf("%s 不能只指定域名部分", prefix))
+	domain := prefix
+	if index > 0 {
+		domain = prefix[:index]
+		prefix = prefix[index:]
 	}
-
-	domain := prefix[:index]
 
 	for _, host := range hs.hosts {
 		if host.raw == domain {
-			host.tree.Clean(prefix[index:])
+			host.tree.Clean(prefix)
 			return
 		}
 	}
@@ -175,16 +179,7 @@ func (hs *Hosts) getTree(pattern string) *tree.Tree {
 		}
 	}
 
-	host := &host{
-		raw:    domain,
-		domain: domain,
-		tree:   tree.New(hs.disableOptions, hs.disableHead),
-	}
-
-	if strings.HasPrefix(host.domain, "*.") {
-		host.wildcard = true
-		host.domain = domain[1:] // 保留 . 符号
-	}
+	host := newHost(domain, tree.New(hs.disableOptions, hs.disableHead))
 
 	// 对域名列表进行排序，非通配符版本在前面
 	hs.hosts = append(hs.hosts, host)
@@ -193,8 +188,10 @@ func (hs *Hosts) getTree(pattern string) *tree.Tree {
 		jj := hs.hosts[j]
 
 		switch {
+		case ii.wildcard == jj.wildcard: // 同为 true 或是 false
+			return ii.domain < jj.domain
 		case ii.wildcard:
-			return true
+			return false
 		case jj.wildcard:
 			return true
 		default:
@@ -203,4 +200,19 @@ func (hs *Hosts) getTree(pattern string) *tree.Tree {
 	})
 
 	return host.tree
+}
+
+func newHost(domain string, tree *tree.Tree) *host {
+	host := &host{
+		raw:    domain,
+		domain: domain,
+		tree:   tree,
+	}
+
+	if strings.HasPrefix(host.domain, "*.") {
+		host.wildcard = true
+		host.domain = domain[1:] // 保留 . 符号
+	}
+
+	return host
 }
