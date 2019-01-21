@@ -49,25 +49,35 @@ func New(disableOptions, disableHead, skipCleanPath bool) *Hosts {
 
 // Add 添加路由项
 func (hs *Hosts) Add(pattern string, h http.Handler, method ...string) error {
-	return hs.getTree(pattern).Add(pattern, h, method...)
+	domain, pattern := hs.split(pattern)
+	return hs.getTree(domain).Add(pattern, h, method...)
 }
 
 // SetAllow 设置 Options 的 allow 报头值
 func (hs *Hosts) SetAllow(pattern string, allow string) error {
-	return hs.getTree(pattern).SetAllow(pattern, allow)
+	domain, pattern := hs.split(pattern)
+	return hs.getTree(domain).SetAllow(pattern, allow)
 }
 
 // Remove 移除指定的路由项。
 func (hs *Hosts) Remove(pattern string, method ...string) {
-	if tree := hs.findTree(pattern); tree != nil {
+	domain, pattern := hs.split(pattern)
+
+	if tree := hs.findTree(domain); tree != nil {
 		tree.Remove(pattern, method...)
 	}
 }
 
 // URL 根据参数生成地址。
 func (hs *Hosts) URL(pattern string, params map[string]string) (string, error) {
-	if tree := hs.findTree(pattern); tree != nil {
-		return tree.URL(pattern, params)
+	domain, pattern := hs.split(pattern)
+
+	if tree := hs.findTree(domain); tree != nil {
+		url, err := tree.URL(pattern, params)
+		if err != nil {
+			return "", err
+		}
+		return domain + url, nil
 	}
 
 	return "", errPatternNotFound
@@ -95,16 +105,11 @@ func (hs *Hosts) Clean(prefix string) {
 		return
 	}
 
-	index := strings.IndexByte(prefix, '/')
-	domain := prefix
-	if index > 0 {
-		domain = prefix[:index]
-		prefix = prefix[index:]
-	}
+	domain, pattern := hs.split(prefix)
 
 	for _, host := range hs.hosts {
 		if host.raw == domain {
-			host.tree.Clean(prefix)
+			host.tree.Clean(pattern)
 			return
 		}
 	}
@@ -117,12 +122,13 @@ func (hs *Hosts) Handler(r *http.Request) (*handlers.Handlers, params.Params) {
 		p = cleanPath(p)
 	}
 
+	hostname := r.URL.Hostname()
 	for _, host := range hs.hosts {
-		if host.wildcard && strings.HasSuffix(r.Host, host.domain) {
+		if host.wildcard && strings.HasSuffix(hostname, host.domain) {
 			return host.tree.Handler(p)
 		}
 
-		if r.Host == host.domain {
+		if hostname == host.domain {
 			return host.tree.Handler(p)
 		}
 	}
@@ -130,22 +136,28 @@ func (hs *Hosts) Handler(r *http.Request) (*handlers.Handlers, params.Params) {
 	return hs.tree.Handler(p)
 }
 
-// 获取指定路由项对应的 tree.Tree 实例，如果不存在，则返回空值。
-func (hs *Hosts) findTree(pattern string) *tree.Tree {
-	if pattern == "" {
+func (hs *Hosts) split(url string) (domain, pattern string) {
+	if url == "" {
 		panic("路由项地址不能为空")
 	}
 
-	if pattern[0] == '/' {
+	if url[0] == '/' {
+		return "", url
+	}
+
+	index := strings.IndexByte(url, '/')
+	if index < 0 {
+		panic(fmt.Errorf("%s 不能只指定域名部分", url))
+	}
+
+	return url[:index], url[index:]
+}
+
+// 获取指定路由项对应的 tree.Tree 实例，如果不存在，则返回空值。
+func (hs *Hosts) findTree(domain string) *tree.Tree {
+	if domain == "" {
 		return hs.tree
 	}
-
-	index := strings.IndexByte(pattern, '/')
-	if index < 0 {
-		panic(fmt.Errorf("%s 不能只指定域名部分", pattern))
-	}
-
-	domain := pattern[:index]
 
 	for _, host := range hs.hosts {
 		if host.raw == domain {
@@ -157,21 +169,10 @@ func (hs *Hosts) findTree(pattern string) *tree.Tree {
 }
 
 // 获取指定路由项对应的 tree.Tree 实例，如果不存在，则添加并返回。
-func (hs *Hosts) getTree(pattern string) *tree.Tree {
-	if pattern == "" {
-		panic("路由项地址不能为空")
-	}
-
-	if pattern[0] == '/' {
+func (hs *Hosts) getTree(domain string) *tree.Tree {
+	if domain == "" {
 		return hs.tree
 	}
-
-	index := strings.IndexByte(pattern, '/')
-	if index < 0 {
-		panic(fmt.Errorf("%s 不能只指定域名部分", pattern))
-	}
-
-	domain := pattern[:index]
 
 	for _, host := range hs.hosts {
 		if host.raw == domain {
