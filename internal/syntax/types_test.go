@@ -10,6 +10,8 @@ import (
 	"github.com/issue9/assert"
 )
 
+var _ error = &Error{}
+
 func TestGetType(t *testing.T) {
 	a := assert.New(t)
 

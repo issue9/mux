@@ -7,12 +7,26 @@ package syntax
 // Type 路由项的类型
 type Type int8
 
-// 表示路由项的类型
 const (
+	// TypeString 普通的字符串类型，逐字匹配
 	TypeString Type = iota
+
+	// TypeRegexp 正则表达式
 	TypeRegexp
+
+	// TypeNamed 命名参数，相对于正则，其效率更高，当然也没有正则灵活。
 	TypeNamed
 )
+
+// Error 表示路由项的语法错误
+type Error struct {
+	Value   string
+	Message string
+}
+
+func (err *Error) Error() string {
+	return err.Message
+}
 
 // 仅上面的 trace 用到
 func (t Type) String() string {

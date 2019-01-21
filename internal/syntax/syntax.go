@@ -11,16 +11,6 @@ import (
 	"strings"
 )
 
-// Error 表示路由项的语法错误
-type Error struct {
-	Value   string
-	Message string
-}
-
-func (err *Error) Error() string {
-	return err.Message
-}
-
 // 路由项字符串中的几个特殊字符定义
 const (
 	Start     byte = '{' // 命名或是正则参数的起始字符
