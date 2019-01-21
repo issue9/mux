@@ -95,6 +95,11 @@ func TestHandlers_Add_Remove(t *testing.T) {
 	a.False(hs.Remove("not exists"))
 
 	a.True(hs.Remove())
+
+	// 自动生成的 HEAD 和 OPTIONS，在 remove() 是会自动删除
+	a.NotError(hs.Add(getHandler, http.MethodGet))
+	a.NotError(hs.Add(getHandler, http.MethodPost))
+	a.True(hs.Remove())
 }
 
 func TestHandlers_optionsAllow(t *testing.T) {
