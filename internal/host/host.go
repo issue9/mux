@@ -116,24 +116,22 @@ func (hs *Hosts) Clean(prefix string) {
 }
 
 // Handler 获取匹配的路由项
-func (hs *Hosts) Handler(r *http.Request) (*handlers.Handlers, params.Params) {
-	p := r.URL.Path
+func (hs *Hosts) Handler(hostname, path string) (*handlers.Handlers, params.Params) {
 	if !hs.skipCleanPath {
-		p = cleanPath(p)
+		path = cleanPath(path)
 	}
 
-	hostname := r.URL.Hostname()
 	for _, host := range hs.hosts {
 		if host.wildcard && strings.HasSuffix(hostname, host.domain) {
-			return host.tree.Handler(p)
+			return host.tree.Handler(path)
 		}
 
 		if hostname == host.domain {
-			return host.tree.Handler(p)
+			return host.tree.Handler(path)
 		}
 	}
 
-	return hs.tree.Handler(p)
+	return hs.tree.Handler(path)
 }
 
 func (hs *Hosts) split(url string) (domain, pattern string) {

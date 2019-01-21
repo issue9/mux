@@ -6,7 +6,6 @@ package host
 
 import (
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/issue9/assert"
@@ -105,7 +104,7 @@ func TestHosts_Add_URL_ClearAll(t *testing.T) {
 	a.Equal(0, len(hs.hosts))
 }
 
-func TestHosts_Remove(t *testing.T) {
+func TestHosts_Remove_Handler(t *testing.T) {
 	a := assert.New(t)
 	hs := New(false, false, true)
 	a.NotNil(hs)
@@ -114,42 +113,33 @@ func TestHosts_Remove(t *testing.T) {
 	hs.Add("*.example.com/path/1", buildHandler(1), http.MethodGet, http.MethodPost, http.MethodPatch)
 	hs.Add("s1.example.com/path/1", buildHandler(1), http.MethodGet, http.MethodPost, http.MethodPatch)
 
-	r := httptest.NewRequest(http.MethodGet, "/path/1", nil)
-	hh, _ := hs.Handler(r)
+	hh, _ := hs.Handler("", "/path/1")
 	a.NotNil(hh)
 	hs.Remove("/path/1", http.MethodGet)
-	r = httptest.NewRequest(http.MethodGet, "/path/1", nil)
-	hh, _ = hs.Handler(r)
+	hh, _ = hs.Handler("", "/path/1")
 	a.NotNil(hh)
 	hs.Remove("/path/1") // 移除所有
-	r = httptest.NewRequest(http.MethodGet, "/path/1", nil)
-	hh, _ = hs.Handler(r)
+	hh, _ = hs.Handler("", "https://caixw.io/path/1")
 	a.Nil(hh)
 
 	// *.example.com/
-	r = httptest.NewRequest(http.MethodGet, "http://xx.example.com:8080/path/1", nil)
-	hh, _ = hs.Handler(r)
+	hh, _ = hs.Handler("xxxx.example.com", "/path/1")
 	a.NotNil(hh)
 	hs.Remove("*.example.com/path/1", http.MethodGet)
-	r = httptest.NewRequest(http.MethodGet, "http://xx.example.com:8080/path/1", nil)
-	hh, _ = hs.Handler(r)
+	hh, _ = hs.Handler("xx.example.com", "/path/1")
 	a.NotNil(hh)
 	hs.Remove("*.example.com/path/1")
-	r = httptest.NewRequest(http.MethodGet, "http://xx.example.com:8080/path/1", nil)
-	hh, _ = hs.Handler(r)
+	hh, _ = hs.Handler("xxx.example.com", "/path/1")
 	a.Nil(hh)
 
 	// s1.example.com/
-	r = httptest.NewRequest(http.MethodGet, "http://s1.example.com:8080/path/1", nil)
-	hh, _ = hs.Handler(r)
+	hh, _ = hs.Handler("s1.example.com", "/path/1")
 	a.NotNil(hh)
 	hs.Remove("s1.example.com/path/1", http.MethodGet)
-	r = httptest.NewRequest(http.MethodGet, "http://s1.example.com:8080/path/1", nil)
-	hh, _ = hs.Handler(r)
+	hh, _ = hs.Handler("s1.example.com", "/path/1")
 	a.NotNil(hh)
 	hs.Remove("s1.example.com/path/1")
-	r = httptest.NewRequest(http.MethodGet, "http://s1.example.com:8080/path/1", nil)
-	hh, _ = hs.Handler(r)
+	hh, _ = hs.Handler("s1.example.com", "/path/1")
 	a.Nil(hh)
 }
 
@@ -168,27 +158,30 @@ func TestHosts_Clean_Handler(t *testing.T) {
 	hs.Add("s1.example.com/path/1", buildHandler(1), http.MethodGet)
 	hs.Add("s1.example.com/path/2", buildHandler(1), http.MethodGet)
 
-	r := httptest.NewRequest(http.MethodGet, "/path/1", nil)
-	hh, _ := hs.Handler(r)
+	hh, _ := hs.Handler("", "/path/1")
 	a.NotNil(hh)
 	hs.Clean("/path/")
-	r = httptest.NewRequest(http.MethodGet, "/path/1", nil)
-	hh, _ = hs.Handler(r)
+	hh, _ = hs.Handler("", "/path/1")
 	a.Nil(hh)
-	r = httptest.NewRequest(http.MethodGet, "/path", nil)
-	hh, _ = hs.Handler(r)
+	hh, _ = hs.Handler("", "/path")
 	a.NotNil(hh)
 
 	// *.example.com/
-	r = httptest.NewRequest(http.MethodGet, "http://xx.example.com:8080/path/1", nil)
-	hh, _ = hs.Handler(r)
+	hh, _ = hs.Handler("xx.example.com", "/path/1")
 	a.NotNil(hh)
 	hs.Clean("*.example.com/path/")
-	r = httptest.NewRequest(http.MethodGet, "http://xx.example.com:8080/path/1", nil)
-	hh, _ = hs.Handler(r)
+	hh, _ = hs.Handler("xx.example.com", "/path/1")
 	a.Nil(hh)
-	r = httptest.NewRequest(http.MethodGet, "http://xx.example.com:8080/path", nil)
-	hh, _ = hs.Handler(r)
+	hh, _ = hs.Handler("xx.example.com", "/path")
+	a.NotNil(hh)
+
+	// s1.example.com/
+	hh, _ = hs.Handler("s1.example.com", "/path/1")
+	a.NotNil(hh)
+	hs.Clean("s1.example.com/path/")
+	hh, _ = hs.Handler("s1.example.com", "/path/1")
+	a.Nil(hh)
+	hh, _ = hs.Handler("s1.example.com", "/path")
 	a.NotNil(hh)
 }
 

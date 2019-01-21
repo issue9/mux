@@ -189,7 +189,7 @@ func (mux *Mux) AnyFunc(pattern string, fun http.HandlerFunc) *Mux {
 }
 
 func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	hs, ps := mux.hosts.Handler(r)
+	hs, ps := mux.hosts.Handler(r.URL.Hostname(), r.URL.Path)
 	if hs == nil {
 		mux.notFound(w, r)
 		return
