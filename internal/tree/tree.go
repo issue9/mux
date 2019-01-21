@@ -71,15 +71,8 @@ func (tree *Tree) Clean(prefix string) {
 // methods 可以为空，表示删除所有内容。
 func (tree *Tree) Remove(pattern string, methods ...string) {
 	child := tree.find(pattern)
-	if child == nil {
+	if child == nil || child.handlers == nil {
 		return
-	}
-
-	if child.handlers == nil {
-		if len(child.children) == 0 {
-			child.parent.children = removeNodes(child.parent.children, child.pattern)
-			child.parent.buildIndexes()
-		}
 	}
 
 	if child.handlers.Remove(methods...) && len(child.children) == 0 {
