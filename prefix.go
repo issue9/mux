@@ -124,6 +124,7 @@ func (p *Prefix) Clean() *Prefix {
 }
 
 // Name 为一条路由项命名。
+//
 // URL 可以通过此属性来生成地址。
 func (p *Prefix) Name(name, pattern string) error {
 	return p.mux.Name(name, p.prefix+pattern)
