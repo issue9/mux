@@ -13,21 +13,12 @@ import (
 	"strings"
 
 	"github.com/issue9/mux/v2/internal/handlers"
+	"github.com/issue9/mux/v2/internal/syntax"
 	"github.com/issue9/mux/v2/params"
 )
 
 // node.children 的数量只有达到此值时，才会为其建立 indexes 索引表。
 const indexesSize = 5
-
-type nodeType int8
-
-// 表示 Segment 的类型。
-// 同时也表示各个类型在被匹配时的优先级顺序。
-const (
-	nodeTypeString nodeType = iota
-	nodeTypeRegexp
-	nodeTypeNamed
-)
 
 // 表示路由中的节点。
 type node struct {
@@ -35,7 +26,7 @@ type node struct {
 	handlers *handlers.Handlers
 	children []*node
 	pattern  string
-	nodeType nodeType
+	nodeType syntax.Type
 
 	// 用于表示当前是否为终点，仅对非字符串节点有用。此值为 true，
 	// 该节点的优先级会比同类型的节点低，以便优先对比其它非最终节点。
@@ -71,7 +62,7 @@ func (n *node) buildIndexes() {
 	}
 
 	for index, node := range n.children {
-		if node.nodeType == nodeTypeString {
+		if node.nodeType == syntax.TypeString {
 			n.indexes[node.pattern[0]] = index
 		}
 	}
@@ -110,7 +101,7 @@ func (n *node) addSegment(seg string) (*node, error) {
 	var child *node // 找到的最匹配节点
 	var l int       // 最大的匹配字符数量
 	for _, c := range n.children {
-		if c.endpoint != isEndpoint(seg) { // 完全不同的节点
+		if c.endpoint != syntax.IsEndpoint(seg) { // 完全不同的节点
 			continue
 		}
 
@@ -118,7 +109,7 @@ func (n *node) addSegment(seg string) (*node, error) {
 			return c, nil
 		}
 
-		if l1 := longestPrefix(c.pattern, seg); l1 > l {
+		if l1 := syntax.LongestPrefix(c.pattern, seg); l1 > l {
 			l = l1
 			child = c
 		}
@@ -146,19 +137,19 @@ func (n *node) newChild(s string) *node {
 	child := &node{
 		parent:   n,
 		pattern:  s,
-		endpoint: isEndpoint(s),
-		nodeType: stringType(s),
+		endpoint: syntax.IsEndpoint(s),
+		nodeType: syntax.GetType(s),
 	}
 
 	switch child.nodeType {
-	case nodeTypeNamed:
-		index := strings.IndexByte(s, nameEnd)
+	case syntax.TypeNamed:
+		index := strings.IndexByte(s, syntax.End)
 		child.name = s[1:index]
 		child.suffix = s[index+1:]
-	case nodeTypeRegexp:
-		child.expr = regexp.MustCompile(repl.Replace(s))
-		child.name = s[1:strings.IndexByte(s, regexpSeparator)]
-		child.suffix = s[strings.IndexByte(s, nameEnd)+1:]
+	case syntax.TypeRegexp:
+		child.expr = syntax.ToRegexp(s)
+		child.name = s[1:strings.IndexByte(s, syntax.Separator)]
+		child.suffix = s[strings.IndexByte(s, syntax.End)+1:]
 	}
 
 	n.children = append(n.children, child)
@@ -267,11 +258,11 @@ LOOP:
 
 func (n *node) matchCurrent(path string, params params.Params) (bool, string) {
 	switch n.nodeType {
-	case nodeTypeString:
+	case syntax.TypeString:
 		if strings.HasPrefix(path, n.pattern) {
 			return true, path[len(n.pattern):]
 		}
-	case nodeTypeNamed:
+	case syntax.TypeNamed:
 		if n.endpoint {
 			params[n.name] = path
 			return true, path[:0]
@@ -282,7 +273,7 @@ func (n *node) matchCurrent(path string, params params.Params) (bool, string) {
 			params[n.name] = path[:index]
 			return true, path[index+len(n.suffix):]
 		}
-	case nodeTypeRegexp:
+	case syntax.TypeRegexp:
 		locs := n.expr.FindStringSubmatchIndex(path)
 		if locs == nil || locs[0] != 0 { // 不匹配
 			return false, path
@@ -306,9 +297,9 @@ func (n *node) url(params map[string]string) (string, error) {
 	for i := len(nodes) - 1; i >= 0; i-- {
 		node := nodes[i]
 		switch node.nodeType {
-		case nodeTypeString:
+		case syntax.TypeString:
 			buf.WriteString(node.pattern)
-		case nodeTypeNamed, nodeTypeRegexp:
+		case syntax.TypeNamed, syntax.TypeRegexp:
 			param, exists := params[node.name]
 			if !exists {
 				return "", fmt.Errorf("未找到参数 %s 的值", node.name)

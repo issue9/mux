@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	"github.com/issue9/mux/v2/internal/handlers"
+	"github.com/issue9/mux/v2/internal/syntax"
 	"github.com/issue9/mux/v2/params"
 )
 
@@ -83,7 +84,7 @@ func (tree *Tree) Remove(pattern string, methods ...string) {
 
 // 获取指定的节点，若节点不存在，则在该位置生成一个新节点。
 func (tree *Tree) getNode(pattern string) (*node, error) {
-	ss, err := split(pattern)
+	ss, err := syntax.Split(pattern)
 	if err != nil {
 		return nil, err
 	}

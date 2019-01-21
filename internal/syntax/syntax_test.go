@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT
 // license that can be found in the LICENSE file.
 
-package tree
+package syntax
 
 import (
 	"testing"
@@ -10,13 +10,13 @@ import (
 	"github.com/issue9/assert"
 )
 
-var _ error = &SyntaxError{}
+var _ error = &Error{}
 
 func TestLongestPrefix(t *testing.T) {
 	a := assert.New(t)
 
 	test := func(s1, s2 string, len int) {
-		a.Equal(longestPrefix(s1, s2), len)
+		a.Equal(LongestPrefix(s1, s2), len)
 	}
 
 	test("", "", 0)
@@ -40,20 +40,10 @@ func TestRegexp(t *testing.T) {
 	a.Equal(repl.Replace("{id:\\d+}/author"), "(?P<id>\\d+)/author")
 }
 
-func TestStringType(t *testing.T) {
-	a := assert.New(t)
-
-	a.Equal(stringType(""), nodeTypeString)
-	a.Equal(stringType("/posts"), nodeTypeString)
-	a.Equal(stringType("/posts/{id}"), nodeTypeNamed)
-	a.Equal(stringType("/posts/{id}/author"), nodeTypeNamed)
-	a.Equal(stringType("/posts/{id:\\d+}/author"), nodeTypeRegexp)
-}
-
 func TestSplit(t *testing.T) {
 	a := assert.New(t)
 	test := func(str string, isError bool, ss ...string) {
-		s, err := split(str)
+		s, err := Split(str)
 		if isError {
 			a.Error(err)
 			return
@@ -102,6 +92,6 @@ func TestSplit(t *testing.T) {
 	test("/posts/}/author", true)
 
 	a.Panic(func() {
-		split("")
+		Split("")
 	})
 }

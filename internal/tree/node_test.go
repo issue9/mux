@@ -11,6 +11,7 @@ import (
 	"github.com/issue9/assert"
 
 	"github.com/issue9/mux/v2/internal/handlers"
+	"github.com/issue9/mux/v2/internal/syntax"
 )
 
 func TestNode_find(t *testing.T) {
@@ -18,7 +19,7 @@ func TestNode_find(t *testing.T) {
 	node := &node{}
 
 	addNode := func(p string, code int, methods ...string) {
-		segs, err := split(p)
+		segs, err := syntax.Split(p)
 		a.NotError(err).NotNil(segs)
 		nn, err := node.getNode(segs)
 		a.NotError(err).NotNil(nn)

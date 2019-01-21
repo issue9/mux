@@ -98,17 +98,3 @@ func (n *node) len() int {
 
 	return cnt
 }
-
-// 仅上面的 trace 用到
-func (t nodeType) String() string {
-	switch t {
-	case nodeTypeNamed:
-		return "named"
-	case nodeTypeRegexp:
-		return "regexp"
-	case nodeTypeString:
-		return "string"
-	default:
-		return "<unknown>"
-	}
-}
