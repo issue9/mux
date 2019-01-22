@@ -89,7 +89,7 @@ func (tree *Tree) getNode(pattern string) (*node, error) {
 		return nil, err
 	}
 
-	return tree.node.getNode(ss)
+	return tree.node.getNode(ss), nil
 }
 
 // SetAllow 设置指定节点的 allow 报头。
