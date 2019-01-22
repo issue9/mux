@@ -8,13 +8,19 @@ package syntax
 type Type int8
 
 const (
-	// TypeString 普通的字符串类型，逐字匹配
+	// TypeString 普通的字符串类型，逐字匹配，比如
+	//  /users/1
+	// 只能匹配 /users/1，不能匹配 /users/2
 	TypeString Type = iota
 
-	// TypeRegexp 正则表达式
+	// TypeRegexp 正则表达式，比如：
+	//  /users/{id:\\d+}
+	// 可以匹配 /users/1、/users/2 等任意数值。
 	TypeRegexp
 
-	// TypeNamed 命名参数，相对于正则，其效率更高，当然也没有正则灵活。
+	// TypeNamed 命名参数，相对于正则，其效率更高，当然也没有正则灵活。比如：
+	//  /users/{id}
+	// 可以匹配 /users/1、/users/2 和 /users/username 等非数值类型
 	TypeNamed
 )
 

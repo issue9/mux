@@ -29,6 +29,10 @@ func ToRegexp(expr string) *regexp.Regexp {
 	return regexp.MustCompile(repl.Replace(expr))
 }
 
+// IsEndpoint 是否为最终结点
+//
+// 在非字符路由项中，如果以 {path} 等结尾，
+// 可以匹配任意剩余字符，此函数用于判断是否为该功能的结点。
 func IsEndpoint(s string) bool {
 	return s[len(s)-1] == End
 }
@@ -135,8 +139,10 @@ func (s *state) setSeparator(index int) *Error {
 	return nil
 }
 
-// Split 将字符串解析成字符串数组
-// 以 { 为分界线进行分割。
+// Split 将字符串解析成字符串数组。
+//
+// 以 { 为分界线进行分割。比如
+//  /posts/{id}/email ==> /posts/, {id}/email
 func Split(str string) ([]string, error) {
 	if str == "" { // 由调用方保证不会出现此错误，所以直接 panic
 		panic("参数 str 不能为空")
