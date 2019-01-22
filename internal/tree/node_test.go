@@ -94,20 +94,22 @@ func TestSplitNode(t *testing.T) {
 	p := newNode("/blog")
 
 	// 没有父节点
-	nn, err := splitNode(p, 1)
-	a.Error(err).Nil(nn)
+	a.Panic(func() {
+		nn := splitNode(p, 1)
+		a.Nil(nn)
+	})
 
 	node := p.newChild("/posts/{id}/author")
 	a.NotNil(node)
 
-	nn, err = splitNode(node, 7) // 从 { 开始拆分
-	a.NotError(err).NotNil(nn)
+	nn := splitNode(node, 7) // 从 { 开始拆分
+	a.NotNil(nn)
 	a.Equal(len(nn.children), 1).
 		Equal(nn.children[0].pattern, "{id}/author")
 	a.Equal(nn.parent, p)
 
-	nn, err = splitNode(node, 18) // 不需要拆分
-	a.NotError(err).NotNil(nn)
+	nn = splitNode(node, 18) // 不需要拆分
+	a.NotNil(nn)
 	a.Equal(0, len(nn.children))
 
 	a.Panic(func() { splitNode(node, 8) }) // 从 i 开始拆分，不可拆分

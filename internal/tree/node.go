@@ -6,7 +6,6 @@ package tree
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"regexp"
 	"sort"
@@ -43,10 +42,11 @@ type node struct {
 	// 正则表达式特有参数，用于缓存当前节点的正则编译结果。
 	expr *regexp.Regexp
 
+	// 保存着 *node 实例在 children 中的下标。
+	//
 	// 所有节点类型为字符串的子节点，其首字符必定是不同的（相同的都提升到父节点中），
 	// 根据此特性，可以将所有字符串类型的首字符做个索引，这样字符串类型节点的比较，
 	// 可以通过索引排除不必要的比较操作。
-	// indexes 中保存着 *node 实例在 children 中的下标。
 	indexes map[byte]int
 }
 
@@ -69,11 +69,15 @@ func (n *node) buildIndexes() {
 }
 
 // 当前节点的优先级。
+//
+// parent.children 根据此值进行排序。
+// 不同的节点类型拥有不同的优先级，相同类型的，则有子节点的优先级低。
 func (n *node) priority() int {
-	// *10 可以保证在当前类型的节点进行加权时，不会超过其它节点。
+	// 目前节点类型只有 3 种，10
+	// 可以保证在当前类型的节点进行加权时，不会超过其它节点。
 	ret := int(n.nodeType) * 10
 
-	// 有 children 的，endpoit 必然为 false，两者不可能同时为 true
+	// 有 children 的，endpoint 必然为 false，两者不可能同时为 true
 	if len(n.children) > 0 || n.endpoint {
 		return ret + 1
 	}
@@ -119,10 +123,7 @@ func (n *node) addSegment(seg string) (*node, error) {
 		return n.newChild(seg), nil
 	}
 
-	parent, err := splitNode(child, l)
-	if err != nil {
-		return nil, err
-	}
+	parent := splitNode(child, l)
 
 	if len(seg) == l {
 		return parent, nil
@@ -329,15 +330,15 @@ func removeNodes(nodes []*node, pattern string) []*node {
 // 将节点 n 从 pos 位置进行拆分。后一段作为当前段的子节点，并返回当前节点。
 // 若 pos 大于或等于 n.pattern 的长度，则直接返回 n 不会拆分，pos 处的字符作为子节点的内容。
 //
-// NOTE: 调用者需确保 pos 位置是可拆分的，否则将 panic。
-func splitNode(n *node, pos int) (*node, error) {
+// 若 pos 位置是不可拆分的，或是 n.parent 为 nil，都将触发 panic
+func splitNode(n *node, pos int) *node {
 	if len(n.pattern) <= pos { // 不需要拆分
-		return n, nil
+		return n
 	}
 
 	p := n.parent
 	if p == nil {
-		return nil, errors.New("节点必须要有一个有效的父节点，才能进行拆分")
+		panic("节点必须要有一个有效的父节点，才能进行拆分")
 	}
 
 	// 先从父节点中删除老的 n
@@ -353,5 +354,5 @@ func splitNode(n *node, pos int) (*node, error) {
 		item.parent = c
 	}
 
-	return ret, nil
+	return ret
 }
