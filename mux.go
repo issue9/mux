@@ -37,7 +37,6 @@ var ErrNameExists = errors.New("存在相同名称的路由项")
 //  http.ListenAndServe(m)
 type Mux struct {
 	hosts            *host.Hosts
-	skipCleanPath    bool
 	notFound         http.HandlerFunc
 	methodNotAllowed http.HandlerFunc
 
@@ -67,7 +66,6 @@ func New(disableOptions, disableHead, skipCleanPath bool, notFound, methodNotAll
 	mux := &Mux{
 		hosts:            host.New(disableOptions, disableHead, skipCleanPath),
 		names:            make(map[string]string, 50),
-		skipCleanPath:    skipCleanPath,
 		notFound:         notFound,
 		methodNotAllowed: methodNotAllowed,
 	}
