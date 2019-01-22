@@ -8,26 +8,26 @@ package syntax
 type Type int8
 
 const (
-	// TypeString 普通的字符串类型，逐字匹配，比如
+	// String 普通的字符串类型，逐字匹配，比如
 	//  /users/1
 	// 只能匹配 /users/1，不能匹配 /users/2
-	TypeString Type = iota
+	String Type = iota
 
-	// TypeRegexp 正则表达式，比如：
+	// Regexp 正则表达式，比如：
 	//  /users/{id:\\d+}
 	// 可以匹配 /users/1、/users/2 等任意数值。
-	TypeRegexp
+	Regexp
 
-	// TypeNamed 命名参数，相对于正则，其效率更高，当然也没有正则灵活。比如：
+	// Named 命名参数，相对于正则，其效率更高，当然也没有正则灵活。比如：
 	//  /users/{id}
 	// 可以匹配 /users/1、/users/2 和 /users/username 等非数值类型
-	TypeNamed
+	Named
 )
 
 // Error 表示路由项的语法错误
 type Error struct {
-	Value   string
-	Message string
+	Value   string // 出错时的内容
+	Message string // 出错的提示信息
 }
 
 func (err *Error) Error() string {
@@ -37,26 +37,26 @@ func (err *Error) Error() string {
 // 仅上面的 trace 用到
 func (t Type) String() string {
 	switch t {
-	case TypeNamed:
+	case Named:
 		return "named"
-	case TypeRegexp:
+	case Regexp:
 		return "regexp"
-	case TypeString:
+	case String:
 		return "string"
 	default:
-		return "<unknown>"
+		panic("不存在的类型")
 	}
 }
 
 // GetType 获取字符串的类型。调用者需要确保 str 语法正确。
 func GetType(str string) Type {
-	typ := TypeString
+	typ := String
 	for i := 0; i < len(str); i++ {
 		switch str[i] {
 		case Separator:
-			typ = TypeRegexp
+			typ = Regexp
 		case Start:
-			typ = TypeNamed
+			typ = Named
 		case End:
 			break
 		}

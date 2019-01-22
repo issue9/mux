@@ -62,7 +62,7 @@ func (n *node) buildIndexes() {
 	}
 
 	for index, node := range n.children {
-		if node.nodeType == syntax.TypeString {
+		if node.nodeType == syntax.String {
 			n.indexes[node.pattern[0]] = index
 		}
 	}
@@ -142,11 +142,11 @@ func (n *node) newChild(s string) *node {
 	}
 
 	switch child.nodeType {
-	case syntax.TypeNamed:
+	case syntax.Named:
 		index := strings.IndexByte(s, syntax.End)
 		child.name = s[1:index]
 		child.suffix = s[index+1:]
-	case syntax.TypeRegexp:
+	case syntax.Regexp:
 		child.expr = syntax.ToRegexp(s)
 		child.name = s[1:strings.IndexByte(s, syntax.Separator)]
 		child.suffix = s[strings.IndexByte(s, syntax.End)+1:]
@@ -258,11 +258,11 @@ LOOP:
 
 func (n *node) matchCurrent(path string, params params.Params) (bool, string) {
 	switch n.nodeType {
-	case syntax.TypeString:
+	case syntax.String:
 		if strings.HasPrefix(path, n.pattern) {
 			return true, path[len(n.pattern):]
 		}
-	case syntax.TypeNamed:
+	case syntax.Named:
 		if n.endpoint {
 			params[n.name] = path
 			return true, path[:0]
@@ -273,7 +273,7 @@ func (n *node) matchCurrent(path string, params params.Params) (bool, string) {
 			params[n.name] = path[:index]
 			return true, path[index+len(n.suffix):]
 		}
-	case syntax.TypeRegexp:
+	case syntax.Regexp:
 		locs := n.expr.FindStringSubmatchIndex(path)
 		if locs == nil || locs[0] != 0 { // 不匹配
 			return false, path
@@ -297,9 +297,9 @@ func (n *node) url(params map[string]string) (string, error) {
 	for i := len(nodes) - 1; i >= 0; i-- {
 		node := nodes[i]
 		switch node.nodeType {
-		case syntax.TypeString:
+		case syntax.String:
 			buf.WriteString(node.pattern)
-		case syntax.TypeNamed, syntax.TypeRegexp:
+		case syntax.Named, syntax.Regexp:
 			param, exists := params[node.name]
 			if !exists {
 				return "", fmt.Errorf("未找到参数 %s 的值", node.name)

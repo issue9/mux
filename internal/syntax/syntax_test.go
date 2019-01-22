@@ -10,6 +10,18 @@ import (
 	"github.com/issue9/assert"
 )
 
+func TestToRegexp(t *testing.T) {
+	a := assert.New(t)
+
+	a.NotPanic(func() {
+		a.NotNil(ToRegexp("/users/{id:\\d+}"))
+	})
+
+	a.Panic(func() {
+		a.NotNil(ToRegexp("/users/{id:\\d+"))
+	})
+}
+
 func TestLongestPrefix(t *testing.T) {
 	a := assert.New(t)
 
