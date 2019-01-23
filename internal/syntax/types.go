@@ -24,16 +24,6 @@ const (
 	Named
 )
 
-// Error 表示路由项的语法错误
-type Error struct {
-	Value   string // 出错时的内容
-	Message string // 出错的提示信息
-}
-
-func (err *Error) Error() string {
-	return err.Message
-}
-
 // 仅上面的 trace 用到
 func (t Type) String() string {
 	switch t {

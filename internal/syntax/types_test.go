@@ -5,24 +5,10 @@
 package syntax
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/issue9/assert"
 )
-
-var _ error = &Error{}
-
-func TestError_Error(t *testing.T) {
-	a := assert.New(t)
-
-	err := &Error{
-		Message: "msg",
-		Value:   "/posts/{id}",
-	}
-
-	a.True(strings.Contains(err.Error(), err.Message))
-}
 
 func TestGetType(t *testing.T) {
 	a := assert.New(t)

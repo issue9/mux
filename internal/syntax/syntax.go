@@ -81,7 +81,7 @@ func LongestPrefix(s1, s2 string) int {
 // 以 { 为分界线进行分割。比如
 //  /posts/{id}/email ==> /posts/, {id}/email
 func Split(str string) []string {
-	if str == "" { // 由调用方保证不会出现此错误，所以直接 panic
+	if str == "" {
 		panic("参数 str 不能为空")
 	}
 
@@ -94,7 +94,7 @@ func Split(str string) []string {
 			start := state.start
 			state.setStart(i)
 
-			if start == i {
+			if i == 0 { // 以 { 开头
 				continue
 			}
 
@@ -123,4 +123,44 @@ func Split(str string) []string {
 	}
 
 	return ss
+}
+
+// IsWell 检测格式是否正确
+//
+func IsWell(str string) string {
+	if str == "" {
+		return "参数 str 不能为空"
+	}
+
+	state := newState()
+	for i := 0; i < len(str); i++ {
+		switch str[i] {
+		case Start:
+			state.setStart(i)
+
+			if i == 0 { // 以 { 开头
+				continue
+			}
+		case Separator:
+			state.setSeparator(i)
+		case End:
+			state.setEnd(i)
+		}
+
+		if state.err != "" {
+			return state.err
+		}
+	} // end for
+
+	if state.err != "" {
+		return state.err
+	}
+
+	if state.start < len(str) {
+		if state.state != End {
+			return fmt.Sprintf("缺少 %s 字符", string(End))
+		}
+	}
+
+	return ""
 }
