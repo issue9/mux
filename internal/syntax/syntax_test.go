@@ -53,14 +53,15 @@ func TestRegexp(t *testing.T) {
 func TestSplit(t *testing.T) {
 	a := assert.New(t)
 	test := func(str string, isError bool, ss ...string) {
-		s, err := Split(str)
 		if isError {
-			a.Error(err)
+			a.Panic(func() {
+				Split(str)
+			})
 			return
 		}
 
-		a.NotError(err).
-			Equal(len(s), len(ss))
+		s := Split(str)
+		a.Equal(len(s), len(ss))
 		for index, seg := range ss {
 			a.Equal(seg, s[index])
 		}
