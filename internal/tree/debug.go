@@ -27,7 +27,7 @@ func (tree *Tree) Trace(w io.Writer, path string) {
 func (n *node) trace(w io.Writer, deep int, path string, params params.Params) *node {
 	if len(n.indexes) > 0 && len(path) > 0 {
 		node := n.children[n.indexes[path[0]]]
-		fmt.Fprint(w, strings.Repeat(" ", deep*4), node.pattern, "---", node.nodeType, "---", path)
+		fmt.Fprint(w, strings.Repeat(" ", deep*4), node.segment.Value, "---", node.segment.Type, "---", path)
 
 		if node == nil {
 			fmt.Fprintln(w, "(!matched)")
@@ -51,7 +51,7 @@ LOOP:
 	// 比如 /posts/{path:\\w*} 后面的 path 即为空节点。所以此处不判断 len(path)
 	for i := len(n.indexes); i < len(n.children); i++ {
 		node := n.children[i]
-		fmt.Fprint(w, strings.Repeat(" ", deep*4), node.pattern, "---", node.nodeType, "---", path)
+		fmt.Fprint(w, strings.Repeat(" ", deep*4), node.segment.Value, "---", node.segment.Type, "---", path)
 		matched, newPath := node.matchCurrent(path, params)
 		if !matched {
 			fmt.Fprintln(w, "(!matched)")
@@ -69,7 +69,7 @@ LOOP:
 			return nil
 		}
 
-		fmt.Fprintln(w, strings.Repeat(" ", (deep-1)*4), n.pattern, "---", n.nodeType, "---", path, "(matched)")
+		fmt.Fprintln(w, strings.Repeat(" ", (deep-1)*4), n.segment.Value, "---", n.segment.Type, "---", path, "(matched)")
 		return n
 	}
 
@@ -78,7 +78,7 @@ LOOP:
 
 // 向 w 输出节点的树状结构
 func (n *node) print(w io.Writer, deep int) {
-	fmt.Fprintln(w, strings.Repeat(" ", deep*4), n.pattern)
+	fmt.Fprintln(w, strings.Repeat(" ", deep*4), n.segment.Value)
 
 	for _, child := range n.children {
 		child.print(w, deep+1)

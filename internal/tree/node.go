@@ -24,12 +24,7 @@ type node struct {
 	parent   *node
 	handlers *handlers.Handlers
 	children []*node
-	pattern  string
-	nodeType syntax.Type
-
-	// 用于表示当前是否为终点，仅对非字符串节点有用。此值为 true，
-	// 该节点的优先级会比同类型的节点低，以便优先对比其它非最终节点。
-	endpoint bool
+	segment  *syntax.Segment
 
 	// 当前节点的参数名称，比如 "{id}/author"，
 	// 则此值为 "id"，仅非字符串节点有用。
@@ -62,8 +57,8 @@ func (n *node) buildIndexes() {
 	}
 
 	for index, node := range n.children {
-		if node.nodeType == syntax.String {
-			n.indexes[node.pattern[0]] = index
+		if node.segment.Type == syntax.String {
+			n.indexes[node.segment.Value[0]] = index
 		}
 	}
 }
@@ -75,10 +70,10 @@ func (n *node) buildIndexes() {
 func (n *node) priority() int {
 	// 目前节点类型只有 3 种，10
 	// 可以保证在当前类型的节点进行加权时，不会超过其它节点。
-	ret := int(n.nodeType) * 10
+	ret := int(n.segment.Type) * 10
 
 	// 有 children 的，endpoint 必然为 false，两者不可能同时为 true
-	if len(n.children) > 0 || n.endpoint {
+	if len(n.children) > 0 || n.segment.Endpoint {
 		return ret + 1
 	}
 
@@ -87,7 +82,7 @@ func (n *node) priority() int {
 
 // 获取指定路径下的节点，若节点不存在，则添加。
 // segments 为被 syntax.Split 拆分之后的字符串数组。
-func (n *node) getNode(segments []string) *node {
+func (n *node) getNode(segments []*syntax.Segment) *node {
 	child := n.addSegment(segments[0])
 
 	if len(segments) == 1 { // 最后一个节点
@@ -98,19 +93,19 @@ func (n *node) getNode(segments []string) *node {
 }
 
 // 将 seg 添加到当前节点，并返回新节点，如果找到相同的节点，则直接返回该子节点。
-func (n *node) addSegment(seg string) *node {
+func (n *node) addSegment(seg *syntax.Segment) *node {
 	var child *node // 找到的最匹配节点
 	var l int       // 最大的匹配字符数量
 	for _, c := range n.children {
-		if c.endpoint != syntax.IsEndpoint(seg) { // 完全不同的节点
+		if c.segment.Endpoint != seg.Endpoint { // 完全不同的节点
 			continue
 		}
 
-		if c.pattern == seg { // 有完全相同的节点
+		if c.segment.Value == seg.Value { // 有完全相同的节点
 			return c
 		}
 
-		if l1 := syntax.LongestPrefix(c.pattern, seg); l1 > l {
+		if l1 := syntax.LongestPrefix(c.segment.Value, seg.Value); l1 > l {
 			l = l1
 			child = c
 		}
@@ -122,32 +117,30 @@ func (n *node) addSegment(seg string) *node {
 
 	parent := splitNode(child, l)
 
-	if len(seg) == l {
+	if len(seg.Value) == l {
 		return parent
 	}
 
-	return parent.addSegment(seg[l:])
+	return parent.addSegment(syntax.NewSegment(seg.Value[l:]))
 }
 
 // 根据 s 内容为当前节点产生一个子节点，并返回该新节点。
 // 由调用方确保 s 的语法正确性，否则可能 panic。
-func (n *node) newChild(s string) *node {
+func (n *node) newChild(s *syntax.Segment) *node {
 	child := &node{
-		parent:   n,
-		pattern:  s,
-		endpoint: syntax.IsEndpoint(s),
-		nodeType: syntax.GetType(s),
+		parent:  n,
+		segment: s,
 	}
 
-	switch child.nodeType {
+	switch child.segment.Type {
 	case syntax.Named:
-		index := strings.IndexByte(s, syntax.End)
-		child.name = s[1:index]
-		child.suffix = s[index+1:]
+		index := strings.IndexByte(s.Value, syntax.End)
+		child.name = s.Value[1:index]
+		child.suffix = s.Value[index+1:]
 	case syntax.Regexp:
-		child.expr = syntax.ToRegexp(s)
-		child.name = s[1:strings.IndexByte(s, syntax.Separator)]
-		child.suffix = s[strings.IndexByte(s, syntax.End)+1:]
+		child.expr = syntax.ToRegexp(s.Value)
+		child.name = s.Value[1:strings.IndexByte(s.Value, syntax.Separator)]
+		child.suffix = s.Value[strings.IndexByte(s.Value, syntax.End)+1:]
 	}
 
 	n.children = append(n.children, child)
@@ -162,12 +155,12 @@ func (n *node) newChild(s string) *node {
 // 查找路由项，不存在返回 nil
 func (n *node) find(pattern string) *node {
 	for _, child := range n.children {
-		if child.pattern == pattern {
+		if child.segment.Value == pattern {
 			return child
 		}
 
-		if strings.HasPrefix(pattern, child.pattern) {
-			nn := child.find(pattern[len(child.pattern):])
+		if strings.HasPrefix(pattern, child.segment.Value) {
+			nn := child.find(pattern[len(child.segment.Value):])
 			if nn != nil {
 				return nn
 			}
@@ -186,14 +179,14 @@ func (n *node) clean(prefix string) {
 
 	dels := make([]string, 0, len(n.children))
 	for _, child := range n.children {
-		if len(child.pattern) < len(prefix) {
-			if strings.HasPrefix(prefix, child.pattern) {
-				child.clean(prefix[len(child.pattern):])
+		if len(child.segment.Value) < len(prefix) {
+			if strings.HasPrefix(prefix, child.segment.Value) {
+				child.clean(prefix[len(child.segment.Value):])
 			}
 		}
 
-		if strings.HasPrefix(child.pattern, prefix) {
-			dels = append(dels, child.pattern)
+		if strings.HasPrefix(child.segment.Value, prefix) {
+			dels = append(dels, child.segment.Value)
 		}
 	}
 
@@ -255,13 +248,13 @@ LOOP:
 }
 
 func (n *node) matchCurrent(path string, params params.Params) (bool, string) {
-	switch n.nodeType {
+	switch n.segment.Type {
 	case syntax.String:
-		if strings.HasPrefix(path, n.pattern) {
-			return true, path[len(n.pattern):]
+		if strings.HasPrefix(path, n.segment.Value) {
+			return true, path[len(n.segment.Value):]
 		}
 	case syntax.Named:
-		if n.endpoint {
+		if n.segment.Endpoint {
 			params[n.name] = path
 			return true, path[:0]
 		}
@@ -294,9 +287,9 @@ func (n *node) url(params map[string]string) (string, error) {
 	buf := new(bytes.Buffer)
 	for i := len(nodes) - 1; i >= 0; i-- {
 		node := nodes[i]
-		switch node.nodeType {
+		switch node.segment.Type {
 		case syntax.String:
-			buf.WriteString(node.pattern)
+			buf.WriteString(node.segment.Value)
 		case syntax.Named, syntax.Regexp:
 			param, exists := params[node.name]
 			if !exists {
@@ -316,7 +309,7 @@ func (n *node) url(params map[string]string) (string, error) {
 // 所以此处不作多余的判断。
 func removeNodes(nodes []*node, pattern string) []*node {
 	for index, n := range nodes {
-		if n.pattern == pattern {
+		if n.segment.Value == pattern {
 			return append(nodes[:index], nodes[index+1:]...)
 		}
 	}
@@ -329,7 +322,7 @@ func removeNodes(nodes []*node, pattern string) []*node {
 //
 // 若 pos 位置是不可拆分的，或是 n.parent 为 nil，都将触发 panic
 func splitNode(n *node, pos int) *node {
-	if len(n.pattern) <= pos { // 不需要拆分
+	if len(n.segment.Value) <= pos { // 不需要拆分
 		return n
 	}
 
@@ -339,11 +332,11 @@ func splitNode(n *node, pos int) *node {
 	}
 
 	// 先从父节点中删除老的 n
-	p.children = removeNodes(p.children, n.pattern)
+	p.children = removeNodes(p.children, n.segment.Value)
 	p.buildIndexes()
 
-	ret := p.newChild(n.pattern[:pos])
-	c := ret.newChild(n.pattern[pos:])
+	ret := p.newChild(syntax.NewSegment(n.segment.Value[:pos]))
+	c := ret.newChild(syntax.NewSegment(n.segment.Value[pos:]))
 	c.handlers = n.handlers
 	c.children = n.children
 	c.indexes = n.indexes

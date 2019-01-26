@@ -13,10 +13,36 @@ import (
 
 // 路由项字符串中的几个特殊字符定义
 const (
-	Start     byte = '{' // 命名或是正则参数的起始字符
-	End       byte = '}' // 命名或是正则参数的结束字符
-	Separator byte = ':' // 正则参数中名称和正则的分隔符
+	Start     = '{'  // 命名或是正则参数的起始字符
+	End       = '}'  // 命名或是正则参数的结束字符
+	Separator = ':'  // 正则参数中名称和正则的分隔符
+	Escape    = '\\' // 路由项中的转义字符
 )
+
+// Segment 路由项被拆分之后的值
+type Segment struct {
+	Value string
+	Type  Type
+
+	// 是否为最终结点
+	//
+	// 在非字符路由项中，如果以 {path} 等结尾，可以匹配任意剩余字符。
+	Endpoint bool
+}
+
+// NewSegment 声明新的 Segment 变量
+func NewSegment(val string) *Segment {
+	seg := &Segment{
+		Value: val,
+		Type:  GetType(val),
+	}
+
+	if seg.Type != String {
+		seg.Endpoint = isEndpoint(val)
+	}
+
+	return seg
+}
 
 // 将路由语法转换成正则表达式语法，比如：
 //  {id:\\d+}/author => (?P<id>\\d+)
@@ -29,11 +55,7 @@ func ToRegexp(expr string) *regexp.Regexp {
 	return regexp.MustCompile(repl.Replace(expr))
 }
 
-// IsEndpoint 是否为最终结点
-//
-// 在非字符路由项中，如果以 {path} 等结尾，
-// 可以匹配任意剩余字符，此函数用于判断是否为该功能的结点。
-func IsEndpoint(s string) bool {
+func isEndpoint(s string) bool {
 	return s[len(s)-1] == End
 }
 
@@ -80,12 +102,14 @@ func LongestPrefix(s1, s2 string) int {
 //
 // 以 { 为分界线进行分割。比如
 //  /posts/{id}/email ==> /posts/, {id}/email
-func Split(str string) []string {
+//  /posts/\{{id}/email ==> /posts/{, {id}/email
+//  /posts/{year}/{id}.html ==> /posts/, {year}/, {id}.html
+func Split(str string) []*Segment {
 	if str == "" {
 		panic("参数 str 不能为空")
 	}
 
-	ss := make([]string, 0, strings.Count(str, string(Start))+1)
+	ss := make([]*Segment, 0, strings.Count(str, string(Start))+1)
 
 	state := newState()
 	for i := 0; i < len(str); i++ {
@@ -98,7 +122,7 @@ func Split(str string) []string {
 				continue
 			}
 
-			ss = append(ss, str[start:i])
+			ss = append(ss, NewSegment(str[start:i]))
 		case Separator:
 			state.setSeparator(i)
 		case End:
@@ -119,14 +143,13 @@ func Split(str string) []string {
 			panic(fmt.Sprintf("缺少 %s 字符", string(End)))
 		}
 
-		ss = append(ss, str[state.start:])
+		ss = append(ss, NewSegment(str[state.start:]))
 	}
 
 	return ss
 }
 
 // IsWell 检测格式是否正确
-//
 func IsWell(str string) string {
 	if str == "" {
 		return "参数 str 不能为空"
