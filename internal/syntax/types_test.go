@@ -13,11 +13,11 @@ import (
 func TestGetType(t *testing.T) {
 	a := assert.New(t)
 
-	a.Equal(GetType(""), String)
-	a.Equal(GetType("/posts"), String)
-	a.Equal(GetType("/posts/{id}"), Named)
-	a.Equal(GetType("/posts/{id}/author"), Named)
-	a.Equal(GetType("/posts/{id:\\d+}/author"), Regexp)
+	a.Equal(getType(""), String)
+	a.Equal(getType("/posts"), String)
+	a.Equal(getType("/posts/{id}"), Named)
+	a.Equal(getType("/posts/{id}/author"), Named)
+	a.Equal(getType("/posts/{id:\\d+}/author"), Regexp)
 }
 
 func TestType_String(t *testing.T) {

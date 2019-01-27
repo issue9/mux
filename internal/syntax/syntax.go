@@ -34,7 +34,7 @@ type Segment struct {
 func NewSegment(val string) *Segment {
 	seg := &Segment{
 		Value: val,
-		Type:  GetType(val),
+		Type:  getType(val),
 	}
 
 	if seg.Type != String {

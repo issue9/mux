@@ -38,8 +38,8 @@ func (t Type) String() string {
 	}
 }
 
-// GetType 获取字符串的类型。调用者需要确保 str 语法正确。
-func GetType(str string) Type {
+// getType 获取字符串的类型。调用者需要确保 str 语法正确。
+func getType(str string) Type {
 	typ := String
 	for i := 0; i < len(str); i++ {
 		switch str[i] {
