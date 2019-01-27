@@ -85,17 +85,16 @@ func (n *node) addSegment(seg *syntax.Segment) *node {
 	var child *node // 找到的最匹配节点
 	var l int       // 最大的匹配字符数量
 	for _, c := range n.children {
-		if c.segment.Endpoint != seg.Endpoint { // 完全不同的节点
-			continue
-		}
-
-		if c.segment.Value == seg.Value { // 有完全相同的节点
+		l1 := c.segment.Similarity(seg)
+		switch l1 {
+		case 0: // 完全不同，直接退出 switch，继续下一次 for
+		case -1: // 找到完全相同的，则直接返回该节点
 			return c
-		}
-
-		if l1 := syntax.LongestPrefix(c.segment.Value, seg.Value); l1 > l {
-			l = l1
-			child = c
+		default: // 部分相似
+			if l1 > l { // 找到相似度更高的，保存该节点的信息
+				l = l1
+				child = c
+			}
 		}
 	}
 

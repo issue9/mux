@@ -65,6 +65,20 @@ func NewSegment(val string) *Segment {
 	return seg
 }
 
+// Similarity 与 s1 的相似度，-1 表示完全相同，0 表示完全不相同，
+// 其它大于零的值，越大，表示相似度越高。
+func (seg *Segment) Similarity(s1 *Segment) int {
+	if s1.Endpoint != seg.Endpoint { // 完全不同的节点
+		return 0
+	}
+
+	if s1.Value == seg.Value { // 有完全相同的节点
+		return -1
+	}
+
+	return longestPrefix(s1.Value, seg.Value)
+}
+
 // Split 从 pos 位置拆分为两个
 //
 // pos 位置的字符归属于后一个元素。
@@ -109,9 +123,9 @@ func (seg *Segment) Match(path string, params params.Params) (bool, string) {
 	return false, path
 }
 
-// LongestPrefix 获取两个字符串之间相同的前缀字符串的长度，
+// 获取两个字符串之间相同的前缀字符串的长度，
 // 不会从 {} 中间被分开，正则表达式与之后的内容也不再分隔。
-func LongestPrefix(s1, s2 string) int {
+func longestPrefix(s1, s2 string) int {
 	l := len(s1)
 	if len(s2) < l {
 		l = len(s2)
