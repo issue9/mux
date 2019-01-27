@@ -14,11 +14,11 @@ func TestToRegexp(t *testing.T) {
 	a := assert.New(t)
 
 	a.NotPanic(func() {
-		a.NotNil(ToRegexp("/users/{id:\\d+}"))
+		a.NotNil(toRegexp("/users/{id:\\d+}"))
 	})
 
 	a.Panic(func() {
-		a.NotNil(ToRegexp("/users/{id:\\d+"))
+		a.NotNil(toRegexp("/users/{id:\\d+"))
 	})
 }
 

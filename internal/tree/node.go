@@ -7,7 +7,6 @@ package tree
 import (
 	"bytes"
 	"fmt"
-	"regexp"
 	"sort"
 	"strings"
 
@@ -25,17 +24,6 @@ type node struct {
 	handlers *handlers.Handlers
 	children []*node
 	segment  *syntax.Segment
-
-	// 当前节点的参数名称，比如 "{id}/author"，
-	// 则此值为 "id"，仅非字符串节点有用。
-	name string
-
-	// 保存参数名之后的字符串，比如 "{id}/author" 此值为 "/author"，
-	// 仅对非字符串节点有效果，若 endpoint 为 false，则此值也不空。
-	suffix string
-
-	// 正则表达式特有参数，用于缓存当前节点的正则编译结果。
-	expr *regexp.Regexp
 
 	// 保存着 *node 实例在 children 中的下标。
 	//
@@ -132,17 +120,6 @@ func (n *node) newChild(s *syntax.Segment) *node {
 		segment: s,
 	}
 
-	switch child.segment.Type {
-	case syntax.Named:
-		index := strings.IndexByte(s.Value, syntax.End)
-		child.name = s.Value[1:index]
-		child.suffix = s.Value[index+1:]
-	case syntax.Regexp:
-		child.expr = syntax.ToRegexp(s.Value)
-		child.name = s.Value[1:strings.IndexByte(s.Value, syntax.Separator)]
-		child.suffix = s.Value[strings.IndexByte(s.Value, syntax.End)+1:]
-	}
-
 	n.children = append(n.children, child)
 	sort.SliceStable(n.children, func(i, j int) bool {
 		return n.children[i].priority() < n.children[j].priority()
@@ -231,7 +208,7 @@ LOOP:
 		}
 
 		// 不匹配，则删除写入的参数
-		delete(params, n.name)
+		delete(params, n.segment.Name)
 	} // end for
 
 	// 没有子节点匹配，且 len(path)==0，可以判定与当前节点匹配
@@ -255,22 +232,22 @@ func (n *node) matchCurrent(path string, params params.Params) (bool, string) {
 		}
 	case syntax.Named:
 		if n.segment.Endpoint {
-			params[n.name] = path
+			params[n.segment.Name] = path
 			return true, path[:0]
 		}
 
 		// 为零说明前面没有命名参数，肯定不能与当前内容匹配
-		if index := strings.Index(path, n.suffix); index > 0 {
-			params[n.name] = path[:index]
-			return true, path[index+len(n.suffix):]
+		if index := strings.Index(path, n.segment.Suffix); index > 0 {
+			params[n.segment.Name] = path[:index]
+			return true, path[index+len(n.segment.Suffix):]
 		}
 	case syntax.Regexp:
-		locs := n.expr.FindStringSubmatchIndex(path)
+		locs := n.segment.Expr.FindStringSubmatchIndex(path)
 		if locs == nil || locs[0] != 0 { // 不匹配
 			return false, path
 		}
 
-		params[n.name] = path[:locs[3]]
+		params[n.segment.Name] = path[:locs[3]]
 		return true, path[locs[1]:]
 	}
 
@@ -291,12 +268,12 @@ func (n *node) url(params map[string]string) (string, error) {
 		case syntax.String:
 			buf.WriteString(node.segment.Value)
 		case syntax.Named, syntax.Regexp:
-			param, exists := params[node.name]
+			param, exists := params[node.segment.Name]
 			if !exists {
-				return "", fmt.Errorf("未找到参数 %s 的值", node.name)
+				return "", fmt.Errorf("未找到参数 %s 的值", node.segment.Name)
 			}
 			buf.WriteString(param)
-			buf.WriteString(node.suffix) // 如果是 endpoint suffix 肯定为空
+			buf.WriteString(node.segment.Suffix) // 如果是 endpoint suffix 肯定为空
 		} // end switch
 	} // end for
 

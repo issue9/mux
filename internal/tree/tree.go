@@ -40,7 +40,7 @@ type Tree struct {
 // New 声明一个 Tree 实例
 func New(disableOptions, disableHead bool) *Tree {
 	return &Tree{
-		node:           node{},
+		node:           node{segment: syntax.NewSegment("")},
 		disableOptions: disableOptions,
 		disableHead:    disableHead,
 	}

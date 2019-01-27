@@ -28,6 +28,17 @@ type Segment struct {
 	//
 	// 在非字符路由项中，如果以 {path} 等结尾，可以匹配任意剩余字符。
 	Endpoint bool
+
+	// 当前节点的参数名称，比如 "{id}/author"，
+	// 则此值为 "id"，非字符串节点有用。
+	Name string
+
+	// 保存参数名之后的字符串，比如 "{id}/author" 此值为 "/author"，
+	// 仅对非字符串节点有效果，若 endpoint 为 false，则此值也不空。
+	Suffix string
+
+	// 正则表达式特有参数，用于缓存当前节点的正则编译结果。
+	Expr *regexp.Regexp
 }
 
 // NewSegment 声明新的 Segment 变量
@@ -37,7 +48,16 @@ func NewSegment(val string) *Segment {
 		Type:  getType(val),
 	}
 
-	if seg.Type != String {
+	switch seg.Type {
+	case Named:
+		index := strings.IndexByte(val, End)
+		seg.Name = val[1:index]
+		seg.Suffix = val[index+1:]
+		seg.Endpoint = isEndpoint(val)
+	case Regexp:
+		seg.Expr = toRegexp(val)
+		seg.Name = val[1:strings.IndexByte(val, Separator)]
+		seg.Suffix = val[strings.IndexByte(val, End)+1:]
 		seg.Endpoint = isEndpoint(val)
 	}
 
@@ -50,8 +70,7 @@ var repl = strings.NewReplacer(string(Start), "(?P<",
 	string(Separator), ">",
 	string(End), ")")
 
-// ToRegexp 将内容转换成正则表达式
-func ToRegexp(expr string) *regexp.Regexp {
+func toRegexp(expr string) *regexp.Regexp {
 	return regexp.MustCompile(repl.Replace(expr))
 }
 
