@@ -185,7 +185,7 @@ func (n *node) match(path string, params params.Params) *node {
 			goto LOOP
 		}
 
-		matched, newPath := node.matchCurrent(path, params)
+		matched, newPath := node.segment.Match(path, params)
 		if !matched {
 			goto LOOP
 		}
@@ -200,7 +200,7 @@ LOOP:
 	// 比如 /posts/{path:\\w*} 后面的 path 即为空节点。所以此处不判断 len(path)
 	for i := len(n.indexes); i < len(n.children); i++ {
 		node := n.children[i]
-		matched, newPath := node.matchCurrent(path, params)
+		matched, newPath := node.segment.Match(path, params)
 		if !matched {
 			continue
 		}
@@ -224,36 +224,6 @@ LOOP:
 	}
 
 	return nil
-}
-
-func (n *node) matchCurrent(path string, params params.Params) (bool, string) {
-	switch n.segment.Type {
-	case syntax.String:
-		if strings.HasPrefix(path, n.segment.Value) {
-			return true, path[len(n.segment.Value):]
-		}
-	case syntax.Named:
-		if n.segment.Endpoint {
-			params[n.segment.Name] = path
-			return true, path[:0]
-		}
-
-		// 为零说明前面没有命名参数，肯定不能与当前内容匹配
-		if index := strings.Index(path, n.segment.Suffix); index > 0 {
-			params[n.segment.Name] = path[:index]
-			return true, path[index+len(n.segment.Suffix):]
-		}
-	case syntax.Regexp:
-		locs := n.segment.Expr.FindStringSubmatchIndex(path)
-		if locs == nil || locs[0] != 0 { // 不匹配
-			return false, path
-		}
-
-		params[n.segment.Name] = path[:locs[3]]
-		return true, path[locs[1]:]
-	}
-
-	return false, path
 }
 
 // URL 根据参数生成地址

@@ -34,7 +34,7 @@ func (n *node) trace(w io.Writer, deep int, path string, params params.Params) *
 			goto LOOP
 		}
 
-		matched, newPath := node.matchCurrent(path, params)
+		matched, newPath := node.segment.Match(path, params)
 		if !matched {
 			fmt.Fprintln(w, "(!matched)")
 			goto LOOP
@@ -52,7 +52,7 @@ LOOP:
 	for i := len(n.indexes); i < len(n.children); i++ {
 		node := n.children[i]
 		fmt.Fprint(w, strings.Repeat(" ", deep*4), node.segment.Value, "---", node.segment.Type, "---", path)
-		matched, newPath := node.matchCurrent(path, params)
+		matched, newPath := node.segment.Match(path, params)
 		if !matched {
 			fmt.Fprintln(w, "(!matched)")
 			continue
