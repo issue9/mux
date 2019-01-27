@@ -105,10 +105,12 @@ func (n *node) addSegment(seg *syntax.Segment) *node {
 
 	parent := splitNode(child, l)
 
+	// seg.Value 与 parent 重叠
 	if len(seg.Value) == l {
 		return parent
 	}
 
+	// seg.Value[:l] 与 child.segment.Value[:l] 是相同的
 	return parent.addSegment(syntax.NewSegment(seg.Value[l:]))
 }
 
@@ -312,8 +314,9 @@ func splitNode(n *node, pos int) *node {
 	p.children = removeNodes(p.children, n.segment.Value)
 	p.buildIndexes()
 
-	ret := p.newChild(syntax.NewSegment(n.segment.Value[:pos]))
-	c := ret.newChild(syntax.NewSegment(n.segment.Value[pos:]))
+	segs := n.segment.Split(pos)
+	ret := p.newChild(segs[0])
+	c := ret.newChild(segs[1])
 	c.handlers = n.handlers
 	c.children = n.children
 	c.indexes = n.indexes

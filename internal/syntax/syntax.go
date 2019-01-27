@@ -78,6 +78,16 @@ func isEndpoint(s string) bool {
 	return s[len(s)-1] == End
 }
 
+// Split 从 pos 位置拆分为两个
+//
+// pos 位置的字符归属于后一个元素。
+func (seg *Segment) Split(pos int) []*Segment {
+	return []*Segment{
+		NewSegment(seg.Value[:pos]),
+		NewSegment(seg.Value[pos:]),
+	}
+}
+
 // LongestPrefix 获取两个字符串之间相同的前缀字符串的长度，
 // 不会从 {} 中间被分开，正则表达式与之后的内容也不再分隔。
 func LongestPrefix(s1, s2 string) int {
