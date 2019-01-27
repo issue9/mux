@@ -27,7 +27,8 @@ type Segment struct {
 
 	// 是否为最终结点
 	//
-	// 在非字符路由项中，如果以 {path} 等结尾，可以匹配任意剩余字符。
+	// 在命名路由项中，如果以 {path} 等结尾，则表示可以匹配任意剩余的字符。
+	// 此值表示当前节点是否为此种类型。该类型的节点在匹配时，优先级可能会比较低。
 	Endpoint bool
 
 	// 当前节点的参数名称，比如 "{id}/author"，
@@ -59,7 +60,6 @@ func NewSegment(val string) *Segment {
 		seg.expr = regexp.MustCompile(repl.Replace(val))
 		seg.Name = val[1:strings.IndexByte(val, Separator)]
 		seg.Suffix = val[strings.IndexByte(val, End)+1:]
-		seg.Endpoint = isEndpoint(val)
 	}
 
 	return seg
