@@ -29,12 +29,12 @@ const (
 
 // 将路由语法转换成正则表达式语法，比如：
 //  {id:\\d+}/author => (?P<id>\\d+)
-var repl = strings.NewReplacer(string(Start), "(?P<",
-	string(Separator), ">",
-	string(End), ")")
+var repl = strings.NewReplacer(string(start), "(?P<",
+	string(separator), ">",
+	string(end), ")")
 
 func isEndpoint(s string) bool {
-	return s[len(s)-1] == End
+	return s[len(s)-1] == end
 }
 
 // 仅上面的 trace 用到
@@ -56,11 +56,11 @@ func getType(str string) Type {
 	typ := String
 	for i := 0; i < len(str); i++ {
 		switch str[i] {
-		case Separator:
+		case separator:
 			typ = Regexp
-		case Start:
+		case start:
 			typ = Named
-		case End:
+		case end:
 			break
 		}
 	} // end for

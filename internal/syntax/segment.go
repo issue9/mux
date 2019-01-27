@@ -14,10 +14,10 @@ import (
 
 // 路由项字符串中的几个特殊字符定义
 const (
-	Start     = '{'  // 命名或是正则参数的起始字符
-	End       = '}'  // 命名或是正则参数的结束字符
-	Separator = ':'  // 正则参数中名称和正则的分隔符
-	Escape    = '\\' // 路由项中的转义字符
+	start     = '{'  // 命名或是正则参数的起始字符
+	end       = '}'  // 命名或是正则参数的结束字符
+	separator = ':'  // 正则参数中名称和正则的分隔符
+	escape    = '\\' // 路由项中的转义字符
 )
 
 // Segment 路由项被拆分之后的值
@@ -52,14 +52,14 @@ func NewSegment(val string) *Segment {
 
 	switch seg.Type {
 	case Named:
-		index := strings.IndexByte(val, End)
+		index := strings.IndexByte(val, end)
 		seg.Name = val[1:index]
 		seg.Suffix = val[index+1:]
 		seg.Endpoint = isEndpoint(val)
 	case Regexp:
 		seg.expr = regexp.MustCompile(repl.Replace(val))
-		seg.Name = val[1:strings.IndexByte(val, Separator)]
-		seg.Suffix = val[strings.IndexByte(val, End)+1:]
+		seg.Name = val[1:strings.IndexByte(val, separator)]
+		seg.Suffix = val[strings.IndexByte(val, end)+1:]
 	}
 
 	return seg
@@ -68,10 +68,6 @@ func NewSegment(val string) *Segment {
 // Similarity 与 s1 的相似度，-1 表示完全相同，0 表示完全不相同，
 // 其它大于零的值，越大，表示相似度越高。
 func (seg *Segment) Similarity(s1 *Segment) int {
-	if s1.Endpoint != seg.Endpoint { // 完全不同的节点
-		return 0
-	}
-
 	if s1.Value == seg.Value { // 有完全相同的节点
 		return -1
 	}
@@ -133,19 +129,19 @@ func longestPrefix(s1, s2 string) int {
 
 	startIndex := -10
 	endIndex := -10
-	state := End
+	state := end
 	for i := 0; i < l; i++ {
 		switch s1[i] {
-		case Start:
+		case start:
 			startIndex = i
-			state = Start
-		case End:
-			state = End
+			state = start
+		case end:
+			state = end
 			endIndex = i
 		}
 
 		if s1[i] != s2[i] {
-			if state != End { // 不从命名参数中间分隔
+			if state != end { // 不从命名参数中间分隔
 				return startIndex
 			}
 			if endIndex == i { // 命名参数之后必须要有一个或以上的普通字符
@@ -173,12 +169,12 @@ func Split(str string) []*Segment {
 		panic("参数 str 不能为空")
 	}
 
-	ss := make([]*Segment, 0, strings.Count(str, string(Start))+1)
+	ss := make([]*Segment, 0, strings.Count(str, string(start))+1)
 
 	state := newState()
 	for i := 0; i < len(str); i++ {
 		switch str[i] {
-		case Start:
+		case start:
 			start := state.start
 			state.setStart(i)
 
@@ -187,9 +183,9 @@ func Split(str string) []*Segment {
 			}
 
 			ss = append(ss, NewSegment(str[start:i]))
-		case Separator:
+		case separator:
 			state.setSeparator(i)
-		case End:
+		case end:
 			state.setEnd(i)
 		}
 
@@ -203,8 +199,8 @@ func Split(str string) []*Segment {
 	}
 
 	if state.start < len(str) {
-		if state.state != End {
-			panic(fmt.Sprintf("缺少 %s 字符", string(End)))
+		if state.state != end {
+			panic(fmt.Sprintf("缺少 %s 字符", string(end)))
 		}
 
 		ss = append(ss, NewSegment(str[state.start:]))
@@ -222,15 +218,15 @@ func IsWell(str string) string {
 	state := newState()
 	for i := 0; i < len(str); i++ {
 		switch str[i] {
-		case Start:
+		case start:
 			state.setStart(i)
 
 			if i == 0 { // 以 { 开头
 				continue
 			}
-		case Separator:
+		case separator:
 			state.setSeparator(i)
-		case End:
+		case end:
 			state.setEnd(i)
 		}
 
@@ -244,8 +240,8 @@ func IsWell(str string) string {
 	}
 
 	if state.start < len(str) {
-		if state.state != End {
-			return fmt.Sprintf("缺少 %s 字符", string(End))
+		if state.state != end {
+			return fmt.Sprintf("缺少 %s 字符", string(end))
 		}
 	}
 

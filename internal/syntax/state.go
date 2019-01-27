@@ -19,7 +19,7 @@ func newState() *state {
 		start:     0,
 		end:       -10,
 		separator: -10,
-		state:     End,
+		state:     end,
 	}
 }
 
@@ -28,8 +28,8 @@ func (s *state) setStart(index int) {
 		return
 	}
 
-	if s.state != End {
-		s.err = fmt.Sprintf("不能嵌套 %s", string(Start))
+	if s.state != end {
+		s.err = fmt.Sprintf("不能嵌套 %s", string(start))
 		return
 	}
 
@@ -39,7 +39,7 @@ func (s *state) setStart(index int) {
 	}
 
 	s.start = index
-	s.state = Start
+	s.state = start
 }
 
 func (s *state) setEnd(index int) {
@@ -47,8 +47,8 @@ func (s *state) setEnd(index int) {
 		return
 	}
 
-	if s.state == End {
-		s.err = fmt.Sprintf("%s %s 必须成对出现", string(Start), string(End))
+	if s.state == end {
+		s.err = fmt.Sprintf("%s %s 必须成对出现", string(start), string(end))
 		return
 	}
 
@@ -62,7 +62,7 @@ func (s *state) setEnd(index int) {
 		return
 	}
 
-	s.state = End
+	s.state = end
 	s.end = index
 }
 
@@ -71,8 +71,8 @@ func (s *state) setSeparator(index int) {
 		return
 	}
 
-	if s.state != Start {
-		s.err = fmt.Sprintf("字符(:)只能出现在 %s %s 中间", string(Start), string(End))
+	if s.state != start {
+		s.err = fmt.Sprintf("字符(:)只能出现在 %s %s 中间", string(start), string(end))
 		return
 	}
 
@@ -81,6 +81,6 @@ func (s *state) setSeparator(index int) {
 		return
 	}
 
-	s.state = Separator
+	s.state = separator
 	s.separator = index
 }
