@@ -5,7 +5,6 @@
 package tree
 
 import (
-	"bytes"
 	"fmt"
 	"sort"
 	"strings"
@@ -232,7 +231,7 @@ func (n *node) url(params map[string]string) (string, error) {
 		nodes = append(nodes, curr)
 	}
 
-	buf := new(bytes.Buffer)
+	var buf strings.Builder
 	for i := len(nodes) - 1; i >= 0; i-- {
 		node := nodes[i]
 		switch node.segment.Type {
