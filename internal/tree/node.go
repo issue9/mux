@@ -86,15 +86,14 @@ func (n *node) addSegment(seg *syntax.Segment) *node {
 	var l int       // 最大的匹配字符数量
 	for _, c := range n.children {
 		l1 := c.segment.Similarity(seg)
-		switch l1 {
-		case 0: // 完全不同，直接退出 switch，继续下一次 for
-		case -1: // 找到完全相同的，则直接返回该节点
+
+		if l1 == -1 { // 找到完全相同的，则直接返回该节点
 			return c
-		default: // 部分相似
-			if l1 > l { // 找到相似度更高的，保存该节点的信息
-				l = l1
-				child = c
-			}
+		}
+
+		if l1 > l { // 找到相似度更高的，保存该节点的信息
+			l = l1
+			child = c
 		}
 	}
 
@@ -104,12 +103,12 @@ func (n *node) addSegment(seg *syntax.Segment) *node {
 
 	parent := splitNode(child, l)
 
-	// seg.Value 与 parent 重叠
+	// seg 与 parent 重叠
 	if len(seg.Value) == l {
 		return parent
 	}
 
-	// seg.Value[:l] 与 child.segment.Value[:l] 是相同的
+	// seg.Value[:l] 与 child.segment.Value[:l] 暨 parent.Value 是相同的
 	return parent.addSegment(syntax.NewSegment(seg.Value[l:]))
 }
 
@@ -178,7 +177,7 @@ func (n *node) clean(prefix string) {
 //
 // NOTE: 此函数与 node.trace 是一样的，记得同步两边的代码。
 func (n *node) match(path string, params params.Params) *node {
-	if len(n.indexes) > 0 && len(path) > 0 {
+	if len(n.indexes) > 0 && len(path) > 0 { // 普通字符串的匹配
 		node := n.children[n.indexes[path[0]]]
 		if node == nil {
 			goto LOOP
@@ -199,6 +198,7 @@ LOOP:
 	// 比如 /posts/{path:\\w*} 后面的 path 即为空节点。所以此处不判断 len(path)
 	for i := len(n.indexes); i < len(n.children); i++ {
 		node := n.children[i]
+
 		matched, newPath := node.segment.Match(path, params)
 		if !matched {
 			continue

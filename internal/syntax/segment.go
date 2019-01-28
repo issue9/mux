@@ -65,8 +65,8 @@ func NewSegment(val string) *Segment {
 	return seg
 }
 
-// Similarity 与 s1 的相似度，-1 表示完全相同，0 表示完全不相同，
-// 其它大于零的值，越大，表示相似度越高。
+// Similarity 与 s1 的相似度，-1 表示完全相同，
+// 其它大于等于零的值，越大，表示相似度越高。
 func (seg *Segment) Similarity(s1 *Segment) int {
 	if s1.Value == seg.Value { // 有完全相同的节点
 		return -1
@@ -88,7 +88,8 @@ func (seg *Segment) Split(pos int) []*Segment {
 // Match 路径是否与当前节点匹配
 //
 // path 的起始部分如果与当前内容匹配，同返回 true 以及剩下未匹配的内容。
-// 否则返回 false 以及 path 本身。
+// 否则返回 false 以及 path 本身；
+// params 表示匹配完成之后，从地址中获取的参数值。
 func (seg *Segment) Match(path string, params params.Params) (bool, string) {
 	switch seg.Type {
 	case String:
