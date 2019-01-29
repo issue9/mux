@@ -20,7 +20,7 @@ const (
 	escape    = '\\' // 路由项中的转义字符
 )
 
-// Segment 路由项被拆分之后的值
+// Segment 路由项被拆分之后的分段内容。
 type Segment struct {
 	Value string
 	Type  Type
@@ -55,7 +55,7 @@ func NewSegment(val string) *Segment {
 		index := strings.IndexByte(val, end)
 		seg.Name = val[1:index]
 		seg.Suffix = val[index+1:]
-		seg.Endpoint = isEndpoint(val)
+		seg.Endpoint = val[len(val)-1] == end
 	case Regexp:
 		seg.expr = regexp.MustCompile(repl.Replace(val))
 		seg.Name = val[1:strings.IndexByte(val, separator)]

@@ -33,10 +33,6 @@ var repl = strings.NewReplacer(string(start), "(?P<",
 	string(separator), ">",
 	string(end), ")")
 
-func isEndpoint(s string) bool {
-	return s[len(s)-1] == end
-}
-
 // 仅上面的 trace 用到
 func (t Type) String() string {
 	switch t {
