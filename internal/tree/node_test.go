@@ -11,6 +11,7 @@ import (
 	"github.com/issue9/assert"
 
 	"github.com/issue9/mux/v2/internal/handlers"
+	"github.com/issue9/mux/v2/internal/syntax"
 )
 
 func TestNode_find(t *testing.T) {
@@ -18,10 +19,10 @@ func TestNode_find(t *testing.T) {
 	node := &node{}
 
 	addNode := func(p string, code int, methods ...string) {
-		segs, err := split(p)
-		a.NotError(err).NotNil(segs)
-		nn, err := node.getNode(segs)
-		a.NotError(err).NotNil(nn)
+		segs := syntax.Split(p)
+		a.NotNil(segs)
+		nn := node.getNode(segs)
+		a.NotNil(nn)
 
 		if nn.handlers == nil {
 			nn.handlers = handlers.New(false, false)
@@ -36,16 +37,16 @@ func TestNode_find(t *testing.T) {
 	addNode("/posts/1/author", 1, http.MethodGet)
 	addNode("/posts/{id}/{author:\\w+}/profile", 1, http.MethodGet)
 
-	a.Equal(node.find("/").pattern, "/")
-	a.Equal(node.find("/posts/{id}").pattern, "{id}")
-	a.Equal(node.find("/posts/{id}/author").pattern, "author")
-	a.Equal(node.find("/posts/{id}/{author:\\w+}/profile").pattern, "{author:\\w+}/profile")
+	a.Equal(node.find("/").segment.Value, "/")
+	a.Equal(node.find("/posts/{id}").segment.Value, "{id}")
+	a.Equal(node.find("/posts/{id}/author").segment.Value, "author")
+	a.Equal(node.find("/posts/{id}/{author:\\w+}/profile").segment.Value, "{author:\\w+}/profile")
 }
 
 func TestRemoveNodes(t *testing.T) {
 	a := assert.New(t)
 	newNode := func(str string) *node {
-		return &node{pattern: str}
+		return &node{segment: syntax.NewSegment(str)}
 	}
 
 	n1 := newNode("/1")
@@ -88,25 +89,27 @@ func TestRemoveNodes(t *testing.T) {
 func TestSplitNode(t *testing.T) {
 	a := assert.New(t)
 	newNode := func(str string) *node {
-		return &node{pattern: str}
+		return &node{segment: syntax.NewSegment(str)}
 	}
 	p := newNode("/blog")
 
 	// 没有父节点
-	nn, err := splitNode(p, 1)
-	a.Error(err).Nil(nn)
+	a.Panic(func() {
+		nn := splitNode(p, 1)
+		a.Nil(nn)
+	})
 
-	node := p.newChild("/posts/{id}/author")
+	node := p.newChild(syntax.NewSegment("/posts/{id}/author"))
 	a.NotNil(node)
 
-	nn, err = splitNode(node, 7) // 从 { 开始拆分
-	a.NotError(err).NotNil(nn)
+	nn := splitNode(node, 7) // 从 { 开始拆分
+	a.NotNil(nn)
 	a.Equal(len(nn.children), 1).
-		Equal(nn.children[0].pattern, "{id}/author")
+		Equal(nn.children[0].segment.Value, "{id}/author")
 	a.Equal(nn.parent, p)
 
-	nn, err = splitNode(node, 18) // 不需要拆分
-	a.NotError(err).NotNil(nn)
+	nn = splitNode(node, 18) // 不需要拆分
+	a.NotNil(nn)
 	a.Equal(0, len(nn.children))
 
 	a.Panic(func() { splitNode(node, 8) }) // 从 i 开始拆分，不可拆分

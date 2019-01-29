@@ -90,7 +90,8 @@ func (mux *Mux) Remove(pattern string, methods ...string) *Mux {
 
 // Handle 添加一条路由数据。
 //
-// pattern 为路由匹配模式，可以是正则匹配也可以是字符串匹配；
+// pattern 为路由匹配模式，可以是正则匹配也可以是字符串匹配，
+// 若语法不正确，则直接 panic，可以通过 IsWell 检测语法的有效性，其它接口也相同；
 // methods 该路由项对应的请求方法，可通过 SupportedMethods() 获得当前支持的请求方法。
 func (mux *Mux) Handle(pattern string, h http.Handler, methods ...string) error {
 	return mux.hosts.Add(pattern, h, methods...)
@@ -102,11 +103,7 @@ func (mux *Mux) Handle(pattern string, h http.Handler, methods ...string) error 
 // 如果想实现对处理方法的自定义，可以显示地调用 Handle 方法:
 //  Mux.Handle("/api/1", handle, http.MethodOptions)
 func (mux *Mux) Options(pattern string, allow string) *Mux {
-	err := mux.hosts.SetAllow(pattern, allow)
-	if err != nil {
-		panic(err)
-	}
-
+	mux.hosts.SetAllow(pattern, allow)
 	return mux
 }
 

@@ -54,9 +54,9 @@ func (hs *Hosts) Add(pattern string, h http.Handler, method ...string) error {
 }
 
 // SetAllow 设置 Options 的 allow 报头值
-func (hs *Hosts) SetAllow(pattern string, allow string) error {
+func (hs *Hosts) SetAllow(pattern string, allow string) {
 	domain, pattern := hs.split(pattern)
-	return hs.getTree(domain).SetAllow(pattern, allow)
+	hs.getTree(domain).SetAllow(pattern, allow)
 }
 
 // Remove 移除指定的路由项。
