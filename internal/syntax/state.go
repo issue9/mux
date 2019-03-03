@@ -15,23 +15,22 @@ type state struct {
 	separator int
 	state     byte
 	err       string // 错误信息
-	value     string // 需要被解析的字符串
 }
 
-func newState(v string) *state {
-	s := &state{
-		start:     0,
-		end:       -10,
-		separator: -10,
-		state:     end,
-		value:     v,
-	}
-
-	if v == "" {
-		s.err = "值不能为空"
-	}
+func newState() *state {
+	s := &state{}
+	s.reset()
 
 	return s
+}
+
+func (s *state) reset() {
+	s.start = 0
+	s.end = -10
+	s.separator = -10
+	s.state = end
+	s.err = ""
+
 }
 
 func (s *state) setStart(index int) {
@@ -96,17 +95,22 @@ func (s *state) setSeparator(index int) {
 	s.separator = index
 }
 
-// Split 将字符串解析成字符串数组。
+// 将字符串解析成字符串数组。
 //
 // 以 { 为分界线进行分割。比如
 //  /posts/{id}/email ==> /posts/, {id}/email
 //  /posts/\{{id}/email ==> /posts/{, {id}/email
 //  /posts/{year}/{id}.html ==> /posts/, {year}/, {id}.html
-func (s *state) split() []*Segment {
-	ss := make([]*Segment, 0, strings.Count(s.value, string(start))+1)
+func (s *state) parse(str string) []*Segment {
+	if str == "" {
+		s.err = "参数 str 不能为空"
+		return nil
+	}
 
-	for i := 0; i < len(s.value); i++ {
-		switch s.value[i] {
+	ss := make([]*Segment, 0, strings.Count(str, string(start))+1)
+
+	for i := 0; i < len(str); i++ {
+		switch str[i] {
 		case start:
 			start := s.start
 			s.setStart(i)
@@ -115,7 +119,7 @@ func (s *state) split() []*Segment {
 				continue
 			}
 
-			ss = append(ss, NewSegment(s.value[start:i]))
+			ss = append(ss, NewSegment(str[start:i]))
 		case separator:
 			s.setSeparator(i)
 		case end:
@@ -123,55 +127,18 @@ func (s *state) split() []*Segment {
 		}
 
 		if s.err != "" {
-			panic(s.err)
+			return nil
 		}
 	} // end for
 
-	if s.err != "" {
-		panic(s.err)
-	}
-
-	if s.start < len(s.value) {
+	if s.start < len(str) {
 		if s.state != end {
-			panic(fmt.Sprintf("缺少 %s 字符", string(end)))
+			s.err = fmt.Sprintf("缺少 %s 字符", string(end))
+			return nil
 		}
 
-		ss = append(ss, NewSegment(s.value[s.start:]))
+		ss = append(ss, NewSegment(str[s.start:]))
 	}
 
 	return ss
-}
-
-// 检测格式是否正确
-func (s *state) isWell() string {
-	for i := 0; i < len(s.value); i++ {
-		switch s.value[i] {
-		case start:
-			s.setStart(i)
-
-			if i == 0 { // 以 { 开头
-				continue
-			}
-		case separator:
-			s.setSeparator(i)
-		case end:
-			s.setEnd(i)
-		}
-
-		if s.err != "" {
-			return s.err
-		}
-	} // end for
-
-	if s.err != "" {
-		return s.err
-	}
-
-	if s.start < len(s.value) {
-		if s.state != end {
-			return fmt.Sprintf("缺少 %s 字符", string(end))
-		}
-	}
-
-	return ""
 }

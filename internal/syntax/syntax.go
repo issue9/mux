@@ -33,7 +33,6 @@ var repl = strings.NewReplacer(string(start), "(?P<",
 	string(separator), ">",
 	string(end), ")")
 
-// 仅上面的 trace 用到
 func (t Type) String() string {
 	switch t {
 	case Named:
@@ -47,7 +46,7 @@ func (t Type) String() string {
 	}
 }
 
-// getType 获取字符串的类型。调用者需要确保 str 语法正确。
+// 获取字符串的类型。调用者需要确保 str 语法正确。
 func getType(str string) Type {
 	typ := String
 	for i := 0; i < len(str); i++ {
