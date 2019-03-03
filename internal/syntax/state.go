@@ -4,11 +4,7 @@
 
 package syntax
 
-import (
-	"errors"
-	"fmt"
-	"strings"
-)
+import "fmt"
 
 type state struct {
 	start     int
@@ -82,51 +78,4 @@ func (s *state) setSeparator(index int) {
 
 	s.state = separator
 	s.separator = index
-}
-
-// 将字符串解析成字符串数组。
-//
-// 以 { 为分界线进行分割。比如
-//  /posts/{id}/email ==> /posts/, {id}/email
-//  /posts/\{{id}/email ==> /posts/{, {id}/email
-//  /posts/{year}/{id}.html ==> /posts/, {year}/, {id}.html
-func parse(str string) ([]*Segment, error) {
-	if str == "" {
-		return nil, errors.New("参数 str 不能为空")
-	}
-
-	ss := make([]*Segment, 0, strings.Count(str, string(start))+1)
-	s := newState()
-
-	for i := 0; i < len(str); i++ {
-		switch str[i] {
-		case start:
-			start := s.start
-			s.setStart(i)
-
-			if i == 0 { // 以 { 开头
-				continue
-			}
-
-			ss = append(ss, NewSegment(str[start:i]))
-		case separator:
-			s.setSeparator(i)
-		case end:
-			s.setEnd(i)
-		}
-
-		if s.err != "" {
-			return nil, errors.New(s.err)
-		}
-	} // end for
-
-	if s.start < len(str) {
-		if s.state != end {
-			return nil, fmt.Errorf("缺少 %s 字符", string(end))
-		}
-
-		ss = append(ss, NewSegment(str[s.start:]))
-	}
-
-	return ss, nil
 }

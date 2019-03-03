@@ -11,14 +11,6 @@ import (
 	"github.com/issue9/mux/v2/params"
 )
 
-// 路由项字符串中的几个特殊字符定义
-const (
-	start     = '{'  // 命名或是正则参数的起始字符
-	end       = '}'  // 命名或是正则参数的结束字符
-	separator = ':'  // 正则参数中名称和正则的分隔符
-	escape    = '\\' // 路由项中的转义字符
-)
-
 // Segment 路由项被拆分之后的分段内容。
 type Segment struct {
 	Value string
@@ -156,25 +148,4 @@ func longestPrefix(s1, s2 string) int {
 	}
 
 	return l
-}
-
-// Split 将字符串解析成字符串数组。
-//
-// 以 { 为分界线进行分割。比如
-//  /posts/{id}/email ==> /posts/, {id}/email
-//  /posts/\{{id}/email ==> /posts/{, {id}/email
-//  /posts/{year}/{id}.html ==> /posts/, {year}/, {id}.html
-func Split(str string) []*Segment {
-	ss, err := parse(str)
-	if err != nil {
-		panic(err)
-	}
-
-	return ss
-}
-
-// IsWell 检测格式是否正确
-func IsWell(str string) error {
-	_, err := parse(str)
-	return err
 }
