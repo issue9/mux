@@ -165,10 +165,9 @@ func longestPrefix(s1, s2 string) int {
 //  /posts/\{{id}/email ==> /posts/{, {id}/email
 //  /posts/{year}/{id}.html ==> /posts/, {year}/, {id}.html
 func Split(str string) []*Segment {
-	s := newState()
-	ss := s.parse(str)
-	if s.err != "" {
-		panic(s.err)
+	ss, err := parse(str)
+	if err != "" {
+		panic(err)
 	}
 
 	return ss
@@ -176,7 +175,6 @@ func Split(str string) []*Segment {
 
 // IsWell 检测格式是否正确
 func IsWell(str string) string {
-	s := newState()
-	s.parse(str)
-	return s.err
+	_, err := parse(str)
+	return err
 }

@@ -101,13 +101,13 @@ func (s *state) setSeparator(index int) {
 //  /posts/{id}/email ==> /posts/, {id}/email
 //  /posts/\{{id}/email ==> /posts/{, {id}/email
 //  /posts/{year}/{id}.html ==> /posts/, {year}/, {id}.html
-func (s *state) parse(str string) []*Segment {
+func parse(str string) ([]*Segment, string) {
 	if str == "" {
-		s.err = "参数 str 不能为空"
-		return nil
+		return nil, "参数 str 不能为空"
 	}
 
 	ss := make([]*Segment, 0, strings.Count(str, string(start))+1)
+	s := newState()
 
 	for i := 0; i < len(str); i++ {
 		switch str[i] {
@@ -127,18 +127,17 @@ func (s *state) parse(str string) []*Segment {
 		}
 
 		if s.err != "" {
-			return nil
+			return nil, s.err
 		}
 	} // end for
 
 	if s.start < len(str) {
 		if s.state != end {
-			s.err = fmt.Sprintf("缺少 %s 字符", string(end))
-			return nil
+			return nil, fmt.Sprintf("缺少 %s 字符", string(end))
 		}
 
 		ss = append(ss, NewSegment(str[s.start:]))
 	}
 
-	return ss
+	return ss, ""
 }
