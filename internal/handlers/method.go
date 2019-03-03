@@ -35,6 +35,18 @@ var (
 		http.MethodTrace:   trace,
 	}
 
+	methodTypeMap = map[methodType]string{
+		get:     http.MethodGet,
+		post:    http.MethodPost,
+		del:     http.MethodDelete,
+		put:     http.MethodPut,
+		patch:   http.MethodPatch,
+		options: http.MethodOptions,
+		head:    http.MethodHead,
+		connect: http.MethodConnect,
+		trace:   http.MethodTrace,
+	}
+
 	// 当前支持的所有请求方法，在 Remove 方法中用到。
 	removeAll = []string{
 		http.MethodGet,

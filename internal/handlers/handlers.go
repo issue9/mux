@@ -12,7 +12,7 @@ import (
 
 type optionsState int8
 
-// 表示对 OPTIONAL 请求中，Allow 报头中输出内容的处理方式。
+// 表示对 OPTIONAL 请求中 Allow 报头中输出内容的处理方式。
 const (
 	optionsStateDefault      optionsState = iota // 默认情况
 	optionsStateFixedString                      // 设置为固定的字符串
@@ -22,6 +22,7 @@ const (
 
 type headState int8
 
+// 表示对 HEAD 请求是否根据 GET 请求自动生成。
 const (
 	headStateDefault headState = iota // 不作任何额外操作
 	headStateAuto                     // 自动生成，有 GET 就生成，作为默认值
@@ -34,8 +35,7 @@ type Handlers struct {
 
 	optionsAllow string       // 缓存的 OPTIONS 请求的 allow 报头内容。
 	optionsState optionsState // OPTIONS 请求的处理方式
-
-	headState headState
+	headState    headState
 }
 
 // New 声明一个新的 Handlers 实例
@@ -202,4 +202,26 @@ func (hs *Handlers) Options() string {
 // Len 获取当前支持请求方法数量
 func (hs *Handlers) Len() int {
 	return len(hs.handlers)
+}
+
+// Methods 当前节点支持的请求方法
+func (hs *Handlers) Methods(ignoreHead, ignoreOptions bool) []string {
+	methods := make([]string, 0, len(hs.handlers))
+
+LOOP:
+	for key := range hs.handlers {
+		switch key {
+		case options:
+			if ignoreOptions && hs.optionsState == optionsStateDefault {
+				continue LOOP
+			}
+		case head:
+			if ignoreHead && hs.headState == headStateAuto {
+				continue LOOP
+			}
+		}
+		methods = append(methods, methodTypeMap[key])
+	}
+
+	return methods
 }
