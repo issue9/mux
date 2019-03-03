@@ -79,6 +79,15 @@ func (mux *Mux) Clean() *Mux {
 	return mux
 }
 
+// All 返回所有的路由项
+//
+// ignoreHead 是否忽略自动生成的 HEAD 请求；
+// ignoreOptions 是否忽略自动生成的 OPTIONS 请求；
+// 返回值中，键名为路路地址，键值为该路由项对应的可用请求方法。
+func (mux *Mux) All(ignoreHead, ignoreOptions bool) map[string][]string {
+	return mux.hosts.All(ignoreHead, ignoreOptions)
+}
+
 // Remove 移除指定的路由项。
 //
 // 当未指定 methods 时，将删除所有 method 匹配的项。

@@ -143,6 +143,23 @@ func TestHosts_Remove_Handler(t *testing.T) {
 	a.Nil(hh)
 }
 
+func TestHosts_All(t *testing.T) {
+	a := assert.New(t)
+	hs := New(false, false, true)
+	a.NotNil(hs)
+
+	hs.Add("/path/1", buildHandler(1), http.MethodGet, http.MethodPatch)
+	hs.Add("*.example.com/path/1", buildHandler(1), http.MethodGet, http.MethodPatch)
+	hs.Add("s1.example.com/path/1", buildHandler(1), http.MethodGet, http.MethodPatch)
+
+	routes := hs.All(false, false)
+	a.Equal(routes, map[string][]string{
+		"/path/1":               []string{http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodPatch},
+		"*.example.com/path/1":  []string{http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodPatch},
+		"s1.example.com/path/1": []string{http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodPatch},
+	})
+}
+
 func TestHosts_Clean_Handler(t *testing.T) {
 	a := assert.New(t)
 	hs := New(false, false, true)

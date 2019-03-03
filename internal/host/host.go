@@ -68,6 +68,25 @@ func (hs *Hosts) Remove(pattern string, method ...string) {
 	}
 }
 
+// All 返回所有的路由项
+//
+// ignoreHead 是否忽略自动生成的 HEAD 请求
+// ignoreOptions 是否忽略自动生成的 OPTIONS 请求
+func (hs *Hosts) All(ignoreHead, ignoreOptions bool) (routes map[string][]string) {
+	if hs.tree != nil {
+		routes = hs.tree.All(ignoreHead, ignoreOptions)
+	}
+
+	for _, host := range hs.hosts {
+		maps := host.tree.All(ignoreHead, ignoreOptions)
+		for path, methods := range maps {
+			routes[host.raw+path] = methods
+		}
+	}
+
+	return routes
+}
+
 // URL 根据参数生成地址。
 func (hs *Hosts) URL(pattern string, params map[string]string) (string, error) {
 	domain, pattern := hs.split(pattern)
