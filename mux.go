@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/issue9/mux/v2/internal/host"
+	"github.com/issue9/mux/v2/internal/syntax"
 	"github.com/issue9/mux/v2/params"
 )
 
@@ -246,4 +247,9 @@ func (mux *Mux) URL(name string, params map[string]string) (string, error) {
 // Params 获取路由的参数集合。详细情况可参考 params.Get
 func Params(r *http.Request) params.Params {
 	return params.Get(r)
+}
+
+// IsWell 语法格式是否正确
+func IsWell(pattern string) error {
+	return syntax.IsWell(pattern)
 }

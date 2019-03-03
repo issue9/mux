@@ -27,7 +27,6 @@ func (s *state) reset() {
 	s.separator = -10
 	s.state = end
 	s.err = ""
-
 }
 
 func (s *state) setStart(index int) {
