@@ -294,3 +294,17 @@ func splitNode(n *node, pos int) *node {
 
 	return ret
 }
+
+// 获取所有的路由地址列表
+func (n *node) all(ignoreHead, ignoreOptions bool, parent string, routes map[string][]string) {
+	path := n.segment.Value
+
+	methods := n.handlers.Methods(ignoreHead, ignoreOptions)
+	if len(methods) > 0 {
+		routes[path] = methods
+	}
+
+	for _, v := range n.children {
+		v.all(ignoreHead, ignoreOptions, path, routes)
+	}
+}

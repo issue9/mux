@@ -8,6 +8,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"sort"
 )
 
 type optionsState int8
@@ -223,5 +224,6 @@ LOOP:
 		methods = append(methods, methodTypeMap[key])
 	}
 
+	sort.Strings(methods)
 	return methods
 }

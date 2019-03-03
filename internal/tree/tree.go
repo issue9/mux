@@ -114,3 +114,10 @@ func (tree *Tree) Handler(path string) (*handlers.Handlers, params.Params) {
 
 	return node.handlers, ps
 }
+
+// All 获取当前的所有路径项
+func (tree *Tree) All(ignoreHead, ignoreOptions bool) map[string][]string {
+	routes := make(map[string][]string, 10)
+	tree.all(ignoreHead, ignoreOptions, "", routes)
+	return routes
+}

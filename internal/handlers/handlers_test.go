@@ -173,3 +173,69 @@ func TestHandlers_head(t *testing.T) {
 	test("hello")
 
 }
+
+func TestHandlers_Methods(t *testing.T) {
+	a := assert.New(t)
+
+	hs := New(false, false)
+	a.NotNil(hs)
+	hs.Add(getHandler, http.MethodPut)
+	a.Equal(hs.Methods(true, true), []string{http.MethodPut})
+
+	hs = New(false, false)
+	a.NotNil(hs)
+	hs.Add(getHandler, http.MethodPut, http.MethodTrace)
+	a.Equal(hs.Methods(true, true), []string{http.MethodPut, http.MethodTrace})
+
+	hs = New(false, false)
+	a.NotNil(hs)
+	hs.Add(getHandler, http.MethodPut, http.MethodTrace, http.MethodGet)
+	a.Equal(hs.Methods(true, true), []string{http.MethodGet, http.MethodPut, http.MethodTrace})
+
+	hs = New(false, false)
+	a.NotNil(hs)
+	hs.Add(getHandler, http.MethodPut, http.MethodTrace, http.MethodGet)
+	a.Equal(hs.Methods(false, true), []string{http.MethodGet, http.MethodHead, http.MethodPut, http.MethodTrace})
+
+	hs = New(false, false)
+	a.NotNil(hs)
+	hs.Add(getHandler, http.MethodPut, http.MethodGet)
+	a.Equal(hs.Methods(false, false), []string{http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodPut})
+
+	hs = New(true, true)
+	a.NotNil(hs)
+	hs.Add(getHandler, http.MethodPut, http.MethodGet)
+	a.Equal(hs.Methods(false, false), []string{http.MethodGet, http.MethodPut})
+
+	// 动态插入删除操作
+
+	hs = New(false, false)
+	a.NotNil(hs)
+	hs.Add(getHandler, http.MethodPut, http.MethodGet)
+	a.Equal(hs.Methods(false, false), []string{http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodPut})
+	a.Equal(hs.Methods(true, true), []string{http.MethodGet, http.MethodPut})
+
+	// 删除 GET
+	hs.Remove(http.MethodGet)
+	a.Equal(hs.Methods(false, false), []string{http.MethodOptions, http.MethodPut})
+	a.Equal(hs.Methods(true, true), []string{http.MethodPut})
+	hs.Add(getHandler, http.MethodGet)
+
+	// 强制指定 HEAD
+	hs.Add(getHandler, http.MethodHead)
+	a.Equal(hs.Methods(false, false), []string{http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodPut})
+	a.Equal(hs.Methods(true, true), []string{http.MethodGet, http.MethodHead, http.MethodPut})
+
+	// 强制指定 OPTIONS
+	hs.SetAllow("xx")
+	a.Equal(hs.Methods(true, true), []string{http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodPut})
+
+	// 删除除 HEAD,OPTIONS 之外的其它请求方法
+	hs.Remove(http.MethodGet, http.MethodPut)
+	a.Equal(hs.Methods(true, true), []string{http.MethodHead, http.MethodOptions})
+
+	// 删除所有
+	hs.Remove()
+	a.Empty(hs.Methods(false, false))
+	a.Empty(hs.Methods(true, true))
+}

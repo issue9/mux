@@ -253,3 +253,14 @@ func TestTree_SetAllow(t *testing.T) {
 	tree.Remove("/options")
 	a.Equal(n.handlers.Options(), "")
 }
+
+func TestTree_All(t *testing.T) {
+	a := assert.New(t)
+	tree := New(false, false)
+	a.NotNil(tree)
+
+	tree.Add("/", buildHandler(http.StatusOK), http.MethodGet)
+	tree.Add("/posts", buildHandler(http.StatusOK), http.MethodGet, http.MethodPost)
+	tree.Add("/posts/{id}", buildHandler(http.StatusOK), http.MethodGet, http.MethodPut)
+	tree.Add("/posts/{id}/author", buildHandler(http.StatusOK), http.MethodGet)
+}
