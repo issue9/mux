@@ -5,6 +5,7 @@
 package syntax
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -70,7 +71,7 @@ func (s *state) setEnd(index int) {
 
 func (s *state) setSeparator(index int) {
 	if s.state != start {
-		s.err = fmt.Sprintf("字符(:)只能出现在 %s %s 中间", string(start), string(end))
+		s.err = fmt.Sprintf("字符(%s)只能出现在 %s %s 中间", string(separator), string(start), string(end))
 		return
 	}
 
@@ -89,9 +90,9 @@ func (s *state) setSeparator(index int) {
 //  /posts/{id}/email ==> /posts/, {id}/email
 //  /posts/\{{id}/email ==> /posts/{, {id}/email
 //  /posts/{year}/{id}.html ==> /posts/, {year}/, {id}.html
-func parse(str string) ([]*Segment, string) {
+func parse(str string) ([]*Segment, error) {
 	if str == "" {
-		return nil, "参数 str 不能为空"
+		return nil, errors.New("参数 str 不能为空")
 	}
 
 	ss := make([]*Segment, 0, strings.Count(str, string(start))+1)
@@ -115,17 +116,17 @@ func parse(str string) ([]*Segment, string) {
 		}
 
 		if s.err != "" {
-			return nil, s.err
+			return nil, errors.New(s.err)
 		}
 	} // end for
 
 	if s.start < len(str) {
 		if s.state != end {
-			return nil, fmt.Sprintf("缺少 %s 字符", string(end))
+			return nil, fmt.Errorf("缺少 %s 字符", string(end))
 		}
 
 		ss = append(ss, NewSegment(str[s.start:]))
 	}
 
-	return ss, ""
+	return ss, nil
 }
