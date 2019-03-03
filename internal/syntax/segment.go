@@ -5,7 +5,6 @@
 package syntax
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 
@@ -166,85 +165,10 @@ func longestPrefix(s1, s2 string) int {
 //  /posts/\{{id}/email ==> /posts/{, {id}/email
 //  /posts/{year}/{id}.html ==> /posts/, {year}/, {id}.html
 func Split(str string) []*Segment {
-	if str == "" {
-		panic("参数 str 不能为空")
-	}
-
-	ss := make([]*Segment, 0, strings.Count(str, string(start))+1)
-
-	state := newState()
-	for i := 0; i < len(str); i++ {
-		switch str[i] {
-		case start:
-			start := state.start
-			state.setStart(i)
-
-			if i == 0 { // 以 { 开头
-				continue
-			}
-
-			ss = append(ss, NewSegment(str[start:i]))
-		case separator:
-			state.setSeparator(i)
-		case end:
-			state.setEnd(i)
-		}
-
-		if state.err != "" {
-			panic(state.err)
-		}
-	} // end for
-
-	if state.err != "" {
-		panic(state.err)
-	}
-
-	if state.start < len(str) {
-		if state.state != end {
-			panic(fmt.Sprintf("缺少 %s 字符", string(end)))
-		}
-
-		ss = append(ss, NewSegment(str[state.start:]))
-	}
-
-	return ss
+	return newState(str).split()
 }
 
 // IsWell 检测格式是否正确
 func IsWell(str string) string {
-	if str == "" {
-		return "参数 str 不能为空"
-	}
-
-	state := newState()
-	for i := 0; i < len(str); i++ {
-		switch str[i] {
-		case start:
-			state.setStart(i)
-
-			if i == 0 { // 以 { 开头
-				continue
-			}
-		case separator:
-			state.setSeparator(i)
-		case end:
-			state.setEnd(i)
-		}
-
-		if state.err != "" {
-			return state.err
-		}
-	} // end for
-
-	if state.err != "" {
-		return state.err
-	}
-
-	if state.start < len(str) {
-		if state.state != end {
-			return fmt.Sprintf("缺少 %s 字符", string(end))
-		}
-	}
-
-	return ""
+	return newState(str).isWell()
 }
