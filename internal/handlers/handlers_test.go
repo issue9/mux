@@ -228,10 +228,12 @@ func TestHandlers_Methods(t *testing.T) {
 
 	// 强制指定 OPTIONS
 	hs.SetAllow("xx")
+	a.Equal(hs.Methods(false, false), []string{http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodPut})
 	a.Equal(hs.Methods(true, true), []string{http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodPut})
 
 	// 删除除 HEAD,OPTIONS 之外的其它请求方法
 	hs.Remove(http.MethodGet, http.MethodPut)
+	a.Equal(hs.Methods(false, false), []string{http.MethodHead, http.MethodOptions})
 	a.Equal(hs.Methods(true, true), []string{http.MethodHead, http.MethodOptions})
 
 	// 删除所有

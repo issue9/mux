@@ -263,4 +263,12 @@ func TestTree_All(t *testing.T) {
 	tree.Add("/posts", buildHandler(http.StatusOK), http.MethodGet, http.MethodPost)
 	tree.Add("/posts/{id}", buildHandler(http.StatusOK), http.MethodGet, http.MethodPut)
 	tree.Add("/posts/{id}/author", buildHandler(http.StatusOK), http.MethodGet)
+
+	routes := tree.All(false, false)
+	a.Equal(routes, map[string][]string{
+		"/":                  []string{http.MethodGet, http.MethodHead, http.MethodOptions},
+		"/posts":             []string{http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodPost},
+		"/posts/{id}":        []string{http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodPut},
+		"/posts/{id}/author": []string{http.MethodGet, http.MethodHead, http.MethodOptions},
+	})
 }
