@@ -34,10 +34,6 @@ func (s *state) reset() {
 }
 
 func (s *state) setStart(index int) {
-	if s.err != "" {
-		return
-	}
-
 	if s.state != end {
 		s.err = fmt.Sprintf("不能嵌套 %s", string(start))
 		return
@@ -53,10 +49,6 @@ func (s *state) setStart(index int) {
 }
 
 func (s *state) setEnd(index int) {
-	if s.err != "" {
-		return
-	}
-
 	if s.state == end {
 		s.err = fmt.Sprintf("%s %s 必须成对出现", string(start), string(end))
 		return
@@ -77,10 +69,6 @@ func (s *state) setEnd(index int) {
 }
 
 func (s *state) setSeparator(index int) {
-	if s.err != "" {
-		return
-	}
-
 	if s.state != start {
 		s.err = fmt.Sprintf("字符(:)只能出现在 %s %s 中间", string(start), string(end))
 		return
