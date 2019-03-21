@@ -64,11 +64,7 @@ LOOP:
 		}
 	} // end for
 
-	if len(path) == 0 {
-		if n.handlers == nil || n.handlers.Len() == 0 {
-			return nil
-		}
-
+	if len(path) == 0 && n.handlers != nil && n.handlers.Len() > 0 {
 		fmt.Fprintln(w, strings.Repeat(" ", (deep-1)*4), n.segment.Value, "---", n.segment.Type, "---", path, "(matched)")
 		return n
 	}
