@@ -211,13 +211,8 @@ LOOP:
 		delete(params, n.segment.Name)
 	} // end for
 
-	// 没有子节点匹配，且 len(path)==0，可以判定与当前节点匹配
-	if len(path) == 0 {
-		// 虽然与当前节点匹配，但是当前节点下无任何处理函数，
-		// 理论上这个节点不会匹配任何实际路径，所以不作为最终匹配节点返回。
-		if n.handlers == nil || n.handlers.Len() == 0 {
-			return nil
-		}
+	// 没有子节点匹配，len(path)==0，且子节点不为空，可以判定与当前节点匹配。
+	if len(path) == 0 && n.handlers != nil && n.handlers.Len() > 0 {
 		return n
 	}
 
