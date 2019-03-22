@@ -103,7 +103,7 @@ func (mux *Mux) Remove(pattern string, methods ...string) *Mux {
 // pattern 为路由匹配模式，可以是正则匹配也可以是字符串匹配，
 // 若语法不正确，则直接 panic，可以通过 IsWell 检测语法的有效性，其它接口也相同；
 // methods 该路由项对应的请求方法，如果未指定值，则表示所有支持的请求方法，
-// 但不包含 OPTIONS。
+// 但不包含 OPTIONS 和 HEAD。
 func (mux *Mux) Handle(pattern string, h http.Handler, methods ...string) error {
 	return mux.hosts.Add(pattern, h, methods...)
 }

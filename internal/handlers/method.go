@@ -55,7 +55,6 @@ var (
 		http.MethodDelete,
 		http.MethodPut,
 		http.MethodPatch,
-		http.MethodHead,
 		http.MethodConnect,
 		http.MethodTrace,
 	}
