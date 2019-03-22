@@ -47,19 +47,6 @@ var (
 		trace:   http.MethodTrace,
 	}
 
-	// 当前支持的所有请求方法，在 Remove 方法中用到。
-	removeAll = []string{
-		http.MethodGet,
-		http.MethodPost,
-		http.MethodDelete,
-		http.MethodPut,
-		http.MethodPatch,
-		http.MethodOptions,
-		http.MethodHead,
-		http.MethodConnect,
-		http.MethodTrace,
-	}
-
 	// 除 http.MethodOptions 之外的所有支持的元素
 	// 在 Add 方法中用到。
 	addAny = []string{

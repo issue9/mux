@@ -138,20 +138,18 @@ func (hs *Handlers) getOptionsAllow() string {
 // 返回值表示是否已经被清空。
 func (hs *Handlers) Remove(methods ...string) bool {
 	if len(methods) == 0 {
-		methods = removeAll
+		hs.handlers = make(map[methodType]http.Handler, 8)
+		hs.optionsAllow = ""
+		return true
 	}
 
 	for _, m := range methods {
 		mm := methodMap[m]
 		delete(hs.handlers, mm)
 
-		// 明确指出要删除该路由项的 OPTIONS 时，将其 optionsState 转为禁止使用
-		if mm == options {
+		if mm == options { // 明确要删除 OPTIONS，则将其 optionsState 转为禁止使用
 			hs.optionsState = optionsStateDisable
-		}
-
-		// 跟随 get 一起删除
-		if mm == get && hs.headState == headStateAuto {
+		} else if mm == get && hs.headState == headStateAuto { // 跟随 get 一起删除
 			delete(hs.handlers, head)
 		}
 	}
