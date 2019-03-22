@@ -83,39 +83,35 @@ func (hs *Handlers) Add(h http.Handler, methods ...string) error {
 }
 
 func (hs *Handlers) addSingle(h http.Handler, m methodType) error {
-	if m == options { // 强制修改 OPTIONS 方法的处理方式
+	switch m {
+	case options:
 		if hs.optionsState == optionsStateFixedHandler { // 被强制修改过，不能再受理。
-			return fmt.Errorf("该请求方法 %s 已经存在", optionsStrings[options])
+			return fmt.Errorf("该请求方法 %s 已经存在", optionsStrings[m])
 		}
 
 		hs.handlers[options] = h
 		hs.optionsState = optionsStateFixedHandler
-		return nil
-	}
-
-	if m == head {
+	case head:
 		if hs.headState == headStateFixed {
 			return fmt.Errorf("该请求方法 %s 已经存在", optionsStrings[m])
 		}
 		hs.handlers[head] = h
 		hs.headState = headStateFixed
-		return nil
-	}
+	default: // 非 OPTIONS、HEAD 请求
+		if _, found := hs.handlers[m]; found {
+			return fmt.Errorf("该请求方法 %s 已经存在", optionsStrings[m])
+		}
+		hs.handlers[m] = h
 
-	// 非 OPTIONS、HEAD 请求
-	if _, found := hs.handlers[m]; found {
-		return fmt.Errorf("该请求方法 %s 已经存在", optionsStrings[m])
-	}
-	hs.handlers[m] = h
+		// GET 请求，且状态为 Auto 的时候，可以自动添加
+		if m == get && hs.headState == headStateAuto {
+			hs.handlers[head] = hs.headServeHTTP(h)
+		}
 
-	// GET 请求，且状态为 Auto 的时候，可以自动添加
-	if m == get && hs.headState == headStateAuto {
-		hs.handlers[head] = hs.headServeHTTP(h)
-	}
-
-	// 重新生成 optionsAllow 字符串
-	if hs.optionsState == optionsStateDefault {
-		hs.optionsAllow = hs.getOptionsAllow()
+		// 重新生成 optionsAllow 字符串
+		if hs.optionsState == optionsStateDefault {
+			hs.optionsAllow = hs.getOptionsAllow()
+		}
 	}
 	return nil
 }
