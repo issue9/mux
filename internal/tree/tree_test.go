@@ -96,7 +96,6 @@ func TestTree_match(t *testing.T) {
 	test.add(http.MethodGet, "/posts/{id:\\d+}/author", 6)
 	test.add(http.MethodGet, "/page/{page:\\d*}", 7) // 可选的正则节点
 	test.add(http.MethodGet, "/posts/{id}/{page}/author", 8)
-	//test.n.print(0)
 
 	test.matchTrue(http.MethodGet, "/", 1)
 	test.matchTrue(http.MethodGet, "/posts/1", 5)             // 正则
@@ -134,6 +133,21 @@ func TestTree_match(t *testing.T) {
 	test.matchTrue(http.MethodGet, "/admin/items/1/profile", 3)
 	test.matchTrue(http.MethodGet, "/admin/items/1/profile/1", 4)
 	test.tree.Trace(os.Stdout, "/admin/items/1/profile/1")
+
+	// 测试 indexes 功能
+	test = newTester(a)
+	test.add(http.MethodGet, "/admin/1", 1)
+	test.add(http.MethodGet, "/admin/2", 2)
+	test.add(http.MethodGet, "/admin/3", 3)
+	test.add(http.MethodGet, "/admin/4", 4)
+	test.add(http.MethodGet, "/admin/5", 5)
+	test.add(http.MethodGet, "/admin/6", 6)
+	test.add(http.MethodGet, "/admin/7", 7)
+	test.add(http.MethodGet, "/admin/{id}", 20)
+	a.Equal(len(test.tree.children[0].indexes), 7)
+	// /admin/5ndex.html 即部分匹配 /admin/5，更匹配 /admin/{id}
+	// 测试是否正确匹配
+	test.matchTrue(http.MethodGet, "/admin/5ndex.html", 20)
 }
 
 func TestTree_Params(t *testing.T) {
