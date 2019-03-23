@@ -47,7 +47,7 @@ var (
 		trace:   http.MethodTrace,
 	}
 
-	// 除 http.MethodOptions 之外的所有支持的元素
+	// 除 OPTIONS 和 HEAD 之外的所有支持的元素
 	// 在 Add 方法中用到。
 	addAny = []string{
 		http.MethodGet,

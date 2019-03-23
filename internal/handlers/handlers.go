@@ -89,15 +89,16 @@ func (hs *Handlers) addSingle(h http.Handler, m methodType) error {
 			return fmt.Errorf("该请求方法 %s 已经存在", optionsStrings[m])
 		}
 
-		hs.handlers[options] = h
+		hs.handlers[m] = h
 		hs.optionsState = optionsStateFixedHandler
 	case head:
 		if hs.headState == headStateFixed {
 			return fmt.Errorf("该请求方法 %s 已经存在", optionsStrings[m])
 		}
-		hs.handlers[head] = h
+
+		hs.handlers[m] = h
 		hs.headState = headStateFixed
-	default: // 非 OPTIONS、HEAD 请求
+	default:
 		if _, found := hs.handlers[m]; found {
 			return fmt.Errorf("该请求方法 %s 已经存在", optionsStrings[m])
 		}
