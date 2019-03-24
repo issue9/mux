@@ -11,13 +11,17 @@ import (
 )
 
 // 以上各个值进行组合之后的数量。
-const max = get + post + del + put + patch + options + head + connect + trace
+var max int
+
+func init() {
+	max = 1<<uint(len(methodMap)) - 1
+}
 
 func TestMethods(t *testing.T) {
 	a := assert.New(t)
 
 	// 检测 methodMap 是否完整
-	var val methodType
+	var val int
 	for _, v := range methodMap {
 		val += v
 	}
@@ -41,15 +45,12 @@ func TestOptionsStrings(t *testing.T) {
 		}
 	}
 
-	test := func(key methodType, str string) {
+	test := func(key int, str string) {
 		a.Equal(optionsStrings[key], str, "key:%d,str:%s", key, str)
 	}
 
 	test(0, "")
-	test(get, "GET")
-	test(get+post, "GET, POST")
-	test(get+post+options, "GET, OPTIONS, POST")
-	test(get+post+options+del+trace, "DELETE, GET, OPTIONS, POST, TRACE")
-	test(get+post+options+del+trace+head+patch, "DELETE, GET, HEAD, OPTIONS, PATCH, POST, TRACE")
+	test(1, "GET")
+	test(1+2, "GET, POST")
 	test(max, "CONNECT, DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT, TRACE")
 }

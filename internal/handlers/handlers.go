@@ -124,7 +124,7 @@ func (hs *Handlers) headServeHTTP(h http.Handler) http.Handler {
 }
 
 func (hs *Handlers) getOptionsAllow() string {
-	var index methodType
+	var index int
 	for method := range hs.handlers {
 		index += methodMap[method]
 	}

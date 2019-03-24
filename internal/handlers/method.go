@@ -9,33 +9,17 @@ import (
 	"sort"
 )
 
-type methodType int16
-
-// 各个请求方法的值。
-// NOTE: 值类型为 methodType 的实际类型，不要溢出了。
-const (
-	get methodType = 1 << iota
-	post
-	del
-	put
-	patch
-	options
-	head
-	connect
-	trace
-)
-
 var (
-	methodMap = map[string]methodType{
-		http.MethodGet:     get,
-		http.MethodPost:    post,
-		http.MethodDelete:  del,
-		http.MethodPut:     put,
-		http.MethodPatch:   patch,
-		http.MethodOptions: options,
-		http.MethodHead:    head,
-		http.MethodConnect: connect,
-		http.MethodTrace:   trace,
+	methodMap = map[string]int{
+		http.MethodGet:     1,
+		http.MethodPost:    2,
+		http.MethodDelete:  4,
+		http.MethodPut:     8,
+		http.MethodPatch:   16,
+		http.MethodOptions: 32,
+		http.MethodHead:    64,
+		http.MethodConnect: 128,
+		http.MethodTrace:   256,
 	}
 
 	// 除 OPTIONS 和 HEAD 之外的所有支持的元素
