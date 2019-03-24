@@ -204,18 +204,12 @@ func (hs *Handlers) Len() int {
 func (hs *Handlers) Methods(ignoreHead, ignoreOptions bool) []string {
 	methods := make([]string, 0, len(hs.handlers))
 
-LOOP:
 	for key := range hs.handlers {
-		switch key {
-		case options:
-			if ignoreOptions && hs.optionsState == optionsStateDefault {
-				continue LOOP
-			}
-		case head:
-			if ignoreHead && hs.headState == headStateAuto {
-				continue LOOP
-			}
+		if (key == options && ignoreOptions && hs.optionsState == optionsStateDefault) ||
+			key == head && ignoreHead && hs.headState == headStateAuto {
+			continue
 		}
+
 		methods = append(methods, methodTypeMap[key])
 	}
 
