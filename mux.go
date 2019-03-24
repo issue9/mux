@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/issue9/mux/v2/internal/handlers"
 	"github.com/issue9/mux/v2/internal/host"
 	"github.com/issue9/mux/v2/internal/syntax"
 	"github.com/issue9/mux/v2/params"
@@ -253,4 +254,9 @@ func Params(r *http.Request) params.Params {
 // IsWell 语法格式是否正确
 func IsWell(pattern string) error {
 	return syntax.IsWell(pattern)
+}
+
+// Methods 返回所有支持的请求方法
+func Methods() []string {
+	return handlers.Methods()
 }

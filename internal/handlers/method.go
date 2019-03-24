@@ -4,7 +4,10 @@
 
 package handlers
 
-import "net/http"
+import (
+	"net/http"
+	"sort"
+)
 
 type methodType int16
 
@@ -59,3 +62,14 @@ var (
 		http.MethodTrace,
 	}
 )
+
+// Methods 返回所有支持的请求方法名称
+func Methods() []string {
+	methods := make([]string, 0, len(methodMap))
+	for method := range methodMap {
+		methods = append(methods, method)
+	}
+
+	sort.Strings(methods)
+	return methods
+}
