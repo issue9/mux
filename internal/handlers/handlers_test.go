@@ -84,7 +84,7 @@ func TestHandlers_Add_Remove(t *testing.T) {
 	a.NotError(hs.Add(getHandler, http.MethodGet))
 	a.False(hs.Remove(http.MethodGet))
 	a.Equal(hs.headState, headStateAuto)
-	a.Nil(hs.handlers[head])
+	a.Nil(hs.handlers[http.MethodHead])
 
 	// HEAD 特意添加 HEAD
 	a.NotError(hs.Add(getHandler, http.MethodGet))
@@ -142,9 +142,9 @@ func TestHandlers_optionsAllow(t *testing.T) {
 	test("options")
 	// 强制删除
 	a.False(hs.Remove(http.MethodOptions))
-	a.Nil(hs.handlers[options])
+	a.Nil(hs.handlers[http.MethodOptions])
 	hs.SetAllow("set allow") // SetAllow 无法设置值
-	a.NotNil(hs.handlers[options])
+	a.NotNil(hs.handlers[http.MethodOptions])
 	a.NotError(hs.Add(optionsHandler, http.MethodOptions)) // 通过 Add() 再次显示指定
 	test("options")
 }

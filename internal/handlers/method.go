@@ -38,18 +38,6 @@ var (
 		http.MethodTrace:   trace,
 	}
 
-	methodTypeMap = map[methodType]string{
-		get:     http.MethodGet,
-		post:    http.MethodPost,
-		del:     http.MethodDelete,
-		put:     http.MethodPut,
-		patch:   http.MethodPatch,
-		options: http.MethodOptions,
-		head:    http.MethodHead,
-		connect: http.MethodConnect,
-		trace:   http.MethodTrace,
-	}
-
 	// 除 OPTIONS 和 HEAD 之外的所有支持的元素
 	// 在 Add 方法中用到。
 	addAny = []string{
