@@ -86,7 +86,6 @@ func (hs *Handlers) Add(h http.Handler, methods ...string) error {
 	}
 
 	for _, m := range methods {
-		// TODO 判断 m 是否存在
 		if err := hs.addSingle(h, m); err != nil {
 			return err
 		}
@@ -112,7 +111,18 @@ func (hs *Handlers) addSingle(h http.Handler, m string) error {
 		hs.handlers[m] = h
 		hs.headState = headStateFixed
 	default:
-		if _, found := hs.handlers[m]; found {
+		var found bool
+		for _, mm := range Methods {
+			if mm == m {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return fmt.Errorf("该请求方法 %s 不被支持", m)
+		}
+
+		if _, found = hs.handlers[m]; found {
 			return fmt.Errorf("该请求方法 %s 已经存在", m)
 		}
 		hs.handlers[m] = h
