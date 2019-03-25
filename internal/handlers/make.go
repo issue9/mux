@@ -18,25 +18,14 @@ import (
 )
 
 const (
-	fileheader  = "// 该文件由 make.go 产生，不需要手动修改！\n\n"
-	filename    = "./options_table.go"
-	packagename = "handlers"
-	varname     = "optionsStrings"
+	fileheader         = "// 该文件由 make.go 产生，不需要手动修改！\n\n"
+	filename           = "./methods.go"
+	packagename        = "handlers"
+	methodTypeName     = "methodMap"
+	optionsStringsName = "optionsStrings"
 )
 
 func main() {
-	items := handlers.Map()
-	keys := make([]int16, 0, len(items))
-	var size int16
-	for k := range items {
-		keys = append(keys, k)
-		size += k
-	}
-
-	sort.SliceStable(keys, func(i, j int) bool {
-		return keys[i] < keys[j]
-	})
-
 	buf := new(bytes.Buffer)
 
 	ws := func(format string, v ...interface{}) {
@@ -46,15 +35,28 @@ func main() {
 		}
 	}
 
+	var maps = map[int]string{}
+	var size int
+
 	ws(fileheader)
 	ws("package %s\n\n", packagename)
-	ws("var %s = []string{\n", varname)
 
-	methods := make([]string, 0, len(items))
-	for i := int16(0); i <= size; i++ {
-		for _, k := range keys {
+	ws("var %s=map[string]int{\n", methodTypeName)
+	for index, method := range handlers.Methods {
+		ii := 1 << uint(index)
+		ws("\"%s\":%d,\n", method, ii)
+		maps[ii] = method
+		size += ii
+	}
+	ws("}\n\n")
+
+	ws("var %s = []string{\n", optionsStringsName)
+
+	methods := make([]string, 0, len(handlers.Methods))
+	for i := 0; i <= size; i++ {
+		for k, v := range maps {
 			if i&k == k {
-				methods = append(methods, items[k])
+				methods = append(methods, v)
 			}
 		}
 

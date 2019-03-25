@@ -14,7 +14,9 @@ import (
 var max int
 
 func init() {
-	max = 1<<uint(len(methodMap)) - 1
+	for _, v := range methodMap {
+		max += v
+	}
 }
 
 func TestMethods(t *testing.T) {
@@ -46,7 +48,7 @@ func TestOptionsStrings(t *testing.T) {
 	}
 
 	test := func(key int, str string) {
-		a.Equal(optionsStrings[key], str, "key:%d,str:%s", key, str)
+		a.Equal(optionsStrings[key], str, "key:%d,val:%s", key, optionsStrings[key])
 	}
 
 	test(0, "")

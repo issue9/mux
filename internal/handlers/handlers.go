@@ -30,6 +30,23 @@ const (
 	headStateFixed                    // 有固定的 Handler
 )
 
+// Methods 所有支持请求方法
+var Methods = []string{
+	http.MethodGet,
+	http.MethodPost,
+	http.MethodDelete,
+	http.MethodPut,
+	http.MethodPatch,
+	http.MethodConnect,
+	http.MethodTrace,
+	http.MethodOptions,
+	http.MethodHead,
+}
+
+// 除 OPTIONS 和 HEAD 之外的所有支持的元素
+// 在 Add 方法中用到。
+var addAny = Methods[:len(Methods)-2]
+
 // Handlers 用于表示某节点下各个请求方法对应的处理函数。
 type Handlers struct {
 	handlers map[string]http.Handler // 请求方法及其对应的 http.Handler

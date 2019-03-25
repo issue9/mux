@@ -258,5 +258,11 @@ func IsWell(pattern string) error {
 
 // Methods 返回所有支持的请求方法
 func Methods() []string {
-	return handlers.Methods()
+	l := len(handlers.Methods)
+	methods := make([]string, l, l)
+	for i, m := range methods {
+		methods[i] = m
+	}
+
+	return methods
 }
