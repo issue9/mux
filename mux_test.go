@@ -5,6 +5,7 @@
 package mux
 
 import (
+	"github.com/issue9/mux/v2/internal/handlers"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -331,4 +332,9 @@ func TestMux_ServeHTTP_Order(t *testing.T) {
 	test.matchTrue(http.MethodGet, "/tags", 3)                    // f3 // 正好与 f1 的第一个节点匹配
 	test.matchTrue(http.MethodGet, "/tags/1.html", 1)             // f1
 	test.matchTrue(http.MethodGet, "/tags.html", 2)               // f2
+}
+
+func TestMethods(t *testing.T) {
+	a := assert.New(t)
+	a.Equal(Methods(), handlers.Methods)
 }
