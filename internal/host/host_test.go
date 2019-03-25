@@ -154,9 +154,9 @@ func TestHosts_All(t *testing.T) {
 
 	routes := hs.All(false, false)
 	a.Equal(routes, map[string][]string{
-		"/path/1":               []string{http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodPatch},
-		"*.example.com/path/1":  []string{http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodPatch},
-		"s1.example.com/path/1": []string{http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodPatch},
+		"/path/1":               {http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodPatch},
+		"*.example.com/path/1":  {http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodPatch},
+		"s1.example.com/path/1": {http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodPatch},
 	})
 }
 

@@ -280,9 +280,9 @@ func TestTree_All(t *testing.T) {
 
 	routes := tree.All(false, false)
 	a.Equal(routes, map[string][]string{
-		"/":                  []string{http.MethodGet, http.MethodHead, http.MethodOptions},
-		"/posts":             []string{http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodPost},
-		"/posts/{id}":        []string{http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodPut},
-		"/posts/{id}/author": []string{http.MethodGet, http.MethodHead, http.MethodOptions},
+		"/":                  {http.MethodGet, http.MethodHead, http.MethodOptions},
+		"/posts":             {http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodPost},
+		"/posts/{id}":        {http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodPut},
+		"/posts/{id}/author": {http.MethodGet, http.MethodHead, http.MethodOptions},
 	})
 }
