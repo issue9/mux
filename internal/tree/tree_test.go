@@ -286,3 +286,37 @@ func TestTree_All(t *testing.T) {
 		"/posts/{id}/author": {http.MethodGet, http.MethodHead, http.MethodOptions},
 	})
 }
+
+// 路由正确性，由 TestTree_match 验证
+func BenchmarkTree_Handler(b *testing.B) {
+	a := assert.New(b)
+	tree := New(false, false)
+
+	// 添加路由项
+	tree.Add("/", buildHandler(1), http.MethodGet)
+	tree.Add("/posts/{id}", buildHandler(2), http.MethodGet)
+	tree.Add("/posts/{id}/author", buildHandler(3), http.MethodGet)
+	tree.Add("/posts/1/author", buildHandler(4), http.MethodGet)
+	tree.Add("/posts/{id:\\d+}", buildHandler(5), http.MethodGet)
+	tree.Add("/posts/{id:\\d+}/author", buildHandler(6), http.MethodGet)
+	tree.Add("/page/{page:\\d*}", buildHandler(7), http.MethodGet) // 可选的正则节点
+	tree.Add("/posts/{id}/{page}/author", buildHandler(8), http.MethodGet)
+
+	paths := map[int]string{
+		0: "/",
+		1: "/",
+		2: "/posts/1.html/page",
+		3: "/posts/2.html/author",
+		4: "/posts/1/author",
+		5: "/posts/2",
+		6: "/posts/2/author",
+		7: "/page/",
+		8: "/posts/2.html/2/author",
+	}
+
+	for i := 0; i < b.N; i++ {
+		index := i % len(paths)
+		h, _ := tree.Handler(paths[index])
+		a.True(h.Len() > 0)
+	}
+}

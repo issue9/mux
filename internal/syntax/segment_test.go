@@ -12,6 +12,44 @@ import (
 	"github.com/issue9/mux/v2/params"
 )
 
+func BenchmarkSegment_Match_Named(b *testing.B) {
+	a := assert.New(b)
+
+	seg := NewSegment("/posts/{id}/author")
+	a.NotNil(seg)
+
+	ps := params.Params{}
+	for i := 0; i < b.N; i++ {
+		ok, path := seg.Match("/posts/1/author", ps)
+		a.True(ok).Empty(path)
+	}
+}
+
+func BenchmarkSegment_Match_String(b *testing.B) {
+	a := assert.New(b)
+
+	seg := NewSegment("/posts/author")
+	a.NotNil(seg)
+
+	for i := 0; i < b.N; i++ {
+		ok, path := seg.Match("/posts/author", nil)
+		a.True(ok).Equal(path, "")
+	}
+}
+
+func BenchmarkSegment_Match_Regexp(b *testing.B) {
+	a := assert.New(b)
+
+	seg := NewSegment("/posts/{id:\\d+}/author")
+	a.NotNil(seg)
+
+	ps := params.Params{}
+	for i := 0; i < b.N; i++ {
+		ok, path := seg.Match("/posts/1/author", ps)
+		a.True(ok).Equal(path, "")
+	}
+}
+
 func TestLongestPrefix(t *testing.T) {
 	a := assert.New(t)
 

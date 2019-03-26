@@ -105,7 +105,7 @@ func (tree *Tree) URL(pattern string, params map[string]string) (string, error) 
 
 // Handler 找到与当前内容匹配的 handlers.Handlers 实例。
 func (tree *Tree) Handler(path string) (*handlers.Handlers, params.Params) {
-	ps := make(params.Params, 5)
+	ps := make(params.Params, 3)
 	node := tree.match(path, ps)
 
 	if node == nil || node.handlers == nil || node.handlers.Len() == 0 {
@@ -117,7 +117,7 @@ func (tree *Tree) Handler(path string) (*handlers.Handlers, params.Params) {
 
 // All 获取当前的所有路径项
 func (tree *Tree) All(ignoreHead, ignoreOptions bool) map[string][]string {
-	routes := make(map[string][]string, 10)
+	routes := make(map[string][]string, 100)
 	tree.all(ignoreHead, ignoreOptions, "", routes)
 	return routes
 }

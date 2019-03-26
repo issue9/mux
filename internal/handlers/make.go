@@ -76,6 +76,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
 	file.Write(data)
-	defer file.Close()
+
+	if err = file.Close(); err != nil {
+		panic(err)
+	}
 }

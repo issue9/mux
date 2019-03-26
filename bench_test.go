@@ -19,8 +19,6 @@ func init() {
 	for _, api := range apis {
 		path := strings.Replace(api.bracePattern, "}", "", -1)
 		api.test = strings.Replace(path, "{", "", -1)
-
-		api.colonPattern = strings.Replace(path, "{", ":", -1)
 	}
 
 	calcMemStats("Issue9Mux", func() {
@@ -49,7 +47,7 @@ func calcMemStats(name string, load func()) {
 	runtime.GC()
 	runtime.ReadMemStats(stats)
 	after := stats.HeapAlloc
-	fmt.Printf("%v: %d Bytes\n", name, after-before)
+	fmt.Printf("%s: %d Bytes\n", name, after-before)
 }
 
 func benchGithubAPI(name string, b *testing.B, srv http.Handler) {
@@ -64,7 +62,7 @@ func benchGithubAPI(name string, b *testing.B, srv http.Handler) {
 		srv.ServeHTTP(w, r)
 
 		if w.Body.String() != r.URL.Path {
-			b.Errorf("%v: %v:%v", name, w.Body.String(), r.URL.Path)
+			b.Errorf("%s: %s:%s", name, w.Body.String(), r.URL.Path)
 		}
 	}
 }
@@ -76,7 +74,6 @@ func BenchmarkGithubAPI_mux(b *testing.B) {
 type api struct {
 	method       string
 	bracePattern string // {xx} 风格的路由项
-	colonPattern string // :xx 风格的路由项
 	test         string // 测试地址
 }
 

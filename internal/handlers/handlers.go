@@ -111,18 +111,11 @@ func (hs *Handlers) addSingle(h http.Handler, m string) error {
 		hs.handlers[m] = h
 		hs.headState = headStateFixed
 	default:
-		var found bool
-		for _, mm := range Methods {
-			if mm == m {
-				found = true
-				break
-			}
-		}
-		if !found {
+		if !methodExists(m) {
 			return fmt.Errorf("该请求方法 %s 不被支持", m)
 		}
 
-		if _, found = hs.handlers[m]; found {
+		if _, found := hs.handlers[m]; found {
 			return fmt.Errorf("该请求方法 %s 已经存在", m)
 		}
 		hs.handlers[m] = h
@@ -138,6 +131,15 @@ func (hs *Handlers) addSingle(h http.Handler, m string) error {
 		}
 	}
 	return nil
+}
+
+func methodExists(m string) bool {
+	for _, mm := range Methods {
+		if mm == m {
+			return true
+		}
+	}
+	return false
 }
 
 func (hs *Handlers) optionsServeHTTP(w http.ResponseWriter, r *http.Request) {
