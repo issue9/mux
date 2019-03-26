@@ -28,12 +28,11 @@ type Params map[string]string
 //  非正则和命名路由；
 //  正则路由，但是所有匹配参数都是未命名的；
 func Get(r *http.Request) Params {
-	params := r.Context().Value(ContextKeyParams)
-	if params == nil {
-		return nil
+	if params := r.Context().Value(ContextKeyParams); params != nil {
+		return params.(Params)
 	}
 
-	return params.(Params)
+	return nil
 }
 
 // Exists 查找指定名称的参数是否存在。

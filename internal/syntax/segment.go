@@ -78,37 +78,36 @@ func (seg *Segment) Split(pos int) []*Segment {
 
 // Match 路径是否与当前节点匹配
 //
-// path 的起始部分如果与当前内容匹配，同返回 true 以及剩下未匹配的内容。
-// 否则返回 false 以及 path 本身；
+// 如果正确匹配，则返回 path 剩余部分的超始位置。
 // params 表示匹配完成之后，从地址中获取的参数值。
-func (seg *Segment) Match(path string, params params.Params) (bool, string) {
+func (seg *Segment) Match(path string, params params.Params) int {
 	switch seg.Type {
 	case String:
 		if strings.HasPrefix(path, seg.Value) {
-			return true, path[len(seg.Value):]
+			return len(seg.Value)
 		}
 	case Named:
 		if seg.Endpoint {
 			params[seg.Name] = path
-			return true, path[:0]
+			return len(path)
 		}
 
 		// 为零说明前面没有命名参数，肯定不能与当前内容匹配
 		if index := strings.Index(path, seg.Suffix); index > 0 {
 			params[seg.Name] = path[:index]
-			return true, path[index+len(seg.Suffix):]
+			return index + len(seg.Suffix)
 		}
 	case Regexp:
 		locs := seg.expr.FindStringSubmatchIndex(path)
 		if locs == nil || locs[0] != 0 { // 不匹配
-			return false, path
+			return -1
 		}
 
 		params[seg.Name] = path[:locs[3]]
-		return true, path[locs[1]:]
+		return locs[1]
 	}
 
-	return false, path
+	return -1
 }
 
 // 获取两个字符串之间相同的前缀字符串的长度，

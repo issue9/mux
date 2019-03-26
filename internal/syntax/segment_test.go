@@ -19,9 +19,10 @@ func BenchmarkSegment_Match_Named(b *testing.B) {
 	a.NotNil(seg)
 
 	ps := params.Params{}
+	path := "/posts/1/author"
 	for i := 0; i < b.N; i++ {
-		ok, path := seg.Match("/posts/1/author", ps)
-		a.True(ok).Empty(path)
+		index := seg.Match(path, ps)
+		a.Equal(index, len(path))
 	}
 }
 
@@ -31,9 +32,10 @@ func BenchmarkSegment_Match_String(b *testing.B) {
 	seg := NewSegment("/posts/author")
 	a.NotNil(seg)
 
+	path := "/posts/author"
 	for i := 0; i < b.N; i++ {
-		ok, path := seg.Match("/posts/author", nil)
-		a.True(ok).Equal(path, "")
+		index := seg.Match(path, nil)
+		a.Equal(index, len(path))
 	}
 }
 
@@ -43,10 +45,11 @@ func BenchmarkSegment_Match_Regexp(b *testing.B) {
 	seg := NewSegment("/posts/{id:\\d+}/author")
 	a.NotNil(seg)
 
+	path := "/posts/1/author"
 	ps := params.Params{}
 	for i := 0; i < b.N; i++ {
-		ok, path := seg.Match("/posts/1/author", ps)
-		a.True(ok).Equal(path, "")
+		index := seg.Match(path, ps)
+		a.Equal(index, len(path))
 	}
 }
 
@@ -104,38 +107,45 @@ func TestSegment_Match(t *testing.T) {
 
 	// Named 完全匹配
 	ps := params.Params{}
-	ok, path := seg.Match("/posts/1/author", ps)
-	a.True(ok).Equal(path, "")
+	path := "/posts/1/author"
+	index := seg.Match(path, ps)
+	a.Empty(path[index:])
 
 	// Named 部分匹配
-	ok, path = seg.Match("/posts/1/author/email", ps)
-	a.True(ok).Equal(path, "/email")
+	path = "/posts/1/author/email"
+	index = seg.Match(path, ps)
+	a.Equal(path[index:], "/email")
 
 	// Named 不匹配
-	ok, path = seg.Match("/posts/1/aut", ps)
-	a.False(ok).Equal(path, "/posts/1/aut")
+	path = "/posts/1/aut"
+	index = seg.Match(path, ps)
+	a.Equal(index, -1)
 
 	// Named 1/2 匹配 {id}
 	ps = params.Params{}
-	ok, path = seg.Match("/posts/1/2/author", ps)
-	a.True(ok).Equal(path, "")
+	path = "/posts/1/2/author"
+	index = seg.Match(path, ps)
+	a.Equal(path[index:], "")
 
 	// Named Endpoint 匹配
 	seg = NewSegment("{path}")
-	ok, path = seg.Match("/posts/author", ps)
-	a.True(ok).Equal(path, "")
+	path = "/posts/author"
+	index = seg.Match(path, ps)
+	a.Equal(path[index:], "")
 
 	// String
 	seg = NewSegment("/posts/author")
 	a.NotNil(seg)
 
 	// String 匹配
-	ok, path = seg.Match("/posts/author", nil)
-	a.True(ok).Equal(path, "")
+	path = "/posts/author"
+	index = seg.Match(path, nil)
+	a.Equal(path[index:], "")
 
 	// String 不匹配
-	ok, path = seg.Match("/posts/author/email", nil)
-	a.True(ok).Equal(path, "/email")
+	path = "/posts/author/email"
+	index = seg.Match(path, nil)
+	a.Equal(path[index:], "/email")
 
 	// Regexp
 	seg = NewSegment("/posts/{id:\\d+}/author")
@@ -143,15 +153,18 @@ func TestSegment_Match(t *testing.T) {
 
 	// Regexp 完全匹配
 	ps = params.Params{}
-	ok, path = seg.Match("/posts/1/author", ps)
-	a.True(ok).Equal(path, "")
+	path = "/posts/1/author"
+	index = seg.Match(path, ps)
+	a.Equal(path[index:], "")
 
 	// Regexp 不匹配
 	ps = params.Params{}
-	ok, path = seg.Match("/posts/xxx/author", ps)
-	a.False(ok).Equal(path, "/posts/xxx/author")
+	path = "/posts/xxx/author"
+	index = seg.Match(path, ps)
+	a.Equal(index, -1)
 
 	// Regexp 部分匹配
-	ok, path = seg.Match("/posts/1/author/email", ps)
-	a.True(ok).Equal(path, "/email")
+	path = "/posts/1/author/email"
+	index = seg.Match(path, ps)
+	a.Equal(path[index:], "/email")
 }

@@ -182,12 +182,12 @@ func (n *node) match(path string, params params.Params) *node {
 			goto LOOP
 		}
 
-		matched, newPath := node.segment.Match(path, params)
-		if !matched {
+		index := node.segment.Match(path, params)
+		if index < 0 {
 			goto LOOP
 		}
 
-		if nn := node.match(newPath, params); nn != nil {
+		if nn := node.match(path[index:], params); nn != nil {
 			return nn
 		}
 	}
@@ -198,12 +198,12 @@ LOOP:
 	for i := len(n.indexes); i < len(n.children); i++ {
 		node := n.children[i]
 
-		matched, newPath := node.segment.Match(path, params)
-		if !matched {
+		index := node.segment.Match(path, params)
+		if index < 0 {
 			continue
 		}
 
-		if nn := node.match(newPath, params); nn != nil {
+		if nn := node.match(path[index:], params); nn != nil {
 			return nn
 		}
 
