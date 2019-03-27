@@ -21,7 +21,7 @@ func init() {
 		api.test = strings.Replace(path, "{", "", -1)
 	}
 
-	calcMemStats("Issue9Mux", func() {
+	calcMemStats(func() {
 		h := func(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte(r.URL.Path))
 		}
@@ -35,7 +35,7 @@ func init() {
 	})
 }
 
-func calcMemStats(name string, load func()) {
+func calcMemStats(load func()) {
 	stats := &runtime.MemStats{}
 
 	runtime.GC()
@@ -47,10 +47,10 @@ func calcMemStats(name string, load func()) {
 	runtime.GC()
 	runtime.ReadMemStats(stats)
 	after := stats.HeapAlloc
-	fmt.Printf("%s: %d Bytes\n", name, after-before)
+	fmt.Printf("%d Bytes\n", after-before)
 }
 
-func benchGithubAPI(name string, b *testing.B, srv http.Handler) {
+func benchGithubAPI(b *testing.B, srv http.Handler) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
@@ -62,13 +62,13 @@ func benchGithubAPI(name string, b *testing.B, srv http.Handler) {
 		srv.ServeHTTP(w, r)
 
 		if w.Body.String() != r.URL.Path {
-			b.Errorf("%s: %s:%s", name, w.Body.String(), r.URL.Path)
+			b.Errorf("%s:%s", w.Body.String(), r.URL.Path)
 		}
 	}
 }
 
 func BenchmarkGithubAPI_mux(b *testing.B) {
-	benchGithubAPI("Issue9Mux", b, issue9Mux)
+	benchGithubAPI(b, issue9Mux)
 }
 
 type api struct {
