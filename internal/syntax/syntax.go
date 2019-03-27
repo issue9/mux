@@ -64,6 +64,7 @@ func getType(str string) Type {
 		switch str[i] {
 		case separator:
 			typ = Regexp
+			break
 		case start:
 			typ = Named
 		case end:
