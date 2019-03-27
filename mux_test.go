@@ -5,12 +5,14 @@
 package mux
 
 import (
-	"github.com/issue9/mux/v2/internal/handlers"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/issue9/assert"
+	"github.com/issue9/assert/rest"
+
+	"github.com/issue9/mux/v2/internal/handlers"
 )
 
 func buildHandler(code int) http.Handler {
@@ -29,52 +31,31 @@ func buildFunc(code int) http.HandlerFunc {
 type tester struct {
 	a   *assert.Assertion
 	mux *Mux
+	srv *rest.Server
 }
 
 func newTester(a *assert.Assertion, disableOptions, disableHead, skipClean bool) *tester {
+	mux := New(disableOptions, disableHead, skipClean, nil, nil)
 	return &tester{
 		a:   a,
-		mux: New(disableOptions, disableHead, skipClean, nil, nil),
+		mux: mux,
+		srv: rest.NewServer(a.TB(), mux, nil),
 	}
 }
 
 // 确保能正常匹配到指定的 URL
 func (t *tester) matchTrue(method, path string, code int) {
-	w := httptest.NewRecorder()
-	t.a.NotNil(w)
-
-	r, err := http.NewRequest(method, path, nil)
-	t.a.NotError(err).NotNil(r)
-
-	t.mux.ServeHTTP(w, r)
-	t.a.Equal(w.Code, code)
+	t.srv.NewRequest(method, path).Do().Status(code)
 }
 
 // 确保能正常匹配到指定的 URL
 func (t *tester) matchContent(method, path string, code int, content string) {
-	w := httptest.NewRecorder()
-	t.a.NotNil(w)
-
-	r, err := http.NewRequest(method, path, nil)
-	t.a.NotError(err).NotNil(r)
-
-	t.mux.ServeHTTP(w, r)
-
-	t.a.Equal(w.Code, code)
-	t.a.Equal(w.Body.String(), content)
+	t.srv.NewRequest(method, path).Do().Status(code).StringBody(content)
 }
 
 // 确保能正确匹配地址，且拿到正确的 options 报头
-func (t *tester) optionsTrue(url string, code int, allow string) {
-	w := httptest.NewRecorder()
-	t.a.NotNil(w)
-
-	r, err := http.NewRequest(http.MethodOptions, url, nil)
-	t.a.NotError(err).NotNil(r)
-
-	t.mux.ServeHTTP(w, r)
-	t.a.Equal(w.Code, code)
-	t.a.Equal(w.Header().Get("Allow"), allow)
+func (t *tester) optionsTrue(path string, code int, allow string) {
+	t.srv.NewRequest(http.MethodOptions, path).Do().Status(code).Header("Allow", allow)
 }
 
 func TestMux(t *testing.T) {
@@ -82,95 +63,95 @@ func TestMux(t *testing.T) {
 	test := newTester(a, false, true, false)
 
 	// 测试 / 和 "" 是否访问同一地址
-	test.mux.Get("/", buildHandler(1))
-	test.matchTrue(http.MethodGet, "", 1)
-	test.matchTrue(http.MethodGet, "/", 1)
+	test.mux.Get("/", buildHandler(201))
+	test.matchTrue(http.MethodGet, "", 201)
+	test.matchTrue(http.MethodGet, "/", 201)
 	test.matchTrue(http.MethodHead, "/", http.StatusMethodNotAllowed) // 未启用 autoHead
 	test.matchTrue(http.MethodGet, "/abc", http.StatusNotFound)
 
-	test.mux.Get("/h/1", buildHandler(1))
-	test.matchTrue(http.MethodGet, "/h/1", 1)
-	test.mux.GetFunc("/f/1", buildFunc(1))
-	test.matchTrue(http.MethodGet, "/f/1", 1)
+	test.mux.Get("/h/1", buildHandler(201))
+	test.matchTrue(http.MethodGet, "/h/1", 201)
+	test.mux.GetFunc("/f/1", buildFunc(201))
+	test.matchTrue(http.MethodGet, "/f/1", 201)
 
-	test.mux.Post("/h/1", buildHandler(2))
-	test.matchTrue(http.MethodPost, "/h/1", 2)
-	test.mux.PostFunc("/f/1", buildFunc(2))
-	test.matchTrue(http.MethodPost, "/f/1", 2)
+	test.mux.Post("/h/1", buildHandler(202))
+	test.matchTrue(http.MethodPost, "/h/1", 202)
+	test.mux.PostFunc("/f/1", buildFunc(202))
+	test.matchTrue(http.MethodPost, "/f/1", 202)
 
-	test.mux.Put("/h/1", buildHandler(3))
-	test.matchTrue(http.MethodPut, "/h/1", 3)
-	test.mux.PutFunc("/f/1", buildFunc(3))
-	test.matchTrue(http.MethodPut, "/f/1", 3)
+	test.mux.Put("/h/1", buildHandler(203))
+	test.matchTrue(http.MethodPut, "/h/1", 203)
+	test.mux.PutFunc("/f/1", buildFunc(203))
+	test.matchTrue(http.MethodPut, "/f/1", 203)
 
-	test.mux.Patch("/h/1", buildHandler(4))
-	test.matchTrue(http.MethodPatch, "/h/1", 4)
-	test.mux.PatchFunc("/f/1", buildFunc(4))
-	test.matchTrue(http.MethodPatch, "/f/1", 4)
+	test.mux.Patch("/h/1", buildHandler(204))
+	test.matchTrue(http.MethodPatch, "/h/1", 204)
+	test.mux.PatchFunc("/f/1", buildFunc(204))
+	test.matchTrue(http.MethodPatch, "/f/1", 204)
 
-	test.mux.Delete("/h/1", buildHandler(5))
-	test.matchTrue(http.MethodDelete, "/h/1", 5)
-	test.mux.DeleteFunc("/f/1", buildFunc(5))
-	test.matchTrue(http.MethodDelete, "/f/1", 5)
+	test.mux.Delete("/h/1", buildHandler(205))
+	test.matchTrue(http.MethodDelete, "/h/1", 205)
+	test.mux.DeleteFunc("/f/1", buildFunc(205))
+	test.matchTrue(http.MethodDelete, "/f/1", 205)
 
 	// Any
-	test.mux.Any("/h/any", buildHandler(6))
-	test.matchTrue(http.MethodGet, "/h/any", 6)
-	test.matchTrue(http.MethodPost, "/h/any", 6)
-	test.matchTrue(http.MethodPut, "/h/any", 6)
-	test.matchTrue(http.MethodPatch, "/h/any", 6)
-	test.matchTrue(http.MethodDelete, "/h/any", 6)
-	test.matchTrue(http.MethodTrace, "/h/any", 6)
+	test.mux.Any("/h/any", buildHandler(206))
+	test.matchTrue(http.MethodGet, "/h/any", 206)
+	test.matchTrue(http.MethodPost, "/h/any", 206)
+	test.matchTrue(http.MethodPut, "/h/any", 206)
+	test.matchTrue(http.MethodPatch, "/h/any", 206)
+	test.matchTrue(http.MethodDelete, "/h/any", 206)
+	test.matchTrue(http.MethodTrace, "/h/any", 206)
 
-	test.mux.AnyFunc("/f/any", buildFunc(6))
-	test.matchTrue(http.MethodGet, "/f/any", 6)
-	test.matchTrue(http.MethodPost, "/f/any", 6)
-	test.matchTrue(http.MethodPut, "/f/any", 6)
-	test.matchTrue(http.MethodPatch, "/f/any", 6)
-	test.matchTrue(http.MethodDelete, "/f/any", 6)
-	test.matchTrue(http.MethodTrace, "/f/any", 6)
+	test.mux.AnyFunc("/f/any", buildFunc(206))
+	test.matchTrue(http.MethodGet, "/f/any", 206)
+	test.matchTrue(http.MethodPost, "/f/any", 206)
+	test.matchTrue(http.MethodPut, "/f/any", 206)
+	test.matchTrue(http.MethodPatch, "/f/any", 206)
+	test.matchTrue(http.MethodDelete, "/f/any", 206)
+	test.matchTrue(http.MethodTrace, "/f/any", 206)
 }
 
 func TestMux_Head(t *testing.T) {
 	a := assert.New(t)
 	test := newTester(a, false, false, false)
 
-	test.mux.Get("/", buildHandler(1))
-	test.matchTrue(http.MethodGet, "", 1)
-	test.matchTrue(http.MethodGet, "/", 1)
-	test.matchTrue(http.MethodHead, "", 1)
-	test.matchTrue(http.MethodHead, "/", 1)
-	test.matchContent(http.MethodHead, "/", 1, "")
+	test.mux.Get("/", buildHandler(201))
+	test.matchTrue(http.MethodGet, "", 201)
+	test.matchTrue(http.MethodGet, "/", 201)
+	test.matchTrue(http.MethodHead, "", 201)
+	test.matchTrue(http.MethodHead, "/", 201)
+	test.matchContent(http.MethodHead, "/", 201, "")
 
-	test.mux.Get("/h/1", buildHandler(1))
-	test.matchTrue(http.MethodGet, "/h/1", 1)
-	test.matchTrue(http.MethodHead, "/h/1", 1)
-	test.mux.GetFunc("/f/1", buildFunc(1))
-	test.matchTrue(http.MethodGet, "/f/1", 1)
-	test.matchTrue(http.MethodHead, "/f/1", 1)
+	test.mux.Get("/h/1", buildHandler(201))
+	test.matchTrue(http.MethodGet, "/h/1", 201)
+	test.matchTrue(http.MethodHead, "/h/1", 201)
+	test.mux.GetFunc("/f/1", buildFunc(201))
+	test.matchTrue(http.MethodGet, "/f/1", 201)
+	test.matchTrue(http.MethodHead, "/f/1", 201)
 
-	test.mux.Post("/h/post", buildHandler(2))
-	test.matchTrue(http.MethodPost, "/h/post", 2)
+	test.mux.Post("/h/post", buildHandler(202))
+	test.matchTrue(http.MethodPost, "/h/post", 202)
 	test.matchTrue(http.MethodHead, "/h/post", http.StatusMethodNotAllowed)
 
 	// Any
-	test.mux.Any("/h/any", buildHandler(6))
-	test.matchTrue(http.MethodGet, "/h/any", 6)
-	test.matchTrue(http.MethodHead, "/h/any", 6)
-	test.matchTrue(http.MethodPost, "/h/any", 6)
-	test.matchTrue(http.MethodPut, "/h/any", 6)
-	test.matchTrue(http.MethodPatch, "/h/any", 6)
-	test.matchTrue(http.MethodDelete, "/h/any", 6)
-	test.matchTrue(http.MethodTrace, "/h/any", 6)
+	test.mux.Any("/h/any", buildHandler(206))
+	test.matchTrue(http.MethodGet, "/h/any", 206)
+	test.matchTrue(http.MethodHead, "/h/any", 206)
+	test.matchTrue(http.MethodPost, "/h/any", 206)
+	test.matchTrue(http.MethodPut, "/h/any", 206)
+	test.matchTrue(http.MethodPatch, "/h/any", 206)
+	test.matchTrue(http.MethodDelete, "/h/any", 206)
+	test.matchTrue(http.MethodTrace, "/h/any", 206)
 
-	test.mux.AnyFunc("/f/any", buildFunc(6))
-	test.matchTrue(http.MethodGet, "/f/any", 6)
-	test.matchTrue(http.MethodHead, "/f/any", 6)
-	test.matchTrue(http.MethodPost, "/f/any", 6)
-	test.matchTrue(http.MethodPut, "/f/any", 6)
-	test.matchTrue(http.MethodPatch, "/f/any", 6)
-	test.matchTrue(http.MethodDelete, "/f/any", 6)
-	test.matchTrue(http.MethodTrace, "/f/any", 6)
+	test.mux.AnyFunc("/f/any", buildFunc(206))
+	test.matchTrue(http.MethodGet, "/f/any", 206)
+	test.matchTrue(http.MethodHead, "/f/any", 206)
+	test.matchTrue(http.MethodPost, "/f/any", 206)
+	test.matchTrue(http.MethodPut, "/f/any", 206)
+	test.matchTrue(http.MethodPatch, "/f/any", 206)
+	test.matchTrue(http.MethodDelete, "/f/any", 206)
+	test.matchTrue(http.MethodTrace, "/f/any", 206)
 }
 
 func TestMux_Add_Remove(t *testing.T) {
@@ -180,30 +161,30 @@ func TestMux_Add_Remove(t *testing.T) {
 	// 添加 GET /api/1
 	// 添加 PUT /api/1
 	// 添加 GET /api/2
-	a.NotError(test.mux.HandleFunc("/api/1", buildFunc(1), http.MethodGet))
-	a.NotError(test.mux.HandleFunc("/api/1", buildFunc(1), http.MethodPut))
-	a.NotError(test.mux.HandleFunc("/api/2", buildFunc(2), http.MethodGet))
+	a.NotError(test.mux.HandleFunc("/api/1", buildFunc(201), http.MethodGet))
+	a.NotError(test.mux.HandleFunc("/api/1", buildFunc(201), http.MethodPut))
+	a.NotError(test.mux.HandleFunc("/api/2", buildFunc(202), http.MethodGet))
 
-	test.matchTrue(http.MethodGet, "/api/1", 1)
-	test.matchTrue(http.MethodPut, "/api/1", 1)
-	test.matchTrue(http.MethodGet, "/api/2", 2)
+	test.matchTrue(http.MethodGet, "/api/1", 201)
+	test.matchTrue(http.MethodPut, "/api/1", 201)
+	test.matchTrue(http.MethodGet, "/api/2", 202)
 	test.matchTrue(http.MethodDelete, "/api/1", http.StatusMethodNotAllowed) // 未实现
 
 	// 删除 GET /api/1
 	test.mux.Remove("/api/1", http.MethodGet)
 	test.matchTrue(http.MethodGet, "/api/1", http.StatusMethodNotAllowed)
-	test.matchTrue(http.MethodPut, "/api/1", 1) // 不影响 PUT
-	test.matchTrue(http.MethodGet, "/api/2", 2)
+	test.matchTrue(http.MethodPut, "/api/1", 201) // 不影响 PUT
+	test.matchTrue(http.MethodGet, "/api/2", 202)
 
 	// 删除 GET /api/2，只有一个，所以相当于整个节点被删除
 	test.mux.Remove("/api/2", http.MethodGet)
 	test.matchTrue(http.MethodGet, "/api/1", http.StatusMethodNotAllowed)
-	test.matchTrue(http.MethodPut, "/api/1", 1)                   // 不影响 PUT
+	test.matchTrue(http.MethodPut, "/api/1", 201)                 // 不影响 PUT
 	test.matchTrue(http.MethodGet, "/api/2", http.StatusNotFound) // 整个节点被删除
 
 	// 添加 POST /api/1
-	a.NotError(test.mux.Handle("/api/1", buildFunc(1), http.MethodPost))
-	test.matchTrue(http.MethodPost, "/api/1", 1)
+	a.NotError(test.mux.Handle("/api/1", buildFunc(201), http.MethodPost))
+	test.matchTrue(http.MethodPost, "/api/1", 201)
 
 	// 删除 ANY /api/1
 	test.mux.Remove("/api/1")
@@ -215,11 +196,11 @@ func TestMux_Options(t *testing.T) {
 	test := newTester(a, false, true, false)
 
 	// 添加 GET /api/1
-	a.NotError(test.mux.Handle("/api/1", buildHandler(1), http.MethodGet))
+	a.NotError(test.mux.Handle("/api/1", buildHandler(201), http.MethodGet))
 	test.optionsTrue("/api/1", http.StatusOK, "GET, OPTIONS")
 
 	// 添加 DELETE /api/1
-	a.NotError(test.mux.Handle("/api/1", buildHandler(1), http.MethodDelete))
+	a.NotError(test.mux.Handle("/api/1", buildHandler(201), http.MethodDelete))
 	test.optionsTrue("/api/1", http.StatusOK, "DELETE, GET, OPTIONS")
 
 	// 删除 DELETE /api/1
@@ -232,8 +213,8 @@ func TestMux_Options(t *testing.T) {
 	test.mux.Options("/api/1", "CUSTOM OPTIONS2")
 	test.optionsTrue("/api/1", http.StatusOK, "CUSTOM OPTIONS2")
 
-	test.mux.HandleFunc("/api/1", buildFunc(1), http.MethodOptions)
-	test.optionsTrue("/api/1", 1, "")
+	test.mux.HandleFunc("/api/1", buildFunc(201), http.MethodOptions)
+	test.optionsTrue("/api/1", 201, "")
 
 	// disableOptions 为 true
 	test = newTester(a, true, true, false)
@@ -294,11 +275,11 @@ func TestMux_ServeHTTP(t *testing.T) {
 	a := assert.New(t)
 	test := newTester(a, false, true, false)
 
-	test.mux.Handle("/posts/{path}.html", buildHandler(1))
-	test.matchTrue(http.MethodGet, "/posts/2017/1.html", 1)
+	test.mux.Handle("/posts/{path}.html", buildHandler(201))
+	test.matchTrue(http.MethodGet, "/posts/2017/1.html", 201)
 
-	test.mux.Handle("/posts/{path:.+}.html", buildHandler(2))
-	test.matchTrue(http.MethodGet, "/posts/2017/1.html", 2)
+	test.mux.Handle("/posts/{path:.+}.html", buildHandler(202))
+	test.matchTrue(http.MethodGet, "/posts/2017/1.html", 202)
 }
 
 // 测试匹配顺序是否正确
@@ -306,32 +287,32 @@ func TestMux_ServeHTTP_Order(t *testing.T) {
 	a := assert.New(t)
 	test := newTester(a, false, true, false)
 
-	a.NotError(test.mux.GetFunc("/posts/{id}", buildFunc(3)))      // f3
-	a.NotError(test.mux.GetFunc("/posts/{id:\\d+}", buildFunc(2))) // f2
-	a.NotError(test.mux.GetFunc("/posts/1", buildFunc(1)))         // f1
-	test.matchTrue(http.MethodGet, "/posts/1", 1)                  // f1 普通路由项完全匹配
-	test.matchTrue(http.MethodGet, "/posts/2", 2)                  // f1 正则路由
-	test.matchTrue(http.MethodGet, "/posts/abc", 3)                // f3 命名路由
+	a.NotError(test.mux.GetFunc("/posts/{id}", buildFunc(203)))      // f3
+	a.NotError(test.mux.GetFunc("/posts/{id:\\d+}", buildFunc(202))) // f2
+	a.NotError(test.mux.GetFunc("/posts/1", buildFunc(201)))         // f1
+	test.matchTrue(http.MethodGet, "/posts/1", 201)                  // f1 普通路由项完全匹配
+	test.matchTrue(http.MethodGet, "/posts/2", 202)                  // f1 正则路由
+	test.matchTrue(http.MethodGet, "/posts/abc", 203)                // f3 命名路由
 
 	test = newTester(a, false, true, false)
-	a.NotError(test.mux.GetFunc("/p1/{p1}/p2/{p2:\\d+}", buildFunc(1))) // f1
-	a.NotError(test.mux.GetFunc("/p1/{p1}/p2/{p2:\\w+}", buildFunc(2))) // f2
-	test.matchTrue(http.MethodGet, "/p1/1/p2/1", 1)                     // f1
-	test.matchTrue(http.MethodGet, "/p1/2/p2/s", 2)                     // f2
+	a.NotError(test.mux.GetFunc("/p1/{p1}/p2/{p2:\\d+}", buildFunc(201))) // f1
+	a.NotError(test.mux.GetFunc("/p1/{p1}/p2/{p2:\\w+}", buildFunc(202))) // f2
+	test.matchTrue(http.MethodGet, "/p1/1/p2/1", 201)                     // f1
+	test.matchTrue(http.MethodGet, "/p1/2/p2/s", 202)                     // f2
 
 	test = newTester(a, false, true, false)
-	a.NotError(test.mux.GetFunc("/posts/{id}/{page}", buildFunc(2))) // f2
-	a.NotError(test.mux.GetFunc("/posts/{id}/1", buildFunc(1)))      // f1
-	test.matchTrue(http.MethodGet, "/posts/1/1", 1)                  // f1 普通路由项完全匹配
-	test.matchTrue(http.MethodGet, "/posts/2/5", 2)                  // f2 命名完全匹配
+	a.NotError(test.mux.GetFunc("/posts/{id}/{page}", buildFunc(202))) // f2
+	a.NotError(test.mux.GetFunc("/posts/{id}/1", buildFunc(201)))      // f1
+	test.matchTrue(http.MethodGet, "/posts/1/1", 201)                  // f1 普通路由项完全匹配
+	test.matchTrue(http.MethodGet, "/posts/2/5", 202)                  // f2 命名完全匹配
 
 	test = newTester(a, false, true, false)
-	a.NotError(test.mux.GetFunc("/tags/{id}.html", buildFunc(1))) // f1
-	a.NotError(test.mux.GetFunc("/tags.html", buildFunc(2)))      // f2
-	a.NotError(test.mux.GetFunc("/{path}", buildFunc(3)))         // f3
-	test.matchTrue(http.MethodGet, "/tags", 3)                    // f3 // 正好与 f1 的第一个节点匹配
-	test.matchTrue(http.MethodGet, "/tags/1.html", 1)             // f1
-	test.matchTrue(http.MethodGet, "/tags.html", 2)               // f2
+	a.NotError(test.mux.GetFunc("/tags/{id}.html", buildFunc(201))) // f1
+	a.NotError(test.mux.GetFunc("/tags.html", buildFunc(202)))      // f2
+	a.NotError(test.mux.GetFunc("/{path}", buildFunc(203)))         // f3
+	test.matchTrue(http.MethodGet, "/tags", 203)                    // f3 // 正好与 f1 的第一个节点匹配
+	test.matchTrue(http.MethodGet, "/tags/1.html", 201)             // f1
+	test.matchTrue(http.MethodGet, "/tags.html", 202)               // f2
 }
 
 func TestMethods(t *testing.T) {
