@@ -16,8 +16,7 @@ func (t *tester) prefix(p string) *Prefix {
 }
 
 func TestPrefix(t *testing.T) {
-	a := assert.New(t)
-	test := newTester(a, false, true, false)
+	test := newTester(t, false, true, false)
 	p := test.prefix("/p")
 
 	p.Get("/h/1", buildHandler(201))

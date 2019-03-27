@@ -12,16 +12,16 @@ import (
 )
 
 func (t *tester) resource(p string) *Resource {
-	r := t.mux.Resource(p)
-	t.a.NotNil(r)
-	return r
+	return t.mux.Resource(p)
 }
 
 func TestResource(t *testing.T) {
 	a := assert.New(t)
-	test := newTester(a, false, true, false)
+	test := newTester(t, false, true, false)
 	h := test.resource("/h/1")
+	a.NotNil(h)
 	f := test.resource("/f/1")
+	a.NotNil(f)
 
 	h.Get(buildHandler(201))
 	test.matchTrue(http.MethodGet, "/h/1", 201)

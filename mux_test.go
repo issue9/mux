@@ -29,17 +29,15 @@ func buildFunc(code int) http.HandlerFunc {
 
 // mux 的测试工具
 type tester struct {
-	a   *assert.Assertion
 	mux *Mux
 	srv *rest.Server
 }
 
-func newTester(a *assert.Assertion, disableOptions, disableHead, skipClean bool) *tester {
+func newTester(t testing.TB, disableOptions, disableHead, skipClean bool) *tester {
 	mux := New(disableOptions, disableHead, skipClean, nil, nil)
 	return &tester{
-		a:   a,
 		mux: mux,
-		srv: rest.NewServer(a.TB(), mux, nil),
+		srv: rest.NewServer(t, mux, nil),
 	}
 }
 
@@ -59,8 +57,7 @@ func (t *tester) optionsTrue(path string, code int, allow string) {
 }
 
 func TestMux(t *testing.T) {
-	a := assert.New(t)
-	test := newTester(a, false, true, false)
+	test := newTester(t, false, true, false)
 
 	// 测试 / 和 "" 是否访问同一地址
 	test.mux.Get("/", buildHandler(201))
@@ -113,8 +110,7 @@ func TestMux(t *testing.T) {
 }
 
 func TestMux_Head(t *testing.T) {
-	a := assert.New(t)
-	test := newTester(a, false, false, false)
+	test := newTester(t, false, false, false)
 
 	test.mux.Get("/", buildHandler(201))
 	test.matchTrue(http.MethodGet, "", 201)
@@ -156,7 +152,7 @@ func TestMux_Head(t *testing.T) {
 
 func TestMux_Add_Remove(t *testing.T) {
 	a := assert.New(t)
-	test := newTester(a, false, true, false)
+	test := newTester(t, false, true, false)
 
 	// 添加 GET /api/1
 	// 添加 PUT /api/1
@@ -193,7 +189,7 @@ func TestMux_Add_Remove(t *testing.T) {
 
 func TestMux_Options(t *testing.T) {
 	a := assert.New(t)
-	test := newTester(a, false, true, false)
+	test := newTester(t, false, true, false)
 
 	// 添加 GET /api/1
 	a.NotError(test.mux.Handle("/api/1", buildHandler(201), http.MethodGet))
@@ -217,8 +213,7 @@ func TestMux_Options(t *testing.T) {
 	test.optionsTrue("/api/1", 201, "")
 
 	// disableOptions 为 true
-	test = newTester(a, true, true, false)
-	a.NotNil(test)
+	test = newTester(t, true, true, false)
 	test.optionsTrue("/api/1", http.StatusNotFound, "")
 	test.mux.Options("/api/1", "CUSTOM OPTIONS1") // 显示指定
 	test.optionsTrue("/api/1", http.StatusOK, "CUSTOM OPTIONS1")
@@ -272,8 +267,7 @@ func TestMux_Params(t *testing.T) {
 }
 
 func TestMux_ServeHTTP(t *testing.T) {
-	a := assert.New(t)
-	test := newTester(a, false, true, false)
+	test := newTester(t, false, true, false)
 
 	test.mux.Handle("/posts/{path}.html", buildHandler(201))
 	test.matchTrue(http.MethodGet, "/posts/2017/1.html", 201)
@@ -285,7 +279,7 @@ func TestMux_ServeHTTP(t *testing.T) {
 // 测试匹配顺序是否正确
 func TestMux_ServeHTTP_Order(t *testing.T) {
 	a := assert.New(t)
-	test := newTester(a, false, true, false)
+	test := newTester(t, false, true, false)
 
 	a.NotError(test.mux.GetFunc("/posts/{id}", buildFunc(203)))      // f3
 	a.NotError(test.mux.GetFunc("/posts/{id:\\d+}", buildFunc(202))) // f2
@@ -294,19 +288,19 @@ func TestMux_ServeHTTP_Order(t *testing.T) {
 	test.matchTrue(http.MethodGet, "/posts/2", 202)                  // f1 正则路由
 	test.matchTrue(http.MethodGet, "/posts/abc", 203)                // f3 命名路由
 
-	test = newTester(a, false, true, false)
+	test = newTester(t, false, true, false)
 	a.NotError(test.mux.GetFunc("/p1/{p1}/p2/{p2:\\d+}", buildFunc(201))) // f1
 	a.NotError(test.mux.GetFunc("/p1/{p1}/p2/{p2:\\w+}", buildFunc(202))) // f2
 	test.matchTrue(http.MethodGet, "/p1/1/p2/1", 201)                     // f1
 	test.matchTrue(http.MethodGet, "/p1/2/p2/s", 202)                     // f2
 
-	test = newTester(a, false, true, false)
+	test = newTester(t, false, true, false)
 	a.NotError(test.mux.GetFunc("/posts/{id}/{page}", buildFunc(202))) // f2
 	a.NotError(test.mux.GetFunc("/posts/{id}/1", buildFunc(201)))      // f1
 	test.matchTrue(http.MethodGet, "/posts/1/1", 201)                  // f1 普通路由项完全匹配
 	test.matchTrue(http.MethodGet, "/posts/2/5", 202)                  // f2 命名完全匹配
 
-	test = newTester(a, false, true, false)
+	test = newTester(t, false, true, false)
 	a.NotError(test.mux.GetFunc("/tags/{id}.html", buildFunc(201))) // f1
 	a.NotError(test.mux.GetFunc("/tags.html", buildFunc(202)))      // f2
 	a.NotError(test.mux.GetFunc("/{path}", buildFunc(203)))         // f3
