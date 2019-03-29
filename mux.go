@@ -218,6 +218,7 @@ func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // Name 为一条路由项命名。
+//
 // URL 可以通过此属性来生成地址。
 func (mux *Mux) Name(name, pattern string) error {
 	mux.namesMu.Lock()
@@ -232,6 +233,7 @@ func (mux *Mux) Name(name, pattern string) error {
 }
 
 // URL 根据参数生成地址。
+//
 // name 为路由的名称，或是直接为路由项的定义内容；
 // params 为路由项中的参数，键名为参数名，键值为参数值。
 func (mux *Mux) URL(name string, params map[string]string) (string, error) {
