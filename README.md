@@ -44,8 +44,8 @@ http.ListenAndServe(":8080", m)
 路由中支持以正则表达式的方式进行匹配，表达式以大括号包含，内部以冒号分隔，
 前半部分为变量的名称，后半部分为变量可匹配类型的正则表达式。比如：
 ```go
- /posts/{id:\\d+} // 将被转换成 /posts/(?P<id>\\d+)
- /posts/{:\\d+}   // 将被转换成 /posts/\\d+
+/posts/{id:\\d+} // 将被转换成 /posts/(?P<id>\\d+)
+/posts/{:\\d+}   // 将被转换成 /posts/\\d+
 ```
 
 
@@ -55,8 +55,8 @@ http.ListenAndServe(":8080", m)
 则会被转换成命名参数，因为不需要作正则验证，性能会比较正则稍微好上一些。
 命名参数匹配所有字符。
 ```go
- /posts/{id}.html                  // 匹配 /posts/1.html
- /posts-{id}-{page}.html           // 匹配 /posts-1-10.html
+/posts/{id}.html                  // 匹配 /posts/1.html
+/posts-{id}-{page}.html           // 匹配 /posts-1-10.html
 ```
 
 
@@ -64,9 +64,9 @@ http.ListenAndServe(":8080", m)
 
 在路由字符串中若是以命名参数结尾的，则表示可以匹配之后的任意字符。
 ```go
- /blog/assets/{path}
- /blog/{tags:\\w+}/{path}
- /blog/assets{path}
+/blog/assets/{path}
+/blog/{tags:\\w+}/{path}
+/blog/assets{path}
 ```
 
 
@@ -79,13 +79,13 @@ http.ListenAndServe(":8080", m)
 
 比如：
 ```go
- /posts/{id}.html              // 1
- /posts/{id:\\d+}.html         // 2
- /posts/1.html                 // 3
+/posts/{id}.html              // 1
+/posts/{id:\\d+}.html         // 2
+/posts/1.html                 // 3
 
- /posts/1.html      // 匹配 3
- /posts/11.html     // 匹配 2
- /posts/index.html  // 匹配 1
+/posts/1.html      // 匹配 3
+/posts/11.html     // 匹配 2
+/posts/index.html  // 匹配 1
 ```
 
 
@@ -94,8 +94,8 @@ http.ListenAndServe(":8080", m)
 如果路由以非 / 开头，则自动将第一个 / 之前的判定为域名，并对其进行域名限定。
 比如以下格式：
 ```go
- example.com/html/1.html
- *.example.com/html/1.html
+example.com/html/{id}.html   // 匹配 example.com/html/1.html
+*.example.com/html/{id}.html // 支持泛域名，匹配 s1.example.com/html/1.html
 ```
 
 
@@ -103,11 +103,11 @@ http.ListenAndServe(":8080", m)
 
 通过正则表达式匹配的路由，其中带命名的参数可通过 Params() 获取：
 ```go
- params := Params(r)
+params := Params(r)
 
- id, err := params.Int("id")
+id, err := params.Int("id")
  // 或是
- id := params.MustInt("id", 0) // 0 表示在无法获取 id 参数的默认值
+id := params.MustInt("id", 0) // 0 表示在无法获取 id 参数的默认值
 ```
 
 
@@ -120,13 +120,13 @@ http.ListenAndServe(":8080", m)
 如果不需要的话，也可以在 New() 中将 disableOptions 设置为 true。
 显示设定 OPTIONS，不受 disableOptions 的影响。
 ```go
- m := mux.New(...)
- m.Get("/posts/{id}", nil)     // 默认情况下， OPTIONS 的报头为 GET, OPTIONS
- m.Options("/posts/{id}", "*") // 强制改成 *
- m.Delete("/posts/{id}", nil)  // OPTIONS 依然为 *
+m := mux.New(...)
+m.Get("/posts/{id}", nil)     // 默认情况下， OPTIONS 的报头为 GET, OPTIONS
+m.Options("/posts/{id}", "*") // 强制改成 *
+m.Delete("/posts/{id}", nil)  // OPTIONS 依然为 *
 
- m.Remove("/posts/{id}", http.MethodOptions)    // 在当前路由上禁用 OPTIONS
- m.Handle("/posts/{id}", h, http.MethodOptions) // 显示指定一个处理函数 h
+m.Remove("/posts/{id}", http.MethodOptions)    // 在当前路由上禁用 OPTIONS
+m.Handle("/posts/{id}", h, http.MethodOptions) // 显示指定一个处理函数 h
 ```
 
 

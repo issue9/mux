@@ -75,8 +75,8 @@
 //
 // 如果路由以非 / 开头，则自动将第一个 / 之前的判定为域名，并对其进行域名限定。
 // 比如以下格式：
-//  example.com/html/1.html
-//  *.example.com/html/1.html
+//  example.com/html/{id}.html   // 匹配 example.com/html/1.html
+//  *.example.com/html/{id}.html // 支持泛域名，匹配 s1.example.com/html/1.html
 //
 //
 //
@@ -109,7 +109,7 @@
 //
 //
 //
-//  HEAD
+// HEAD
 //
 //  默认情况下，用户无须显示地实现 HEAD 请求，
 //  系统会为每一个 GET 请求自动实现一个对应的 HEAD 请求，
