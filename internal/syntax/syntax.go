@@ -95,11 +95,9 @@ func parse(str string) ([]*Segment, error) {
 			start := s.start
 			s.setStart(i)
 
-			if i == 0 { // 以 { 开头
-				continue
+			if i > 0 { // i==0 表示以 { 开头
+				ss = append(ss, NewSegment(str[start:i]))
 			}
-
-			ss = append(ss, NewSegment(str[start:i]))
 		case separator:
 			s.setSeparator(i)
 		case end:

@@ -132,10 +132,8 @@ func longestPrefix(s1, s2 string) int {
 		}
 
 		if s1[i] != s2[i] {
-			if state != end { // 不从命名参数中间分隔
-				return startIndex
-			}
-			if endIndex == i { // 命名参数之后必须要有一个或以上的普通字符
+			if state != end || // 不从命名参数中间分隔
+				endIndex == i { // 命名参数之后必须要有一个或以上的普通字符
 				return startIndex
 			}
 			return i

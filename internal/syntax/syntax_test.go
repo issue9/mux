@@ -94,3 +94,14 @@ func TestSplit(t *testing.T) {
 		Split("")
 	})
 }
+
+func TestIsWell(t *testing.T) {
+	a := assert.New(t)
+
+	a.NotError(IsWell("/posts/"))
+	a.NotError(IsWell("/posts/{id}"))
+	a.NotError(IsWell("/posts/{id:\\d+}"))
+
+	a.Error(IsWell("/posts/{id:\\d+"))
+	a.Error(IsWell("/posts/id:\\d+}"))
+}
