@@ -100,6 +100,11 @@ func TestResource_Name_URL(t *testing.T) {
 	url, err = res.URL(map[string]string{"id": "1", "path": "p1"})
 	a.NotError(err).Equal(url, "/api/1/p1")
 
+	// 不对正则参数做类型校验，可以生成不符合正则要求的路径。
+	// 方便特殊情况下使用。
+	url, err = res.URL(map[string]string{"id": "xxx", "path": "p1"})
+	a.NotError(err).Equal(url, "/api/xxx/p1")
+
 	// 多个参数
 	res = srvmux.Resource("/api/{action}/{id:\\d+}")
 	a.NotNil(res)
