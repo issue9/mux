@@ -1,6 +1,4 @@
-// Copyright 2017 by caixw, All rights reserved.
-// Use of this source code is governed by a MIT
-// license that can be found in the LICENSE file.
+// SPDX-License-Identifier: MIT
 
 // Package params 获取和转换路由中的参数信息。
 package params

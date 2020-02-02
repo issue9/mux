@@ -1,6 +1,4 @@
-// Copyright 2019 by caixw, All rights reserved.
-// Use of this source code is governed by a MIT
-// license that can be found in the LICENSE file.
+// SPDX-License-Identifier: MIT
 
 // Package syntax 负责处理路由语法
 package syntax
