@@ -1,2 +1,4 @@
 github.com/issue9/assert v1.3.4 h1:m9O+Nmi0ejRsLaTfQa349WTQtryQYHynBn6DFv6+sNY=
 github.com/issue9/assert v1.3.4/go.mod h1:9Ger+iz8X7r1zMYYwEhh++2wMGWcNN2oVI+zIQXxcio=
+github.com/issue9/errwrap v0.1.1 h1:akAQ1z726dnwhNzI7eAmCvYXYPbvF6OTGwct/vRVev0=
+github.com/issue9/errwrap v0.1.1/go.mod h1:H9mdt7KifDebeRecMn5yt7F25f+4N0V2sqIqyZnNjzQ=

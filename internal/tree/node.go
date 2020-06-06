@@ -7,6 +7,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/issue9/errwrap"
+
 	"github.com/issue9/mux/v2/internal/handlers"
 	"github.com/issue9/mux/v2/internal/syntax"
 	"github.com/issue9/mux/v2/params"
@@ -224,27 +226,24 @@ func (n *node) url(params map[string]string) (string, error) {
 		nodes = append(nodes, curr)
 	}
 
-	var buf strings.Builder
-	var err error
+	var buf errwrap.StringBuilder
 	for i := len(nodes) - 1; i >= 0; i-- {
 		node := nodes[i]
 		switch node.segment.Type {
 		case syntax.String:
-			_, err = buf.WriteString(node.segment.Value)
+			buf.WString(node.segment.Value)
 		case syntax.Named, syntax.Regexp:
 			param, exists := params[node.segment.Name]
 			if !exists {
 				return "", fmt.Errorf("未找到参数 %s 的值", node.segment.Name)
 			}
-			if _, err = buf.WriteString(param); err != nil {
-				return "", err
-			}
-			_, err = buf.WriteString(node.segment.Suffix) // 如果是 endpoint suffix 肯定为空
+			buf.WString(param).
+				WString(node.segment.Suffix) // 如果是 endpoint suffix 肯定为空
 		} // end switch
 	} // end for
 
-	if err != nil {
-		return "", err
+	if buf.Err != nil {
+		return "", buf.Err
 	}
 	return buf.String(), nil
 }
