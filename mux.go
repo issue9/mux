@@ -47,7 +47,7 @@ type Mux struct {
 	namesMu sync.RWMutex
 }
 
-// New 声明一个新的 Mux。
+// New 声明一个新的 Mux
 //
 // disableOptions 是否禁用自动生成 OPTIONS 功能；
 // disableHead 是否根据 Get 请求自动生成 HEAD 请求；
@@ -97,7 +97,7 @@ func (mux *Mux) Remove(pattern string, methods ...string) *Mux {
 	return mux
 }
 
-// Handle 添加一条路由数据。
+// Handle 添加一条路由数据
 //
 // pattern 为路由匹配模式，可以是正则匹配也可以是字符串匹配，
 // 若语法不正确，则直接 panic，可以通过 IsWell 检测语法的有效性，其它接口也相同；
@@ -107,7 +107,7 @@ func (mux *Mux) Handle(pattern string, h http.Handler, methods ...string) error 
 	return mux.hosts.Add(pattern, h, methods...)
 }
 
-// Options 将 OPTIONS 请求方法的报头 allow 值固定为指定的值。
+// Options 将 OPTIONS 请求方法的报头 allow 值固定为指定的值
 //
 // 若无特殊需求，不用调用此方法，系统会自动计算符合当前路由的请求方法列表。
 // 如果想实现对处理方法的自定义，可以显示地调用 Handle 方法:
@@ -215,7 +215,7 @@ func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.ServeHTTP(w, r)
 }
 
-// Name 为一条路由项命名。
+// Name 为一条路由项命名
 //
 // URL 可以通过此属性来生成地址。
 func (mux *Mux) Name(name, pattern string) error {
@@ -230,7 +230,7 @@ func (mux *Mux) Name(name, pattern string) error {
 	return nil
 }
 
-// URL 根据参数生成地址。
+// URL 根据参数生成地址
 //
 // name 为路由的名称，或是直接为路由项的定义内容；
 // params 为路由项中的参数，键名为参数名，键值为参数值。
@@ -246,7 +246,9 @@ func (mux *Mux) URL(name string, params map[string]string) (string, error) {
 	return mux.hosts.URL(pattern, params)
 }
 
-// Params 获取路由的参数集合。详细情况可参考 params.Get
+// Params 获取路由的参数集合
+//
+// NOTE: 详细情况可参考 params.Get
 func Params(r *http.Request) params.Params {
 	return params.Get(r)
 }
