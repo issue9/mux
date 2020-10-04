@@ -4,7 +4,8 @@ package mux
 
 import "net/http"
 
-// Resource 以资源地址为对象的路由配置。
+// Resource 以资源地址为对象的路由配置
+//
 //  r, _ := srv.Resource("/api/users/{id}")
 //  r.Get(h)  // 相当于 srv.Get("/api/users/{id}")
 //  r.Post(h) // 相当于 srv.Post("/api/users/{id}")
@@ -14,7 +15,9 @@ type Resource struct {
 	pattern string
 }
 
-// Options 手动指定 OPTIONS 请求方法的值。具体说明可参考 Mux.Options 方法。
+// Options 手动指定 OPTIONS 请求方法的值
+//
+// 具体说明可参考 Mux.Options 方法。
 func (r *Resource) Options(allow string) *Resource {
 	r.mux.Options(r.pattern, allow)
 	return r
@@ -117,13 +120,14 @@ func (r *Resource) Clean() *Resource {
 	return r
 }
 
-// Name 为一条路由项命名。
+// Name 为一条路由项命名
+//
 // URL 可以通过此属性来生成地址。
 func (r *Resource) Name(name string) error {
 	return r.mux.Name(name, r.pattern)
 }
 
-// URL 根据参数构建一条 URL。
+// URL 根据参数构建一条 URL
 //
 // params 匹配路由参数中的同名参数，或是不存在路由参数，比如普通的字符串路由项，
 // 该参数不启作用；
@@ -136,7 +140,7 @@ func (r *Resource) URL(params map[string]string) (string, error) {
 	return r.mux.URL(r.pattern, params)
 }
 
-// Resource 创建一个资源路由项。
+// Resource 创建一个资源路由项
 func (mux *Mux) Resource(pattern string) *Resource {
 	return &Resource{
 		mux:     mux,
@@ -144,7 +148,7 @@ func (mux *Mux) Resource(pattern string) *Resource {
 	}
 }
 
-// Resource 创建一个资源路由项。
+// Resource 创建一个资源路由项
 func (p *Prefix) Resource(pattern string) *Resource {
 	return &Resource{
 		mux:     p.mux,

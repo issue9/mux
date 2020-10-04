@@ -24,12 +24,14 @@ var (
 	}
 )
 
-// ErrNameExists 当为一个路由项命名时，若存在相同名称的，则返回此错误信息。
+// ErrNameExists 存在相同名称
+//
+// 当为一个路由项命名时，若存在相同名称的，则返回此错误信息。
 var ErrNameExists = errors.New("存在相同名称的路由项")
 
-// Mux 提供了强大的路由匹配功能，可以对路径按正则或是请求方法进行匹配。
+// Mux 提供了强大的路由匹配功能
 //
-// 用法如下：
+// 可以对路径按正则或是请求方法进行匹配。用法如下：
 //  m := mux.New()
 //  m.Get("/abc/h1", h1).
 //    Post("/abc/h2", h2).
@@ -88,7 +90,7 @@ func (mux *Mux) All(ignoreHead, ignoreOptions bool) map[string][]string {
 	return mux.hosts.All(ignoreHead, ignoreOptions)
 }
 
-// Remove 移除指定的路由项。
+// Remove 移除指定的路由项
 //
 // 当未指定 methods 时，将删除所有 method 匹配的项。
 // 指定错误的 methods 值，将自动忽略该值。

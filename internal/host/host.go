@@ -85,7 +85,7 @@ func (hs *Hosts) All(ignoreHead, ignoreOptions bool) (routes map[string][]string
 	return routes
 }
 
-// URL 根据参数生成地址。
+// URL 根据参数生成地址
 func (hs *Hosts) URL(pattern string, params map[string]string) (string, error) {
 	domain, pattern := hs.split(pattern)
 

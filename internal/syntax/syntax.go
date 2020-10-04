@@ -73,7 +73,7 @@ func getType(str string) Type {
 	return typ
 }
 
-// 将字符串解析成字符串数组。
+// 将字符串解析成字符串数组
 //
 // 以 { 为分界线进行分割。比如
 //  /posts/{id}/email ==> /posts/, {id}/email
@@ -118,7 +118,7 @@ func parse(str string) ([]*Segment, error) {
 	return ss, nil
 }
 
-// Split 将字符串解析成字符串数组。
+// Split 将字符串解析成字符串数组
 //
 // 以 { 为分界线进行分割。比如
 //  /posts/{id}/email ==> /posts/, {id}/email

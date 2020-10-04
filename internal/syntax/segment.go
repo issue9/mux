@@ -9,7 +9,7 @@ import (
 	"github.com/issue9/mux/v2/params"
 )
 
-// Segment 路由项被拆分之后的分段内容。
+// Segment 路由项被拆分之后的分段内容
 type Segment struct {
 	Value string
 	Type  Type

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-// Package mux 是一个提供了路由匹配功能的中间件。
+// Package mux 是一个提供了路由匹配功能的中间件
 //
 //  m := mux.New(false, false, false, nil, nil).
 //      Get("/users/1", h).

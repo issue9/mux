@@ -17,7 +17,7 @@ import (
 // node.children 的数量只有达到此值时，才会为其建立 indexes 索引表。
 const indexesSize = 5
 
-// 表示路由中的节点。
+// 表示路由中的节点
 type node struct {
 	parent   *node
 	handlers *handlers.Handlers
@@ -50,7 +50,7 @@ func (n *node) buildIndexes() {
 	}
 }
 
-// 当前节点的优先级。
+// 当前节点的优先级
 //
 // parent.children 根据此值进行排序。
 // 不同的节点类型拥有不同的优先级，相同类型的，则有子节点的优先级低。

@@ -11,7 +11,7 @@ import (
 	"github.com/issue9/mux/v2/params"
 )
 
-// Tree 以树节点的形式保存的路由。
+// Tree 以树节点的形式保存的路由
 //
 // 多段路由项，会提取其中的相同的内容组成树状结构的节点。
 // 比如以下路由项：
@@ -44,7 +44,7 @@ func New(disableOptions, disableHead bool) *Tree {
 	}
 }
 
-// Add 添加路由项。
+// Add 添加路由项
 //
 // methods 可以为空，表示添加除 OPTIONS 之外所有支持的请求方法。
 func (tree *Tree) Add(pattern string, h http.Handler, methods ...string) error {
@@ -82,7 +82,8 @@ func (tree *Tree) getNode(pattern string) *node {
 	return tree.node.getNode(syntax.Split(pattern))
 }
 
-// SetAllow 设置指定节点的 allow 报头。
+// SetAllow 设置指定节点的 allow 报头
+//
 // 若节点不存在，则会自动生成该节点。
 func (tree *Tree) SetAllow(pattern, allow string) {
 	n := tree.getNode(pattern)
@@ -94,14 +95,14 @@ func (tree *Tree) SetAllow(pattern, allow string) {
 	n.handlers.SetAllow(allow)
 }
 
-// URL 根据参数生成地址。
+// URL 根据参数生成地址
 //
 // 若节点不存在，则会自动生成。
 func (tree *Tree) URL(pattern string, params map[string]string) (string, error) {
 	return tree.getNode(pattern).url(params)
 }
 
-// Handler 找到与当前内容匹配的 handlers.Handlers 实例。
+// Handler 找到与当前内容匹配的 handlers.Handlers 实例
 func (tree *Tree) Handler(path string) (*handlers.Handlers, params.Params) {
 	ps := make(params.Params, 3)
 	node := tree.match(path, ps)

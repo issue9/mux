@@ -7,14 +7,14 @@ mux
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/issue9/mux/v2)](https://pkg.go.dev/github.com/issue9/mux/v2)
 ======
 
-mux 是一个实现了 [http.Handler](https://godoc.org/net/http#Handler) 的中间件，为用户提供了以下功能：
+mux 是一个实现了 [http.Handler](https://pkg.go.dev/net/http#Handler) 的中间件，为用户提供了以下功能：
 
 1. 正则路由；
 1. 路由参数；
 1. 丰富的 OPTIONS 请求处理方式；
 1. 自动生成 HEAD 请求内容；
 1. 限定域名；
-1. 根据路由生成地址。
+1. 根据路由生成地址；
 
 ```go
 m := mux.New(false, false, false, nil, nil).
@@ -42,6 +42,7 @@ http.ListenAndServe(":8080", m)
 
 路由中支持以正则表达式的方式进行匹配，表达式以大括号包含，内部以冒号分隔，
 前半部分为变量的名称，后半部分为变量可匹配类型的正则表达式。比如：
+
 ```go
 /posts/{id:\\d+} // 将被转换成 /posts/(?P<id>\\d+)
 /posts/{:\\d+}   // 将被转换成 /posts/\\d+

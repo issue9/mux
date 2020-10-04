@@ -4,7 +4,9 @@ package mux
 
 import "net/http"
 
-// Prefix 可以将具有统一前缀的路由项集中在一起操作。
+// Prefix 可以将具有统一前缀的路由项集中在一起操作
+//
+// example:
 //  p := srv.Prefix("/api")
 //  p.Get("/users")  // 相当于 srv.Get("/api/users")
 //  p.Get("/user/1") // 相当于 srv.Get("/api/user/1")
@@ -13,7 +15,7 @@ type Prefix struct {
 	prefix string
 }
 
-// Options 手动指定 OPTIONS 请求方法的值。具体说明可参考 Mux.Options 方法。
+// Options 手动指定 OPTIONS 请求方法的值
 func (p *Prefix) Options(pattern string, allow string) *Prefix {
 	p.mux.Options(p.prefix+pattern, allow)
 	return p
@@ -110,7 +112,7 @@ func (p *Prefix) Remove(pattern string, methods ...string) *Prefix {
 	return p
 }
 
-// Clean 清除所有以 Prefix.prefix 开头的 Entry。
+// Clean 清除所有以 Prefix.prefix 开头的 Entry
 //
 // 当指定多个相同的 Prefix 时，调用其中的一个 Clean 也将会清除其它的：
 //  p1 := mux.Prefix("prefix")
@@ -121,14 +123,15 @@ func (p *Prefix) Clean() *Prefix {
 	return p
 }
 
-// Name 为一条路由项命名。
+// Name 为一条路由项命名
 //
 // URL 可以通过此属性来生成地址。
 func (p *Prefix) Name(name, pattern string) error {
 	return p.mux.Name(name, p.prefix+pattern)
 }
 
-// URL 根据参数生成地址。
+// URL 根据参数生成地址
+//
 // name 为路由的名称，或是直接为路由项的定义内容，
 // 若 name 作为路由项定义，会加上 Prefix.prefix 作为前缀；
 // params 为路由项中的参数，键名为参数名，键值为参数值。
@@ -144,7 +147,9 @@ func (p *Prefix) URL(name string, params map[string]string) (string, error) {
 	return p.mux.hosts.URL(pattern, params)
 }
 
-// Prefix 在现在有 Prefix 的基础上声明一个新的 Prefix 实例。
+// Prefix 在现在有 Prefix 的基础上声明一个新的 Prefix 实例
+//
+// example:
 //  p := mux.Prefix("/api")
 //  v := p.Prefix("/v2")
 //  v.Get("/users")  // 相当于 g.Get("/api/v2/users")
@@ -156,7 +161,7 @@ func (p *Prefix) Prefix(prefix string) *Prefix {
 	}
 }
 
-// Prefix 声明一个 Prefix 实例。
+// Prefix 声明一个 Prefix 实例
 func (mux *Mux) Prefix(prefix string) *Prefix {
 	return &Prefix{
 		mux:    mux,

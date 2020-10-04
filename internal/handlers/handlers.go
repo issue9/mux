@@ -158,7 +158,8 @@ func (hs *Handlers) getOptionsAllow() string {
 	return optionsStrings[index]
 }
 
-// Remove 移除某个请求方法对应的处理函数。
+// Remove 移除某个请求方法对应的处理函数
+//
 // 返回值表示是否已经被清空。
 func (hs *Handlers) Remove(methods ...string) bool {
 	if len(methods) == 0 {
@@ -198,7 +199,7 @@ func (hs *Handlers) Remove(methods ...string) bool {
 	return false
 }
 
-// SetAllow 设置 Options 请求头的 Allow 报头。
+// SetAllow 设置 Options 请求头的 Allow 报头
 func (hs *Handlers) SetAllow(optionsAllow string) {
 	if hs.optionsState == optionsStateDisable {
 		hs.handlers[http.MethodOptions] = http.HandlerFunc(hs.optionsServeHTTP)
