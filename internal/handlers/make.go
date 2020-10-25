@@ -6,11 +6,12 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"go/format"
 	"os"
 	"sort"
 	"strings"
+
+	"github.com/issue9/errwrap"
 
 	"github.com/issue9/mux/v2/internal/handlers"
 )
@@ -24,31 +25,24 @@ const (
 )
 
 func main() {
-	buf := new(bytes.Buffer)
-
-	ws := func(format string, v ...interface{}) {
-		_, err := fmt.Fprintf(buf, format, v...)
-		if err != nil {
-			panic(err)
-		}
-	}
+	buf := &errwrap.Buffer{Buffer: bytes.Buffer{}}
 
 	var maps = map[int]string{}
 	var size int
 
-	ws(fileheader)
-	ws("package %s\n\n", packagename)
+	buf.WString(fileheader)
+	buf.Printf("package %s\n\n", packagename)
 
-	ws("var %s=map[string]int{\n", methodTypeName)
+	buf.Printf("var %s=map[string]int{\n", methodTypeName)
 	for index, method := range handlers.Methods {
 		ii := 1 << uint(index)
-		ws("\"%s\":%d,\n", method, ii)
+		buf.Printf("\"%s\":%d,\n", method, ii)
 		maps[ii] = method
 		size += ii
 	}
-	ws("}\n\n")
+	buf.WString("}\n\n")
 
-	ws("var %s = []string{\n", optionsStringsName)
+	buf.Printf("var %s = []string{\n", optionsStringsName)
 
 	methods := make([]string, 0, len(handlers.Methods))
 	for i := 0; i <= size; i++ {
@@ -59,11 +53,11 @@ func main() {
 		}
 
 		sort.Strings(methods) // 统一的排序，方便测试使用
-		ws("\"%s\",\n", strings.Join(methods, ", "))
+		buf.Printf("\"%s\",\n", strings.Join(methods, ", "))
 		methods = methods[:0]
 	} // end for
 
-	ws("}")
+	buf.WByte('}')
 
 	data, err := format.Source(buf.Bytes())
 	if err != nil {

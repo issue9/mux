@@ -42,10 +42,11 @@ var Methods = []string{
 }
 
 // 除 OPTIONS 和 HEAD 之外的所有支持的元素
+//
 // 在 Add 方法中用到。
 var addAny = Methods[:len(Methods)-2]
 
-// Handlers 用于表示某节点下各个请求方法对应的处理函数。
+// Handlers 用于表示某节点下各个请求方法对应的处理函数
 type Handlers struct {
 	handlers map[string]http.Handler // 请求方法及其对应的 http.Handler
 
@@ -55,6 +56,7 @@ type Handlers struct {
 }
 
 // New 声明一个新的 Handlers 实例
+//
 // disableHead 是否自动添加 HEAD 请求内容。
 func New(disableOptions, disableHead bool) *Handlers {
 	ret := &Handlers{

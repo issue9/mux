@@ -2,7 +2,7 @@ module github.com/issue9/mux/v2
 
 require (
 	github.com/issue9/assert v1.4.1
-	github.com/issue9/errwrap v0.1.2
+	github.com/issue9/errwrap v0.2.0
 )
 
 go 1.13
