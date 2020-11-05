@@ -151,13 +151,14 @@ func (p *Prefix) URL(name string, params map[string]string) (string, error) {
 	return p.mux.hosts.URL(pattern, params)
 }
 
-// Prefix 在现在有 Prefix 的基础上声明一个新的 Prefix 实例
+// Prefix 在现有 Prefix 的基础上声明一个新的 Prefix 实例
 //
 // example:
 //  p := mux.Prefix("/api")
 //  v := p.Prefix("/v2")
-//  v.Get("/users")  // 相当于 g.Get("/api/v2/users")
-//  v.Get("/user/1") // 相当于 g.Get("/api/v2/user/1")
+//  v.Get("/users")   // 相当于 g.Get("/api/v2/users")
+//  v.Get("/users/1") // 相当于 g.Get("/api/v2/users/1")
+//  v.Get("example.com/users/1") // 相当于 g.Get("/api/v2/example.com/users/1")
 func (p *Prefix) Prefix(prefix string) *Prefix {
 	return &Prefix{
 		mux:    p.mux,
