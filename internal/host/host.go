@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/issue9/mux/v2/internal/handlers"
+	"github.com/issue9/mux/v2/internal/syntax"
 	"github.com/issue9/mux/v2/internal/tree"
 	"github.com/issue9/mux/v2/params"
 )
@@ -47,19 +48,19 @@ func New(disableOptions, disableHead, skipCleanPath bool) *Hosts {
 
 // Add 添加路由项
 func (hs *Hosts) Add(pattern string, h http.Handler, method ...string) error {
-	domain, pattern := hs.split(pattern)
+	domain, pattern := split(pattern)
 	return hs.getTree(domain).Add(pattern, h, method...)
 }
 
 // SetAllow 设置 Options 的 allow 报头值
 func (hs *Hosts) SetAllow(pattern string, allow string) {
-	domain, pattern := hs.split(pattern)
+	domain, pattern := split(pattern)
 	hs.getTree(domain).SetAllow(pattern, allow)
 }
 
 // Remove 移除指定的路由项。
 func (hs *Hosts) Remove(pattern string, method ...string) {
-	domain, pattern := hs.split(pattern)
+	domain, pattern := split(pattern)
 
 	if tree := hs.findTree(domain); tree != nil {
 		tree.Remove(pattern, method...)
@@ -87,7 +88,7 @@ func (hs *Hosts) All(ignoreHead, ignoreOptions bool) (routes map[string][]string
 
 // URL 根据参数生成地址
 func (hs *Hosts) URL(pattern string, params map[string]string) (string, error) {
-	domain, pattern := hs.split(pattern)
+	domain, pattern := split(pattern)
 
 	if tree := hs.findTree(domain); tree != nil {
 		url, err := tree.URL(pattern, params)
@@ -122,7 +123,7 @@ func (hs *Hosts) Clean(prefix string) {
 		return
 	}
 
-	domain, pattern := hs.split(prefix)
+	domain, pattern := split(prefix)
 
 	for _, host := range hs.hosts {
 		if host.raw == domain {
@@ -149,23 +150,6 @@ func (hs *Hosts) Handler(hostname, path string) (*handlers.Handlers, params.Para
 	}
 
 	return hs.tree.Handler(path)
-}
-
-func (hs *Hosts) split(url string) (domain, pattern string) {
-	if url == "" {
-		panic("路由项地址不能为空")
-	}
-
-	if url[0] == '/' {
-		return "", url
-	}
-
-	index := strings.IndexByte(url, '/')
-	if index < 0 {
-		panic(fmt.Errorf("%s 不能只指定域名部分", url))
-	}
-
-	return url[:index], url[index:]
 }
 
 // 获取指定路由项对应的 tree.Tree 实例，如果不存在，则返回空值。
@@ -231,4 +215,37 @@ func newHost(domain string, tree *tree.Tree) *host {
 	}
 
 	return host
+}
+
+func split(url string) (domain, pattern string) {
+	if url == "" {
+		panic(errors.New("路由项地址不能为空"))
+	}
+
+	if url[0] == '/' {
+		return "", url
+	}
+
+	index := strings.IndexByte(url, '/')
+	if index < 0 {
+		panic(fmt.Errorf("%s 不能只指定域名部分", url))
+	}
+
+	if strings.IndexByte(url[:index], ':') >= 0 {
+		panic(errors.New("不能指定端口"))
+	}
+
+	return url[:index], url[index:]
+}
+
+// IsWell 检测格式是否正确
+func IsWell(pattern string) (err error) {
+	defer func() {
+		if msg := recover(); msg != nil {
+			err = msg.(error)
+		}
+	}()
+
+	_, path := split(pattern)
+	return syntax.IsWell(path)
 }

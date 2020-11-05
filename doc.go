@@ -72,6 +72,7 @@
 // 域名限定
 //
 // 如果路由以非 / 开头，则自动将第一个 / 之前的判定为域名，并对其进行域名限定。
+// 域名部分不能带端口号。
 // 比如以下格式：
 //  example.com/html/{id}.html   // 匹配 example.com/html/1.html
 //  *.example.com/html/{id}.html // 支持泛域名，匹配 s1.example.com/html/1.html

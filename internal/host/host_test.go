@@ -32,32 +32,6 @@ func TestNew(t *testing.T) {
 		NotNil(h.tree)
 }
 
-func TestHosts_split(t *testing.T) {
-	a := assert.New(t)
-	hs := New(false, false, true)
-	a.NotNil(hs)
-
-	domain, pattern := hs.split("*.example.com/path")
-	a.Equal(pattern, "/path").
-		Equal(domain, "*.example.com")
-
-	domain, pattern = hs.split("*.example.com/path/test")
-	a.Equal(pattern, "/path/test").
-		Equal(domain, "*.example.com")
-
-	a.Panic(func() {
-		domain, pattern = hs.split("")
-	})
-
-	domain, pattern = hs.split("/path")
-	a.Equal(pattern, "/path").
-		Equal(domain, "")
-
-	a.Panic(func() {
-		domain, pattern = hs.split("*.example.com")
-	})
-}
-
 func TestHosts_Add_URL_ClearAll(t *testing.T) {
 	a := assert.New(t)
 	hs := New(false, false, true)
@@ -237,4 +211,44 @@ func TestNewHosts(t *testing.T) {
 		Equal(h.raw, "*.example.com").
 		Equal(h.domain, ".example.com").
 		True(h.wildcard)
+}
+
+func TestSplit(t *testing.T) {
+	a := assert.New(t)
+
+	domain, pattern := split("*.example.com/path")
+	a.Equal(pattern, "/path").
+		Equal(domain, "*.example.com")
+
+	domain, pattern = split("*.example.com/path/test")
+	a.Equal(pattern, "/path/test").
+		Equal(domain, "*.example.com")
+
+	a.Panic(func() {
+		domain, pattern = split("")
+	})
+
+	domain, pattern = split("/path")
+	a.Equal(pattern, "/path").
+		Equal(domain, "")
+
+	// 没有路径
+	a.Panic(func() {
+		domain, pattern = split("*.example.com")
+	})
+
+	// 不能带端口
+	a.Panic(func() {
+		domain, pattern = split("*.example.com:80/path")
+	})
+}
+
+func TestIsWell(t *testing.T) {
+	a := assert.New(t)
+
+	a.ErrorString(IsWell(""), "不能为空")
+	a.ErrorString(IsWell("*.example.com:80/path"), "端口")
+	a.Error(IsWell("*.example.com/{path"))
+	a.Error(IsWell("/path"))
+	a.NotError(IsWell("path")) // 非限定域名
 }

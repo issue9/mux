@@ -311,3 +311,11 @@ func TestMethods(t *testing.T) {
 	a := assert.New(t)
 	a.Equal(Methods(), handlers.Methods)
 }
+
+func TestIsWell(t *testing.T) {
+	a := assert.New(t)
+
+	a.Error(IsWell("*.example.com:80/path"))
+	a.Error(IsWell("*.example.com"))
+	a.Error(IsWell(""))
+}
