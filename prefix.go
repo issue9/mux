@@ -23,6 +23,10 @@ func (p *Prefix) Options(pattern string, allow string) *Prefix {
 
 // Handle 相当于 Mux.Handle(prefix+pattern, h, methods...) 的简易写法
 func (p *Prefix) Handle(pattern string, h http.Handler, methods ...string) error {
+	if pattern != "" && pattern[0] != '/' {
+		return p.mux.Handle(pattern, h, methods...)
+	}
+
 	return p.mux.Handle(p.prefix+pattern, h, methods...)
 }
 
@@ -112,7 +116,7 @@ func (p *Prefix) Remove(pattern string, methods ...string) *Prefix {
 	return p
 }
 
-// Clean 清除所有以 Prefix.prefix 开头的 Entry
+// Clean 清除所有以 Prefix.prefix 开头的路由项
 //
 // 当指定多个相同的 Prefix 时，调用其中的一个 Clean 也将会清除其它的：
 //  p1 := mux.Prefix("prefix")
