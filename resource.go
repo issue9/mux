@@ -67,7 +67,7 @@ func (r *Resource) Any(h http.Handler) *Resource {
 
 // HandleFunc 功能同 Mux.HandleFunc(pattern, fun, ...)
 func (r *Resource) HandleFunc(fun http.HandlerFunc, methods ...string) error {
-	return r.mux.HandleFunc(r.pattern, fun, methods...)
+	return r.Handle(fun, methods...)
 }
 
 func (r *Resource) handleFunc(fun http.HandlerFunc, methods ...string) *Resource {

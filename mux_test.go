@@ -366,7 +366,7 @@ func TestHost(t *testing.T) {
 	// prefix prefix
 	p1 := m.Prefix("/prefix1")
 	p2 := p1.Prefix("/prefix2")
-	p2.Get("localhost/p2", buildHandler(204))
+	p2.GetFunc("localhost/p2", buildFunc(204))
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "/prefix1/prefix2/p2", nil)
 	m.ServeHTTP(w, r)
