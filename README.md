@@ -79,7 +79,7 @@ http.ListenAndServe(":8080", m)
 
 比如：
 
-```go
+```text
 /posts/{id}.html              // 1
 /posts/{id:\\d+}.html         // 2
 /posts/1.html                 // 3
@@ -94,7 +94,7 @@ http.ListenAndServe(":8080", m)
 如果路由以非 / 开头，则自动将第一个 / 之前的判定为域名，并对其进行域名限定。
 比如以下格式：
 
-```go
+```text
 example.com/html/{id}.html   // 匹配 example.com/html/1.html
 *.example.com/html/{id}.html // 支持泛域名，匹配 s1.example.com/html/1.html
 ```
