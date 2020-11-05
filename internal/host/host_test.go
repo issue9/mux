@@ -249,6 +249,7 @@ func TestIsWell(t *testing.T) {
 	a.ErrorString(IsWell(""), "不能为空")
 	a.ErrorString(IsWell("*.example.com:80/path"), "端口")
 	a.Error(IsWell("*.example.com/{path"))
-	a.Error(IsWell("/path"))
-	a.NotError(IsWell("path")) // 非限定域名
+
+	a.Error(IsWell("path"))
+	a.NotError(IsWell("/path"))
 }

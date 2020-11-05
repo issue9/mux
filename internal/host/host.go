@@ -228,7 +228,7 @@ func split(url string) (domain, pattern string) {
 
 	index := strings.IndexByte(url, '/')
 	if index < 0 {
-		panic(fmt.Errorf("%s 不能只指定域名部分", url))
+		panic(fmt.Errorf("%s 未包含域名或是路径内容", url))
 	}
 
 	if strings.IndexByte(url[:index], ':') >= 0 {
