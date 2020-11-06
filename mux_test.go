@@ -10,7 +10,7 @@ import (
 	"github.com/issue9/assert"
 	"github.com/issue9/assert/rest"
 
-	"github.com/issue9/mux/v2/internal/handlers"
+	"github.com/issue9/mux/v3/internal/handlers"
 )
 
 func buildHandler(code int) http.Handler {

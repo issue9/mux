@@ -10,8 +10,8 @@ import (
 
 	"github.com/issue9/assert"
 
-	"github.com/issue9/mux/v2/internal/handlers"
-	"github.com/issue9/mux/v2/params"
+	"github.com/issue9/mux/v3/internal/handlers"
+	"github.com/issue9/mux/v3/params"
 )
 
 func buildHandler(code int) http.Handler {

@@ -9,9 +9,9 @@ import (
 
 	"github.com/issue9/errwrap"
 
-	"github.com/issue9/mux/v2/internal/handlers"
-	"github.com/issue9/mux/v2/internal/syntax"
-	"github.com/issue9/mux/v2/params"
+	"github.com/issue9/mux/v3/internal/handlers"
+	"github.com/issue9/mux/v3/internal/syntax"
+	"github.com/issue9/mux/v3/params"
 )
 
 // node.children 的数量只有达到此值时，才会为其建立 indexes 索引表。

@@ -8,8 +8,8 @@ import (
 
 	"github.com/issue9/assert"
 
-	"github.com/issue9/mux/v2/internal/handlers"
-	"github.com/issue9/mux/v2/internal/syntax"
+	"github.com/issue9/mux/v3/internal/handlers"
+	"github.com/issue9/mux/v3/internal/syntax"
 )
 
 func TestNode_find(t *testing.T) {

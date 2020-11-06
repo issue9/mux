@@ -4,7 +4,7 @@ mux
 [![Go Report Card](https://goreportcard.com/badge/github.com/issue9/mux)](https://goreportcard.com/report/github.com/issue9/mux)
 [![license](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](https://opensource.org/licenses/MIT)
 [![codecov](https://codecov.io/gh/issue9/mux/branch/master/graph/badge.svg)](https://codecov.io/gh/issue9/mux)
-[![PkgGoDev](https://pkg.go.dev/badge/github.com/issue9/mux/v2)](https://pkg.go.dev/github.com/issue9/mux/v2)
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/issue9/mux/v3)](https://pkg.go.dev/github.com/issue9/mux/v3)
 ======
 
 mux 是一个实现了 [http.Handler](https://pkg.go.dev/net/http#Handler) 的中间件，为用户提供了以下功能：

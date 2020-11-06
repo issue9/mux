@@ -9,10 +9,10 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/issue9/mux/v2/internal/handlers"
-	"github.com/issue9/mux/v2/internal/syntax"
-	"github.com/issue9/mux/v2/internal/tree"
-	"github.com/issue9/mux/v2/params"
+	"github.com/issue9/mux/v3/internal/handlers"
+	"github.com/issue9/mux/v3/internal/syntax"
+	"github.com/issue9/mux/v3/internal/tree"
+	"github.com/issue9/mux/v3/params"
 )
 
 var (

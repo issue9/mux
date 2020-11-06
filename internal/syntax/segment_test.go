@@ -7,7 +7,7 @@ import (
 
 	"github.com/issue9/assert"
 
-	"github.com/issue9/mux/v2/params"
+	"github.com/issue9/mux/v3/params"
 )
 
 func BenchmarkSegment_Match_Named(b *testing.B) {
