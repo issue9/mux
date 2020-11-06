@@ -85,21 +85,15 @@ func New(disableOptions, disableHead, skipCleanPath bool, notFound, methodNotAll
 	return mux
 }
 
-// Matcher 添加 matcher 匹配规则的路由并返回
-func (mux *Mux) Matcher(matcher Matcher) *Mux {
-	if mux.matchers == nil {
-		mux.matchers = make([]*Mux, 0, 5)
-	}
-
-	m := New(mux.disableOptions, mux.disableHead, mux.skipCleanPath, mux.notFound, mux.methodNotAllowed)
-	m.matcher = matcher
-	mux.matchers = append(mux.matchers, m)
-	return m
-}
-
 // Clean 清除所有的路由项
+//
+// 包括子匹配项的 matchers
 func (mux *Mux) Clean() *Mux {
+	for _, m := range mux.matchers {
+		m.Clean()
+	}
 	mux.tree.Clean("")
+
 	return mux
 }
 
@@ -109,6 +103,7 @@ func (mux *Mux) Clean() *Mux {
 // ignoreOptions 是否忽略自动生成的 OPTIONS 请求；
 // 返回值中，键名为路路地址，键值为该路由项对应的可用请求方法。
 func (mux *Mux) All(ignoreHead, ignoreOptions bool) map[string][]string {
+	// TODO
 	return mux.tree.All(ignoreHead, ignoreOptions)
 }
 

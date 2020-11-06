@@ -89,14 +89,22 @@ http.ListenAndServe(":8080", m)
 /posts/index.html  // 匹配 1
 ```
 
-#### 域名限定
+#### Matcher
 
-如果路由以非 / 开头，则自动将第一个 / 之前的判定为域名，并对其进行域名限定。
-比如以下格式：
+可以通过匹配 Matcher 接口，定义了一组特定要求的路由项。
 
-```text
-example.com/html/{id}.html   // 匹配 example.com/html/1.html
-*.example.com/html/{id}.html // 支持泛域名，匹配 s1.example.com/html/1.html
+```go
+// server
+m := mux.New(false, false, false, nil, nil)
+host := m.Matcher(mux.NewHosts("*.example.com"))
+host.Get("/path", h)
+
+// client
+r := http.NewRequest(http.MethodGet, "https://abc.example.com/path", nil)
+r.Do() // 正确访问 h 的返回内容
+
+r := http.NewRequest(http.MethodGet, "/path", nil)
+r.Do() // 无法访问 h 的返回内容
 ```
 
 #### 路由参数

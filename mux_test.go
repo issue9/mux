@@ -148,7 +148,7 @@ func TestMux_Head(t *testing.T) {
 	test.matchTrue(http.MethodTrace, "/f/any", 206)
 }
 
-func TestMux_Add_Remove(t *testing.T) {
+func TestMux_Handle_Remove(t *testing.T) {
 	a := assert.New(t)
 	test := newTester(t, false, true, false)
 
@@ -262,6 +262,39 @@ func TestMux_Params(t *testing.T) {
 	a.NotError(srvmux.Patch("/api/v2/{version:\\d*}/test", buildParamsHandler()))
 	requestParams(http.MethodPatch, "/api/v2/2/test", http.StatusOK, map[string]string{"version": "2"})
 	requestParams(http.MethodPatch, "/api/v2//test", http.StatusNotFound, nil) // 可选参数不能在路由中间
+}
+
+func TestMux_Clean(t *testing.T) {
+	a := assert.New(t)
+
+	m := New(false, false, false, nil, nil)
+	m.Get("/m1", buildHandler(200)).
+		Post("/m1", buildHandler(201)).
+		Matcher(NewHosts("example.com")).
+		Get("/m1", buildHandler(202)).
+		Post("/m1", buildHandler(203))
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/m1", nil)
+	m.ServeHTTP(w, r)
+	a.Equal(w.Result().StatusCode, 200)
+
+	w = httptest.NewRecorder()
+	r = httptest.NewRequest(http.MethodGet, "https://example.com/m1", nil)
+	m.ServeHTTP(w, r)
+	a.Equal(w.Result().StatusCode, 202)
+
+	m.Clean()
+
+	w = httptest.NewRecorder()
+	r = httptest.NewRequest(http.MethodGet, "/m1", nil)
+	m.ServeHTTP(w, r)
+	a.Equal(w.Result().StatusCode, 404)
+
+	w = httptest.NewRecorder()
+	r = httptest.NewRequest(http.MethodGet, "http://example.com/m1", nil)
+	m.ServeHTTP(w, r)
+	a.Equal(w.Result().StatusCode, 404)
 }
 
 func TestMux_ServeHTTP(t *testing.T) {

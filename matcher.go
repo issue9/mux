@@ -35,6 +35,20 @@ func NewHosts(domain ...string) *Hosts {
 	return h
 }
 
+// Matcher 添加子路由组
+//
+// 该路由只有符合 matcher 的要求才会进入，其它与 Mux 功能相同。
+func (mux *Mux) Matcher(matcher Matcher) *Mux {
+	if mux.matchers == nil {
+		mux.matchers = make([]*Mux, 0, 5)
+	}
+
+	m := New(mux.disableOptions, mux.disableHead, mux.skipCleanPath, mux.notFound, mux.methodNotAllowed)
+	m.matcher = matcher
+	mux.matchers = append(mux.matchers, m)
+	return m
+}
+
 func (mux *Mux) match(r *http.Request) (hs *handlers.Handlers, ps params.Params) {
 	path := r.URL.Path
 	if !mux.skipCleanPath {
