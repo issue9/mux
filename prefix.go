@@ -123,7 +123,7 @@ func (p *Prefix) Remove(pattern string, methods ...string) *Prefix {
 //  p2 := mux.Prefix("prefix")
 //  p2.Clean() 将同时清除 p1 的内容，因为有相同的前缀。
 func (p *Prefix) Clean() *Prefix {
-	p.mux.hosts.Clean(p.prefix)
+	p.mux.tree.Clean(p.prefix)
 	return p
 }
 
@@ -148,7 +148,7 @@ func (p *Prefix) URL(name string, params map[string]string) (string, error) {
 		pattern = p.prefix + name
 	}
 
-	return p.mux.hosts.URL(pattern, params)
+	return p.mux.tree.URL(pattern, params)
 }
 
 // Prefix 在现有 Prefix 的基础上声明一个新的 Prefix 实例

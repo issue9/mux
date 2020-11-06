@@ -315,105 +315,25 @@ func TestMethods(t *testing.T) {
 func TestIsWell(t *testing.T) {
 	a := assert.New(t)
 
-	a.Error(IsWell("*.example.com:80/path"))
-	a.Error(IsWell("*.example.com"))
+	a.Error(IsWell("/{path"))
+	a.Error(IsWell("/path}"))
 	a.Error(IsWell(""))
 }
 
-// 带域名的路由项
-func TestHost(t *testing.T) {
+func TestClearPath(t *testing.T) {
 	a := assert.New(t)
 
-	m := New(false, false, false, nil, nil)
-	w := httptest.NewRecorder()
-	m.Get("localhost/t1", buildHandler(201))
-	r := httptest.NewRequest(http.MethodGet, "/t1", nil)
-	m.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 404)
+	a.Equal(cleanPath(""), "/")
 
-	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "https://localhost/t1", nil)
-	m.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 201)
+	a.Equal(cleanPath("/api//"), "/api/")
+	a.Equal(cleanPath("api/"), "/api/")
+	a.Equal(cleanPath("api/////"), "/api/")
+	a.Equal(cleanPath("//api/////1"), "/api/1")
 
-	// resource
-	m = New(false, false, false, nil, nil)
-	res := m.Resource("localhost/r1")
-	res.Get(buildHandler(202))
-	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "/r1", nil)
-	m.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 404)
+	a.Equal(cleanPath("/api/"), "/api/")
+	a.Equal(cleanPath("/api/./"), "/api/./")
 
-	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "http://localhost/r1", nil)
-	m.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 202)
-
-	// prefix
-	m = New(false, false, false, nil, nil)
-	p := m.Prefix("/prefix1")
-	p.Get("localhost/p1", buildHandler(203))
-	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "/prefix1/p1", nil)
-	m.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 404)
-
-	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "http://localhost:88/p1", nil)
-	m.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 203)
-
-	// prefix 为域名
-	m = New(false, false, false, nil, nil)
-	p = m.Prefix("example.com")
-	p.Get("/p1", buildHandler(203))
-	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "/p1", nil)
-	m.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 404)
-
-	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "http://example.com:88/p1", nil)
-	m.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 203)
-
-	// prefix 为域名，同时又注册了一个域名路由项
-	m = New(false, false, false, nil, nil)
-	p = m.Prefix("example.com")
-	p.Get("localhost/p1", buildHandler(203))
-	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "http://example.com:88/p1", nil)
-	m.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 404)
-
-	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "http://localhost:88/p1", nil)
-	m.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 203)
-
-	// prefix prefix
-	m = New(false, false, false, nil, nil)
-	p1 := m.Prefix("/prefix1")
-	p2 := p1.Prefix("/prefix2")
-	p2.GetFunc("localhost/p2", buildFunc(204))
-	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "/prefix1/prefix2/p2", nil)
-	m.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 404)
-
-	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "http://localhost/p2", nil)
-	m.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 204)
-
-	// 第二个 Prefix 为域名
-	m = New(false, false, false, nil, nil)
-	p1 = m.Prefix("/prefix1")
-	p2 = p1.Prefix("example.com")
-	p2.GetFunc("/p2", buildFunc(205))
-	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "/prefix1example.com/p2", nil)
-	m.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 205)
+	a.Equal(cleanPath("/api/.."), "/api/..")
+	a.Equal(cleanPath("/api/../"), "/api/../")
+	a.Equal(cleanPath("/api/../../"), "/api/../../")
 }
