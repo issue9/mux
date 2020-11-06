@@ -13,7 +13,7 @@ import (
 
 	"github.com/issue9/errwrap"
 
-	"github.com/issue9/mux/v2/internal/handlers"
+	"github.com/issue9/mux/v3/internal/handlers"
 )
 
 const (
