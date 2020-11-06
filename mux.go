@@ -39,9 +39,10 @@ var ErrNameExists = errors.New("存在相同名称的路由项")
 //    Handle("/api/{version:\\d+}",h3, http.MethodGet, http.MethodPost) // 只匹配 GET 和 POST
 //  http.ListenAndServe(m)
 type Mux struct {
-	matchers         []*Mux
-	matcher          Matcher
-	tree             *tree.Tree
+	name             string     // 当前路由的名称
+	routers          []*Mux     // 子路由
+	matcher          Matcher    // 当前路由的先决条件
+	tree             *tree.Tree // 当前路由的路由项
 	notFound         http.HandlerFunc
 	methodNotAllowed http.HandlerFunc
 
@@ -54,10 +55,16 @@ type Mux struct {
 	namesMu sync.RWMutex
 }
 
+// Router 用于描述 Mux.All 返回的参数
+type Router struct {
+	Name   string
+	Routes map[string][]string
+}
+
 // New 声明一个新的 Mux
 //
 // disableOptions 是否禁用自动生成 OPTIONS 功能；
-// disableHead 是否根据 Get 请求自动生成 HEAD 请求；
+// disableHead 是否禁用根据 Get 请求自动生成 HEAD 请求；
 // skipCleanPath 是否不对访问路径作处理，比如 "//api" ==> "/api"；
 // notFound 404 页面的处理方式，为 nil 时会调用默认的方式进行处理；
 // methodNotAllowed 405 页面的处理方式，为 nil 时会调用默认的方式进行处理，
@@ -89,7 +96,7 @@ func New(disableOptions, disableHead, skipCleanPath bool, notFound, methodNotAll
 //
 // 包括子匹配项的 matchers
 func (mux *Mux) Clean() *Mux {
-	for _, m := range mux.matchers {
+	for _, m := range mux.routers {
 		m.Clean()
 	}
 	mux.tree.Clean("")
@@ -102,9 +109,17 @@ func (mux *Mux) Clean() *Mux {
 // ignoreHead 是否忽略自动生成的 HEAD 请求；
 // ignoreOptions 是否忽略自动生成的 OPTIONS 请求；
 // 返回值中，键名为路路地址，键值为该路由项对应的可用请求方法。
-func (mux *Mux) All(ignoreHead, ignoreOptions bool) map[string][]string {
-	// TODO
-	return mux.tree.All(ignoreHead, ignoreOptions)
+func (mux *Mux) All(ignoreHead, ignoreOptions bool) []*Router {
+	routers := make([]*Router, 0, len(mux.routers)+1)
+
+	for _, router := range mux.routers {
+		routers = append(routers, router.All(ignoreHead, ignoreOptions)...)
+	}
+
+	return append(routers, &Router{
+		Name:   mux.name,
+		Routes: mux.tree.All(ignoreHead, ignoreOptions),
+	})
 }
 
 // Remove 移除指定的路由项

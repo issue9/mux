@@ -68,14 +68,31 @@ func TestHosts_Add_Delete(t *testing.T) {
 		Equal(0, len(h.wildcards))
 }
 
+func TestMux_NewMux(t *testing.T) {
+	a := assert.New(t)
+
+	m := New(false, false, false, nil, nil)
+	r, ok := m.NewMux("host", NewHosts())
+	a.True(ok).NotNil(r)
+	a.Equal(r.name, "host").Equal(r.disableHead, m.disableHead)
+
+	r, ok = m.NewMux("host", NewHosts())
+	a.False(ok).Nil(r)
+
+	r, ok = m.NewMux("host-2", NewHosts())
+	a.True(ok).NotNil(r)
+	a.Equal(r.name, "host-2").Equal(r.disableHead, m.disableHead)
+}
+
 // 带域名的路由项
 func TestHosts(t *testing.T) {
 	a := assert.New(t)
 
 	m := New(false, false, false, nil, nil)
-	h := m.Matcher(NewHosts("localhost"))
+	router, ok := m.NewMux("host", NewHosts("localhost"))
+	a.True(ok).NotNil(router)
 	w := httptest.NewRecorder()
-	h.Get("/t1", buildHandler(201))
+	router.Get("/t1", buildHandler(201))
 	r := httptest.NewRequest(http.MethodGet, "/t1", nil)
 	m.ServeHTTP(w, r)
 	a.Equal(w.Result().StatusCode, 404)
@@ -87,18 +104,19 @@ func TestHosts(t *testing.T) {
 
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "https://localhost/t1", nil)
-	h.ServeHTTP(w, r) // 由 h 直接访问
+	router.ServeHTTP(w, r) // 由 h 直接访问
 	a.Equal(w.Result().StatusCode, 201)
 
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "/t1", nil)
-	h.ServeHTTP(w, r) // 由 h 直接访问
+	router.ServeHTTP(w, r) // 由 h 直接访问
 	a.Equal(w.Result().StatusCode, 404)
 
 	// resource
 	m = New(false, false, false, nil, nil)
-	h = m.Matcher(NewHosts("localhost"))
-	res := h.Resource("/r1")
+	router, ok = m.NewMux("host", NewHosts("localhost"))
+	a.True(ok).NotNil(router)
+	res := router.Resource("/r1")
 	res.Get(buildHandler(202))
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "/r1", nil)
@@ -112,8 +130,9 @@ func TestHosts(t *testing.T) {
 
 	// prefix
 	m = New(false, false, false, nil, nil)
-	h = m.Matcher(NewHosts("localhost"))
-	p := h.Prefix("/prefix1")
+	router, ok = m.NewMux("host", NewHosts("localhost"))
+	a.True(ok).NotNil(router)
+	p := router.Prefix("/prefix1")
 	p.Get("/p1", buildHandler(203))
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "/prefix1/p1", nil)
@@ -127,8 +146,9 @@ func TestHosts(t *testing.T) {
 
 	// prefix prefix
 	m = New(false, false, false, nil, nil)
-	h = m.Matcher(NewHosts("localhost"))
-	p1 := h.Prefix("/prefix1")
+	router, ok = m.NewMux("host", NewHosts("localhost"))
+	a.True(ok).NotNil(router)
+	p1 := router.Prefix("/prefix1")
 	p2 := p1.Prefix("/prefix2")
 	p2.GetFunc("/p2", buildFunc(204))
 	w = httptest.NewRecorder()

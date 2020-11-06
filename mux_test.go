@@ -107,6 +107,43 @@ func TestMux(t *testing.T) {
 	test.matchTrue(http.MethodTrace, "/f/any", 206)
 }
 
+func TestMux_All(t *testing.T) {
+	a := assert.New(t)
+
+	m := New(false, false, false, nil, nil)
+	a.NotNil(m)
+
+	m.Get("/m", buildHandler(1))
+	m.Post("/m", buildHandler(1))
+	a.Equal(m.All(false, false), []*Router{
+		{
+			Name: "",
+			Routes: map[string][]string{
+				"/m": {"GET", "HEAD", "OPTIONS", "POST"},
+			},
+		},
+	})
+
+	r, ok := m.NewMux("host-1", NewHosts())
+	a.True(ok).NotNil(r)
+	r.Get("/m", buildHandler(1))
+	r.Post("/m", buildHandler(1))
+	a.Equal(m.All(false, false), []*Router{
+		{
+			Name: "host-1",
+			Routes: map[string][]string{
+				"/m": {"GET", "HEAD", "OPTIONS", "POST"},
+			},
+		},
+		{
+			Name: "",
+			Routes: map[string][]string{
+				"/m": {"GET", "HEAD", "OPTIONS", "POST"},
+			},
+		},
+	})
+}
+
 func TestMux_Head(t *testing.T) {
 	test := newTester(t, false, false, false)
 
@@ -269,9 +306,10 @@ func TestMux_Clean(t *testing.T) {
 
 	m := New(false, false, false, nil, nil)
 	m.Get("/m1", buildHandler(200)).
-		Post("/m1", buildHandler(201)).
-		Matcher(NewHosts("example.com")).
-		Get("/m1", buildHandler(202)).
+		Post("/m1", buildHandler(201))
+	router, ok := m.NewMux("host", NewHosts("example.com"))
+	a.True(ok).NotNil(router)
+	router.Get("/m1", buildHandler(202)).
 		Post("/m1", buildHandler(203))
 
 	w := httptest.NewRecorder()

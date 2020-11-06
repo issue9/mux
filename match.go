@@ -35,18 +35,25 @@ func NewHosts(domain ...string) *Hosts {
 	return h
 }
 
-// Matcher 添加子路由组
+// NewMux 添加子路由组
 //
 // 该路由只有符合 matcher 的要求才会进入，其它与 Mux 功能相同。
-func (mux *Mux) Matcher(matcher Matcher) *Mux {
-	if mux.matchers == nil {
-		mux.matchers = make([]*Mux, 0, 5)
+//
+// name 表示不该路由组的名称，需要唯一，否则返回 false；
+func (mux *Mux) NewMux(name string, matcher Matcher) (*Mux, bool) {
+	if mux.routers == nil {
+		mux.routers = make([]*Mux, 0, 5)
+	}
+
+	if sliceutil.Count(mux.routers, func(i int) bool { return mux.routers[i].name == name }) > 0 {
+		return nil, false
 	}
 
 	m := New(mux.disableOptions, mux.disableHead, mux.skipCleanPath, mux.notFound, mux.methodNotAllowed)
+	m.name = name
 	m.matcher = matcher
-	mux.matchers = append(mux.matchers, m)
-	return m
+	mux.routers = append(mux.routers, m)
+	return m, true
 }
 
 func (mux *Mux) match(r *http.Request) (hs *handlers.Handlers, ps params.Params) {
@@ -55,7 +62,7 @@ func (mux *Mux) match(r *http.Request) (hs *handlers.Handlers, ps params.Params)
 		path = cleanPath(path)
 	}
 
-	for _, m := range mux.matchers {
+	for _, m := range mux.routers {
 		if !m.matcher.Match(r) {
 			continue
 		}
