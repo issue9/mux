@@ -110,7 +110,7 @@ func TestMux(t *testing.T) {
 func TestMux_All(t *testing.T) {
 	a := assert.New(t)
 
-	m := New(false, false, false, nil, nil)
+	m := Default()
 	a.NotNil(m)
 
 	m.Get("/m", buildHandler(1))

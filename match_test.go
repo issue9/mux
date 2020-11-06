@@ -71,7 +71,7 @@ func TestHosts_Add_Delete(t *testing.T) {
 func TestMux_NewMux(t *testing.T) {
 	a := assert.New(t)
 
-	m := New(false, false, false, nil, nil)
+	m := Default()
 	r, ok := m.NewMux("host", NewHosts())
 	a.True(ok).NotNil(r)
 	a.Equal(r.name, "host").Equal(r.disableHead, m.disableHead)
@@ -88,7 +88,7 @@ func TestMux_NewMux(t *testing.T) {
 func TestHosts(t *testing.T) {
 	a := assert.New(t)
 
-	m := New(false, false, false, nil, nil)
+	m := Default()
 	router, ok := m.NewMux("host", NewHosts("localhost"))
 	a.True(ok).NotNil(router)
 	w := httptest.NewRecorder()
@@ -113,7 +113,7 @@ func TestHosts(t *testing.T) {
 	a.Equal(w.Result().StatusCode, 404)
 
 	// resource
-	m = New(false, false, false, nil, nil)
+	m = Default()
 	router, ok = m.NewMux("host", NewHosts("localhost"))
 	a.True(ok).NotNil(router)
 	res := router.Resource("/r1")
@@ -129,7 +129,7 @@ func TestHosts(t *testing.T) {
 	a.Equal(w.Result().StatusCode, 202)
 
 	// prefix
-	m = New(false, false, false, nil, nil)
+	m = Default()
 	router, ok = m.NewMux("host", NewHosts("localhost"))
 	a.True(ok).NotNil(router)
 	p := router.Prefix("/prefix1")
@@ -145,7 +145,7 @@ func TestHosts(t *testing.T) {
 	a.Equal(w.Result().StatusCode, 203)
 
 	// prefix prefix
-	m = New(false, false, false, nil, nil)
+	m = Default()
 	router, ok = m.NewMux("host", NewHosts("localhost"))
 	a.True(ok).NotNil(router)
 	p1 := router.Prefix("/prefix1")
@@ -162,7 +162,7 @@ func TestHosts(t *testing.T) {
 	a.Equal(w.Result().StatusCode, 204)
 
 	// 第二个 Prefix 为域名
-	m = New(false, false, false, nil, nil)
+	m = Default()
 	p1 = m.Prefix("/prefix1")
 	p2 = p1.Prefix("example.com")
 	p2.GetFunc("/p2", buildFunc(205))

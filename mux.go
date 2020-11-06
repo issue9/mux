@@ -61,6 +61,11 @@ type Router struct {
 	Routes map[string][]string
 }
 
+// Default New 的默主人参数版本要
+func Default() *Mux {
+	return New(false, false, false, nil, nil)
+}
+
 // New 声明一个新的 Mux
 //
 // disableOptions 是否禁用自动生成 OPTIONS 功能；
