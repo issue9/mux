@@ -41,7 +41,8 @@
 //  /posts-{id}-{page}.html           // 匹配 /posts-1-10.html
 //  /posts/{id:number}.html           // 匹配 /posts/1.html
 // 目前支持以下作为命名参数的类型限定：
-/// digit 限定为数字字符；
+//  digit 限定为数字字符，相当于正则的 [0-9]；
+//  word 相当于正则的 [a-zA-Z0-9]；
 //
 //
 //
