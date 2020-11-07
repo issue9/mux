@@ -43,7 +43,7 @@ http.ListenAndServe(":8080", m)
 路由中支持以正则表达式的方式进行匹配，表达式以大括号包含，内部以冒号分隔，
 前半部分为变量的名称，后半部分为变量可匹配类型的正则表达式。比如：
 
-```go
+```text
 /posts/{id:\\d+} // 将被转换成 /posts/(?P<id>\\d+)
 /posts/{:\\d+}   // 将被转换成 /posts/\\d+
 ```
@@ -54,22 +54,24 @@ http.ListenAndServe(":8080", m)
 则会被转换成命名参数，因为有专门的验证方法，性能会比较正则稍微好上一些。
 命名参数匹配所有字符。
 
-```go
+```text
  /posts/{id}.html                  // 匹配 /posts/1.html
  /posts-{id}-{page}.html           // 匹配 /posts-1-10.html
  /posts/{id:number}.html           // 匹配 /posts/1.html
 ```
 
-目前支持以下作为命名参数的类型限定：
+目前支持以下作为命名参数的内容约束：
 
 - digit 限定为数字字符，相当于正则的 [0-9]；
 - word 相当于正则的 [a-zA-Z0-9]；
+
+用户也可以自行添加新的约束符。具体可参考 <https://pkg.go.dev/github.com/issue9/mux/v3/interceptor>
 
 #### 通配符
 
 在路由字符串中若是以命名参数结尾的，则表示可以匹配之后的任意字符。
 
-```go
+```text
 /blog/assets/{path}
 /blog/{tags:\\w+}/{path}
 /blog/assets{path}

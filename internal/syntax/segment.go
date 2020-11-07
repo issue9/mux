@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/issue9/mux/v3/interceptor"
 	"github.com/issue9/mux/v3/params"
 )
 
@@ -31,8 +32,8 @@ type Segment struct {
 	// 正则表达式特有参数，用于缓存当前节点的正则编译结果。
 	expr *regexp.Regexp
 
-	// 命名参数的验证函数
-	namedMatcher namedMatcher
+	// 正则表达式的拦截器的处理函数
+	matcher interceptor.MatchFunc
 }
 
 // NewSegment 声明新的 Segment 变量
@@ -58,17 +59,17 @@ func NewSegment(val string) *Segment {
 		seg.Name = val[start+1 : end]
 		seg.Suffix = val[end+1:]
 		seg.Endpoint = val[len(val)-1] == endByte
-		seg.namedMatcher = anyMatch
+		seg.matcher = interceptor.MatchAny
 		return seg
 	}
 
-	matcher, found := namedMatchers[val[separator+1:end]]
+	matcher, found := interceptor.Get(val[separator+1 : end])
 	if found {
 		seg.Type = Named
 		seg.Name = val[start+1 : separator]
 		seg.Suffix = val[end+1:]
 		seg.Endpoint = val[len(val)-1] == endByte
-		seg.namedMatcher = matcher
+		seg.matcher = matcher
 		return seg
 	}
 
@@ -112,7 +113,7 @@ func (seg *Segment) Match(path string, params params.Params) int {
 	case Named:
 		if seg.Endpoint {
 			params[seg.Name] = path
-			if seg.namedMatcher(path) {
+			if seg.matcher(path) {
 				return len(path)
 			}
 			return -1
@@ -121,7 +122,7 @@ func (seg *Segment) Match(path string, params params.Params) int {
 		// 为零说明前面没有命名参数，肯定不能与当前内容匹配
 		if index := strings.Index(path, seg.Suffix); index > 0 {
 			val := path[:index]
-			if !seg.namedMatcher(val) {
+			if !seg.matcher(val) {
 				return -1
 			}
 

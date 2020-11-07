@@ -40,9 +40,11 @@
 //  /posts/{id}.html                  // 匹配 /posts/1.html
 //  /posts-{id}-{page}.html           // 匹配 /posts-1-10.html
 //  /posts/{id:number}.html           // 匹配 /posts/1.html
-// 目前支持以下作为命名参数的类型限定：
+// 目前支持以下作为命名参数的类型约束：
 //  digit 限定为数字字符，相当于正则的 [0-9]；
 //  word 相当于正则的 [a-zA-Z0-9]；
+//
+// 如果需要自定义这些约束符，可以参考 interceptor 包的文档。
 //
 //
 //
