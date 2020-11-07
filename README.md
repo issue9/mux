@@ -13,8 +13,9 @@ mux 是一个实现了 [http.Handler](https://pkg.go.dev/net/http#Handler) 的�
 1. 路由参数；
 1. 丰富的 OPTIONS 请求处理方式；
 1. 自动生成 HEAD 请求内容；
-1. 限定域名；
 1. 根据路由生成地址；
+1. 自定义附加的路由匹配项，比如限定域名，或是限定版本号等；
+1. 任意风格的路由，比如 discuz 这种不以 / 作为分隔符的；
 
 ```go
 m := mux.New(false, false, false, nil, nil).
@@ -151,6 +152,11 @@ m.Handle("/posts/{id}", h, http.MethodOptions) // 显示指定一个处理函数
  默认情况下，用户无须显示地实现 HEAD 请求，
  系统会为每一个 GET 请求自动实现一个对应的 HEAD 请求，
  当然也与 OPTIONS 一样，你也可以自通过 mux.Handle() 自己实现 HEAD 请求。
+
+性能
+----
+
+<https://caixw.github.io/go-http-routers-testing/> 提供了与其它几个框架的对比情况。
 
 中间件
 ----
