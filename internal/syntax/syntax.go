@@ -31,16 +31,16 @@ const (
 
 // 路由项字符串中的几个特殊字符定义
 const (
-	start     = '{' // 命名或是正则参数的起始字符
-	end       = '}' // 命名或是正则参数的结束字符
-	separator = ':' // 正则参数中名称和正则的分隔符
+	startByte     = '{' // 命名或是正则参数的起始字符
+	endByte       = '}' // 命名或是正则参数的结束字符
+	separatorByte = ':' // 正则参数中名称和正则的分隔符
 )
 
 // 将路由语法转换成正则表达式语法，比如：
 //  {id:\\d+}/author => (?P<id>\\d+)
-var repl = strings.NewReplacer(string(start), "(?P<",
-	string(separator), ">",
-	string(end), ")")
+var repl = strings.NewReplacer(string(startByte), "(?P<",
+	string(separatorByte), ">",
+	string(endByte), ")")
 
 func (t Type) String() string {
 	switch t {
@@ -60,12 +60,12 @@ func getType(str string) Type {
 	typ := String
 	for i := 0; i < len(str); i++ {
 		switch str[i] {
-		case separator:
+		case separatorByte:
 			typ = Regexp
 			break
-		case start:
+		case startByte:
 			typ = Named
-		case end:
+		case endByte:
 			break
 		}
 	} // end for
@@ -84,21 +84,21 @@ func parse(str string) ([]*Segment, error) {
 		return nil, errors.New("参数 str 不能为空")
 	}
 
-	ss := make([]*Segment, 0, strings.Count(str, string(start))+1)
+	ss := make([]*Segment, 0, strings.Count(str, string(startByte))+1)
 	s := newState()
 
 	for i := 0; i < len(str); i++ {
 		switch str[i] {
-		case start:
+		case startByte:
 			start := s.start
 			s.setStart(i)
 
 			if i > 0 { // i==0 表示以 { 开头
 				ss = append(ss, NewSegment(str[start:i]))
 			}
-		case separator:
+		case separatorByte:
 			s.setSeparator(i)
-		case end:
+		case endByte:
 			s.setEnd(i)
 		}
 
@@ -108,8 +108,8 @@ func parse(str string) ([]*Segment, error) {
 	} // end for
 
 	if s.start < len(str) {
-		if s.state != end {
-			return nil, fmt.Errorf("缺少 %s 字符", string(end))
+		if s.state != endByte {
+			return nil, fmt.Errorf("缺少 %s 字符", string(endByte))
 		}
 
 		ss = append(ss, NewSegment(str[s.start:]))

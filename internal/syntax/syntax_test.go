@@ -49,7 +49,11 @@ func TestSplit(t *testing.T) {
 		s := Split(str)
 		a.Equal(len(s), len(ss))
 		for index, seg := range ss {
-			a.Equal(seg, s[index])
+			item := s[index]
+			a.Equal(seg.Value, item.Value).
+				Equal(seg.Name, item.Name).
+				Equal(seg.Endpoint, item.Endpoint).
+				Equal(seg.Suffix, item.Suffix)
 		}
 	}
 
@@ -70,8 +74,11 @@ func TestSplit(t *testing.T) {
 	// 以命名参数结尾的
 	test("/posts/{id}/author", false, NewSegment("/posts/"), NewSegment("{id}/author"))
 
+	test("/posts/{id:digit}/author", false, NewSegment("/posts/"), NewSegment("{id:digit}/author"))
+
 	// 命名参数及通配符
 	test("/posts/{id}/page/{page}", false, NewSegment("/posts/"), NewSegment("{id}/page/"), NewSegment("{page}"))
+	test("/posts/{id}/page/{page:digit}", false, NewSegment("/posts/"), NewSegment("{id}/page/"), NewSegment("{page:digit}"))
 
 	// 正则
 	test("/posts/{id:\\d+}", false, NewSegment("/posts/"), NewSegment("{id:\\d+}"))

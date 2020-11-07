@@ -30,27 +30,52 @@ type Segment struct {
 
 	// 正则表达式特有参数，用于缓存当前节点的正则编译结果。
 	expr *regexp.Regexp
+
+	// 命名参数的验证函数
+	namedMatcher namedMatcher
 }
 
 // NewSegment 声明新的 Segment 变量
+//
+// 如果为非字符串类型的内容，应该是以 { 符号开头才是合法的。
+//
+/// 由调用方保证 val 的格式正确。
 func NewSegment(val string) *Segment {
 	seg := &Segment{
 		Value: val,
-		Type:  getType(val),
+		Type:  String,
 	}
 
-	switch seg.Type {
-	case Named:
-		index := strings.IndexByte(val, end)
-		seg.Name = val[1:index]
-		seg.Suffix = val[index+1:]
-		seg.Endpoint = val[len(val)-1] == end
-	case Regexp:
-		seg.expr = regexp.MustCompile(repl.Replace(val))
-		seg.Name = val[1:strings.IndexByte(val, separator)]
-		seg.Suffix = val[strings.IndexByte(val, end)+1:]
+	start := strings.IndexByte(val, startByte)
+	if start < 0 {
+		return seg
+	}
+	separator := strings.IndexByte(val, separatorByte)
+	end := strings.IndexByte(val, endByte)
+
+	if separator < 0 {
+		seg.Type = Named
+		seg.Name = val[start+1 : end]
+		seg.Suffix = val[end+1:]
+		seg.Endpoint = val[len(val)-1] == endByte
+		seg.namedMatcher = anyMatch
+		return seg
 	}
 
+	matcher, found := namedMatchers[val[separator+1:end]]
+	if found {
+		seg.Type = Named
+		seg.Name = val[start+1 : separator]
+		seg.Suffix = val[end+1:]
+		seg.Endpoint = val[len(val)-1] == endByte
+		seg.namedMatcher = matcher
+		return seg
+	}
+
+	seg.Type = Regexp
+	seg.expr = regexp.MustCompile(repl.Replace(val))
+	seg.Name = val[start+1 : separator]
+	seg.Suffix = val[end+1:]
 	return seg
 }
 
@@ -76,7 +101,7 @@ func (seg *Segment) Split(pos int) []*Segment {
 
 // Match 路径是否与当前节点匹配
 //
-// 如果正确匹配，则返回 path 剩余部分的超始位置。
+// 如果正确匹配，则返回 path 剩余部分的起始位置。
 // params 表示匹配完成之后，从地址中获取的参数值。
 func (seg *Segment) Match(path string, params params.Params) int {
 	switch seg.Type {
@@ -87,12 +112,20 @@ func (seg *Segment) Match(path string, params params.Params) int {
 	case Named:
 		if seg.Endpoint {
 			params[seg.Name] = path
-			return len(path)
+			if seg.namedMatcher(path) {
+				return len(path)
+			}
+			return -1
 		}
 
 		// 为零说明前面没有命名参数，肯定不能与当前内容匹配
 		if index := strings.Index(path, seg.Suffix); index > 0 {
-			params[seg.Name] = path[:index]
+			val := path[:index]
+			if !seg.namedMatcher(val) {
+				return -1
+			}
+
+			params[seg.Name] = val
 			return index + len(seg.Suffix)
 		}
 	case Regexp:
@@ -118,19 +151,19 @@ func longestPrefix(s1, s2 string) int {
 
 	startIndex := -10
 	endIndex := -10
-	state := end
+	state := endByte
 	for i := 0; i < l; i++ {
 		switch s1[i] {
-		case start:
+		case startByte:
 			startIndex = i
-			state = start
-		case end:
-			state = end
+			state = startByte
+		case endByte:
+			state = endByte
 			endIndex = i
 		}
 
 		if s1[i] != s2[i] {
-			if state != end || // 不从命名参数中间分隔
+			if state != endByte || // 不从命名参数中间分隔
 				endIndex == i { // 命名参数之后必须要有一个或以上的普通字符
 				return startIndex
 			}
