@@ -62,6 +62,8 @@ func TestSplit(t *testing.T) {
 	test("/posts/1", false, NewSegment("/posts/1"))
 
 	test("{action}/1", false, NewSegment("{action}/1"))
+	test("{act/ion}/1", false, NewSegment("{act/ion}/1")) // 名称中包含非常规则字符
+	test("{中文}/1", false, NewSegment("{中文}/1"))           // 名称中包含中文
 
 	// 以命名参数开头的
 	test("/{action}", false, NewSegment("/"), NewSegment("{action}"))

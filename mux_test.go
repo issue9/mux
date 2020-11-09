@@ -299,6 +299,10 @@ func TestMux_Params(t *testing.T) {
 	a.NotError(srvmux.Patch("/api/v2/{version:\\d*}/test", buildParamsHandler()))
 	requestParams(http.MethodPatch, "/api/v2/2/test", http.StatusOK, map[string]string{"version": "2"})
 	requestParams(http.MethodPatch, "/api/v2//test", http.StatusNotFound, nil) // 可选参数不能在路由中间
+
+	// 中文作为值
+	a.NotError(srvmux.Patch("/api/v3/{版本:digit}", buildParamsHandler()))
+	requestParams(http.MethodPatch, "/api/v3/2", http.StatusOK, map[string]string{"版本": "2"})
 }
 
 func TestMux_Clean(t *testing.T) {
