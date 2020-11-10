@@ -55,31 +55,13 @@ func (t Type) String() string {
 	}
 }
 
-// 获取字符串的类型。调用者需要确保 str 语法正确。
-func getType(str string) Type {
-	typ := String
-	for i := 0; i < len(str); i++ {
-		switch str[i] {
-		case separatorByte:
-			typ = Regexp
-			break
-		case startByte:
-			typ = Named
-		case endByte:
-			break
-		}
-	} // end for
-
-	return typ
-}
-
-// 将字符串解析成字符串数组
+// Split 将字符串解析成字符串数组
 //
 // 以 { 为分界线进行分割。比如
 //  /posts/{id}/email ==> /posts/, {id}/email
 //  /posts/\{{id}/email ==> /posts/{, {id}/email
 //  /posts/{year}/{id}.html ==> /posts/, {year}/, {id}.html
-func parse(str string) ([]*Segment, error) {
+func Split(str string) ([]*Segment, error) {
 	if str == "" {
 		return nil, errors.New("参数 str 不能为空")
 	}
@@ -93,7 +75,7 @@ func parse(str string) ([]*Segment, error) {
 			start := s.start
 			s.setStart(i)
 
-			if i > 0 { // i==0 表示以 { 开头
+			if s.err == "" && i > 0 { // i==0 表示以 { 开头
 				ss = append(ss, NewSegment(str[start:i]))
 			}
 		case separatorByte:
@@ -116,25 +98,4 @@ func parse(str string) ([]*Segment, error) {
 	}
 
 	return ss, nil
-}
-
-// Split 将字符串解析成字符串数组
-//
-// 以 { 为分界线进行分割。比如
-//  /posts/{id}/email ==> /posts/, {id}/email
-//  /posts/\{{id}/email ==> /posts/{, {id}/email
-//  /posts/{year}/{id}.html ==> /posts/, {year}/, {id}.html
-func Split(str string) []*Segment {
-	ss, err := parse(str)
-	if err != nil {
-		panic(err)
-	}
-
-	return ss
-}
-
-// IsWell 检测格式是否正确
-func IsWell(str string) error {
-	_, err := parse(str)
-	return err
 }

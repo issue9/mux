@@ -15,9 +15,16 @@ type Prefix struct {
 	prefix string
 }
 
+// SetAllow 手动指定 OPTIONS 请求方法的值
+func (p *Prefix) SetAllow(pattern string, allow string) error {
+	return p.mux.SetAllow(p.prefix+pattern, allow)
+}
+
 // Options 手动指定 OPTIONS 请求方法的值
 func (p *Prefix) Options(pattern string, allow string) *Prefix {
-	p.mux.Options(p.prefix+pattern, allow)
+	if err := p.SetAllow(pattern, allow); err != nil {
+		panic(err)
+	}
 	return p
 }
 

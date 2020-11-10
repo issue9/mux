@@ -35,8 +35,8 @@ func newTester(a *assert.Assertion) *tester {
 // 添加一条路由项。code 表示该路由项返回的报头，
 // 测试路由项的 code 需要唯一，之后也是通过此值来判断其命中的路由项。
 func (n *tester) add(method, pattern string, code int) {
-	nn := n.tree.getNode(pattern)
-	n.a.NotNil(nn)
+	nn, err := n.tree.getNode(pattern)
+	n.a.NotError(err).NotNil(nn)
 
 	if nn.handlers == nil {
 		nn.handlers = handlers.New(false, false)
@@ -202,8 +202,8 @@ func TestTree_Clean(t *testing.T) {
 	tree := New(false, false)
 
 	addNode := func(p string, code int, methods ...string) {
-		nn := tree.getNode(p)
-		a.NotNil(nn)
+		nn, err := tree.getNode(p)
+		a.NotError(err).NotNil(nn)
 
 		if nn.handlers == nil {
 			nn.handlers = handlers.New(false, false)
@@ -254,8 +254,8 @@ func TestTree_SetAllow(t *testing.T) {
 
 	a.NotError(tree.Add("/options", buildHandler(1), http.MethodGet, http.MethodDelete, http.MethodPatch))
 	tree.SetAllow("/options", "TEST1,TEST2")
-	n := tree.getNode("/options")
-	a.NotNil(n)
+	n, err := tree.getNode("/options")
+	a.NotError(err).NotNil(n)
 	a.Equal(n.handlers.Options(), "TEST1,TEST2")
 
 	tree.Remove("/options", http.MethodGet)

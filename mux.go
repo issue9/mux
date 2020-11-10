@@ -146,13 +146,30 @@ func (mux *Mux) Handle(pattern string, h http.Handler, methods ...string) error 
 	return mux.tree.Add(pattern, h, methods...)
 }
 
+// SetAllow 将 OPTIONS 请求方法的报头 allow 值固定为指定的值
+//
+// 若无特殊需求，不用调用此方法，系统会自动计算符合当前路由的请求方法列表。
+// 如果想实现对处理方法的自定义，可以显示地调用 Handle 方法:
+//  Mux.Handle("/api/1", handle, http.MethodOptions)
+//
+// Options 与 SetAllow 功能上完全相同，只是对错误处理上有所有区别。
+// Options 在出错时 panic，而 SetAllow 会返回错误信息。
+func (mux *Mux) SetAllow(pattern string, allow string) error {
+	return mux.tree.SetAllow(pattern, allow)
+}
+
 // Options 将 OPTIONS 请求方法的报头 allow 值固定为指定的值
 //
 // 若无特殊需求，不用调用此方法，系统会自动计算符合当前路由的请求方法列表。
 // 如果想实现对处理方法的自定义，可以显示地调用 Handle 方法:
 //  Mux.Handle("/api/1", handle, http.MethodOptions)
+//
+// Options 与 SetAllow 功能上完全相同，只是对错误处理上有所有区别。
+// Options 在出错时 panic，而 SetAllow 会返回错误信息。
 func (mux *Mux) Options(pattern string, allow string) *Mux {
-	mux.tree.SetAllow(pattern, allow)
+	if err := mux.SetAllow(pattern, allow); err != nil {
+		panic(err)
+	}
 	return mux
 }
 
@@ -296,7 +313,8 @@ func Params(r *http.Request) params.Params {
 //
 // 如果出错，则会返回具体的错误信息。
 func IsWell(pattern string) error {
-	return syntax.IsWell(pattern)
+	_, err := syntax.Split(pattern)
+	return err
 }
 
 // Methods 返回所有支持的请求方法

@@ -15,11 +15,20 @@ type Resource struct {
 	pattern string
 }
 
+// SetAllow 手动指定 OPTIONS 请求方法的值
+//
+// 具体说明可参考 Mux.Options 方法。
+func (r *Resource) SetAllow(allow string) error {
+	return r.mux.SetAllow(r.pattern, allow)
+}
+
 // Options 手动指定 OPTIONS 请求方法的值
 //
 // 具体说明可参考 Mux.Options 方法。
 func (r *Resource) Options(allow string) *Resource {
-	r.mux.Options(r.pattern, allow)
+	if err := r.SetAllow(allow); err != nil {
+		panic(err)
+	}
 	return r
 }
 

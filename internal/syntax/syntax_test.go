@@ -15,16 +15,6 @@ func TestRegexp(t *testing.T) {
 	a.Equal(repl.Replace("{id:\\d+}/author"), "(?P<id>\\d+)/author")
 }
 
-func TestGetType(t *testing.T) {
-	a := assert.New(t)
-
-	a.Equal(getType(""), String)
-	a.Equal(getType("/posts"), String)
-	a.Equal(getType("/posts/{id}"), Named)
-	a.Equal(getType("/posts/{id}/author"), Named)
-	a.Equal(getType("/posts/{id:\\d+}/author"), Regexp)
-}
-
 func TestType_String(t *testing.T) {
 	a := assert.New(t)
 
@@ -39,15 +29,14 @@ func TestType_String(t *testing.T) {
 func TestSplit(t *testing.T) {
 	a := assert.New(t)
 	test := func(str string, isError bool, ss ...*Segment) {
+		s, err := Split(str)
+
 		if isError {
-			a.Panic(func() {
-				Split(str)
-			})
+			a.Error(err)
 			return
 		}
 
-		s := Split(str)
-		a.Equal(len(s), len(ss))
+		a.NotError(err).Equal(len(s), len(ss))
 		for index, seg := range ss {
 			item := s[index]
 			a.Equal(seg.Value, item.Value).
@@ -96,19 +85,5 @@ func TestSplit(t *testing.T) {
 	test("/posts/:id/author", true)
 	test("/posts/{id}/{author", true)
 	test("/posts/}/author", true)
-
-	a.Panic(func() {
-		Split("")
-	})
-}
-
-func TestIsWell(t *testing.T) {
-	a := assert.New(t)
-
-	a.NotError(IsWell("/posts/"))
-	a.NotError(IsWell("/posts/{id}"))
-	a.NotError(IsWell("/posts/{id:\\d+}"))
-
-	a.Error(IsWell("/posts/{id:\\d+"))
-	a.Error(IsWell("/posts/id:\\d+}"))
+	test("", true)
 }
