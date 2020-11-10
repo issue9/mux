@@ -30,10 +30,6 @@ func (p *Prefix) Options(pattern string, allow string) *Prefix {
 
 // Handle 相当于 Mux.Handle(prefix+pattern, h, methods...) 的简易写法
 func (p *Prefix) Handle(pattern string, h http.Handler, methods ...string) error {
-	if pattern != "" && pattern[0] != '/' {
-		return p.mux.Handle(pattern, h, methods...)
-	}
-
 	return p.mux.Handle(p.prefix+pattern, h, methods...)
 }
 

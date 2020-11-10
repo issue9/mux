@@ -4,6 +4,7 @@ package mux
 
 import (
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/issue9/assert"
@@ -93,6 +94,29 @@ func TestMux_Resource(t *testing.T) {
 	r2 := srvmux.Resource("/abc/1")
 	a.NotNil(r2)
 	a.False(r1 == r2) // 不是同一个 *Resource
+
+	r2.Delete(buildHandler(201))
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodDelete, "/abc/1", nil)
+	srvmux.ServeHTTP(w, r)
+	a.Equal(w.Result().StatusCode, 201)
+}
+
+func TestPrefix_Resource(t *testing.T) {
+	a := assert.New(t)
+
+	srvmux := Default()
+	a.NotNil(srvmux)
+	p := srvmux.Prefix("/p1")
+
+	r1 := p.Resource("/abc/1")
+	a.NotNil(r1)
+
+	r1.Delete(buildHandler(201))
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodDelete, "/p1/abc/1", nil)
+	srvmux.ServeHTTP(w, r)
+	a.Equal(w.Result().StatusCode, 201)
 }
 
 func TestResource_Name_URL(t *testing.T) {
