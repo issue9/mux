@@ -9,8 +9,8 @@ mux
 
 mux 是一个实现了 [http.Handler](https://pkg.go.dev/net/http#Handler) 的中间件，为用户提供了以下功能：
 
-1. 正则路由；
 1. 路由参数；
+1. 支持正则表达式作为路由项匹配方式；
 1. 丰富的 OPTIONS 请求处理方式；
 1. 自动生成 HEAD 请求内容；
 1. 根据路由生成地址；
@@ -53,7 +53,6 @@ http.ListenAndServe(":8080", m)
 
 若路由字符串中，所有的正则表达式冒号之后的内容是特定的内容，或是无内容，
 则会被转换成命名参数，因为有专门的验证方法，性能会比较正则稍微好上一些。
-命名参数匹配所有字符。
 
 ```text
  /posts/{id}.html                  // 匹配 /posts/1.html
@@ -66,15 +65,15 @@ http.ListenAndServe(":8080", m)
 
 - digit 限定为数字字符，相当于正则的 [0-9]；
 - word 相当于正则的 [a-zA-Z0-9]；
+- any 表示匹配任意内容；
+- "" 为空表示与 any 相同；
 
 用户也可以自行添加新的约束符。具体可参考 <https://pkg.go.dev/github.com/issue9/mux/v3/interceptor>
-
-#### 通配符
 
 在路由字符串中若是以命名参数结尾的，则表示可以匹配之后的任意字符。
 
 ```text
-/blog/assets/{path}
+/blog/assets/{path}       // 可以匹配 /blog/assets/2020/11/11/file.ext 等格式
 /blog/{tags:\\w+}/{path}
 /blog/assets{path}
 ```

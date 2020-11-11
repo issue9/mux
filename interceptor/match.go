@@ -13,6 +13,10 @@ func init() {
 	if err := Register(MatchDigit, "word"); err != nil {
 		panic(err)
 	}
+
+	if err := Register(MatchAny, "any"); err != nil {
+		panic(err)
+	}
 }
 
 // MatchAny 匹配任意非空内容

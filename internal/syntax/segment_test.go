@@ -89,15 +89,20 @@ func TestSegment_Split(t *testing.T) {
 func TestSegment_Match(t *testing.T) {
 	a := assert.New(t)
 
-	// Named
-	seg := NewSegment("{id}/author")
-	a.NotNil(seg)
-
-	// Named 完全匹配
+	// Named:any
+	seg := NewSegment("{id:any}/author")
 	ps := params.Params{}
-	seg = NewSegment("{id}/author")
+	a.NotNil(seg)
 	path := "1/author"
 	index := seg.Match(path, ps)
+	a.Empty(path[index:]).
+		Equal(ps, params.Params{"id": "1"})
+
+	// Named 完全匹配
+	ps = params.Params{}
+	seg = NewSegment("{id}/author")
+	path = "1/author"
+	index = seg.Match(path, ps)
 	a.Empty(path[index:]).
 		Equal(ps, params.Params{"id": "1"})
 

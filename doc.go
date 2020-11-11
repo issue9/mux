@@ -36,22 +36,20 @@
 //
 // 若路由字符串中，所有的正则表达式冒号之后的内容是特定的内容，或是无内容，
 // 则会被转换成命名参数，因为有专门的验证方法，性能会比较正则稍微好上一些。
-// 命名参数匹配所有字符。
 //  /posts/{id}.html                  // 匹配 /posts/1.html
 //  /posts-{id}-{page}.html           // 匹配 /posts-1-10.html
 //  /posts/{id:number}.html           // 匹配 /posts/1.html
 // 目前支持以下作为命名参数的类型约束：
 //  digit 限定为数字字符，相当于正则的 [0-9]；
-//  word 相当于正则的 [a-zA-Z0-9]；
+//  word  相当于正则的 [a-zA-Z0-9]；
+//  any   表示匹配任意内容；
+//        为空表示与 any 相同；
 //
 // 如果需要自定义这些约束符，可以参考 interceptor 包的文档。
 //
 //
-//
-// 通配符
-//
 // 在路由字符串中若是以命名参数结尾的，则表示可以匹配之后的任意字符。
-//  /blog/assets/{path}
+//  /blog/assets/{path}        // 可以匹配 /blog/assets/2020/11/11/file.ext 等格式
 //  /blog/{tags:\\w+}/{path}
 //  /blog/assets{path}
 //
