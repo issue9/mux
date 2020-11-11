@@ -13,8 +13,10 @@ func TestMatchDigit(t *testing.T) {
 
 	a.True(MatchDigit("123"))
 	a.True(MatchDigit("0123"))
+
 	a.False(MatchDigit("0123x"))
 	a.False(MatchDigit("01.23"))
+	a.False(MatchDigit(""))
 }
 
 func TestMatchWord(t *testing.T) {
@@ -27,4 +29,5 @@ func TestMatchWord(t *testing.T) {
 
 	a.False(MatchWord("Ab c"))
 	a.False(MatchWord("Ab_c"))
+	a.False(MatchWord(""))
 }

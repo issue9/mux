@@ -19,11 +19,11 @@ mux 是一个实现了 [http.Handler](https://pkg.go.dev/net/http#Handler) 的�
 
 ```go
 m := mux.New(false, false, false, nil, nil).
-    Get("/users/1", h).             // GET /user/1
-    Post("/login", h).              // POST /api/login
-    Get("/posts/{id:\\d+}", h).     // GET /blog/post/{id:\\d+} 正则路由
+    Get("/users/1", h).
+    Post("/login", h).
+    Get("/pages/{id:\\d+}.html", h). // 匹配 /pages/123.html 等格式，path = 123
+    Get("/posts/{path}.html", h).    // 匹配 /posts/2020/11/11/title.html 等格式，path = 2020/11/11/title
     Options("/users/1", "GET").     // OPTIONS /user/1 手动指定该路由项的 OPTIONS 请求方法返回内容
-    Get("example.com/users/1", h)   // 限定在 example.com 域名下的地址
 
 // 统一前缀路径的路由
 p := m.Prefix("/api")
@@ -58,7 +58,8 @@ http.ListenAndServe(":8080", m)
 ```text
  /posts/{id}.html                  // 匹配 /posts/1.html
  /posts-{id}-{page}.html           // 匹配 /posts-1-10.html
- /posts/{id:number}.html           // 匹配 /posts/1.html
+ /posts/{id:digit}.html            // 匹配 /posts/1.html
+ /posts/{path}.html                // 匹配 /posts/2020/11/11/title.html
 ```
 
 目前支持以下作为命名参数的内容约束：

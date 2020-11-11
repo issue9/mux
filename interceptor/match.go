@@ -15,8 +15,8 @@ func init() {
 	}
 }
 
-// MatchAny 匹配任意字符
-func MatchAny(path string) bool { return true }
+// MatchAny 匹配任意非空内容
+func MatchAny(path string) bool { return len(path) > 0 }
 
 // MatchDigit 匹配数值字符
 //
@@ -27,7 +27,7 @@ func MatchDigit(path string) bool {
 			return false
 		}
 	}
-	return true
+	return len(path) > 0
 }
 
 // MatchWord 匹配单词
@@ -39,5 +39,5 @@ func MatchWord(path string) bool {
 			return false
 		}
 	}
-	return true
+	return len(path) > 0
 }
