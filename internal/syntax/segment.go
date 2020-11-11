@@ -112,22 +112,26 @@ func (seg *Segment) Match(path string, params params.Params) int {
 		}
 	case Named:
 		if seg.Endpoint {
-			params[seg.Name] = path
 			if seg.matcher(path) {
+				params[seg.Name] = path
 				return len(path)
 			}
 			return -1
 		}
 
-		// 为零说明前面没有命名参数，肯定不能与当前内容匹配
-		if index := strings.Index(path, seg.Suffix); index > 0 {
-			val := path[:index]
-			if !seg.matcher(val) {
-				return -1
-			}
+		if index := strings.Index(path, seg.Suffix); index >= 0 {
+			for {
+				if val := path[:index]; seg.matcher(val) {
+					params[seg.Name] = val
+					return index + len(seg.Suffix)
+				}
 
-			params[seg.Name] = val
-			return index + len(seg.Suffix)
+				i := strings.Index(path[index+len(seg.Suffix):], seg.Suffix)
+				if i < 0 {
+					return -1
+				}
+				index += i + len(seg.Suffix)
+			}
 		}
 	case Regexp:
 		locs := seg.expr.FindStringSubmatchIndex(path)

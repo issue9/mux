@@ -256,7 +256,7 @@ func TestMux_Options(t *testing.T) {
 
 func TestMux_Params(t *testing.T) {
 	a := assert.New(t)
-	srvmux := New(false, false, false, nil, nil)
+	srvmux := Default()
 	a.NotNil(srvmux)
 	params := map[string]string{}
 
@@ -347,6 +347,9 @@ func TestMux_ServeHTTP(t *testing.T) {
 
 	test.mux.Handle("/posts/{path:.+}.html", buildHandler(202))
 	test.matchTrue(http.MethodGet, "/posts/2017/1.html", 202)
+
+	test.mux.Handle("/posts/{id:digit}123", buildHandler(203))
+	test.matchTrue(http.MethodGet, "/posts/123123", 203)
 }
 
 // 测试匹配顺序是否正确

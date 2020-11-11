@@ -95,6 +95,7 @@ func TestSegment_Match(t *testing.T) {
 
 	// Named 完全匹配
 	ps := params.Params{}
+	seg = NewSegment("{id}/author")
 	path := "1/author"
 	index := seg.Match(path, ps)
 	a.Empty(path[index:]).
@@ -102,21 +103,51 @@ func TestSegment_Match(t *testing.T) {
 
 	// Named 部分匹配
 	ps = params.Params{}
+	seg = NewSegment("{id}/author")
 	path = "1/author/email"
 	index = seg.Match(path, ps)
 	a.Equal(path[index:], "/email")
 
 	// Named 不匹配
 	ps = params.Params{}
+	seg = NewSegment("{id}/author")
 	path = "1/aut"
 	index = seg.Match(path, ps)
 	a.Equal(index, -1)
 
 	// Named 1/2 匹配 {id}
 	ps = params.Params{}
+	seg = NewSegment("{id}/author")
 	path = "1/2/author"
 	index = seg.Match(path, ps)
 	a.Equal(path[index:], "")
+
+	ps = params.Params{}
+	seg = NewSegment("{any}/123")
+	path = "123"
+	index = seg.Match(path, ps)
+	a.Equal(index, -1)
+
+	ps = params.Params{}
+	seg = NewSegment("{any}123")
+	path = "123123"
+	index = seg.Match(path, ps)
+	a.Equal(index, 6).
+		Equal(ps, map[string]string{"any": "123"})
+
+	ps = params.Params{}
+	seg = NewSegment("{any}123")
+	path = "12345123"
+	index = seg.Match(path, ps)
+	a.Equal(index, 8).
+		Equal(ps, map[string]string{"any": "12345"})
+
+	ps = params.Params{}
+	seg = NewSegment("{any:digit}123")
+	path = "12345123"
+	index = seg.Match(path, ps)
+	a.Equal(index, 8).
+		Equal(ps, map[string]string{"any": "12345"})
 
 	// Named Endpoint 匹配
 	ps = params.Params{}
@@ -124,6 +155,21 @@ func TestSegment_Match(t *testing.T) {
 	path = "/posts/author"
 	index = seg.Match(path, ps)
 	a.Equal(path[index:], "")
+
+	// Named:digit Endpoint 匹配
+	ps = params.Params{}
+	seg = NewSegment("{id:digit}")
+	path = "123"
+	index = seg.Match(path, ps)
+	a.Equal(path[index:], "").
+		Equal(ps, map[string]string{"id": "123"})
+
+	// Named:digit Endpoint 不匹配
+	ps = params.Params{}
+	seg = NewSegment("{id:digit}")
+	path = "one"
+	index = seg.Match(path, ps)
+	a.Equal(index, -1).Empty(ps)
 
 	// Named:digit
 	seg = NewSegment("{id:digit}/author")
