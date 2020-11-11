@@ -127,7 +127,6 @@ func (tree *Tree) Handler(path string) (*handlers.Handlers, params.Params) {
 	if node == nil || node.handlers == nil || node.handlers.Len() == 0 {
 		return nil, nil
 	}
-
 	return node.handlers, ps
 }
 

@@ -56,27 +56,24 @@ func (mux *Mux) NewMux(name string, matcher Matcher) (*Mux, bool) {
 	return m, true
 }
 
-func (mux *Mux) match(r *http.Request) (hs *handlers.Handlers, ps params.Params) {
+func (mux *Mux) match(r *http.Request) (*handlers.Handlers, params.Params) {
 	path := r.URL.Path
 	if !mux.skipCleanPath {
 		path = cleanPath(path)
 	}
 
 	for _, m := range mux.routers {
-		if !m.matcher.Match(r) {
-			continue
-		}
-
-		if hs, ps = m.tree.Handler(path); hs != nil {
-			return hs, ps
+		if m.matcher.Match(r) {
+			if hs, ps := m.tree.Handler(path); hs != nil {
+				return hs, ps
+			}
 		}
 	}
 
-	if mux.matcher != nil && !mux.matcher.Match(r) {
-		return nil, nil
+	if mux.matcher == nil || mux.matcher.Match(r) {
+		return mux.tree.Handler(path)
 	}
-
-	return mux.tree.Handler(path)
+	return nil, nil
 }
 
 // Match Matcher.Match

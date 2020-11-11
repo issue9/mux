@@ -116,10 +116,7 @@ func (seg *Segment) Match(path string, params params.Params) int {
 				params[seg.Name] = path
 				return len(path)
 			}
-			return -1
-		}
-
-		if index := strings.Index(path, seg.Suffix); index >= 0 {
+		} else if index := strings.Index(path, seg.Suffix); index >= 0 {
 			for {
 				if val := path[:index]; seg.matcher(val) {
 					params[seg.Name] = val
@@ -134,13 +131,10 @@ func (seg *Segment) Match(path string, params params.Params) int {
 			}
 		}
 	case Regexp:
-		locs := seg.expr.FindStringSubmatchIndex(path)
-		if locs == nil || locs[0] != 0 { // 不匹配
-			return -1
+		if locs := seg.expr.FindStringSubmatchIndex(path); locs != nil && locs[0] == 0 {
+			params[seg.Name] = path[:locs[3]]
+			return locs[1]
 		}
-
-		params[seg.Name] = path[:locs[3]]
-		return locs[1]
 	}
 
 	return -1

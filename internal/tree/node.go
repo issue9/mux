@@ -207,9 +207,8 @@ LOOP:
 			return nn
 		}
 
-		// 不匹配，则删除写入的参数
-		delete(params, n.segment.Name)
-	} // end for
+		delete(params, n.segment.Name) // 不匹配，则删除写入的参数
+	}
 
 	// 没有子节点匹配，len(path)==0，且子节点不为空，可以判定与当前节点匹配。
 	if len(path) == 0 && n.handlers != nil && n.handlers.Len() > 0 {
