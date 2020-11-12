@@ -9,6 +9,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/issue9/errwrap"
+
 	"github.com/issue9/mux/v3/internal/handlers"
 	"github.com/issue9/mux/v3/internal/syntax"
 	"github.com/issue9/mux/v3/internal/tree"
@@ -330,17 +332,23 @@ func cleanPath(p string) string {
 		return "/"
 	}
 
+	var b errwrap.StringBuilder
+	b.Grow(len(p))
+
 	if p[0] != '/' {
-		p = "/" + p
+		b.WByte('/')
 	}
 
 	index := strings.Index(p, "//")
 	if index == -1 {
-		return p
+		b.WString(p)
+		if b.Err != nil {
+			panic(b.Err)
+		}
+		return b.String()
 	}
 
-	pp := make([]byte, index+1, len(p))
-	copy(pp, p[:index+1])
+	b.WString(p[:index+1])
 
 	slash := true
 	for i := index + 2; i < len(p); i++ {
@@ -352,8 +360,11 @@ func cleanPath(p string) string {
 		} else {
 			slash = false
 		}
-		pp = append(pp, p[i])
+		b.WByte(p[i])
 	}
 
-	return string(pp)
+	if b.Err != nil {
+		panic(b.Err)
+	}
+	return b.String()
 }
