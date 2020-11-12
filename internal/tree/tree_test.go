@@ -5,7 +5,6 @@ package tree
 import (
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/issue9/assert"
@@ -130,7 +129,6 @@ func TestTree_match(t *testing.T) {
 	test.matchTrue(http.MethodGet, "/admin/items/1", 2)
 	test.matchTrue(http.MethodGet, "/admin/items/1/profile", 3)
 	test.matchTrue(http.MethodGet, "/admin/items/1/profile/1", 4)
-	test.tree.Trace(os.Stdout, "/admin/items/1/profile/1")
 
 	// 测试 indexes 功能
 	test = newTester(a)
