@@ -63,10 +63,8 @@ func (mux *Mux) match(r *http.Request) (*handlers.Handlers, params.Params) {
 	}
 
 	for _, m := range mux.routers {
-		if m.matcher.Match(r) {
-			if hs, ps := m.tree.Handler(path); hs != nil {
-				return hs, ps
-			}
+		if hs, ps := m.match(r); hs != nil {
+			return hs, ps
 		}
 	}
 
