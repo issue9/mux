@@ -264,8 +264,7 @@ func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(ps) > 0 {
-		ctx := context.WithValue(r.Context(), params.ContextKeyParams, ps)
-		r = r.WithContext(ctx)
+		r = r.WithContext(context.WithValue(r.Context(), params.ContextKeyParams, ps))
 	}
 
 	h.ServeHTTP(w, r)
