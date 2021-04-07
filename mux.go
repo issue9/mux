@@ -58,7 +58,7 @@ type Mux struct {
 // Router 用于描述 Mux.All 返回的参数
 type Router struct {
 	Name   string
-	Routes map[string][]string
+	Routes map[string][]string // 键名为请求地址，键值为请求方法
 }
 
 // Default New 的默主人参数版本要
@@ -113,7 +113,6 @@ func (mux *Mux) Clean() *Mux {
 //
 // ignoreHead 是否忽略自动生成的 HEAD 请求；
 // ignoreOptions 是否忽略自动生成的 OPTIONS 请求；
-// 返回值中，键名为路路地址，键值为该路由项对应的可用请求方法。
 func (mux *Mux) All(ignoreHead, ignoreOptions bool) []*Router {
 	routers := make([]*Router, 0, len(mux.routers)+1)
 
