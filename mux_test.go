@@ -20,9 +20,9 @@ func buildHandler(code int) http.Handler {
 }
 
 func buildFunc(code int) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(code)
-	})
+	}
 }
 
 // mux 的测试工具
@@ -244,7 +244,7 @@ func TestMux_Options(t *testing.T) {
 	test.mux.Options("/api/1", "CUSTOM OPTIONS2")
 	test.optionsTrue("/api/1", http.StatusOK, "CUSTOM OPTIONS2")
 
-	test.mux.HandleFunc("/api/1", buildFunc(201), http.MethodOptions)
+	a.NotError(test.mux.HandleFunc("/api/1", buildFunc(201), http.MethodOptions))
 	test.optionsTrue("/api/1", 201, "")
 
 	// disableOptions 为 true
@@ -334,21 +334,23 @@ func TestMux_Clean(t *testing.T) {
 	a.Equal(w.Result().StatusCode, 404)
 
 	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "http://example.com/m1", nil)
+	r = httptest.NewRequest(http.MethodGet, "https://example.com/m1", nil)
 	m.ServeHTTP(w, r)
 	a.Equal(w.Result().StatusCode, 404)
 }
 
 func TestMux_ServeHTTP(t *testing.T) {
+	a := assert.New(t)
+
 	test := newTester(t, false, true, false)
 
-	test.mux.Handle("/posts/{path}.html", buildHandler(201))
+	a.NotError(test.mux.Handle("/posts/{path}.html", buildHandler(201)))
 	test.matchTrue(http.MethodGet, "/posts/2017/1.html", 201)
 
-	test.mux.Handle("/posts/{path:.+}.html", buildHandler(202))
+	a.NotError(test.mux.Handle("/posts/{path:.+}.html", buildHandler(202)))
 	test.matchTrue(http.MethodGet, "/posts/2017/1.html", 202)
 
-	test.mux.Handle("/posts/{id:digit}123", buildHandler(203))
+	a.NotError(test.mux.Handle("/posts/{id:digit}123", buildHandler(203)))
 	test.matchTrue(http.MethodGet, "/posts/123123", 203)
 }
 
