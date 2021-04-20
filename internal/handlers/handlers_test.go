@@ -12,7 +12,9 @@ import (
 
 var getHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
-	w.Write([]byte("hello"))
+	if _, err := w.Write([]byte("hello")); err != nil {
+		panic(err)
+	}
 })
 
 var optionsHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -131,7 +133,7 @@ func TestHandlers_optionsAllow(t *testing.T) {
 	a.NotError(hs.Add(getHandler, http.MethodDelete))
 	test("TEST,TEST1")
 
-	// 显式使用 http.MehtodOptions 之后，所有输出都从 options 函数来获取。
+	// 显式使用 http.MethodOptions 之后，所有输出都从 options 函数来获取。
 	a.NotError(hs.Add(optionsHandler, http.MethodOptions))
 	test("options")
 	a.NotError(hs.Add(getHandler, http.MethodPatch))
@@ -177,39 +179,39 @@ func TestHandlers_Methods(t *testing.T) {
 
 	hs := New(false, false)
 	a.NotNil(hs)
-	hs.Add(getHandler, http.MethodPut)
+	a.NotError(hs.Add(getHandler, http.MethodPut))
 	a.Equal(hs.Methods(true, true), []string{http.MethodPut})
 
 	hs = New(false, false)
 	a.NotNil(hs)
-	hs.Add(getHandler, http.MethodPut, http.MethodTrace)
+	a.NotError(hs.Add(getHandler, http.MethodPut, http.MethodTrace))
 	a.Equal(hs.Methods(true, true), []string{http.MethodPut, http.MethodTrace})
 
 	hs = New(false, false)
 	a.NotNil(hs)
-	hs.Add(getHandler, http.MethodPut, http.MethodTrace, http.MethodGet)
+	a.NotError(hs.Add(getHandler, http.MethodPut, http.MethodTrace, http.MethodGet))
 	a.Equal(hs.Methods(true, true), []string{http.MethodGet, http.MethodPut, http.MethodTrace})
 
 	hs = New(false, false)
 	a.NotNil(hs)
-	hs.Add(getHandler, http.MethodPut, http.MethodTrace, http.MethodGet)
+	a.NotError(hs.Add(getHandler, http.MethodPut, http.MethodTrace, http.MethodGet))
 	a.Equal(hs.Methods(false, true), []string{http.MethodGet, http.MethodHead, http.MethodPut, http.MethodTrace})
 
 	hs = New(false, false)
 	a.NotNil(hs)
-	hs.Add(getHandler, http.MethodPut, http.MethodGet)
+	a.NotError(hs.Add(getHandler, http.MethodPut, http.MethodGet))
 	a.Equal(hs.Methods(false, false), []string{http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodPut})
 
 	hs = New(true, true)
 	a.NotNil(hs)
-	hs.Add(getHandler, http.MethodPut, http.MethodGet)
+	a.NotError(hs.Add(getHandler, http.MethodPut, http.MethodGet))
 	a.Equal(hs.Methods(false, false), []string{http.MethodGet, http.MethodPut})
 
 	// 动态插入删除操作
 
 	hs = New(false, false)
 	a.NotNil(hs)
-	hs.Add(getHandler, http.MethodPut, http.MethodGet)
+	a.NotError(hs.Add(getHandler, http.MethodPut, http.MethodGet))
 	a.Equal(hs.Methods(false, false), []string{http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodPut})
 	a.Equal(hs.Methods(true, true), []string{http.MethodGet, http.MethodPut})
 
@@ -217,10 +219,10 @@ func TestHandlers_Methods(t *testing.T) {
 	hs.Remove(http.MethodGet)
 	a.Equal(hs.Methods(false, false), []string{http.MethodOptions, http.MethodPut})
 	a.Equal(hs.Methods(true, true), []string{http.MethodPut})
-	hs.Add(getHandler, http.MethodGet)
+	a.NotError(hs.Add(getHandler, http.MethodGet))
 
 	// 强制指定 HEAD
-	hs.Add(getHandler, http.MethodHead)
+	a.NotError(hs.Add(getHandler, http.MethodHead))
 	a.Equal(hs.Methods(false, false), []string{http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodPut})
 	a.Equal(hs.Methods(true, true), []string{http.MethodGet, http.MethodHead, http.MethodPut})
 

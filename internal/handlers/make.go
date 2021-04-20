@@ -17,9 +17,9 @@ import (
 )
 
 const (
-	fileheader         = "// 该文件由 make.go 产生，不需要手动修改！\n\n"
+	fileHeader         = "// 该文件由 make.go 产生，不需要手动修改！\n\n"
 	filename           = "./methods.go"
-	packagename        = "handlers"
+	packageName        = "handlers"
 	methodTypeName     = "methodMap"
 	optionsStringsName = "optionsStrings"
 )
@@ -30,8 +30,8 @@ func main() {
 	var maps = map[int]string{}
 	var size int
 
-	buf.WString(fileheader)
-	buf.Printf("package %s\n\n", packagename)
+	buf.WString(fileHeader)
+	buf.Printf("package %s\n\n", packageName)
 
 	buf.Printf("var %s=map[string]int{\n", methodTypeName)
 	for index, method := range handlers.Methods {

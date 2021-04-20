@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-// Package interceptor 针对正则表达式拦截处理
+// Package interceptor 针对带参数类型路由的拦截处理
 //
 // 在解析诸如 /authors/{id:\\d+} 带正则表达式的路由项时，
 // 用户可以通过拦截并自定义对 {id:\\d+} 的解析，
@@ -25,6 +25,7 @@
 // interceptor 也是本着这样的原则，添加了以下拦截器：
 //  - digit 数字；
 //  - word 单词，即 [a-zA-Z0-9]+；
+//  - any 任意非空内容；
 package interceptor
 
 import (
