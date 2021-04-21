@@ -38,12 +38,12 @@
 // 则会被转换成命名参数，因为有专门的验证方法，性能会比较正则稍微好上一些。
 //  /posts/{id}.html                  // 匹配 /posts/1.html
 //  /posts-{id}-{page}.html           // 匹配 /posts-1-10.html
-//  /posts/{id:number}.html           // 匹配 /posts/1.html
+//  /posts/{id:digit}.html            // 匹配 /posts/1.html
 // 目前支持以下作为命名参数的类型约束：
 //  digit 限定为数字字符，相当于正则的 [0-9]；
 //  word  相当于正则的 [a-zA-Z0-9]；
-//  any   表示匹配任意内容；
-//        为空表示与 any 相同；
+//  any   表示匹配任意非空内容；
+//        为空表示表示任意内容，包括空；
 //
 // 如果需要自定义这些约束符，可以参考 interceptor 包的文档。
 //

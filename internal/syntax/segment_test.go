@@ -28,6 +28,12 @@ func TestNewSegment(t *testing.T) {
 		True(seg.Endpoint).
 		Empty(seg.Suffix)
 
+	seg = NewSegment("{id:any}")
+	a.Equal(seg.Type, Interceptor).
+		Equal(seg.Value, "{id:any}").
+		True(seg.Endpoint).
+		Empty(seg.Suffix)
+
 	seg = NewSegment("{id:digit}/1")
 	a.Equal(seg.Type, Interceptor).
 		Equal(seg.Value, "{id:digit}/1").
@@ -125,7 +131,16 @@ func TestSegment_Match(t *testing.T) {
 	seg = NewSegment("{id}/author")
 	path = "1/2/author"
 	index = seg.Match(path, ps)
-	a.Equal(path[index:], "")
+	a.Equal(path[index:], "").
+		Equal(ps, map[string]string{"id": "1/2"})
+
+	// Interceptor 1/2 匹配 {id}
+	ps = params.Params{}
+	seg = NewSegment("{id:any}/author")
+	path = "1/2/author"
+	index = seg.Match(path, ps)
+	a.Equal(path[index:], "").
+		Equal(ps, map[string]string{"id": "1/2"})
 
 	ps = params.Params{}
 	seg = NewSegment("{any}/123")
@@ -134,14 +149,30 @@ func TestSegment_Match(t *testing.T) {
 	a.Equal(index, -1)
 
 	ps = params.Params{}
+	seg = NewSegment("{any:any}/123")
+	path = "123"
+	index = seg.Match(path, ps)
+	a.Equal(index, -1)
+
+	// 命名参数
+	ps = params.Params{}
 	seg = NewSegment("{any}123")
+	a.Equal(seg.Type, Named)
+	path = "123123"
+	index = seg.Match(path, ps)
+	a.Equal(index, 3).Equal(ps, map[string]string{"any": ""})
+
+	// Interceptor
+	ps = params.Params{}
+	seg = NewSegment("{any:any}123")
+	a.Equal(seg.Type, Interceptor)
 	path = "123123"
 	index = seg.Match(path, ps)
 	a.Equal(index, 6).
 		Equal(ps, map[string]string{"any": "123"})
 
 	ps = params.Params{}
-	seg = NewSegment("{any}123")
+	seg = NewSegment("{any:any}123")
 	path = "12345123"
 	index = seg.Match(path, ps)
 	a.Equal(index, 8).

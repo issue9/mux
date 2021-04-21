@@ -59,7 +59,7 @@ func NewSegment(val string) *Segment {
 		seg.Name = val[start+1 : end]
 		seg.Suffix = val[end+1:]
 		seg.Endpoint = val[len(val)-1] == endByte
-		seg.matcher = interceptor.MatchAny
+		seg.matcher = func(string) bool { return true }
 		return seg
 	}
 
