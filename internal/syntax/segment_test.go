@@ -29,7 +29,7 @@ func TestNewSegment(t *testing.T) {
 		Empty(seg.Suffix)
 
 	seg = NewSegment("{id:digit}/1")
-	a.Equal(seg.Type, Named).
+	a.Equal(seg.Type, Interceptor).
 		Equal(seg.Value, "{id:digit}/1").
 		False(seg.Endpoint).
 		Equal(seg.Suffix, "/1")

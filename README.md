@@ -1,8 +1,8 @@
 mux
 [![Go](https://github.com/issue9/mux/workflows/Go/badge.svg)](https://github.com/issue9/mux/actions?query=workflow%3AGo)
-[![Go version](https://img.shields.io/badge/Go-1.13-brightgreen.svg?style=flat)](https://golang.org)
+[![Go version](https://img.shields.io/github/go-mod/go-version/issue9/mux)](https://golang.org)
 [![Go Report Card](https://goreportcard.com/badge/github.com/issue9/mux)](https://goreportcard.com/report/github.com/issue9/mux)
-[![license](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](https://opensource.org/licenses/MIT)
+[![license](https://img.shields.io/github/license/issue9/mux)](LICENSE)
 [![codecov](https://codecov.io/gh/issue9/mux/branch/master/graph/badge.svg)](https://codecov.io/gh/issue9/mux)
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/issue9/mux/v3)](https://pkg.go.dev/github.com/issue9/mux/v3)
 ======

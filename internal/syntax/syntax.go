@@ -18,6 +18,11 @@ const (
 	// 只能匹配 /users/1，不能匹配 /users/2
 	String Type = iota
 
+	// Interceptor 拦截器
+	//
+	// 这是正则和命名参数的特例，其优先级比两都都要高。
+	Interceptor
+
 	// Regexp 正则表达式，比如：
 	//  /users/{id:\\d+}
 	// 可以匹配 /users/1、/users/2 等任意数值。
@@ -46,6 +51,8 @@ func (t Type) String() string {
 	switch t {
 	case Named:
 		return "named"
+	case Interceptor:
+		return "interceptor"
 	case Regexp:
 		return "regexp"
 	case String:

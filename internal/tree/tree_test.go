@@ -105,6 +105,25 @@ func TestTree_match(t *testing.T) {
 	test.matchTrue(http.MethodGet, "/page/", 7)
 	test.matchTrue(http.MethodGet, "/posts/2.html/2/author", 8) // 若 {id} 可匹配任意字符，此条也可匹配 3
 
+	// 测试 digit 和 \\d 是否正常
+	test = newTester(a)
+	test.add(http.MethodGet, "/posts/{id:\\d}/author", 1)
+	test.add(http.MethodGet, "/posts/{id:digit}/author", 2)
+	test.matchTrue(http.MethodGet, "/posts/1/author", 2)
+
+	// 测试 digit 和 named 是否正常
+	test = newTester(a)
+	test.add(http.MethodGet, "/posts/{id}/author", 1)
+	test.add(http.MethodGet, "/posts/{id:digit}/author", 2)
+	test.matchTrue(http.MethodGet, "/posts/1/author", 2)
+
+	// 测试 digit 和 \\d 和 named 三者顺序是否正常
+	test = newTester(a)
+	test.add(http.MethodGet, "/posts/{id}/author", 1)
+	test.add(http.MethodGet, "/posts/{id:\\d}/author", 2)
+	test.add(http.MethodGet, "/posts/{id:digit}/author", 3)
+	test.matchTrue(http.MethodGet, "/posts/1/author", 3)
+
 	// 以斜框结尾，是否能正常访问
 	test = newTester(a)
 	test.add(http.MethodGet, "/posts/{id}/", 1)

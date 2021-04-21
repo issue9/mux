@@ -19,6 +19,7 @@ func TestType_String(t *testing.T) {
 	a := assert.New(t)
 
 	a.Equal(Named.String(), "named")
+	a.Equal(Interceptor.String(), "interceptor")
 	a.Equal(Regexp.String(), "regexp")
 	a.Equal(String.String(), "string")
 	a.Panic(func() {

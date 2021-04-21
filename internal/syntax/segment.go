@@ -65,7 +65,7 @@ func NewSegment(val string) *Segment {
 
 	matcher, found := interceptor.Get(val[separator+1 : end])
 	if found {
-		seg.Type = Named
+		seg.Type = Interceptor
 		seg.Name = val[start+1 : separator]
 		seg.Suffix = val[end+1:]
 		seg.Endpoint = val[len(val)-1] == endByte
@@ -110,7 +110,7 @@ func (seg *Segment) Match(path string, params params.Params) int {
 		if strings.HasPrefix(path, seg.Value) {
 			return len(seg.Value)
 		}
-	case Named:
+	case Interceptor, Named:
 		if seg.Endpoint {
 			if seg.matcher(path) {
 				params[seg.Name] = path
