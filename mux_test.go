@@ -365,6 +365,7 @@ func TestMux_ServeHTTP_Order(t *testing.T) {
 	test.matchTrue(http.MethodGet, "/posts/1", 201)                  // f1 普通路由项完全匹配
 	test.matchTrue(http.MethodGet, "/posts/2", 202)                  // f1 正则路由
 	test.matchTrue(http.MethodGet, "/posts/abc", 203)                // f3 命名路由
+	test.matchTrue(http.MethodGet, "/posts/", 203)                   // f3
 
 	test = newTester(t, false, true, false)
 	a.NotError(test.mux.GetFunc("/p1/{p1}/p2/{p2:\\d+}", buildFunc(201))) // f1
