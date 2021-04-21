@@ -41,7 +41,7 @@ func (n *tester) add(method, pattern string, code int) {
 		nn.handlers = handlers.New(false, false)
 	}
 
-	nn.handlers.Add(buildHandler(code), method)
+	n.a.NotError(nn.handlers.Add(buildHandler(code), method))
 }
 
 // 验证按照指定的 method 和 path 访问，是否会返回相同的 code 值，
@@ -251,7 +251,7 @@ func TestTree_SetAllow(t *testing.T) {
 	tree := New(false, false)
 
 	a.NotError(tree.Add("/options", buildHandler(1), http.MethodGet, http.MethodDelete, http.MethodPatch))
-	tree.SetAllow("/options", "TEST1,TEST2")
+	a.NotError(tree.SetAllow("/options", "TEST1,TEST2"))
 	n, err := tree.getNode("/options")
 	a.NotError(err).NotNil(n)
 	a.Equal(n.handlers.Options(), "TEST1,TEST2")
@@ -269,10 +269,10 @@ func TestTree_All(t *testing.T) {
 	tree := New(false, false)
 	a.NotNil(tree)
 
-	tree.Add("/", buildHandler(http.StatusOK), http.MethodGet)
-	tree.Add("/posts", buildHandler(http.StatusOK), http.MethodGet, http.MethodPost)
-	tree.Add("/posts/{id}", buildHandler(http.StatusOK), http.MethodGet, http.MethodPut)
-	tree.Add("/posts/{id}/author", buildHandler(http.StatusOK), http.MethodGet)
+	a.NotError(tree.Add("/", buildHandler(http.StatusOK), http.MethodGet))
+	a.NotError(tree.Add("/posts", buildHandler(http.StatusOK), http.MethodGet, http.MethodPost))
+	a.NotError(tree.Add("/posts/{id}", buildHandler(http.StatusOK), http.MethodGet, http.MethodPut))
+	a.NotError(tree.Add("/posts/{id}/author", buildHandler(http.StatusOK), http.MethodGet))
 
 	routes := tree.All(false, false)
 	a.Equal(routes, map[string][]string{
@@ -289,14 +289,14 @@ func BenchmarkTree_Handler(b *testing.B) {
 	tree := New(false, false)
 
 	// 添加路由项
-	tree.Add("/", buildHandler(1), http.MethodGet)
-	tree.Add("/posts/{id}", buildHandler(2), http.MethodGet)
-	tree.Add("/posts/{id}/author", buildHandler(3), http.MethodGet)
-	tree.Add("/posts/1/author", buildHandler(4), http.MethodGet)
-	tree.Add("/posts/{id:\\d+}", buildHandler(5), http.MethodGet)
-	tree.Add("/posts/{id:\\d+}/author", buildHandler(6), http.MethodGet)
-	tree.Add("/page/{page:\\d*}", buildHandler(7), http.MethodGet) // 可选的正则节点
-	tree.Add("/posts/{id}/{page}/author", buildHandler(8), http.MethodGet)
+	a.NotError(tree.Add("/", buildHandler(1), http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}", buildHandler(2), http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}/author", buildHandler(3), http.MethodGet))
+	a.NotError(tree.Add("/posts/1/author", buildHandler(4), http.MethodGet))
+	a.NotError(tree.Add("/posts/{id:\\d+}", buildHandler(5), http.MethodGet))
+	a.NotError(tree.Add("/posts/{id:\\d+}/author", buildHandler(6), http.MethodGet))
+	a.NotError(tree.Add("/page/{page:\\d*}", buildHandler(7), http.MethodGet)) // 可选的正则节点
+	a.NotError(tree.Add("/posts/{id}/{page}/author", buildHandler(8), http.MethodGet))
 
 	paths := map[int]string{
 		0: "/",

@@ -131,9 +131,9 @@ func (seg *Segment) Match(path string, params params.Params) int {
 			}
 		}
 	case Regexp:
-		if locs := seg.expr.FindStringSubmatchIndex(path); locs != nil && locs[0] == 0 {
-			params[seg.Name] = path[:locs[3]]
-			return locs[1]
+		if loc := seg.expr.FindStringSubmatchIndex(path); loc != nil && loc[0] == 0 {
+			params[seg.Name] = path[:loc[3]]
+			return loc[1]
 		}
 	}
 
