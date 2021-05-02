@@ -39,7 +39,7 @@ func NewHosts(domain ...string) *Hosts {
 //
 // 该路由只有符合 matcher 的要求才会进入，其它与 Mux 功能相同。
 //
-// name 表示不该路由组的名称，需要唯一，否则返回 false；
+// name 表示该路由组的名称，需要唯一，否则返回 false；
 func (mux *Mux) NewMux(name string, matcher Matcher) (*Mux, bool) {
 	if mux.routers == nil {
 		mux.routers = make([]*Mux, 0, 5)
@@ -57,11 +57,6 @@ func (mux *Mux) NewMux(name string, matcher Matcher) (*Mux, bool) {
 }
 
 func (mux *Mux) match(r *http.Request) (*handlers.Handlers, params.Params) {
-	path := r.URL.Path
-	if !mux.skipCleanPath {
-		path = cleanPath(path)
-	}
-
 	for _, m := range mux.routers {
 		if hs, ps := m.match(r); hs != nil {
 			return hs, ps
@@ -69,7 +64,7 @@ func (mux *Mux) match(r *http.Request) (*handlers.Handlers, params.Params) {
 	}
 
 	if mux.matcher == nil || mux.matcher.Match(r) {
-		return mux.tree.Handler(path)
+		return mux.tree.Handler(r.URL.Path)
 	}
 	return nil, nil
 }

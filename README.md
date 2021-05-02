@@ -104,9 +104,10 @@ http.ListenAndServe(":8080", m)
 
 ```go
 // server
-m := mux.New(false, false, false, nil, nil)
+m := mux.Default()
 host := m.Matcher(mux.NewHosts("*.example.com"))
 host.Get("/path", h)
+http.ListenAndServe(":8080", m)
 
 // client
 r := http.NewRequest(http.MethodGet, "https://abc.example.com/path", nil)
@@ -138,7 +139,7 @@ id := params.MustInt("id", 0) // 0 表示在无法获取 id 参数的默认值
 显示设定 OPTIONS，不受 disableOptions 的影响。
 
 ```go
-m := mux.New(...)
+m := mux.Default()
 m.Get("/posts/{id}", nil)     // 默认情况下， OPTIONS 的报头为 GET, OPTIONS
 m.Options("/posts/{id}", "*") // 强制改成 *
 m.Delete("/posts/{id}", nil)  // OPTIONS 依然为 *

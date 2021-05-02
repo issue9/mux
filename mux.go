@@ -61,10 +61,8 @@ type Router struct {
 	Routes map[string][]string // 键名为请求地址，键值为请求方法
 }
 
-// Default New 的默主人参数版本要
-func Default() *Mux {
-	return New(false, false, false, nil, nil)
-}
+// Default New 的默认参数版本要
+func Default() *Mux { return New(false, false, false, nil, nil) }
 
 // New 声明一个新的 Mux
 //
@@ -249,6 +247,10 @@ func (mux *Mux) AnyFunc(pattern string, fun http.HandlerFunc) *Mux {
 }
 
 func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if !mux.skipCleanPath {
+		r.URL.Path = cleanPath(r.URL.Path)
+	}
+
 	hs, ps := mux.match(r)
 	if hs == nil {
 		mux.notFound(w, r)
@@ -303,9 +305,7 @@ func (mux *Mux) URL(name string, params map[string]string) (string, error) {
 // Params 获取路由的参数集合
 //
 // NOTE: 详细情况可参考 params.Get
-func Params(r *http.Request) params.Params {
-	return params.Get(r)
-}
+func Params(r *http.Request) params.Params { return params.Get(r) }
 
 // IsWell 语法格式是否正确
 //
