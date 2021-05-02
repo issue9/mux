@@ -17,11 +17,20 @@ type Matcher interface {
 	Match(*http.Request) bool
 }
 
+// MatcherFunc 用于转一个 Match(http.Request) bool 转换成 Matcher 接口
+type MatcherFunc func(*http.Request) bool
+
 // Hosts 限定域名的匹配工具
 type Hosts struct {
 	domains   []string // 域名列表
 	wildcards []string // 泛域名列表，只保存 * 之后的部分内容
 }
+
+func (f MatcherFunc) Match(r *http.Request) bool {
+	return f(r)
+}
+
+func matchAny(*http.Request) bool { return true }
 
 // NewHosts 声明新的 Hosts 实例
 func NewHosts(domain ...string) *Hosts {

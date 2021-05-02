@@ -70,8 +70,7 @@ func Default() *Mux { return New(false, false, false, nil, nil) }
 // disableHead 是否禁用根据 Get 请求自动生成 HEAD 请求；
 // skipCleanPath 是否不对访问路径作处理，比如 "//api" ==> "/api"；
 // notFound 404 页面的处理方式，为 nil 时会调用默认的方式进行处理；
-// methodNotAllowed 405 页面的处理方式，为 nil 时会调用默认的方式进行处理，
-// 调用此方法前，会设置 Allow 报头，如果不需要，则要在 methodNotAllowed 中去掉。
+// methodNotAllowed 405 页面的处理方式，为 nil 时会调用默认的方式进行处理；
 func New(disableOptions, disableHead, skipCleanPath bool, notFound, methodNotAllowed http.HandlerFunc) *Mux {
 	if notFound == nil {
 		notFound = defaultNotFound
