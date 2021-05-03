@@ -4,7 +4,7 @@ mux
 [![Go Report Card](https://goreportcard.com/badge/github.com/issue9/mux)](https://goreportcard.com/report/github.com/issue9/mux)
 [![license](https://img.shields.io/github/license/issue9/mux)](LICENSE)
 [![codecov](https://codecov.io/gh/issue9/mux/branch/master/graph/badge.svg)](https://codecov.io/gh/issue9/mux)
-[![PkgGoDev](https://pkg.go.dev/badge/github.com/issue9/mux/v3)](https://pkg.go.dev/github.com/issue9/mux/v3)
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/issue9/mux/v4)](https://pkg.go.dev/github.com/issue9/mux/v4)
 ======
 
 mux 是一个实现了 [http.Handler](https://pkg.go.dev/net/http#Handler) 的中间件，为用户提供了以下功能：
@@ -68,7 +68,7 @@ http.ListenAndServe(":8080", m)
 - any 表示匹配任意非空内容；
 - "" 为空表示任意内容，包括非内容；
 
-用户也可以自行添加新的约束符。具体可参考 <https://pkg.go.dev/github.com/issue9/mux/v3/interceptor>
+用户也可以自行添加新的约束符。具体可参考 <https://pkg.go.dev/github.com/issue9/mux/v4/interceptor>
 
 在路由字符串中若是以命名参数结尾的，则表示可以匹配之后的任意字符。
 

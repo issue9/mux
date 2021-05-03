@@ -9,11 +9,11 @@ import (
 
 	"github.com/issue9/sliceutil"
 
-	"github.com/issue9/mux/v3/group"
-	"github.com/issue9/mux/v3/internal/handlers"
-	"github.com/issue9/mux/v3/internal/syntax"
-	"github.com/issue9/mux/v3/internal/tree"
-	"github.com/issue9/mux/v3/params"
+	"github.com/issue9/mux/v4/group"
+	"github.com/issue9/mux/v4/internal/handlers"
+	"github.com/issue9/mux/v4/internal/syntax"
+	"github.com/issue9/mux/v4/internal/tree"
+	"github.com/issue9/mux/v4/params"
 )
 
 var (
