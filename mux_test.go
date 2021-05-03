@@ -33,7 +33,7 @@ type tester struct {
 }
 
 func newTester(t testing.TB, disableOptions, disableHead, skipClean bool) *tester {
-	mux := New(disableOptions, disableHead, skipClean, nil, nil)
+	mux := New(disableOptions, disableHead, skipClean, nil, nil, "", nil)
 	return &tester{
 		mux: mux,
 		srv: rest.NewServer(t, mux, nil),
@@ -309,7 +309,7 @@ func TestMux_Params(t *testing.T) {
 func TestMux_Clean(t *testing.T) {
 	a := assert.New(t)
 
-	m := New(false, false, false, nil, nil)
+	m := Default()
 	m.Get("/m1", buildHandler(200)).
 		Post("/m1", buildHandler(201))
 	router, ok := m.New("host", group.NewHosts("example.com"))

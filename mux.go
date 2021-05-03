@@ -63,7 +63,7 @@ type Router struct {
 }
 
 // Default New 的默认参数版本
-func Default() *Mux { return New(false, false, false, nil, nil) }
+func Default() *Mux { return New(false, false, false, nil, nil, "", nil) }
 
 // New 声明一个新的 Mux
 //
@@ -72,7 +72,9 @@ func Default() *Mux { return New(false, false, false, nil, nil) }
 // skipCleanPath 是否不对访问路径作处理，比如 "//api" ==> "/api"；
 // notFound 404 页面的处理方式，为 nil 时会调用默认的方式进行处理；
 // methodNotAllowed 405 页面的处理方式，为 nil 时会调用默认的方式进行处理；
-func New(disableOptions, disableHead, skipCleanPath bool, notFound, methodNotAllowed http.HandlerFunc) *Mux {
+// name 为当前路由组指定名称，可以为空，该名称即在 Mux.All() 返回标记属于哪个路由组；
+// m 当前路由组的匹配规则，可以为空，表示无规则；
+func New(disableOptions, disableHead, skipCleanPath bool, notFound, methodNotAllowed http.HandlerFunc, name string, m group.Matcher) *Mux {
 	if notFound == nil {
 		notFound = defaultNotFound
 	}
@@ -80,8 +82,14 @@ func New(disableOptions, disableHead, skipCleanPath bool, notFound, methodNotAll
 		methodNotAllowed = defaultMethodNotAllowed
 	}
 
+	if m == nil {
+		m = group.MatcherFunc(group.Any)
+	}
+
 	mux := &Mux{
-		tree: tree.New(disableOptions, disableHead),
+		name:    name,
+		matcher: m,
+		tree:    tree.New(disableOptions, disableHead),
 
 		disableOptions: disableOptions,
 		disableHead:    disableHead,
@@ -285,9 +293,7 @@ func (mux *Mux) New(name string, matcher group.Matcher) (*Mux, bool) {
 		return nil, false
 	}
 
-	m := New(mux.disableOptions, mux.disableHead, mux.skipCleanPath, mux.notFound, mux.methodNotAllowed)
-	m.name = name
-	m.matcher = matcher
+	m := New(mux.disableOptions, mux.disableHead, mux.skipCleanPath, mux.notFound, mux.methodNotAllowed, name, matcher)
 	mux.routers = append(mux.routers, m)
 	return m, true
 }
@@ -299,7 +305,7 @@ func (mux *Mux) match(r *http.Request) (*handlers.Handlers, params.Params) {
 		}
 	}
 
-	if mux.matcher == nil || mux.matcher.Match(r) {
+	if mux.matcher.Match(r) {
 		return mux.tree.Handler(r.URL.Path)
 	}
 	return nil, nil

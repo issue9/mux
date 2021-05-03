@@ -83,7 +83,7 @@ func TestResource(t *testing.T) {
 
 func TestMux_Resource(t *testing.T) {
 	a := assert.New(t)
-	srvmux := New(false, true, false, nil, nil)
+	srvmux := New(false, true, false, nil, nil, "", nil)
 	a.NotNil(srvmux)
 
 	r1 := srvmux.Resource("/abc/1")
@@ -121,7 +121,7 @@ func TestPrefix_Resource(t *testing.T) {
 
 func TestResource_Name_URL(t *testing.T) {
 	a := assert.New(t)
-	srvmux := New(false, true, false, nil, nil)
+	srvmux := New(false, true, false, nil, nil, "", nil)
 	a.NotNil(srvmux)
 
 	// 非正则

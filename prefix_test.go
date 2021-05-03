@@ -81,7 +81,7 @@ func TestPrefix(t *testing.T) {
 
 func TestMux_Prefix(t *testing.T) {
 	a := assert.New(t)
-	srvmux := New(false, true, false, nil, nil)
+	srvmux := New(false, true, false, nil, nil, "", nil)
 	a.NotNil(srvmux)
 
 	p := srvmux.Prefix("/abc")
@@ -94,7 +94,7 @@ func TestMux_Prefix(t *testing.T) {
 
 func TestPrefix_Prefix(t *testing.T) {
 	a := assert.New(t)
-	srvmux := New(false, true, false, nil, nil)
+	srvmux := New(false, true, false, nil, nil, "", nil)
 	a.NotNil(srvmux)
 
 	p := srvmux.Prefix("/abc")
@@ -109,7 +109,7 @@ func TestPrefix_Prefix(t *testing.T) {
 
 func TestPrefix_Name_URL(t *testing.T) {
 	a := assert.New(t)
-	srvmux := New(false, true, false, nil, nil)
+	srvmux := New(false, true, false, nil, nil, "", nil)
 	a.NotNil(srvmux)
 
 	// 非正则
