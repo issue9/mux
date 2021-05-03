@@ -94,9 +94,7 @@ func New(disableOptions, disableHead, skipCleanPath bool, notFound, methodNotAll
 // Name 当前路由组的名称
 func (mux *Mux) Name() string { return mux.name }
 
-// Clean 清除所有的路由项
-//
-// 包括子匹配项
+// Clean 清除包括子路由组在内的所有的路由项
 func (mux *Mux) Clean() *Mux {
 	for _, m := range mux.routers {
 		m.Clean()
