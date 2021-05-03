@@ -136,10 +136,6 @@ func TestPrefix_Name_URL(t *testing.T) {
 	url, err = p.URL("/{action}/{id:\\d+}", map[string]string{"id": "1"})
 	a.Error(err).Equal(url, "")
 
-	a.NotError(p.Name("action", "/{action}/{id:\\d+}"))
-	url, err = p.Mux().URL("action", map[string]string{"id": "1", "action": "blog"})
-	a.NotError(err).Equal(url, "/api/blog/1")
-
-	url, err = p.URL("action", map[string]string{"id": "1", "action": "blog"})
+	url, err = p.URL("/{action}/{id:\\d+}", map[string]string{"id": "1", "action": "blog"})
 	a.NotError(err).Equal(url, "/api/blog/1")
 }

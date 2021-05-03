@@ -130,24 +130,13 @@ func (p *Prefix) Clean() *Prefix {
 	return p
 }
 
-// Name 为一条路由项命名
-//
-// URL 可以通过此属性来生成地址。
-func (p *Prefix) Name(name, pattern string) error {
-	return p.mux.Name(name, p.prefix+pattern)
-}
-
 // URL 根据参数生成地址
 //
 // name 为路由的名称，或是直接为路由项的定义内容，
 // 若 name 作为路由项定义，会加上 Prefix.prefix 作为前缀；
 // params 为路由项中的参数，键名为参数名，键值为参数值。
-func (p *Prefix) URL(name string, params map[string]string) (string, error) {
-	pattern, found := p.mux.names[name]
-	if !found {
-		pattern = p.prefix + name
-	}
-	return p.mux.tree.URL(pattern, params)
+func (p *Prefix) URL(pattern string, params map[string]string) (string, error) {
+	return p.mux.tree.URL(p.prefix+pattern, params)
 }
 
 // Prefix 在现有 Prefix 的基础上声明一个新的 Prefix 实例

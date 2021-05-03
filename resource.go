@@ -129,11 +129,6 @@ func (r *Resource) Clean() *Resource {
 	return r
 }
 
-// Name 为一条路由项命名
-//
-// URL 可以通过此属性来生成地址。
-func (r *Resource) Name(name string) error { return r.mux.Name(name, r.pattern) }
-
 // URL 根据参数构建一条 URL
 //
 // params 匹配路由参数中的同名参数，或是不存在路由参数，比如普通的字符串路由项，

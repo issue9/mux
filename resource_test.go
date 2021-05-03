@@ -150,7 +150,6 @@ func TestResource_Name_URL(t *testing.T) {
 	url, err = res.URL(map[string]string{"id": "1"})
 	a.Error(err).Equal(url, "")
 
-	a.NotError(res.Name("action"))
-	url, err = res.Mux().URL("action", map[string]string{"id": "1", "action": "blog"})
+	url, err = res.URL(map[string]string{"id": "1", "action": "blog"})
 	a.NotError(err).Equal(url, "/api/blog/1")
 }

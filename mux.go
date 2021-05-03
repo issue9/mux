@@ -49,11 +49,6 @@ type Mux struct {
 	methodNotAllowed http.HandlerFunc
 
 	disableOptions, disableHead, skipCleanPath bool
-
-	// names 保存着路由项与其名称的对应关系，默认情况下，
-	// 路由项不存在名称，但可以通过 Mux.Name() 为其指定一个名称，
-	// 之后即可以在 Mux.URL() 使用名称来查找路由项。
-	names map[string]string
 }
 
 // Router 用于描述 Mux.All 返回的参数
@@ -91,13 +86,12 @@ func New(disableOptions, disableHead, skipCleanPath bool, notFound, methodNotAll
 		matcher: m,
 		tree:    tree.New(disableOptions, disableHead),
 
+		notFound:         notFound,
+		methodNotAllowed: methodNotAllowed,
+
 		disableOptions: disableOptions,
 		disableHead:    disableHead,
 		skipCleanPath:  skipCleanPath,
-
-		names:            make(map[string]string, 50),
-		notFound:         notFound,
-		methodNotAllowed: methodNotAllowed,
 	}
 
 	return mux
@@ -311,26 +305,11 @@ func (mux *Mux) match(r *http.Request) (*handlers.Handlers, params.Params) {
 	return nil, nil
 }
 
-// Name 为一条路由项命名
-//
-// URL 可以通过此属性来生成地址。
-func (mux *Mux) Name(name, pattern string) error {
-	if _, found := mux.names[name]; found {
-		return ErrNameExists
-	}
-	mux.names[name] = pattern
-	return nil
-}
-
 // URL 根据参数生成地址
 //
-// name 为路由的名称，或是直接为路由项的定义内容；
+// pattern 为路由项的定义内容；
 // params 为路由项中的参数，键名为参数名，键值为参数值。
-func (mux *Mux) URL(name string, params map[string]string) (string, error) {
-	pattern, found := mux.names[name]
-	if !found {
-		pattern = name
-	}
+func (mux *Mux) URL(pattern string, params map[string]string) (string, error) {
 	return mux.tree.URL(pattern, params)
 }
 
