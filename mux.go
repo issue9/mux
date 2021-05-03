@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/issue9/mux/v3/group"
 	"github.com/issue9/mux/v3/internal/handlers"
 	"github.com/issue9/mux/v3/internal/syntax"
 	"github.com/issue9/mux/v3/internal/tree"
@@ -39,10 +40,10 @@ var ErrNameExists = errors.New("存在相同名称的路由项")
 //    Handle("/api/{version:\\d+}",h3, http.MethodGet, http.MethodPost) // 只匹配 GET 和 POST
 //  http.ListenAndServe(m)
 type Mux struct {
-	name             string     // 当前路由的名称
-	routers          []*Mux     // 子路由
-	matcher          Matcher    // 当前路由的先决条件
-	tree             *tree.Tree // 当前路由的路由项
+	name             string        // 当前路由的名称
+	routers          []*Mux        // 子路由
+	matcher          group.Matcher // 当前路由的先决条件
+	tree             *tree.Tree    // 当前路由的路由项
 	notFound         http.HandlerFunc
 	methodNotAllowed http.HandlerFunc
 
@@ -96,7 +97,7 @@ func New(disableOptions, disableHead, skipCleanPath bool, notFound, methodNotAll
 
 // Clean 清除所有的路由项
 //
-// 包括子匹配项的 matchers
+// 包括子匹配项
 func (mux *Mux) Clean() *Mux {
 	for _, m := range mux.routers {
 		m.Clean()

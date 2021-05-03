@@ -10,6 +10,7 @@ import (
 	"github.com/issue9/assert"
 	"github.com/issue9/assert/rest"
 
+	"github.com/issue9/mux/v3/group"
 	"github.com/issue9/mux/v3/internal/handlers"
 )
 
@@ -124,7 +125,7 @@ func TestMux_All(t *testing.T) {
 		},
 	})
 
-	r, ok := m.NewMux("host-1", NewHosts())
+	r, ok := m.New("host-1", group.NewHosts())
 	a.True(ok).NotNil(r)
 	r.Get("/m", buildHandler(1))
 	r.Post("/m", buildHandler(1))
@@ -311,7 +312,7 @@ func TestMux_Clean(t *testing.T) {
 	m := New(false, false, false, nil, nil)
 	m.Get("/m1", buildHandler(200)).
 		Post("/m1", buildHandler(201))
-	router, ok := m.NewMux("host", NewHosts("example.com"))
+	router, ok := m.New("host", group.NewHosts("example.com"))
 	a.True(ok).NotNil(router)
 	router.Get("/m1", buildHandler(202)).
 		Post("/m1", buildHandler(203))
