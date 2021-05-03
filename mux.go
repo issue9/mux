@@ -4,7 +4,6 @@ package mux
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"strings"
 
@@ -26,11 +25,6 @@ var (
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 	}
 )
-
-// ErrNameExists 存在相同名称
-//
-// 当为一个路由项命名时，若存在相同名称的，则返回此错误信息。
-var ErrNameExists = errors.New("存在相同名称的路由项")
 
 // Mux 提供了强大的路由匹配功能
 //
@@ -96,6 +90,9 @@ func New(disableOptions, disableHead, skipCleanPath bool, notFound, methodNotAll
 
 	return mux
 }
+
+// Name 当前路由组的名称
+func (mux *Mux) Name() string { return mux.name }
 
 // Clean 清除所有的路由项
 //

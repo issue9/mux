@@ -112,7 +112,7 @@ func TestMux_All(t *testing.T) {
 	a := assert.New(t)
 
 	m := Default()
-	a.NotNil(m)
+	a.NotNil(m).Equal(m.Name(), "")
 
 	m.Get("/m", buildHandler(1))
 	m.Post("/m", buildHandler(1))
@@ -395,7 +395,7 @@ func TestMux_New(t *testing.T) {
 	m := Default()
 	r, ok := m.New("host", group.NewHosts())
 	a.True(ok).NotNil(r)
-	a.Equal(r.name, "host").Equal(r.disableHead, m.disableHead)
+	a.Equal(r.name, "host").Equal(r.disableHead, m.disableHead).Equal(r.Name(), "host")
 
 	r, ok = m.New("host", group.NewHosts())
 	a.False(ok).Nil(r)
