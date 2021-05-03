@@ -1,11 +1,11 @@
-mux
+# mux
+
 [![Go](https://github.com/issue9/mux/workflows/Go/badge.svg)](https://github.com/issue9/mux/actions?query=workflow%3AGo)
 [![Go version](https://img.shields.io/github/go-mod/go-version/issue9/mux)](https://golang.org)
 [![Go Report Card](https://goreportcard.com/badge/github.com/issue9/mux)](https://goreportcard.com/report/github.com/issue9/mux)
 [![license](https://img.shields.io/github/license/issue9/mux)](LICENSE)
 [![codecov](https://codecov.io/gh/issue9/mux/branch/master/graph/badge.svg)](https://codecov.io/gh/issue9/mux)
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/issue9/mux/v4)](https://pkg.go.dev/github.com/issue9/mux/v4)
-======
 
 mux 是一个实现了 [http.Handler](https://pkg.go.dev/net/http#Handler) 的中间件，为用户提供了以下功能：
 
@@ -18,7 +18,7 @@ mux 是一个实现了 [http.Handler](https://pkg.go.dev/net/http#Handler) 的�
 1. 任意风格的路由，比如 discuz 这种不以 / 作为分隔符的；
 
 ```go
-m := mux.New(false, false, false, nil, nil).
+m := mux.New(false, false, false, nil, nil, "", nil).
     Get("/users/1", h).
     Post("/login", h).
     Get("/pages/{id:\\d+}.html", h). // 匹配 /pages/123.html 等格式，path = 123
@@ -132,8 +132,8 @@ id := params.MustInt("id", 0) // 0 表示在无法获取 id 参数的默认值
 #### OPTIONS
 
 默认情况下，用户无须显示地实现它，系统会自动实现。
-当然用户也可以使用 *.Options() 函数指定特定的数据；
-或是直接使用 *.Handle() 指定一个自定义的实现方式。
+当然用户也可以使用 `*.Options()` 函数指定特定的数据；
+或是直接使用 `*.Handle()` 指定一个自定义的实现方式。
 
 如果不需要的话，也可以在 New() 中将 disableOptions 设置为 true。
 显示设定 OPTIONS，不受 disableOptions 的影响。
@@ -154,20 +154,17 @@ m.Handle("/posts/{id}", h, http.MethodOptions) // 显示指定一个处理函数
  系统会为每一个 GET 请求自动实现一个对应的 HEAD 请求，
  当然也与 OPTIONS 一样，你也可以自通过 mux.Handle() 自己实现 HEAD 请求。
 
-性能
-----
+## 性能
 
 <https://caixw.github.io/go-http-routers-testing/> 提供了与其它几个框架的对比情况。
 
-中间件
-----
+## 中间件
 
 mux 本身就是一个实现了 [http.Handler](https://godoc.org/net/http#Handler) 接口的中间件，
 所有实现官方接口 `http.Handler` 的都可以附加到 mux 上作为中间件使用。
 
 [middleware](https://github.com/issue9/middleware) 提供了诸如按域名过滤等常用的中间件功能。
 
-版权
-----
+## 版权
 
 本项目采用 [MIT](https://opensource.org/licenses/MIT) 开源授权许可证，完整的授权说明可在 [LICENSE](LICENSE) 文件中找到。

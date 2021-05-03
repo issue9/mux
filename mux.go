@@ -29,7 +29,7 @@ var (
 // Mux 提供了强大的路由匹配功能
 //
 // 可以对路径按正则或是请求方法进行匹配。用法如下：
-//  m := mux.New()
+//  m := mux.Default()
 //  m.Get("/abc/h1", h1).
 //    Post("/abc/h2", h2).
 //    Handle("/api/{version:\\d+}",h3, http.MethodGet, http.MethodPost) // 只匹配 GET 和 POST

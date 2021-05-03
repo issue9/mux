@@ -2,7 +2,7 @@
 
 // Package mux 是一个提供了路由匹配功能的中间件
 //
-//  m := mux.New(false, false, false, nil, nil).
+//  m := mux.New(false, false, false, nil, nil, "", nil).
 //      Get("/users/1", h).
 //      Post("/login", h).
 //      Get("/posts/{id:\\d+}", h).  // 正则路由
@@ -92,7 +92,7 @@
 //
 // 如果不需要的话，也可以在 New() 中将 disableOptions 设置为 true。
 // 显示设定 OPTIONS，不受 disableOptions 的影响。
-//  m := mux.New(...)
+//  m := mux.Default()
 //  m.Get("/posts/{id}", nil)     // 默认情况下， OPTIONS 的报头为 GET, OPTIONS
 //  m.Options("/posts/{id}", "*") // 强制改成 *
 //  m.Delete("/posts/{id}", nil)  // OPTIONS 依然为 *
