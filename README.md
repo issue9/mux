@@ -98,14 +98,14 @@ http.ListenAndServe(":8080", m)
 /posts/index.html  // 匹配 1
 ```
 
-#### Matcher
+#### 分组路由
 
-可以通过匹配 Matcher 接口，定义了一组特定要求的路由项。
+可以通过匹配 group.Matcher 接口，定义了一组特定要求的路由项。
 
 ```go
 // server
 m := mux.Default()
-host := m.Matcher(mux.NewHosts("*.example.com"))
+host := m.Matcher(group.NewHosts("*.example.com"))
 host.Get("/path", h)
 http.ListenAndServe(":8080", m)
 
