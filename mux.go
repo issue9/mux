@@ -7,7 +7,6 @@ import (
 	"errors"
 	"net/http"
 	"strings"
-	"sync"
 
 	"github.com/issue9/sliceutil"
 
@@ -54,8 +53,7 @@ type Mux struct {
 	// names 保存着路由项与其名称的对应关系，默认情况下，
 	// 路由项不存在名称，但可以通过 Mux.Name() 为其指定一个名称，
 	// 之后即可以在 Mux.URL() 使用名称来查找路由项。
-	names   map[string]string
-	namesMu sync.RWMutex
+	names map[string]string
 }
 
 // Router 用于描述 Mux.All 返回的参数
@@ -311,13 +309,9 @@ func (mux *Mux) match(r *http.Request) (*handlers.Handlers, params.Params) {
 //
 // URL 可以通过此属性来生成地址。
 func (mux *Mux) Name(name, pattern string) error {
-	mux.namesMu.Lock()
-	defer mux.namesMu.Unlock()
-
 	if _, found := mux.names[name]; found {
 		return ErrNameExists
 	}
-
 	mux.names[name] = pattern
 	return nil
 }
@@ -327,14 +321,10 @@ func (mux *Mux) Name(name, pattern string) error {
 // name 为路由的名称，或是直接为路由项的定义内容；
 // params 为路由项中的参数，键名为参数名，键值为参数值。
 func (mux *Mux) URL(name string, params map[string]string) (string, error) {
-	mux.namesMu.RLock()
 	pattern, found := mux.names[name]
-	mux.namesMu.RUnlock()
-
 	if !found {
 		pattern = name
 	}
-
 	return mux.tree.URL(pattern, params)
 }
 

@@ -143,14 +143,10 @@ func (p *Prefix) Name(name, pattern string) error {
 // 若 name 作为路由项定义，会加上 Prefix.prefix 作为前缀；
 // params 为路由项中的参数，键名为参数名，键值为参数值。
 func (p *Prefix) URL(name string, params map[string]string) (string, error) {
-	p.mux.namesMu.RLock()
 	pattern, found := p.mux.names[name]
-	p.mux.namesMu.RUnlock()
-
 	if !found {
 		pattern = p.prefix + name
 	}
-
 	return p.mux.tree.URL(pattern, params)
 }
 
@@ -178,6 +174,4 @@ func (mux *Mux) Prefix(prefix string) *Prefix {
 }
 
 // Mux 返回与当前关联的 *Mux 实例
-func (p *Prefix) Mux() *Mux {
-	return p.mux
-}
+func (p *Prefix) Mux() *Mux { return p.mux }

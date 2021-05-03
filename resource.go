@@ -132,9 +132,7 @@ func (r *Resource) Clean() *Resource {
 // Name 为一条路由项命名
 //
 // URL 可以通过此属性来生成地址。
-func (r *Resource) Name(name string) error {
-	return r.mux.Name(name, r.pattern)
-}
+func (r *Resource) Name(name string) error { return r.mux.Name(name, r.pattern) }
 
 // URL 根据参数构建一条 URL
 //
@@ -166,6 +164,4 @@ func (p *Prefix) Resource(pattern string) *Resource {
 }
 
 // Mux 返回与当前资源关联的 *Mux 实例
-func (r *Resource) Mux() *Mux {
-	return r.mux
-}
+func (r *Resource) Mux() *Mux { return r.mux }
