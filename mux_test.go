@@ -393,6 +393,7 @@ func TestMux_New(t *testing.T) {
 	a := assert.New(t)
 
 	m := Default()
+	a.Equal(m.Name(), "") // 默认为空
 	r, ok := m.New("host", group.NewHosts())
 	a.True(ok).NotNil(r)
 	a.Equal(r.name, "host").Equal(r.disableHead, m.disableHead).Equal(r.Name(), "host")
@@ -400,13 +401,29 @@ func TestMux_New(t *testing.T) {
 	r, ok = m.New("host", group.NewHosts())
 	a.False(ok).Nil(r)
 
+	// 空值，与 Default 相同
+	r, ok = m.New("", group.NewHosts())
+	a.False(ok).Nil(r)
+
 	r, ok = m.New("host-2", group.NewHosts())
 	a.True(ok).NotNil(r)
-	a.Equal(r.name, "host-2").Equal(r.disableHead, m.disableHead)
+	a.Equal(r.name, "host-2").Equal(r.disableHead, m.disableHead).Equal(r.Name(), "host-2")
+
+	// 主 name 不为空
+
+	m = New(false, false, false, nil, nil, "v1", group.NewVersion(false, "v1"))
+	a.NotNil(m).Equal(m.Name(), "v1")
+
+	// 相同名称
+	r, ok = m.New("v1", group.NewHosts())
+	a.False(ok).Nil(r)
+
+	// 空值可以
+	r, ok = m.New("", group.NewHosts())
+	a.True(ok).NotNil(r)
 }
 
-// 带域名的路由项
-func TestHosts(t *testing.T) {
+func TestMux_group(t *testing.T) {
 	a := assert.New(t)
 
 	m := Default()
@@ -491,6 +508,66 @@ func TestHosts(t *testing.T) {
 	r = httptest.NewRequest(http.MethodGet, "/prefix1example.com/p2", nil)
 	m.ServeHTTP(w, r)
 	a.Equal(w.Result().StatusCode, 205)
+}
+
+func TestMux_group_nest(t *testing.T) {
+	a := assert.New(t)
+
+	m := Default()
+	router, ok := m.New("host", group.NewHosts("localhost"))
+	a.True(ok).NotNil(router)
+	router.Get("/t1", buildHandler(201))
+	v1, ok := router.New("v1", group.NewVersion(false, "v1"))
+	a.True(ok).NotNil(v1)
+	v1.Get("/path", buildHandler(202))
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "https://localhost/t1", nil)
+	m.ServeHTTP(w, r)
+	a.Equal(w.Result().StatusCode, 201)
+
+	w = httptest.NewRecorder()
+	r = httptest.NewRequest(http.MethodGet, "https://localhost/v1/path", nil)
+	m.ServeHTTP(w, r)
+	a.Equal(w.Result().StatusCode, 202)
+
+	// 不存在的路径
+	w = httptest.NewRecorder()
+	r = httptest.NewRequest(http.MethodGet, "https://localhost/v111/path", nil)
+	m.ServeHTTP(w, r)
+	a.Equal(w.Result().StatusCode, 404)
+}
+
+func TestMux_group_multiple(t *testing.T) {
+	a := assert.New(t)
+
+	m := Default()
+	router, ok := m.New("host", group.NewHosts("localhost"))
+	a.True(ok).NotNil(router)
+	router.Get("/t1", buildHandler(201))
+	v1, ok := router.New("v1", group.NewVersion(false, "v1"))
+	a.True(ok).NotNil(v1)
+	v1.Get("/path", buildHandler(202))
+	v2, ok := router.New("v2", group.NewVersion(false, "v1", "v2"))
+	a.True(ok).NotNil(v2)
+	v2.Get("/path", buildHandler(203))
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "https://localhost/t1", nil)
+	m.ServeHTTP(w, r)
+	a.Equal(w.Result().StatusCode, 201)
+
+	// 指向 v1
+	w = httptest.NewRecorder()
+	r = httptest.NewRequest(http.MethodGet, "https://localhost/v1/path", nil)
+	m.ServeHTTP(w, r)
+	a.Equal(w.Result().StatusCode, 202)
+
+	// 指向 v2
+	w = httptest.NewRecorder()
+	r = httptest.NewRequest(http.MethodGet, "https://localhost/v2/path", nil)
+	m.ServeHTTP(w, r)
+	a.Equal(w.Result().StatusCode, 203)
 }
 
 func TestMethods(t *testing.T) {

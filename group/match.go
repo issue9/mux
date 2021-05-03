@@ -1,14 +1,17 @@
 // SPDX-License-Identifier: MIT
 
 // Package group 提供了按条件进行分组路由的功能
-//
-// 比如按指定的域名进行分类路由等。
 package group
 
 import "net/http"
 
 // Matcher 验证一个请求是否符合要求
+//
+// Matcher 常用于路由项的前置判断，用于对路由项进行归类，
+// 符合同一个 Matcher 的路由项，再各自进行路由。
+// 比如按域名进行分组路由。
 type Matcher interface {
+	// Match 验证请求是否符合当前对象的要求
 	Match(*http.Request) bool
 }
 

@@ -63,7 +63,9 @@ func Default() *Mux { return New(false, false, false, nil, nil, "", nil) }
 // methodNotAllowed 405 页面的处理方式，为 nil 时会调用默认的方式进行处理；
 // name 为当前路由组指定名称，可以为空，该名称即在 Mux.All() 返回标记属于哪个路由组；
 // m 当前路由组的匹配规则，可以为空，表示无规则；
-func New(disableOptions, disableHead, skipCleanPath bool, notFound, methodNotAllowed http.HandlerFunc, name string, m group.Matcher) *Mux {
+func New(disableOptions, disableHead, skipCleanPath bool,
+	notFound, methodNotAllowed http.HandlerFunc,
+	name string, m group.Matcher) *Mux {
 	if notFound == nil {
 		notFound = defaultNotFound
 	}
@@ -278,7 +280,10 @@ func (mux *Mux) New(name string, matcher group.Matcher) (*Mux, bool) {
 		mux.routers = make([]*Mux, 0, 5)
 	}
 
-	if sliceutil.Count(mux.routers, func(i int) bool { return mux.routers[i].name == name }) > 0 {
+	dup := sliceutil.Count(mux.routers, func(i int) bool {
+		return mux.routers[i].name == name
+	}) > 0
+	if mux.Name() == name || dup {
 		return nil, false
 	}
 

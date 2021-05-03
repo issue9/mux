@@ -163,7 +163,7 @@ m.Handle("/posts/{id}", h, http.MethodOptions) // 显示指定一个处理函数
 mux 本身就是一个实现了 [http.Handler](https://godoc.org/net/http#Handler) 接口的中间件，
 所有实现官方接口 `http.Handler` 的都可以附加到 mux 上作为中间件使用。
 
-[middleware](https://github.com/issue9/middleware) 提供了诸如按域名过滤等常用的中间件功能。
+[middleware](https://github.com/issue9/middleware) 提供了常用的中间件功能。
 
 ## 版权
 
