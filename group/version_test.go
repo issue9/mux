@@ -12,16 +12,10 @@ import (
 
 var _ Matcher = &Version{}
 
-func BenchmarkFindVersionNumberInHeader(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		_ = findVersionNumberInHeader("application/json;version=1.0;application/json")
-	}
-}
-
 func TestVersion_matchInHeader(t *testing.T) {
 	a := assert.New(t)
 
-	h := NewVersion(true, "1.0")
+	h := NewVersion(true, "1.0", "2.0", "3.0")
 
 	// 相同版本号
 	r := httptest.NewRequest(http.MethodGet, "https://caixw.io/test", nil)
@@ -75,7 +69,7 @@ func TestVersion_matchInURL(t *testing.T) {
 		NewVersion(false, "")
 	})
 
-	h := NewVersion(false, "v1")
+	h := NewVersion(false, "v3", "v2", "v1")
 
 	// 相同版本号
 	r := httptest.NewRequest(http.MethodGet, "https://caixw.io/v1/test", nil)
