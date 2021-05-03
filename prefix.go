@@ -11,7 +11,7 @@ import "net/http"
 //  p.Get("/users")  // 相当于 srv.Get("/api/users")
 //  p.Get("/user/1") // 相当于 srv.Get("/api/user/1")
 type Prefix struct {
-	mux    *Mux
+	mux    *Router
 	prefix string
 }
 
@@ -28,7 +28,7 @@ func (p *Prefix) Options(pattern string, allow string) *Prefix {
 	return p
 }
 
-// Handle 相当于 Mux.Handle(prefix+pattern, h, methods...) 的简易写法
+// Handle 相当于 Router.Handle(prefix+pattern, h, methods...) 的简易写法
 func (p *Prefix) Handle(pattern string, h http.Handler, methods ...string) error {
 	return p.mux.Handle(p.prefix+pattern, h, methods...)
 }
@@ -41,37 +41,37 @@ func (p *Prefix) handle(pattern string, h http.Handler, methods ...string) *Pref
 	return p
 }
 
-// Get 相当于 Mux.Get(prefix+pattern, h) 的简易写法
+// Get 相当于 Router.Get(prefix+pattern, h) 的简易写法
 func (p *Prefix) Get(pattern string, h http.Handler) *Prefix {
 	return p.handle(pattern, h, http.MethodGet)
 }
 
-// Post 相当于 Mux.Post(prefix+pattern, h) 的简易写法
+// Post 相当于 Router.Post(prefix+pattern, h) 的简易写法
 func (p *Prefix) Post(pattern string, h http.Handler) *Prefix {
 	return p.handle(pattern, h, http.MethodPost)
 }
 
-// Delete 相当于 Mux.Delete(prefix+pattern, h)的简易写法
+// Delete 相当于 Router.Delete(prefix+pattern, h)的简易写法
 func (p *Prefix) Delete(pattern string, h http.Handler) *Prefix {
 	return p.handle(pattern, h, http.MethodDelete)
 }
 
-// Put 相当于 Mux.Put(prefix+pattern, h) 的简易写法
+// Put 相当于 Router.Put(prefix+pattern, h) 的简易写法
 func (p *Prefix) Put(pattern string, h http.Handler) *Prefix {
 	return p.handle(pattern, h, http.MethodPut)
 }
 
-// Patch 相当于 Mux.Patch(prefix+pattern, h) 的简易写法
+// Patch 相当于 Router.Patch(prefix+pattern, h) 的简易写法
 func (p *Prefix) Patch(pattern string, h http.Handler) *Prefix {
 	return p.handle(pattern, h, http.MethodPatch)
 }
 
-// Any 相当于 Mux.Any(prefix+pattern, h) 的简易写法
+// Any 相当于 Router.Any(prefix+pattern, h) 的简易写法
 func (p *Prefix) Any(pattern string, h http.Handler) *Prefix {
 	return p.handle(pattern, h)
 }
 
-// HandleFunc 功能同 Mux.HandleFunc(prefix+pattern, fun, ...)
+// HandleFunc 功能同 Router.HandleFunc(prefix+pattern, fun, ...)
 func (p *Prefix) HandleFunc(pattern string, fun http.HandlerFunc, methods ...string) error {
 	return p.Handle(pattern, fun, methods...)
 }
@@ -83,12 +83,12 @@ func (p *Prefix) handleFunc(pattern string, fun http.HandlerFunc, methods ...str
 	return p
 }
 
-// GetFunc 相当于 Mux.GetFunc(prefix+pattern, func) 的简易写法
+// GetFunc 相当于 Router.GetFunc(prefix+pattern, func) 的简易写法
 func (p *Prefix) GetFunc(pattern string, fun http.HandlerFunc) *Prefix {
 	return p.handleFunc(pattern, fun, http.MethodGet)
 }
 
-// PutFunc 相当于 Mux.PutFunc(prefix+pattern, func) 的简易写法
+// PutFunc 相当于 Router.PutFunc(prefix+pattern, func) 的简易写法
 func (p *Prefix) PutFunc(pattern string, fun http.HandlerFunc) *Prefix {
 	return p.handleFunc(pattern, fun, http.MethodPut)
 }
@@ -98,17 +98,17 @@ func (p *Prefix) PostFunc(pattern string, fun http.HandlerFunc) *Prefix {
 	return p.handleFunc(pattern, fun, http.MethodPost)
 }
 
-// DeleteFunc 相当于 Mux.DeleteFunc(prefix+pattern, func) 的简易写法
+// DeleteFunc 相当于 Router.DeleteFunc(prefix+pattern, func) 的简易写法
 func (p *Prefix) DeleteFunc(pattern string, fun http.HandlerFunc) *Prefix {
 	return p.handleFunc(pattern, fun, http.MethodDelete)
 }
 
-// PatchFunc 相当于 Mux.PatchFunc(prefix+pattern, func) 的简易写法
+// PatchFunc 相当于 Router.PatchFunc(prefix+pattern, func) 的简易写法
 func (p *Prefix) PatchFunc(pattern string, fun http.HandlerFunc) *Prefix {
 	return p.handleFunc(pattern, fun, http.MethodPatch)
 }
 
-// AnyFunc 相当于 Mux.AnyFunc(prefix+pattern, func) 的简易写法
+// AnyFunc 相当于 Router.AnyFunc(prefix+pattern, func) 的简易写法
 func (p *Prefix) AnyFunc(pattern string, fun http.HandlerFunc) *Prefix {
 	return p.handleFunc(pattern, fun)
 }
@@ -155,12 +155,12 @@ func (p *Prefix) Prefix(prefix string) *Prefix {
 }
 
 // Prefix 声明一个 Prefix 实例
-func (mux *Mux) Prefix(prefix string) *Prefix {
+func (mux *Router) Prefix(prefix string) *Prefix {
 	return &Prefix{
 		mux:    mux,
 		prefix: prefix,
 	}
 }
 
-// Mux 返回与当前关联的 *Mux 实例
-func (p *Prefix) Mux() *Mux { return p.mux }
+// Router 返回与当前关联的 *Router 实例
+func (p *Prefix) Router() *Router { return p.mux }

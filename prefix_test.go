@@ -10,7 +10,7 @@ import (
 )
 
 func (t *tester) prefix(p string) *Prefix {
-	return t.mux.Prefix(p)
+	return t.router.Prefix(p)
 }
 
 func TestPrefix(t *testing.T) {
@@ -79,37 +79,37 @@ func TestPrefix(t *testing.T) {
 	test.matchTrue(http.MethodDelete, "/p/f/1", 404)
 }
 
-func TestMux_Prefix(t *testing.T) {
+func TestRouter_Prefix(t *testing.T) {
 	a := assert.New(t)
-	srvmux := New(false, true, false, nil, nil, "", nil)
-	a.NotNil(srvmux)
+	router := NewRouter(false, true, false, nil, nil, "", nil)
+	a.NotNil(router)
 
-	p := srvmux.Prefix("/abc")
+	p := router.Prefix("/abc")
 	a.Equal(p.prefix, "/abc")
-	a.Equal(p.Mux(), srvmux)
+	a.Equal(p.Router(), router)
 
-	p = srvmux.Prefix("")
+	p = router.Prefix("")
 	a.Equal(p.prefix, "")
 }
 
 func TestPrefix_Prefix(t *testing.T) {
 	a := assert.New(t)
-	srvmux := New(false, true, false, nil, nil, "", nil)
+	srvmux := NewRouter(false, true, false, nil, nil, "", nil)
 	a.NotNil(srvmux)
 
 	p := srvmux.Prefix("/abc")
 	pp := p.Prefix("/def")
 	a.Equal(pp.prefix, "/abc/def")
-	a.Equal(p.Mux(), srvmux)
+	a.Equal(p.Router(), srvmux)
 
 	p = srvmux.Prefix("")
 	pp = p.Prefix("/abc")
 	a.Equal(pp.prefix, "/abc")
 }
 
-func TestPrefix_Name_URL(t *testing.T) {
+func TestPrefix_URL(t *testing.T) {
 	a := assert.New(t)
-	srvmux := New(false, true, false, nil, nil, "", nil)
+	srvmux := NewRouter(false, true, false, nil, nil, "", nil)
 	a.NotNil(srvmux)
 
 	// 非正则

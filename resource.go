@@ -11,20 +11,20 @@ import "net/http"
 //  r.Post(h) // 相当于 srv.Post("/api/users/{id}")
 //  url := r.URL(map[string]string{"id":5}) // 获得 /api/users/5
 type Resource struct {
-	mux     *Mux
+	mux     *Router
 	pattern string
 }
 
 // SetAllow 手动指定 OPTIONS 请求方法的值
 //
-// 具体说明可参考 Mux.Options 方法。
+// 具体说明可参考 Router.Options 方法。
 func (r *Resource) SetAllow(allow string) error {
 	return r.mux.SetAllow(r.pattern, allow)
 }
 
 // Options 手动指定 OPTIONS 请求方法的值
 //
-// 具体说明可参考 Mux.Options 方法。
+// 具体说明可参考 Router.Options 方法。
 func (r *Resource) Options(allow string) *Resource {
 	if err := r.SetAllow(allow); err != nil {
 		panic(err)
@@ -32,7 +32,7 @@ func (r *Resource) Options(allow string) *Resource {
 	return r
 }
 
-// Handle 相当于 Mux.Handle(pattern, h, methods...) 的简易写法
+// Handle 相当于 Router.Handle(pattern, h, methods...) 的简易写法
 func (r *Resource) Handle(h http.Handler, methods ...string) error {
 	return r.mux.Handle(r.pattern, h, methods...)
 }
@@ -44,37 +44,37 @@ func (r *Resource) handle(h http.Handler, methods ...string) *Resource {
 	return r
 }
 
-// Get 相当于 Mux.Get(pattern, h) 的简易写法
+// Get 相当于 Router.Get(pattern, h) 的简易写法
 func (r *Resource) Get(h http.Handler) *Resource {
 	return r.handle(h, http.MethodGet)
 }
 
-// Post 相当于 Mux.Post(pattern, h) 的简易写法
+// Post 相当于 Router.Post(pattern, h) 的简易写法
 func (r *Resource) Post(h http.Handler) *Resource {
 	return r.handle(h, http.MethodPost)
 }
 
-// Delete 相当于 Mux.Delete(pattern, h) 的简易写法
+// Delete 相当于 Router.Delete(pattern, h) 的简易写法
 func (r *Resource) Delete(h http.Handler) *Resource {
 	return r.handle(h, http.MethodDelete)
 }
 
-// Put 相当于 Mux.Put(pattern, h) 的简易写法
+// Put 相当于 Router.Put(pattern, h) 的简易写法
 func (r *Resource) Put(h http.Handler) *Resource {
 	return r.handle(h, http.MethodPut)
 }
 
-// Patch 相当于 Mux.Patch(pattern, h) 的简易写法
+// Patch 相当于 Router.Patch(pattern, h) 的简易写法
 func (r *Resource) Patch(h http.Handler) *Resource {
 	return r.handle(h, http.MethodPatch)
 }
 
-// Any 相当于 Mux.Any(pattern, h) 的简易写法
+// Any 相当于 Router.Any(pattern, h) 的简易写法
 func (r *Resource) Any(h http.Handler) *Resource {
 	return r.handle(h)
 }
 
-// HandleFunc 功能同 Mux.HandleFunc(pattern, fun, ...)
+// HandleFunc 功能同 Router.HandleFunc(pattern, fun, ...)
 func (r *Resource) HandleFunc(fun http.HandlerFunc, methods ...string) error {
 	return r.Handle(fun, methods...)
 }
@@ -87,32 +87,32 @@ func (r *Resource) handleFunc(fun http.HandlerFunc, methods ...string) *Resource
 	return r
 }
 
-// GetFunc 相当于 Mux.GetFunc(pattern, func) 的简易写法
+// GetFunc 相当于 Router.GetFunc(pattern, func) 的简易写法
 func (r *Resource) GetFunc(fun http.HandlerFunc) *Resource {
 	return r.handleFunc(fun, http.MethodGet)
 }
 
-// PutFunc 相当于 Mux.PutFunc(pattern, func) 的简易写法
+// PutFunc 相当于 Router.PutFunc(pattern, func) 的简易写法
 func (r *Resource) PutFunc(fun http.HandlerFunc) *Resource {
 	return r.handleFunc(fun, http.MethodPut)
 }
 
-// PostFunc 相当于 Mux.PostFunc(pattern, func) 的简易写法
+// PostFunc 相当于 Router.PostFunc(pattern, func) 的简易写法
 func (r *Resource) PostFunc(fun http.HandlerFunc) *Resource {
 	return r.handleFunc(fun, http.MethodPost)
 }
 
-// DeleteFunc 相当于 Mux.DeleteFunc(pattern, func) 的简易写法
+// DeleteFunc 相当于 Router.DeleteFunc(pattern, func) 的简易写法
 func (r *Resource) DeleteFunc(fun http.HandlerFunc) *Resource {
 	return r.handleFunc(fun, http.MethodDelete)
 }
 
-// PatchFunc 相当于 Mux.PatchFunc(pattern, func) 的简易写法
+// PatchFunc 相当于 Router.PatchFunc(pattern, func) 的简易写法
 func (r *Resource) PatchFunc(fun http.HandlerFunc) *Resource {
 	return r.handleFunc(fun, http.MethodPatch)
 }
 
-// AnyFunc 相当于 Mux.AnyFunc(pattern, func) 的简易写法
+// AnyFunc 相当于 Router.AnyFunc(pattern, func) 的简易写法
 func (r *Resource) AnyFunc(fun http.HandlerFunc) *Resource {
 	return r.handleFunc(fun)
 }
@@ -143,7 +143,7 @@ func (r *Resource) URL(params map[string]string) (string, error) {
 }
 
 // Resource 创建一个资源路由项
-func (mux *Mux) Resource(pattern string) *Resource {
+func (mux *Router) Resource(pattern string) *Resource {
 	return &Resource{
 		mux:     mux,
 		pattern: pattern,
@@ -158,5 +158,5 @@ func (p *Prefix) Resource(pattern string) *Resource {
 	}
 }
 
-// Mux 返回与当前资源关联的 *Mux 实例
-func (r *Resource) Mux() *Mux { return r.mux }
+// Router 返回与当前资源关联的 *Router 实例
+func (r *Resource) Router() *Router { return r.mux }
