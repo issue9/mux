@@ -38,11 +38,53 @@ func TestMux_NewRouter(t *testing.T) {
 	m = New(false, false, false, nil, nil, "v1", group.NewVersion(false, "v1"))
 	a.NotNil(m).Equal(m.Name(), "v1")
 
-	// 相同名称
+	// 无法添加与主路由相同名称
 	r, ok = m.NewRouter("v1", group.NewHosts())
 	a.False(ok).Nil(r)
 
 	// 空值可以
+	r, ok = m.NewRouter("", group.NewHosts())
+	a.True(ok).NotNil(r)
+}
+
+func TestMux_RemoveRouter(t *testing.T) {
+	a := assert.New(t)
+
+	m := Default()
+	a.Equal(m.Name(), "") // 默认为空
+	r, ok := m.NewRouter("host", group.NewHosts())
+	a.True(ok).NotNil(r)
+	a.Equal(r.name, "host").Equal(r.Name(), "host")
+	r, ok = m.NewRouter("host-2", group.NewHosts())
+	a.True(ok).NotNil(r)
+
+	r, ok = m.NewRouter("host", group.NewHosts())
+	a.False(ok).Nil(r)
+
+	m.RemoveRouter("host")
+	r, ok = m.NewRouter("host", group.NewHosts())
+	a.True(ok).NotNil(r)
+
+	// 主 name 不为空
+
+	m = New(false, false, false, nil, nil, "v1", group.NewVersion(false, "v1"))
+	a.NotNil(m).Equal(m.Name(), "v1")
+
+	// 无法添加与主路由相同名称
+	r, ok = m.NewRouter("v1", group.NewHosts())
+	a.False(ok).Nil(r)
+
+	// 无法删除主路由
+	m.RemoveRouter("v1")
+	r, ok = m.NewRouter("v1", group.NewHosts())
+	a.False(ok).Nil(r)
+
+	// 空值可以
+	r, ok = m.NewRouter("", group.NewHosts())
+	a.True(ok).NotNil(r)
+
+	// 可删除空值
+	m.RemoveRouter("")
 	r, ok = m.NewRouter("", group.NewHosts())
 	a.True(ok).NotNil(r)
 }

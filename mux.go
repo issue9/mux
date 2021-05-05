@@ -84,9 +84,6 @@ func New(disableOptions, disableHead, skipCleanPath bool,
 	}
 }
 
-// Routers 返回当前路由所属的子路由组列表
-func (mux *Mux) Routers() []*Router { return mux.routers }
-
 func (mux *Mux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if !mux.skipCleanPath {
 		req.URL.Path = cleanPath(req.URL.Path)
@@ -125,12 +122,15 @@ func (mux *Mux) match(req *http.Request) (*handlers.Handlers, params.Params) {
 	return nil, nil
 }
 
+// Routers 返回当前路由所属的子路由组列表
+func (mux *Mux) Routers() []*Router { return mux.routers }
+
 // NewRouter 添加子路由组
 //
 // 该路由只有符合 group.Matcher 的要求才会进入，其它与 Router 功能相同。
 //
 // name 表示该路由组的名称，需要唯一，否则返回 false；
-func (mux *Mux) NewRouter(name string, matcher group.Matcher) (*Router, bool) {
+func (mux *Mux) NewRouter(name string, matcher group.Matcher) (r *Router, ok bool) {
 	// NOTE: 返回 Router 而不是 Mux，防止无限嵌套调用 NewRouter
 
 	if matcher == nil {
@@ -143,19 +143,25 @@ func (mux *Mux) NewRouter(name string, matcher group.Matcher) (*Router, bool) {
 
 	dup := sliceutil.Count(mux.routers, func(i int) bool {
 		return mux.routers[i].name == name
-	}) > 0
-	if mux.Name() == name || dup {
+	})
+	if mux.Name() == name || dup > 0 {
 		return nil, false
 	}
 
-	m := newRouter(mux.disableOptions, mux.disableHead, name, matcher)
-	mux.routers = append(mux.routers, m)
-	return m, true
+	r = newRouter(mux.disableOptions, mux.disableHead, name, matcher)
+	mux.routers = append(mux.routers, r)
+	return r, true
+}
+
+// RemoveRouter 删除子路由
+func (mux *Mux) RemoveRouter(name string) {
+	size := sliceutil.Delete(mux.routers, func(i int) bool {
+		return mux.routers[i].name == name
+	})
+	mux.routers = mux.routers[:size]
 }
 
 // Params 获取路由的参数集合
-//
-// NOTE: 详细情况可参考 params.Get
 func Params(r *http.Request) params.Params { return params.Get(r) }
 
 // IsWell 语法格式是否正确
