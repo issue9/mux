@@ -11,7 +11,7 @@ import (
 )
 
 func (t *tester) resource(p string) *Resource {
-	return t.router.Resource(p)
+	return t.mux.Resource(p)
 }
 
 func TestResource(t *testing.T) {
@@ -83,22 +83,22 @@ func TestResource(t *testing.T) {
 
 func TestRouter_Resource(t *testing.T) {
 	a := assert.New(t)
-	router := NewRouter(false, true, false, nil, nil, "", nil)
-	a.NotNil(router)
+	mux := New(false, true, false, nil, nil, "", nil)
+	a.NotNil(mux)
 
-	r1 := router.Resource("/abc/1")
+	r1 := mux.Resource("/abc/1")
 	a.NotNil(r1)
-	a.Equal(r1.Router(), router)
+	a.Equal(r1.Router(), mux.Router)
 	a.Equal(r1.pattern, "/abc/1")
 
-	r2 := router.Resource("/abc/1")
+	r2 := mux.Resource("/abc/1")
 	a.NotNil(r2)
 	a.False(r1 == r2) // 不是同一个 *Resource
 
 	r2.Delete(buildHandler(201))
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodDelete, "/abc/1", nil)
-	router.ServeHTTP(w, r)
+	mux.ServeHTTP(w, r)
 	a.Equal(w.Result().StatusCode, 201)
 }
 
@@ -121,17 +121,17 @@ func TestPrefix_Resource(t *testing.T) {
 
 func TestResource_URL(t *testing.T) {
 	a := assert.New(t)
-	router := NewRouter(false, true, false, nil, nil, "", nil)
-	a.NotNil(router)
+	mux := New(false, true, false, nil, nil, "", nil)
+	a.NotNil(mux)
 
 	// 非正则
-	res := router.Resource("/api/v1")
+	res := mux.Resource("/api/v1")
 	a.NotNil(res)
 	url, err := res.URL(map[string]string{"id": "1"})
 	a.NotError(err).Equal(url, "/api/v1")
 
 	// 正常的单个参数
-	res = router.Resource("/api/{id:\\d+}/{path}")
+	res = mux.Resource("/api/{id:\\d+}/{path}")
 	a.NotNil(res)
 	url, err = res.URL(map[string]string{"id": "1", "path": "p1"})
 	a.NotError(err).Equal(url, "/api/1/p1")
@@ -142,7 +142,7 @@ func TestResource_URL(t *testing.T) {
 	a.NotError(err).Equal(url, "/api/xxx/p1")
 
 	// 多个参数
-	res = router.Resource("/api/{action}/{id:\\d+}")
+	res = mux.Resource("/api/{action}/{id:\\d+}")
 	a.NotNil(res)
 	url, err = res.URL(map[string]string{"id": "1", "action": "blog"})
 	a.NotError(err).Equal(url, "/api/blog/1")

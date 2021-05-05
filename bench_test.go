@@ -13,7 +13,7 @@ import (
 	"github.com/issue9/assert"
 )
 
-var issue9Mux *Router
+var issue9Mux *Mux
 
 func init() {
 	for _, api := range apis {
@@ -26,7 +26,7 @@ func init() {
 			w.Write([]byte(r.URL.Path))
 		}
 
-		issue9Mux = NewRouter(false, true, false, nil, nil, "", nil)
+		issue9Mux = New(false, true, false, nil, nil, "", nil)
 		for _, api := range apis {
 			if err := issue9Mux.HandleFunc(api.bracePattern, h, api.method); err != nil {
 				fmt.Println("calcMemStats:", err)

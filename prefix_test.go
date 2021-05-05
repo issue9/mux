@@ -10,7 +10,7 @@ import (
 )
 
 func (t *tester) prefix(p string) *Prefix {
-	return t.router.Prefix(p)
+	return t.mux.Prefix(p)
 }
 
 func TestPrefix(t *testing.T) {
@@ -81,53 +81,53 @@ func TestPrefix(t *testing.T) {
 
 func TestRouter_Prefix(t *testing.T) {
 	a := assert.New(t)
-	router := NewRouter(false, true, false, nil, nil, "", nil)
-	a.NotNil(router)
+	mux := New(false, true, false, nil, nil, "", nil)
+	a.NotNil(mux)
 
-	p := router.Prefix("/abc")
+	p := mux.Prefix("/abc")
 	a.Equal(p.prefix, "/abc")
-	a.Equal(p.Router(), router)
+	a.Equal(p.Router(), mux.Router)
 
-	p = router.Prefix("")
+	p = mux.Prefix("")
 	a.Equal(p.prefix, "")
 }
 
 func TestPrefix_Prefix(t *testing.T) {
 	a := assert.New(t)
-	srvmux := NewRouter(false, true, false, nil, nil, "", nil)
-	a.NotNil(srvmux)
+	mux := New(false, true, false, nil, nil, "", nil)
+	a.NotNil(mux)
 
-	p := srvmux.Prefix("/abc")
+	p := mux.Prefix("/abc")
 	pp := p.Prefix("/def")
 	a.Equal(pp.prefix, "/abc/def")
-	a.Equal(p.Router(), srvmux)
+	a.Equal(p.Router(), mux.Router)
 
-	p = srvmux.Prefix("")
+	p = mux.Prefix("")
 	pp = p.Prefix("/abc")
 	a.Equal(pp.prefix, "/abc")
 }
 
 func TestPrefix_URL(t *testing.T) {
 	a := assert.New(t)
-	srvmux := NewRouter(false, true, false, nil, nil, "", nil)
-	a.NotNil(srvmux)
+	mux := New(false, true, false, nil, nil, "", nil)
+	a.NotNil(mux)
 
 	// 非正则
-	p := srvmux.Prefix("/api")
+	p := mux.Prefix("/api")
 	p.Any("/v1", nil)
 	a.NotNil(p)
 	url, err := p.URL("/v1", map[string]string{"id": "1"})
 	a.NotError(err).Equal(url, "/api/v1")
 
 	// 正常的单个参数
-	p = srvmux.Prefix("/api")
+	p = mux.Prefix("/api")
 	p.Any("/{id:\\d+}/{path}", nil)
 	a.NotNil(p)
 	url, err = p.URL("/{id:\\d+}/{path}", map[string]string{"id": "1", "path": "p1"})
 	a.NotError(err).Equal(url, "/api/1/p1")
 
 	// 多个参数
-	p = srvmux.Prefix("/api")
+	p = mux.Prefix("/api")
 	p.Any("/{action}/{id:\\d+}", nil)
 	a.NotNil(p)
 	url, err = p.URL("/{action}/{id:\\d+}", map[string]string{"id": "1", "action": "blog"})

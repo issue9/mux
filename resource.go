@@ -11,7 +11,7 @@ import "net/http"
 //  r.Post(h) // 相当于 srv.Post("/api/users/{id}")
 //  url := r.URL(map[string]string{"id":5}) // 获得 /api/users/5
 type Resource struct {
-	mux     *Router
+	router  *Router
 	pattern string
 }
 
@@ -19,7 +19,7 @@ type Resource struct {
 //
 // 具体说明可参考 Router.Options 方法。
 func (r *Resource) SetAllow(allow string) error {
-	return r.mux.SetAllow(r.pattern, allow)
+	return r.router.SetAllow(r.pattern, allow)
 }
 
 // Options 手动指定 OPTIONS 请求方法的值
@@ -34,7 +34,7 @@ func (r *Resource) Options(allow string) *Resource {
 
 // Handle 相当于 Router.Handle(pattern, h, methods...) 的简易写法
 func (r *Resource) Handle(h http.Handler, methods ...string) error {
-	return r.mux.Handle(r.pattern, h, methods...)
+	return r.router.Handle(r.pattern, h, methods...)
 }
 
 func (r *Resource) handle(h http.Handler, methods ...string) *Resource {
@@ -119,13 +119,13 @@ func (r *Resource) AnyFunc(fun http.HandlerFunc) *Resource {
 
 // Remove 删除指定匹配模式的路由项
 func (r *Resource) Remove(methods ...string) *Resource {
-	r.mux.Remove(r.pattern, methods...)
+	r.router.Remove(r.pattern, methods...)
 	return r
 }
 
 // Clean 清除当前资源的所有路由项
 func (r *Resource) Clean() *Resource {
-	r.mux.Remove(r.pattern)
+	r.router.Remove(r.pattern)
 	return r
 }
 
@@ -139,13 +139,13 @@ func (r *Resource) Clean() *Resource {
 //  res, := m.Resource("/posts/{id}/{path}")
 //  res.URL(map[string]string{"id": "1","path":"author/profile"}) // /posts/1/author/profile
 func (r *Resource) URL(params map[string]string) (string, error) {
-	return r.mux.URL(r.pattern, params)
+	return r.router.URL(r.pattern, params)
 }
 
 // Resource 创建一个资源路由项
-func (mux *Router) Resource(pattern string) *Resource {
+func (router *Router) Resource(pattern string) *Resource {
 	return &Resource{
-		mux:     mux,
+		router:  router,
 		pattern: pattern,
 	}
 }
@@ -153,10 +153,10 @@ func (mux *Router) Resource(pattern string) *Resource {
 // Resource 创建一个资源路由项
 func (p *Prefix) Resource(pattern string) *Resource {
 	return &Resource{
-		mux:     p.mux,
+		router:  p.router,
 		pattern: p.prefix + pattern,
 	}
 }
 
 // Router 返回与当前资源关联的 *Router 实例
-func (r *Resource) Router() *Router { return r.mux }
+func (r *Resource) Router() *Router { return r.router }
