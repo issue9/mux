@@ -81,14 +81,14 @@ func TestResource(t *testing.T) {
 	test.optionsTrue("/f/options", 200, "ABC")
 }
 
-func TestRouter_Resource(t *testing.T) {
+func TestMux_Resource(t *testing.T) {
 	a := assert.New(t)
 	mux := New(false, true, false, nil, nil, "", nil)
 	a.NotNil(mux)
 
 	r1 := mux.Resource("/abc/1")
 	a.NotNil(r1)
-	a.Equal(r1.Router(), mux.Router)
+	a.Equal(r1.Mux(), mux)
 	a.Equal(r1.pattern, "/abc/1")
 
 	r2 := mux.Resource("/abc/1")

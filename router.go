@@ -11,43 +11,17 @@ import (
 
 // Router 提供了基本的路由项添加和删除等功能
 type Router struct {
-	name             string        // 当前路由的名称
-	matcher          group.Matcher // 当前路由的先决条件
-	tree             *tree.Tree    // 当前路由的路由项
-	notFound         http.HandlerFunc
-	methodNotAllowed http.HandlerFunc
-
-	disableOptions, disableHead, skipCleanPath bool
+	name    string        // 当前路由的名称
+	matcher group.Matcher // 当前路由的先决条件
+	tree    *tree.Tree    // 当前路由的路由项
 }
 
-func newRouter(disableOptions, disableHead, skipCleanPath bool,
-	notFound, methodNotAllowed http.HandlerFunc,
-	name string, m group.Matcher) *Router {
-	if notFound == nil {
-		notFound = defaultNotFound
-	}
-	if methodNotAllowed == nil {
-		methodNotAllowed = defaultMethodNotAllowed
-	}
-
-	if m == nil {
-		m = group.MatcherFunc(group.Any)
-	}
-
-	mux := &Router{
+func newRouter(disableOptions, disableHead bool, name string, m group.Matcher) *Router {
+	return &Router{
 		name:    name,
 		matcher: m,
 		tree:    tree.New(disableOptions, disableHead),
-
-		notFound:         notFound,
-		methodNotAllowed: methodNotAllowed,
-
-		disableOptions: disableOptions,
-		disableHead:    disableHead,
-		skipCleanPath:  skipCleanPath,
 	}
-
-	return mux
 }
 
 // Name 当前路由组的名称

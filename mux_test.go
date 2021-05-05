@@ -20,7 +20,7 @@ func TestMux_NewRouter(t *testing.T) {
 	a.Equal(m.Name(), "") // 默认为空
 	r, ok := m.NewRouter("host", group.NewHosts())
 	a.True(ok).NotNil(r)
-	a.Equal(r.name, "host").Equal(r.disableHead, m.disableHead).Equal(r.Name(), "host")
+	a.Equal(r.name, "host").Equal(r.Name(), "host")
 
 	r, ok = m.NewRouter("host", group.NewHosts())
 	a.False(ok).Nil(r)
@@ -31,7 +31,7 @@ func TestMux_NewRouter(t *testing.T) {
 
 	r, ok = m.NewRouter("host-2", group.NewHosts())
 	a.True(ok).NotNil(r)
-	a.Equal(r.name, "host-2").Equal(r.disableHead, m.disableHead).Equal(r.Name(), "host-2")
+	a.Equal(r.name, "host-2").Equal(r.Name(), "host-2")
 
 	// 主 name 不为空
 
@@ -75,10 +75,9 @@ func TestRouter_routers(t *testing.T) {
 	a.Equal(w.Result().StatusCode, 404)
 
 	// resource
-	m = Default()
-	router, ok = m.NewRouter("host", group.NewHosts("localhost"))
-	a.True(ok).NotNil(router)
-	res := router.Resource("/r1")
+	m = New(false, false, false, nil, nil, "", group.NewHosts("localhost"))
+	a.NotNil(m)
+	res := m.Resource("/r1")
 	res.Get(buildHandler(202))
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "/r1", nil)
@@ -91,10 +90,9 @@ func TestRouter_routers(t *testing.T) {
 	a.Equal(w.Result().StatusCode, 202)
 
 	// prefix
-	m = Default()
-	router, ok = m.NewRouter("host", group.NewHosts("localhost"))
-	a.True(ok).NotNil(router)
-	p := router.Prefix("/prefix1")
+	m = New(false, false, false, nil, nil, "", group.NewHosts("localhost"))
+	a.NotNil(m)
+	p := m.Prefix("/prefix1")
 	p.Get("/p1", buildHandler(203))
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "/prefix1/p1", nil)
@@ -107,10 +105,9 @@ func TestRouter_routers(t *testing.T) {
 	a.Equal(w.Result().StatusCode, 203)
 
 	// prefix prefix
-	m = Default()
-	router, ok = m.NewRouter("host", group.NewHosts("localhost"))
-	a.True(ok).NotNil(router)
-	p1 := router.Prefix("/prefix1")
+	m = New(false, false, false, nil, nil, "", group.NewHosts("localhost"))
+	a.NotNil(m)
+	p1 := m.Prefix("/prefix1")
 	p2 := p1.Prefix("/prefix2")
 	p2.GetFunc("/p2", buildFunc(204))
 	w = httptest.NewRecorder()

@@ -37,6 +37,13 @@ var (
 type Mux struct {
 	*Router
 	routers []*Router
+
+	notFound,
+	methodNotAllowed http.HandlerFunc
+
+	disableOptions,
+	disableHead,
+	skipCleanPath bool
 }
 
 // Default New 的默认参数版本
@@ -54,10 +61,26 @@ func Default() *Mux { return New(false, false, false, nil, nil, "", nil) }
 func New(disableOptions, disableHead, skipCleanPath bool,
 	notFound, methodNotAllowed http.HandlerFunc,
 	name string, m group.Matcher) *Mux {
-	r := newRouter(disableOptions, disableHead, skipCleanPath, notFound, methodNotAllowed, name, m)
+	if notFound == nil {
+		notFound = defaultNotFound
+	}
+	if methodNotAllowed == nil {
+		methodNotAllowed = defaultMethodNotAllowed
+	}
+
+	if m == nil {
+		m = group.MatcherFunc(group.Any)
+	}
+
+	r := newRouter(disableOptions, disableHead, name, m)
 
 	return &Mux{
-		Router: r,
+		Router:           r,
+		notFound:         notFound,
+		methodNotAllowed: methodNotAllowed,
+		disableOptions:   disableOptions,
+		disableHead:      disableHead,
+		skipCleanPath:    skipCleanPath,
 	}
 }
 
@@ -108,6 +131,8 @@ func (mux *Mux) match(req *http.Request) (*handlers.Handlers, params.Params) {
 //
 // name 表示该路由组的名称，需要唯一，否则返回 false；
 func (mux *Mux) NewRouter(name string, matcher group.Matcher) (*Router, bool) {
+	// NOTE: 返回 Router 而不是 Mux，防止无限嵌套调用 NewRouter
+
 	if matcher == nil {
 		panic("参数 matcher 不能为空")
 	}
@@ -123,7 +148,7 @@ func (mux *Mux) NewRouter(name string, matcher group.Matcher) (*Router, bool) {
 		return nil, false
 	}
 
-	m := newRouter(mux.disableOptions, mux.disableHead, mux.skipCleanPath, mux.notFound, mux.methodNotAllowed, name, matcher)
+	m := newRouter(mux.disableOptions, mux.disableHead, name, matcher)
 	mux.routers = append(mux.routers, m)
 	return m, true
 }

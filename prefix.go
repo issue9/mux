@@ -11,13 +11,13 @@ import "net/http"
 //  p.Get("/users")  // 相当于 srv.Get("/api/users")
 //  p.Get("/user/1") // 相当于 srv.Get("/api/user/1")
 type Prefix struct {
-	router *Router
+	mux    *Mux
 	prefix string
 }
 
 // SetAllow 手动指定 OPTIONS 请求方法的值
 func (p *Prefix) SetAllow(pattern string, allow string) error {
-	return p.router.SetAllow(p.prefix+pattern, allow)
+	return p.mux.SetAllow(p.prefix+pattern, allow)
 }
 
 // Options 手动指定 OPTIONS 请求方法的值
@@ -30,7 +30,7 @@ func (p *Prefix) Options(pattern string, allow string) *Prefix {
 
 // Handle 相当于 Router.Handle(prefix+pattern, h, methods...) 的简易写法
 func (p *Prefix) Handle(pattern string, h http.Handler, methods ...string) error {
-	return p.router.Handle(p.prefix+pattern, h, methods...)
+	return p.mux.Handle(p.prefix+pattern, h, methods...)
 }
 
 func (p *Prefix) handle(pattern string, h http.Handler, methods ...string) *Prefix {
@@ -115,7 +115,7 @@ func (p *Prefix) AnyFunc(pattern string, fun http.HandlerFunc) *Prefix {
 
 // Remove 删除指定匹配模式的路由项
 func (p *Prefix) Remove(pattern string, methods ...string) *Prefix {
-	p.router.Remove(p.prefix+pattern, methods...)
+	p.mux.Remove(p.prefix+pattern, methods...)
 	return p
 }
 
@@ -126,7 +126,7 @@ func (p *Prefix) Remove(pattern string, methods ...string) *Prefix {
 //  p2 := mux.Prefix("prefix")
 //  p2.Clean() 将同时清除 p1 的内容，因为有相同的前缀。
 func (p *Prefix) Clean() *Prefix {
-	p.router.tree.Clean(p.prefix)
+	p.mux.tree.Clean(p.prefix)
 	return p
 }
 
@@ -136,7 +136,7 @@ func (p *Prefix) Clean() *Prefix {
 // 若 name 作为路由项定义，会加上 Prefix.prefix 作为前缀；
 // params 为路由项中的参数，键名为参数名，键值为参数值。
 func (p *Prefix) URL(pattern string, params map[string]string) (string, error) {
-	return p.router.tree.URL(p.prefix+pattern, params)
+	return p.mux.tree.URL(p.prefix+pattern, params)
 }
 
 // Prefix 在现有 Prefix 的基础上声明一个新的 Prefix 实例
@@ -149,18 +149,18 @@ func (p *Prefix) URL(pattern string, params map[string]string) (string, error) {
 //  v.Get("example.com/users/1") // 相当于 g.Get("/api/v2/example.com/users/1")
 func (p *Prefix) Prefix(prefix string) *Prefix {
 	return &Prefix{
-		router: p.router,
+		mux:    p.mux,
 		prefix: p.prefix + prefix,
 	}
 }
 
 // Prefix 声明一个 Prefix 实例
-func (router *Router) Prefix(prefix string) *Prefix {
+func (mux *Mux) Prefix(prefix string) *Prefix {
 	return &Prefix{
-		router: router,
+		mux:    mux,
 		prefix: prefix,
 	}
 }
 
-// Router 返回与当前关联的 *Router 实例
-func (p *Prefix) Router() *Router { return p.router }
+// Mux 返回与当前关联的 *Mux 实例
+func (p *Prefix) Mux() *Mux { return p.mux }

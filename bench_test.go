@@ -23,7 +23,9 @@ func init() {
 
 	calcMemStats(func() {
 		h := func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte(r.URL.Path))
+			if _, err := w.Write([]byte(r.URL.Path)); err != nil {
+				panic(err)
+			}
 		}
 
 		issue9Mux = New(false, true, false, nil, nil, "", nil)

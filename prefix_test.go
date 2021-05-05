@@ -79,14 +79,14 @@ func TestPrefix(t *testing.T) {
 	test.matchTrue(http.MethodDelete, "/p/f/1", 404)
 }
 
-func TestRouter_Prefix(t *testing.T) {
+func TestMux_Prefix(t *testing.T) {
 	a := assert.New(t)
 	mux := New(false, true, false, nil, nil, "", nil)
 	a.NotNil(mux)
 
 	p := mux.Prefix("/abc")
 	a.Equal(p.prefix, "/abc")
-	a.Equal(p.Router(), mux.Router)
+	a.Equal(p.Mux(), mux)
 
 	p = mux.Prefix("")
 	a.Equal(p.prefix, "")
@@ -100,7 +100,7 @@ func TestPrefix_Prefix(t *testing.T) {
 	p := mux.Prefix("/abc")
 	pp := p.Prefix("/def")
 	a.Equal(pp.prefix, "/abc/def")
-	a.Equal(p.Router(), mux.Router)
+	a.Equal(p.Mux(), mux)
 
 	p = mux.Prefix("")
 	pp = p.Prefix("/abc")
