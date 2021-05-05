@@ -18,7 +18,7 @@ mux 是一个实现了 [http.Handler](https://pkg.go.dev/net/http#Handler) 的�
 1. 任意风格的路由，比如 discuz 这种不以 / 作为分隔符的；
 
 ```go
-m := mux.NewRouter(false, false, false, nil, nil, "", nil).
+m := mux.New(false, false, false, nil, nil, "", nil).
     Get("/users/1", h).
     Post("/login", h).
     Get("/pages/{id:\\d+}.html", h). // 匹配 /pages/123.html 等格式，path = 123
@@ -135,7 +135,7 @@ id := params.MustInt("id", 0) // 0 表示在无法获取 id 参数的默认值
 当然用户也可以使用 `*.Options()` 函数指定特定的数据；
 或是直接使用 `*.Handle()` 指定一个自定义的实现方式。
 
-如果不需要的话，也可以在 NewRouter() 中将 disableOptions 设置为 true。
+如果不需要的话，也可以在 New() 中将 disableOptions 设置为 true。
 显示设定 OPTIONS，不受 disableOptions 的影响。
 
 ```go
