@@ -60,7 +60,6 @@ func TestHeaderVersion_Match(t *testing.T) {
 	a.NotNil(r)
 	a.False(h.Match(r))
 
-	h = &HeaderVersion{}
 	r = httptest.NewRequest(http.MethodGet, "https://caixw.io/test", nil)
 	r.Header.Set("Accept", "application/json; version=1.0")
 	a.NotNil(r)
