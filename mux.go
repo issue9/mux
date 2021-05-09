@@ -44,6 +44,9 @@ type Mux struct {
 	disableOptions,
 	disableHead,
 	skipCleanPath bool
+
+	middlewares []Middleware
+	handler     http.Handler
 }
 
 // Default New 的默认参数版本
@@ -72,41 +75,44 @@ func New(disableOptions, disableHead, skipCleanPath bool,
 		m = group.MatcherFunc(group.Any)
 	}
 
-	r := newRouter(disableOptions, disableHead, name, m)
+	mux := &Mux{
+		Router: newRouter(disableOptions, disableHead, name, m),
 
-	return &Mux{
-		Router:           r,
 		notFound:         notFound,
 		methodNotAllowed: methodNotAllowed,
-		disableOptions:   disableOptions,
-		disableHead:      disableHead,
-		skipCleanPath:    skipCleanPath,
+
+		disableOptions: disableOptions,
+		disableHead:    disableHead,
+		skipCleanPath:  skipCleanPath,
 	}
+	mux.handler = http.HandlerFunc(mux.serveHTTP)
+
+	return mux
 }
 
-func (mux *Mux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+func (mux *Mux) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	if !mux.skipCleanPath {
-		req.URL.Path = cleanPath(req.URL.Path)
+		r.URL.Path = cleanPath(r.URL.Path)
 	}
 
-	hs, ps := mux.match(req)
+	hs, ps := mux.match(r)
 	if hs == nil {
-		mux.notFound(w, req)
+		mux.notFound(w, r)
 		return
 	}
 
-	h := hs.Handler(req.Method)
+	h := hs.Handler(r.Method)
 	if h == nil {
 		w.Header().Set("Allow", hs.Options())
-		mux.methodNotAllowed(w, req)
+		mux.methodNotAllowed(w, r)
 		return
 	}
 
 	if len(ps) > 0 {
-		req = req.WithContext(context.WithValue(req.Context(), params.ContextKeyParams, ps))
+		r = r.WithContext(context.WithValue(r.Context(), params.ContextKeyParams, ps))
 	}
 
-	h.ServeHTTP(w, req)
+	h.ServeHTTP(w, r)
 }
 
 func (mux *Mux) match(req *http.Request) (*handlers.Handlers, params.Params) {

@@ -19,7 +19,7 @@ func buildHandler(code int) http.Handler {
 	})
 }
 
-func buildFunc(code int) http.HandlerFunc {
+func buildHandlerFunc(code int) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(code)
 	}
@@ -66,27 +66,27 @@ func TestRouter(t *testing.T) {
 
 	test.mux.Get("/h/1", buildHandler(201))
 	test.matchTrue(http.MethodGet, "/h/1", 201)
-	test.mux.GetFunc("/f/1", buildFunc(201))
+	test.mux.GetFunc("/f/1", buildHandlerFunc(201))
 	test.matchTrue(http.MethodGet, "/f/1", 201)
 
 	test.mux.Post("/h/1", buildHandler(202))
 	test.matchTrue(http.MethodPost, "/h/1", 202)
-	test.mux.PostFunc("/f/1", buildFunc(202))
+	test.mux.PostFunc("/f/1", buildHandlerFunc(202))
 	test.matchTrue(http.MethodPost, "/f/1", 202)
 
 	test.mux.Put("/h/1", buildHandler(203))
 	test.matchTrue(http.MethodPut, "/h/1", 203)
-	test.mux.PutFunc("/f/1", buildFunc(203))
+	test.mux.PutFunc("/f/1", buildHandlerFunc(203))
 	test.matchTrue(http.MethodPut, "/f/1", 203)
 
 	test.mux.Patch("/h/1", buildHandler(204))
 	test.matchTrue(http.MethodPatch, "/h/1", 204)
-	test.mux.PatchFunc("/f/1", buildFunc(204))
+	test.mux.PatchFunc("/f/1", buildHandlerFunc(204))
 	test.matchTrue(http.MethodPatch, "/f/1", 204)
 
 	test.mux.Delete("/h/1", buildHandler(205))
 	test.matchTrue(http.MethodDelete, "/h/1", 205)
-	test.mux.DeleteFunc("/f/1", buildFunc(205))
+	test.mux.DeleteFunc("/f/1", buildHandlerFunc(205))
 	test.matchTrue(http.MethodDelete, "/f/1", 205)
 
 	// Any
@@ -98,7 +98,7 @@ func TestRouter(t *testing.T) {
 	test.matchTrue(http.MethodDelete, "/h/any", 206)
 	test.matchTrue(http.MethodTrace, "/h/any", 206)
 
-	test.mux.AnyFunc("/f/any", buildFunc(206))
+	test.mux.AnyFunc("/f/any", buildHandlerFunc(206))
 	test.matchTrue(http.MethodGet, "/f/any", 206)
 	test.matchTrue(http.MethodPost, "/f/any", 206)
 	test.matchTrue(http.MethodPut, "/f/any", 206)
@@ -136,7 +136,7 @@ func TestRouter_Head(t *testing.T) {
 	test.mux.Get("/h/1", buildHandler(201))
 	test.matchTrue(http.MethodGet, "/h/1", 201)
 	test.matchTrue(http.MethodHead, "/h/1", 201)
-	test.mux.GetFunc("/f/1", buildFunc(201))
+	test.mux.GetFunc("/f/1", buildHandlerFunc(201))
 	test.matchTrue(http.MethodGet, "/f/1", 201)
 	test.matchTrue(http.MethodHead, "/f/1", 201)
 
@@ -154,7 +154,7 @@ func TestRouter_Head(t *testing.T) {
 	test.matchTrue(http.MethodDelete, "/h/any", 206)
 	test.matchTrue(http.MethodTrace, "/h/any", 206)
 
-	test.mux.AnyFunc("/f/any", buildFunc(206))
+	test.mux.AnyFunc("/f/any", buildHandlerFunc(206))
 	test.matchTrue(http.MethodGet, "/f/any", 206)
 	test.matchTrue(http.MethodHead, "/f/any", 206)
 	test.matchTrue(http.MethodPost, "/f/any", 206)
@@ -171,9 +171,9 @@ func TestRouter_Handle_Remove(t *testing.T) {
 	// 添加 GET /api/1
 	// 添加 PUT /api/1
 	// 添加 GET /api/2
-	a.NotError(test.mux.HandleFunc("/api/1", buildFunc(201), http.MethodGet))
-	a.NotError(test.mux.HandleFunc("/api/1", buildFunc(201), http.MethodPut))
-	a.NotError(test.mux.HandleFunc("/api/2", buildFunc(202), http.MethodGet))
+	a.NotError(test.mux.HandleFunc("/api/1", buildHandlerFunc(201), http.MethodGet))
+	a.NotError(test.mux.HandleFunc("/api/1", buildHandlerFunc(201), http.MethodPut))
+	a.NotError(test.mux.HandleFunc("/api/2", buildHandlerFunc(202), http.MethodGet))
 
 	test.matchTrue(http.MethodGet, "/api/1", 201)
 	test.matchTrue(http.MethodPut, "/api/1", 201)
@@ -193,7 +193,7 @@ func TestRouter_Handle_Remove(t *testing.T) {
 	test.matchTrue(http.MethodGet, "/api/2", http.StatusNotFound) // 整个节点被删除
 
 	// 添加 POST /api/1
-	a.NotError(test.mux.Handle("/api/1", buildFunc(201), http.MethodPost))
+	a.NotError(test.mux.Handle("/api/1", buildHandlerFunc(201), http.MethodPost))
 	test.matchTrue(http.MethodPost, "/api/1", 201)
 
 	// 删除 ANY /api/1
@@ -223,7 +223,7 @@ func TestRouter_Options(t *testing.T) {
 	test.mux.Options("/api/1", "CUSTOM OPTIONS2")
 	test.optionsTrue("/api/1", http.StatusOK, "CUSTOM OPTIONS2")
 
-	a.NotError(test.mux.HandleFunc("/api/1", buildFunc(201), http.MethodOptions))
+	a.NotError(test.mux.HandleFunc("/api/1", buildHandlerFunc(201), http.MethodOptions))
 	test.optionsTrue("/api/1", 201, "")
 
 	// disableOptions 为 true

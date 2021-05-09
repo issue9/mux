@@ -164,7 +164,7 @@ func TestRouter_routers(t *testing.T) {
 	a.NotNil(m)
 	p1 := m.Prefix("/prefix1")
 	p2 := p1.Prefix("/prefix2")
-	p2.GetFunc("/p2", buildFunc(204))
+	p2.GetFunc("/p2", buildHandlerFunc(204))
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "/prefix1/prefix2/p2", nil)
 	m.ServeHTTP(w, r)
@@ -179,7 +179,7 @@ func TestRouter_routers(t *testing.T) {
 	m = Default()
 	p1 = m.Prefix("/prefix1")
 	p2 = p1.Prefix("example.com")
-	p2.GetFunc("/p2", buildFunc(205))
+	p2.GetFunc("/p2", buildHandlerFunc(205))
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "/prefix1example.com/p2", nil)
 	m.ServeHTTP(w, r)
@@ -237,33 +237,33 @@ func TestMux_ServeHTTP_Order(t *testing.T) {
 	a := assert.New(t)
 	test := newTester(t, false, true, false)
 
-	a.NotError(test.mux.GetFunc("/posts/{id}", buildFunc(203)))      // f3
-	a.NotError(test.mux.GetFunc("/posts/{id:\\d+}", buildFunc(202))) // f2
-	a.NotError(test.mux.GetFunc("/posts/1", buildFunc(201)))         // f1
-	test.matchTrue(http.MethodGet, "/posts/1", 201)                  // f1 普通路由项完全匹配
-	test.matchTrue(http.MethodGet, "/posts/2", 202)                  // f1 正则路由
-	test.matchTrue(http.MethodGet, "/posts/abc", 203)                // f3 命名路由
-	test.matchTrue(http.MethodGet, "/posts/", 203)                   // f3
+	a.NotError(test.mux.GetFunc("/posts/{id}", buildHandlerFunc(203)))      // f3
+	a.NotError(test.mux.GetFunc("/posts/{id:\\d+}", buildHandlerFunc(202))) // f2
+	a.NotError(test.mux.GetFunc("/posts/1", buildHandlerFunc(201)))         // f1
+	test.matchTrue(http.MethodGet, "/posts/1", 201)                         // f1 普通路由项完全匹配
+	test.matchTrue(http.MethodGet, "/posts/2", 202)                         // f1 正则路由
+	test.matchTrue(http.MethodGet, "/posts/abc", 203)                       // f3 命名路由
+	test.matchTrue(http.MethodGet, "/posts/", 203)                          // f3
 
 	test = newTester(t, false, true, false)
-	a.NotError(test.mux.GetFunc("/p1/{p1}/p2/{p2:\\d+}", buildFunc(201))) // f1
-	a.NotError(test.mux.GetFunc("/p1/{p1}/p2/{p2:\\w+}", buildFunc(202))) // f2
-	test.matchTrue(http.MethodGet, "/p1/1/p2/1", 201)                     // f1
-	test.matchTrue(http.MethodGet, "/p1/2/p2/s", 202)                     // f2
+	a.NotError(test.mux.GetFunc("/p1/{p1}/p2/{p2:\\d+}", buildHandlerFunc(201))) // f1
+	a.NotError(test.mux.GetFunc("/p1/{p1}/p2/{p2:\\w+}", buildHandlerFunc(202))) // f2
+	test.matchTrue(http.MethodGet, "/p1/1/p2/1", 201)                            // f1
+	test.matchTrue(http.MethodGet, "/p1/2/p2/s", 202)                            // f2
 
 	test = newTester(t, false, true, false)
-	a.NotError(test.mux.GetFunc("/posts/{id}/{page}", buildFunc(202))) // f2
-	a.NotError(test.mux.GetFunc("/posts/{id}/1", buildFunc(201)))      // f1
-	test.matchTrue(http.MethodGet, "/posts/1/1", 201)                  // f1 普通路由项完全匹配
-	test.matchTrue(http.MethodGet, "/posts/2/5", 202)                  // f2 命名完全匹配
+	a.NotError(test.mux.GetFunc("/posts/{id}/{page}", buildHandlerFunc(202))) // f2
+	a.NotError(test.mux.GetFunc("/posts/{id}/1", buildHandlerFunc(201)))      // f1
+	test.matchTrue(http.MethodGet, "/posts/1/1", 201)                         // f1 普通路由项完全匹配
+	test.matchTrue(http.MethodGet, "/posts/2/5", 202)                         // f2 命名完全匹配
 
 	test = newTester(t, false, true, false)
-	a.NotError(test.mux.GetFunc("/tags/{id}.html", buildFunc(201))) // f1
-	a.NotError(test.mux.GetFunc("/tags.html", buildFunc(202)))      // f2
-	a.NotError(test.mux.GetFunc("/{path}", buildFunc(203)))         // f3
-	test.matchTrue(http.MethodGet, "/tags", 203)                    // f3 // 正好与 f1 的第一个节点匹配
-	test.matchTrue(http.MethodGet, "/tags/1.html", 201)             // f1
-	test.matchTrue(http.MethodGet, "/tags.html", 202)               // f2
+	a.NotError(test.mux.GetFunc("/tags/{id}.html", buildHandlerFunc(201))) // f1
+	a.NotError(test.mux.GetFunc("/tags.html", buildHandlerFunc(202)))      // f2
+	a.NotError(test.mux.GetFunc("/{path}", buildHandlerFunc(203)))         // f3
+	test.matchTrue(http.MethodGet, "/tags", 203)                           // f3 // 正好与 f1 的第一个节点匹配
+	test.matchTrue(http.MethodGet, "/tags/1.html", 201)                    // f1
+	test.matchTrue(http.MethodGet, "/tags.html", 202)                      // f2
 }
 
 func TestMethods(t *testing.T) {

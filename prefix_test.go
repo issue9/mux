@@ -19,27 +19,27 @@ func TestPrefix(t *testing.T) {
 
 	p.Get("/h/1", buildHandler(201))
 	test.matchTrue(http.MethodGet, "/p/h/1", 201)
-	p.GetFunc("/f/1", buildFunc(201))
+	p.GetFunc("/f/1", buildHandlerFunc(201))
 	test.matchTrue(http.MethodGet, "/p/f/1", 201)
 
 	p.Post("/h/1", buildHandler(202))
 	test.matchTrue(http.MethodPost, "/p/h/1", 202)
-	p.PostFunc("/f/1", buildFunc(202))
+	p.PostFunc("/f/1", buildHandlerFunc(202))
 	test.matchTrue(http.MethodPost, "/p/f/1", 202)
 
 	p.Put("/h/1", buildHandler(203))
 	test.matchTrue(http.MethodPut, "/p/h/1", 203)
-	p.PutFunc("/f/1", buildFunc(203))
+	p.PutFunc("/f/1", buildHandlerFunc(203))
 	test.matchTrue(http.MethodPut, "/p/f/1", 203)
 
 	p.Patch("/h/1", buildHandler(204))
 	test.matchTrue(http.MethodPatch, "/p/h/1", 204)
-	p.PatchFunc("/f/1", buildFunc(204))
+	p.PatchFunc("/f/1", buildHandlerFunc(204))
 	test.matchTrue(http.MethodPatch, "/p/f/1", 204)
 
 	p.Delete("/h/1", buildHandler(205))
 	test.matchTrue(http.MethodDelete, "/p/h/1", 205)
-	p.DeleteFunc("/f/1", buildFunc(205))
+	p.DeleteFunc("/f/1", buildHandlerFunc(205))
 	test.matchTrue(http.MethodDelete, "/p/f/1", 205)
 
 	// Any
@@ -51,7 +51,7 @@ func TestPrefix(t *testing.T) {
 	test.matchTrue(http.MethodDelete, "/p/h/any", 206)
 	test.matchTrue(http.MethodTrace, "/p/h/any", 206)
 
-	p.AnyFunc("/f/any", buildFunc(206))
+	p.AnyFunc("/f/any", buildHandlerFunc(206))
 	test.matchTrue(http.MethodGet, "/p/f/any", 206)
 	test.matchTrue(http.MethodPost, "/p/f/any", 206)
 	test.matchTrue(http.MethodPut, "/p/f/any", 206)

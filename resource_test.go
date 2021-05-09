@@ -24,27 +24,27 @@ func TestResource(t *testing.T) {
 
 	h.Get(buildHandler(201))
 	test.matchTrue(http.MethodGet, "/h/1", 201)
-	f.GetFunc(buildFunc(201))
+	f.GetFunc(buildHandlerFunc(201))
 	test.matchTrue(http.MethodGet, "/f/1", 201)
 
 	h.Post(buildHandler(202))
 	test.matchTrue(http.MethodPost, "/h/1", 202)
-	f.PostFunc(buildFunc(202))
+	f.PostFunc(buildHandlerFunc(202))
 	test.matchTrue(http.MethodPost, "/f/1", 202)
 
 	h.Put(buildHandler(203))
 	test.matchTrue(http.MethodPut, "/h/1", 203)
-	f.PutFunc(buildFunc(203))
+	f.PutFunc(buildHandlerFunc(203))
 	test.matchTrue(http.MethodPut, "/f/1", 203)
 
 	h.Patch(buildHandler(204))
 	test.matchTrue(http.MethodPatch, "/h/1", 204)
-	f.PatchFunc(buildFunc(204))
+	f.PatchFunc(buildHandlerFunc(204))
 	test.matchTrue(http.MethodPatch, "/f/1", 204)
 
 	h.Delete(buildHandler(205))
 	test.matchTrue(http.MethodDelete, "/h/1", 205)
-	f.DeleteFunc(buildFunc(205))
+	f.DeleteFunc(buildHandlerFunc(205))
 	test.matchTrue(http.MethodDelete, "/f/1", 205)
 
 	// Any
@@ -58,7 +58,7 @@ func TestResource(t *testing.T) {
 	test.matchTrue(http.MethodTrace, "/h/any", 206)
 
 	f = test.resource("/f/any")
-	f.AnyFunc(buildFunc(206))
+	f.AnyFunc(buildHandlerFunc(206))
 	test.matchTrue(http.MethodGet, "/f/any", 206)
 	test.matchTrue(http.MethodPost, "/f/any", 206)
 	test.matchTrue(http.MethodPut, "/f/any", 206)
