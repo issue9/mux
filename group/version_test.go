@@ -10,12 +10,17 @@ import (
 	"github.com/issue9/assert"
 )
 
-var _ Matcher = &Version{}
+var (
+	_ Matcher = &HeaderVersion{}
+	_ Matcher = &PathVersion{}
+)
 
-func TestVersion_matchInHeader(t *testing.T) {
+func TestHeaderVersion_Match(t *testing.T) {
 	a := assert.New(t)
 
-	h := NewVersion(true, "1.0", "2.0", "3.0")
+	h := &HeaderVersion{
+		Versions: []string{"1.0", "2.0", "3.0"},
+	}
 
 	// 相同版本号
 	r := httptest.NewRequest(http.MethodGet, "https://caixw.io/test", nil)
@@ -37,7 +42,7 @@ func TestVersion_matchInHeader(t *testing.T) {
 
 	// 空值，不匹配任何内容
 
-	h = NewVersion(true)
+	h = &HeaderVersion{}
 	r = httptest.NewRequest(http.MethodGet, "https://caixw.io/test", nil)
 	r.Header.Set("Accept", "application/json; version=1.0")
 	a.NotNil(r)
@@ -55,21 +60,21 @@ func TestVersion_matchInHeader(t *testing.T) {
 	a.NotNil(r)
 	a.False(h.Match(r))
 
-	h = NewVersion(true)
+	h = &HeaderVersion{}
 	r = httptest.NewRequest(http.MethodGet, "https://caixw.io/test", nil)
 	r.Header.Set("Accept", "application/json; version=1.0")
 	a.NotNil(r)
 	a.False(h.Match(r))
 }
 
-func TestVersion_matchInURL(t *testing.T) {
+func TestPathVersion_Match(t *testing.T) {
 	a := assert.New(t)
 
-	a.Panic(func() {
-		NewVersion(false, "")
-	})
+	h := NewPathVersion("v3", "/v2", "/v1")
 
-	h := NewVersion(false, "v3", "v2", "v1")
+	a.Panic(func() {
+		NewPathVersion("", "v3")
+	})
 
 	// 相同版本号
 	r := httptest.NewRequest(http.MethodGet, "https://caixw.io/v1/test", nil)
@@ -91,7 +96,7 @@ func TestVersion_matchInURL(t *testing.T) {
 
 	// 空值，不匹配任何内容
 
-	h = NewVersion(false)
+	h = NewPathVersion()
 	r = httptest.NewRequest(http.MethodGet, "https://caixw.io/test", nil)
 	r.Header.Set("Accept", "application/json; version=1.0")
 	a.NotNil(r)
