@@ -176,10 +176,10 @@ func TestRouter_routers_multiple(t *testing.T) {
 	a.True(ok).NotNil(def)
 	def.Get("/t1", buildHandler(201))
 
-	v1, ok := m.NewRouter("v1", group.NewVersion(false, "v1"))
+	v1, ok := m.NewRouter("v1", group.NewPathVersion("v1"))
 	a.True(ok).NotNil(v1)
 	v1.Get("/path", buildHandler(202))
-	v2, ok := m.NewRouter("v2", group.NewVersion(false, "v1", "v2"))
+	v2, ok := m.NewRouter("v2", group.NewPathVersion("v1", "v2"))
 	a.True(ok).NotNil(v2)
 	v2.Get("/path", buildHandler(203))
 
