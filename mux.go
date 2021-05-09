@@ -119,6 +119,8 @@ func (mux *Mux) Routers() []*Router { return mux.routers }
 // NewRouter 添加子路由组
 //
 // 该路由只有符合 group.Matcher 的要求才会进入，其它与 Router 功能相同。
+// 当 group.Matcher 与其它路由组的判断有重复时，第一条返回 true 的路由组获胜，
+// 即使该路由组最终返回 404，也不会再在其它路由组里查找相应的路由。
 //
 // name 表示该路由组的名称，需要唯一，否则返回 false；
 func (mux *Mux) NewRouter(name string, matcher group.Matcher) (r *Router, ok bool) {

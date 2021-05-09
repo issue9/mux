@@ -298,35 +298,33 @@ func TestRouter_Clean(t *testing.T) {
 	m := Default()
 	a.NotNil(m)
 
-	def, ok := m.NewRouter("def", group.MatcherFunc(group.Any))
+	def, ok := m.NewRouter("def", group.NewHosts("localhost"))
 	a.True(ok).NotNil(def)
 	def.Get("/m1", buildHandler(200)).
 		Post("/m1", buildHandler(201))
 
-	router, ok := m.NewRouter("host", group.NewHosts("example.com"))
-	a.True(ok).NotNil(router)
-	router.Get("/m1", buildHandler(202)).
+	host, ok := m.NewRouter("host", group.NewHosts("example.com"))
+	a.True(ok).NotNil(host)
+	host.Get("/m1", buildHandler(202)).
 		Post("/m1", buildHandler(203))
 
 	w := httptest.NewRecorder()
-	r := httptest.NewRequest(http.MethodGet, "/m1", nil)
+	r := httptest.NewRequest(http.MethodGet, "http://localhost:88/m1", nil)
 	m.ServeHTTP(w, r)
 	a.Equal(w.Result().StatusCode, 200)
 
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "https://example.com/m1", nil)
 	m.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 203)
+	a.Equal(w.Result().StatusCode, 202)
 
 	def.Clean()
-
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "/m1", nil)
 	m.ServeHTTP(w, r)
 	a.Equal(w.Result().StatusCode, 404)
 
-	// 不清除子路由的项
-
+	// def.Clean 不影响 host 路由
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "https://example.com/m1", nil)
 	m.ServeHTTP(w, r)

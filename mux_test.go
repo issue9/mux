@@ -199,6 +199,12 @@ func TestRouter_routers_multiple(t *testing.T) {
 	r = httptest.NewRequest(http.MethodGet, "https://localhost/v2/path", nil)
 	m.ServeHTTP(w, r)
 	a.Equal(w.Result().StatusCode, 404)
+
+	// 不匹配 def，转向 v2
+	w = httptest.NewRecorder()
+	r = httptest.NewRequest(http.MethodGet, "https://example.com/v2/path", nil)
+	m.ServeHTTP(w, r)
+	a.Equal(w.Result().StatusCode, 203)
 }
 
 func TestMux_ServeHTTP(t *testing.T) {
