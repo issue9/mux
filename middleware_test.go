@@ -19,14 +19,14 @@ func buildMiddleware(a *assert.Assertion, text string) MiddlewareFunc {
 	}
 }
 
-func TestMux_Append(t *testing.T) {
+func TestMux_insertFirst(t *testing.T) {
 	a := assert.New(t)
 	mux := Default()
 	a.NotNil(mux)
 
 	mux.Get("/get", buildHandler(201))
-	mux.Append(buildMiddleware(a, "1")).
-		Append(buildMiddleware(a, "2"))
+	mux.AddMiddleware(true, buildMiddleware(a, "1")).
+		AddMiddleware(true, buildMiddleware(a, "2"))
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "/get", nil)
@@ -44,14 +44,14 @@ func TestMux_Append(t *testing.T) {
 		Empty(w.Body.String())
 }
 
-func TestMux_Prepend(t *testing.T) {
+func TestMux_insertLast(t *testing.T) {
 	a := assert.New(t)
 	mux := Default()
 	a.NotNil(mux)
 
 	mux.Get("/get", buildHandler(201))
-	mux.Prepend(buildMiddleware(a, "1")).
-		Prepend(buildMiddleware(a, "2"))
+	mux.AddMiddleware(false, buildMiddleware(a, "1")).
+		AddMiddleware(false, buildMiddleware(a, "2"))
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "/get", nil)
@@ -69,16 +69,16 @@ func TestMux_Prepend(t *testing.T) {
 		Empty(w.Body.String())
 }
 
-func TestMux_Append_Prepend(t *testing.T) {
+func TestMux_AddMiddleware(t *testing.T) {
 	a := assert.New(t)
 	mux := Default()
 	a.NotNil(mux)
 
 	mux.Get("/get", buildHandler(201))
-	mux.Prepend(buildMiddleware(a, "p1")).
-		Append(buildMiddleware(a, "a1")).
-		Prepend(buildMiddleware(a, "p2")).
-		Append(buildMiddleware(a, "a2"))
+	mux.AddMiddleware(false, buildMiddleware(a, "p1")).
+		AddMiddleware(true, buildMiddleware(a, "a1")).
+		AddMiddleware(false, buildMiddleware(a, "p2")).
+		AddMiddleware(true, buildMiddleware(a, "a2"))
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "/get", nil)
