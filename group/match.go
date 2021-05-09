@@ -22,27 +22,3 @@ func (f MatcherFunc) Match(r *http.Request) bool { return f(r) }
 
 // Any 匹配任意内容
 func Any(*http.Request) bool { return true }
-
-// And 多个条件同时满足
-func And(m ...Matcher) Matcher {
-	return MatcherFunc(func(r *http.Request) bool {
-		for _, mm := range m {
-			if !mm.Match(r) {
-				return false
-			}
-		}
-		return true
-	})
-}
-
-// Or 满足任意条件
-func Or(m ...Matcher) Matcher {
-	return MatcherFunc(func(r *http.Request) bool {
-		for _, mm := range m {
-			if mm.Match(r) {
-				return true
-			}
-		}
-		return false
-	})
-}

@@ -10,6 +10,11 @@ import (
 const versionString = "version="
 
 // PathVersion 匹配路径中的版本号
+//
+// 会修改 *http.Request.URL.Path 的值，去掉匹配的版本号路径部分，比如：
+//  /v1/path.html
+// 如果匹配 v1 版本，会修改为：
+//  /path.html
 type PathVersion struct {
 	// 需要匹配的版本号列表，需要以 / 作分隔，比如 /v3/  /v4/  /v11/
 	Versions []string
