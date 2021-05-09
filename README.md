@@ -7,15 +7,15 @@
 [![codecov](https://codecov.io/gh/issue9/mux/branch/master/graph/badge.svg)](https://codecov.io/gh/issue9/mux)
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/issue9/mux/v4)](https://pkg.go.dev/github.com/issue9/mux/v4)
 
-mux Go 的路由器功能：
+mux 功能完备的 Go 路由器：
 
 1. 路由参数；
 1. 支持正则表达式作为路由项匹配方式；
 1. 丰富的 OPTIONS 请求处理方式；
 1. 自动生成 HEAD 请求内容；
-1. 根据路由生成地址；
-1. 自定义附加的路由匹配项，比如限定域名，或是限定版本号等；
+1. 根据路由反向生成地址；
 1. 任意风格的路由，比如 discuz 这种不以 / 作为分隔符的；
+1. 分组路由，比如按域名，或是版本号等；
 1. 支持中间件；
 
 ```go
@@ -48,7 +48,9 @@ res.URL(map[string]string{"id": "5"}) // 构建一条基于此路由项的路径
 http.ListenAndServe(":8080", m)
 ```
 
-#### 正则表达式
+## 语式
+
+### 正则表达式
 
 路由中支持以正则表达式的方式进行匹配，表达式以大括号包含，内部以冒号分隔，
 前半部分为变量的名称，后半部分为变量可匹配类型的正则表达式。比如：
@@ -58,7 +60,7 @@ http.ListenAndServe(":8080", m)
 /posts/{:\\d+}   // 将被转换成 /posts/\\d+
 ```
 
-#### 命名参数
+### 命名参数
 
 若路由字符串中，所有的正则表达式冒号之后的内容是特定的内容，或是无内容，
 则会被转换成命名参数，因为有专门的验证方法，性能会比较正则稍微好上一些。
@@ -87,7 +89,7 @@ http.ListenAndServe(":8080", m)
 /blog/assets{path}
 ```
 
-#### 路径匹配规则
+### 路径匹配规则
 
 可能会出现多条记录与同一请求都匹配的情况，这种情况下，
 系统会找到一条认为最匹配的路由来处理，判断规则如下：
@@ -107,35 +109,7 @@ http.ListenAndServe(":8080", m)
 /posts/index.html  // 匹配 1
 ```
 
-#### 分组路由
-
-可以通过匹配 group.Matcher 接口，定义了一组特定要求的路由项。
-
-```go
-// server.go
-
-m := mux.Default()
-
-r, ok := m.NewRouter("default", group.Any)
-r.Get("/path", h1)
-
-host, ok := m.Matcher(group.NewHosts("*.example.com"))
-host.Get("/path", h2)
-
-http.ListenAndServe(":8080", m)
-
-// client.go
-
-// 访问 h2 的内容
-r := http.NewRequest(http.MethodGet, "https://abc.example.com/path", nil)
-r.Do()
-
-// 访问 h1 的内容
-r := http.NewRequest(http.MethodGet, "https://other_domain.com/path", nil)
-r.Do()
-```
-
-#### 路由参数
+### 路由参数
 
 通过正则表达式匹配的路由，其中带命名的参数可通过 Params() 获取：
 
@@ -147,7 +121,38 @@ id, err := params.Int("id")
 id := params.MustInt("id", 0) // 0 表示在无法获取 id 参数的默认值
 ```
 
-#### OPTIONS
+
+## 高级用法
+
+### 分组路由
+
+可以通过匹配 group.Matcher 接口，定义了一组特定要求的路由项。
+
+```go
+// server.go
+
+m := mux.Default()
+
+def, ok := m.NewRouter("default", group.NewPathVersion("v1"))
+def.Get("/path", h1)
+
+host, ok := m.NewRouter("host", group.NewHosts("*.example.com"))
+host.Get("/path", h2)
+
+http.ListenAndServe(":8080", m)
+
+// client.go
+
+// 访问 h2 的内容
+r := http.NewRequest(http.MethodGet, "https://abc.example.com/path", nil)
+r.Do()
+
+// 访问 h1 的内容
+r := http.NewRequest(http.MethodGet, "https://other_domain.com/v1/path", nil)
+r.Do()
+```
+
+### OPTIONS
 
 默认情况下，用户无须显示地实现它，系统会自动实现。
 当然用户也可以使用 `*.Options()` 函数指定特定的数据；
@@ -168,7 +173,7 @@ r.Remove("/posts/{id}", http.MethodOptions)    // 在当前路由上禁用 OPTIO
 r.Handle("/posts/{id}", h, http.MethodOptions) // 显示指定一个处理函数 h
 ```
 
-#### HEAD
+### HEAD
 
  默认情况下，用户无须显示地实现 HEAD 请求，
  系统会为每一个 GET 请求自动实现一个对应的 HEAD 请求，
