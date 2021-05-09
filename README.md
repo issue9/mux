@@ -25,8 +25,9 @@ h := header.New(map[string]string{
 	"Access-Control-Allow-Origin": "*"
 })
 
-m := mux.New(false, false, false, nil, nil, "", nil)
-m.AddMiddleware(h.Middleware). // 中间件，输出跨域的报头。
+m := mux.New(false, false, false, nil, nil)
+router, ok := m.New("", group.NewHosts("example.com"))
+router.AddMiddleware(h.Middleware). // 中间件，输出跨域的报头。
     Get("/users/1", h).
     Post("/login", h).
     Get("/pages/{id:\\d+}.html", h). // 匹配 /pages/123.html 等格式，path = 123
@@ -114,9 +115,13 @@ http.ListenAndServe(":8080", m)
 // server.go
 
 m := mux.Default()
-m.Get("/path", h1)
-host := m.Matcher(group.NewHosts("*.example.com"))
+
+r, ok := m.NewRouter("", group.Any)
+r.Get("/path", h1)
+
+host, ok := m.Matcher(group.NewHosts("*.example.com"))
 host.Get("/path", h2)
+
 http.ListenAndServe(":8080", m)
 
 // client.go
@@ -153,12 +158,14 @@ id := params.MustInt("id", 0) // 0 表示在无法获取 id 参数的默认值
 
 ```go
 m := mux.Default()
-m.Get("/posts/{id}", nil)     // 默认情况下， OPTIONS 的报头为 GET, OPTIONS
-m.Options("/posts/{id}", "*") // 强制改成 *
-m.Delete("/posts/{id}", nil)  // OPTIONS 依然为 *
+r, ok := m.NewRouter("", group.Any)
 
-m.Remove("/posts/{id}", http.MethodOptions)    // 在当前路由上禁用 OPTIONS
-m.Handle("/posts/{id}", h, http.MethodOptions) // 显示指定一个处理函数 h
+r.Get("/posts/{id}", nil)     // 默认情况下， OPTIONS 的报头为 GET, OPTIONS
+r.Options("/posts/{id}", "*") // 强制改成 *
+r.Delete("/posts/{id}", nil)  // OPTIONS 依然为 *
+
+r.Remove("/posts/{id}", http.MethodOptions)    // 在当前路由上禁用 OPTIONS
+r.Handle("/posts/{id}", h, http.MethodOptions) // 显示指定一个处理函数 h
 ```
 
 #### HEAD
