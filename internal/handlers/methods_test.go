@@ -27,7 +27,7 @@ func TestMethods(t *testing.T) {
 	}
 	a.Equal(max, val, "methodMap 中的值与 max 不相同！")
 
-	// addAny 的内容是否都存在于 mehtodMap
+	// addAny 的内容是否都存在于 methodMap
 	for _, m := range addAny {
 		_, found := methodMap[m]
 		a.True(found)
