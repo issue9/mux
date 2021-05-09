@@ -22,11 +22,11 @@ func ApplyMiddlewaresFunc(h func(w http.ResponseWriter, r *http.Request), f ...M
 	return ApplyMiddlewares(http.HandlerFunc(h), f...)
 }
 
-// AddMiddlewareFunc 添加中间件
+// AddMiddleware 添加中间件
 //
 // first 是否添加到顶部，顶部的中间件在运行过程中，最早被调用，多次添加，最后一次在顶部。
 // first == false 添加在尾部，末次添加的元素在最末尾。
-func (mux *Mux) AddMiddlewareFunc(first bool, f MiddlewareFunc) *Mux {
+func (mux *Mux) AddMiddleware(first bool, f MiddlewareFunc) *Mux {
 	if first {
 		mux.insertFirst(f)
 	} else {

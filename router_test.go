@@ -119,6 +119,7 @@ func TestRouter_Routes(t *testing.T) {
 	m := Default()
 
 	def, ok := m.NewRouter("def", group.MatcherFunc(group.Any))
+	a.True(ok).NotNil(def)
 	def.Get("/m", buildHandler(1))
 	def.Post("/m", buildHandler(1))
 	a.Equal(def.Routes(false, false), map[string][]string{"/m": {"GET", "HEAD", "OPTIONS", "POST"}})
