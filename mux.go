@@ -13,6 +13,7 @@ import (
 	"github.com/issue9/mux/v4/group"
 	"github.com/issue9/mux/v4/internal/handlers"
 	"github.com/issue9/mux/v4/internal/syntax"
+	"github.com/issue9/mux/v4/internal/tree"
 	"github.com/issue9/mux/v4/params"
 )
 
@@ -67,6 +68,8 @@ func New(disableOptions, disableHead, skipCleanPath bool, notFound, methodNotAll
 	}
 
 	mux := &Mux{
+		routers: make([]*Router, 0, 1),
+
 		notFound:         notFound,
 		methodNotAllowed: methodNotAllowed,
 
@@ -124,14 +127,11 @@ func (mux *Mux) Routers() []*Router { return mux.routers }
 //
 // name 表示该路由组的名称，需要唯一，否则返回 false；
 func (mux *Mux) NewRouter(name string, matcher group.Matcher) (r *Router, ok bool) {
-	// NOTE: 返回 Router 而不是 Mux，防止无限嵌套调用 NewRouter
-
+	if name == "" {
+		panic("参数 name 不能为空")
+	}
 	if matcher == nil {
 		panic("参数 matcher 不能为空")
-	}
-
-	if mux.routers == nil {
-		mux.routers = make([]*Router, 0, 5)
 	}
 
 	dup := sliceutil.Count(mux.routers, func(i int) bool {
@@ -141,7 +141,11 @@ func (mux *Mux) NewRouter(name string, matcher group.Matcher) (r *Router, ok boo
 		return nil, false
 	}
 
-	r = newRouter(mux.disableOptions, mux.disableHead, name, matcher)
+	r = &Router{
+		name:    name,
+		matcher: matcher,
+		tree:    tree.New(mux.disableOptions, mux.disableHead),
+	}
 	mux.routers = append(mux.routers, r)
 	return r, true
 }

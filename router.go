@@ -16,14 +16,6 @@ type Router struct {
 	tree    *tree.Tree    // 当前路由的路由项
 }
 
-func newRouter(disableOptions, disableHead bool, name string, m group.Matcher) *Router {
-	return &Router{
-		name:    name,
-		matcher: m,
-		tree:    tree.New(disableOptions, disableHead),
-	}
-}
-
 // Name 当前路由组的名称
 func (r *Router) Name() string { return r.name }
 

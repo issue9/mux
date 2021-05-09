@@ -23,16 +23,17 @@ func TestMux_NewRouter(t *testing.T) {
 		m.NewRouter("v1", nil)
 	})
 
+	// name 为空
+	a.Panic(func() {
+		m.NewRouter("", group.NewHosts("example.com"))
+	})
+
 	r, ok := m.NewRouter("host", group.NewHosts())
 	a.True(ok).NotNil(r)
 	a.Equal(r.name, "host").Equal(r.Name(), "host")
 
 	r, ok = m.NewRouter("host", group.NewHosts())
 	a.False(ok).Nil(r)
-
-	// 空值
-	r, ok = m.NewRouter("", group.NewHosts())
-	a.True(ok).NotNil(r)
 
 	r, ok = m.NewRouter("host-2", group.NewHosts())
 	a.True(ok).NotNil(r)
@@ -63,14 +64,7 @@ func TestMux_RemoveRouter(t *testing.T) {
 	a.True(ok).NotNil(r)
 	a.Equal(2, len(m.Routers()))
 
-	// 删除不存在的数据
-	m.RemoveRouter("")
-	a.Equal(2, len(m.Routers()))
-
-	r, ok = m.NewRouter("", group.NewHosts())
-	a.True(ok).NotNil(r)
-	a.Equal(3, len(m.Routers()))
-
+	// 删除空名，不出错。
 	m.RemoveRouter("")
 	a.Equal(2, len(m.Routers()))
 }
