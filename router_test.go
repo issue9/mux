@@ -27,15 +27,21 @@ func buildHandlerFunc(code int) http.HandlerFunc {
 
 // mux 的测试工具
 type tester struct {
-	mux *Mux
-	srv *rest.Server
+	mux    *Mux
+	router *Router
+	srv    *rest.Server
 }
 
 func newTester(t testing.TB, disableOptions, disableHead, skipClean bool) *tester {
-	mux := New(disableOptions, disableHead, skipClean, nil, nil, "", nil)
+	mux := New(disableOptions, disableHead, skipClean, nil, nil)
+	r, ok := mux.NewRouter("default", group.MatcherFunc(group.Any))
+	assert.True(t, ok)
+	assert.NotNil(t, r)
+
 	return &tester{
-		mux: mux,
-		srv: rest.NewServer(t, mux, nil),
+		mux:    mux,
+		router: r,
+		srv:    rest.NewServer(t, mux, nil),
 	}
 }
 
@@ -58,39 +64,39 @@ func TestRouter(t *testing.T) {
 	test := newTester(t, false, true, false)
 
 	// 测试 / 和 "" 是否访问同一地址
-	test.mux.Get("/", buildHandler(201))
+	test.router.Get("/", buildHandler(201))
 	test.matchTrue(http.MethodGet, "", 201)
 	test.matchTrue(http.MethodGet, "/", 201)
 	test.matchTrue(http.MethodHead, "/", http.StatusMethodNotAllowed) // 未启用 autoHead
 	test.matchTrue(http.MethodGet, "/abc", http.StatusNotFound)
 
-	test.mux.Get("/h/1", buildHandler(201))
+	test.router.Get("/h/1", buildHandler(201))
 	test.matchTrue(http.MethodGet, "/h/1", 201)
-	test.mux.GetFunc("/f/1", buildHandlerFunc(201))
+	test.router.GetFunc("/f/1", buildHandlerFunc(201))
 	test.matchTrue(http.MethodGet, "/f/1", 201)
 
-	test.mux.Post("/h/1", buildHandler(202))
+	test.router.Post("/h/1", buildHandler(202))
 	test.matchTrue(http.MethodPost, "/h/1", 202)
-	test.mux.PostFunc("/f/1", buildHandlerFunc(202))
+	test.router.PostFunc("/f/1", buildHandlerFunc(202))
 	test.matchTrue(http.MethodPost, "/f/1", 202)
 
-	test.mux.Put("/h/1", buildHandler(203))
+	test.router.Put("/h/1", buildHandler(203))
 	test.matchTrue(http.MethodPut, "/h/1", 203)
-	test.mux.PutFunc("/f/1", buildHandlerFunc(203))
+	test.router.PutFunc("/f/1", buildHandlerFunc(203))
 	test.matchTrue(http.MethodPut, "/f/1", 203)
 
-	test.mux.Patch("/h/1", buildHandler(204))
+	test.router.Patch("/h/1", buildHandler(204))
 	test.matchTrue(http.MethodPatch, "/h/1", 204)
-	test.mux.PatchFunc("/f/1", buildHandlerFunc(204))
+	test.router.PatchFunc("/f/1", buildHandlerFunc(204))
 	test.matchTrue(http.MethodPatch, "/f/1", 204)
 
-	test.mux.Delete("/h/1", buildHandler(205))
+	test.router.Delete("/h/1", buildHandler(205))
 	test.matchTrue(http.MethodDelete, "/h/1", 205)
-	test.mux.DeleteFunc("/f/1", buildHandlerFunc(205))
+	test.router.DeleteFunc("/f/1", buildHandlerFunc(205))
 	test.matchTrue(http.MethodDelete, "/f/1", 205)
 
 	// Any
-	test.mux.Any("/h/any", buildHandler(206))
+	test.router.Any("/h/any", buildHandler(206))
 	test.matchTrue(http.MethodGet, "/h/any", 206)
 	test.matchTrue(http.MethodPost, "/h/any", 206)
 	test.matchTrue(http.MethodPut, "/h/any", 206)
@@ -98,7 +104,7 @@ func TestRouter(t *testing.T) {
 	test.matchTrue(http.MethodDelete, "/h/any", 206)
 	test.matchTrue(http.MethodTrace, "/h/any", 206)
 
-	test.mux.AnyFunc("/f/any", buildHandlerFunc(206))
+	test.router.AnyFunc("/f/any", buildHandlerFunc(206))
 	test.matchTrue(http.MethodGet, "/f/any", 206)
 	test.matchTrue(http.MethodPost, "/f/any", 206)
 	test.matchTrue(http.MethodPut, "/f/any", 206)
@@ -111,11 +117,11 @@ func TestRouter_Routes(t *testing.T) {
 	a := assert.New(t)
 
 	m := Default()
-	a.NotNil(m).Equal(m.Name(), "")
 
-	m.Get("/m", buildHandler(1))
-	m.Post("/m", buildHandler(1))
-	a.Equal(m.Routes(false, false), map[string][]string{"/m": {"GET", "HEAD", "OPTIONS", "POST"}})
+	def, ok := m.NewRouter("def", group.MatcherFunc(group.Any))
+	def.Get("/m", buildHandler(1))
+	def.Post("/m", buildHandler(1))
+	a.Equal(def.Routes(false, false), map[string][]string{"/m": {"GET", "HEAD", "OPTIONS", "POST"}})
 
 	r, ok := m.NewRouter("host-1", group.NewHosts())
 	a.True(ok).NotNil(r)
@@ -126,26 +132,26 @@ func TestRouter_Routes(t *testing.T) {
 func TestRouter_Head(t *testing.T) {
 	test := newTester(t, false, false, false)
 
-	test.mux.Get("/", buildHandler(201))
+	test.router.Get("/", buildHandler(201))
 	test.matchTrue(http.MethodGet, "", 201)
 	test.matchTrue(http.MethodGet, "/", 201)
 	test.matchTrue(http.MethodHead, "", 201)
 	test.matchTrue(http.MethodHead, "/", 201)
 	test.matchContent(http.MethodHead, "/", 201, "")
 
-	test.mux.Get("/h/1", buildHandler(201))
+	test.router.Get("/h/1", buildHandler(201))
 	test.matchTrue(http.MethodGet, "/h/1", 201)
 	test.matchTrue(http.MethodHead, "/h/1", 201)
-	test.mux.GetFunc("/f/1", buildHandlerFunc(201))
+	test.router.GetFunc("/f/1", buildHandlerFunc(201))
 	test.matchTrue(http.MethodGet, "/f/1", 201)
 	test.matchTrue(http.MethodHead, "/f/1", 201)
 
-	test.mux.Post("/h/post", buildHandler(202))
+	test.router.Post("/h/post", buildHandler(202))
 	test.matchTrue(http.MethodPost, "/h/post", 202)
 	test.matchTrue(http.MethodHead, "/h/post", http.StatusMethodNotAllowed)
 
 	// Any
-	test.mux.Any("/h/any", buildHandler(206))
+	test.router.Any("/h/any", buildHandler(206))
 	test.matchTrue(http.MethodGet, "/h/any", 206)
 	test.matchTrue(http.MethodHead, "/h/any", 206)
 	test.matchTrue(http.MethodPost, "/h/any", 206)
@@ -154,7 +160,7 @@ func TestRouter_Head(t *testing.T) {
 	test.matchTrue(http.MethodDelete, "/h/any", 206)
 	test.matchTrue(http.MethodTrace, "/h/any", 206)
 
-	test.mux.AnyFunc("/f/any", buildHandlerFunc(206))
+	test.router.AnyFunc("/f/any", buildHandlerFunc(206))
 	test.matchTrue(http.MethodGet, "/f/any", 206)
 	test.matchTrue(http.MethodHead, "/f/any", 206)
 	test.matchTrue(http.MethodPost, "/f/any", 206)
@@ -171,9 +177,9 @@ func TestRouter_Handle_Remove(t *testing.T) {
 	// 添加 GET /api/1
 	// 添加 PUT /api/1
 	// 添加 GET /api/2
-	a.NotError(test.mux.HandleFunc("/api/1", buildHandlerFunc(201), http.MethodGet))
-	a.NotError(test.mux.HandleFunc("/api/1", buildHandlerFunc(201), http.MethodPut))
-	a.NotError(test.mux.HandleFunc("/api/2", buildHandlerFunc(202), http.MethodGet))
+	a.NotError(test.router.HandleFunc("/api/1", buildHandlerFunc(201), http.MethodGet))
+	a.NotError(test.router.HandleFunc("/api/1", buildHandlerFunc(201), http.MethodPut))
+	a.NotError(test.router.HandleFunc("/api/2", buildHandlerFunc(202), http.MethodGet))
 
 	test.matchTrue(http.MethodGet, "/api/1", 201)
 	test.matchTrue(http.MethodPut, "/api/1", 201)
@@ -181,23 +187,23 @@ func TestRouter_Handle_Remove(t *testing.T) {
 	test.matchTrue(http.MethodDelete, "/api/1", http.StatusMethodNotAllowed) // 未实现
 
 	// 删除 GET /api/1
-	test.mux.Remove("/api/1", http.MethodGet)
+	test.router.Remove("/api/1", http.MethodGet)
 	test.matchTrue(http.MethodGet, "/api/1", http.StatusMethodNotAllowed)
 	test.matchTrue(http.MethodPut, "/api/1", 201) // 不影响 PUT
 	test.matchTrue(http.MethodGet, "/api/2", 202)
 
 	// 删除 GET /api/2，只有一个，所以相当于整个节点被删除
-	test.mux.Remove("/api/2", http.MethodGet)
+	test.router.Remove("/api/2", http.MethodGet)
 	test.matchTrue(http.MethodGet, "/api/1", http.StatusMethodNotAllowed)
 	test.matchTrue(http.MethodPut, "/api/1", 201)                 // 不影响 PUT
 	test.matchTrue(http.MethodGet, "/api/2", http.StatusNotFound) // 整个节点被删除
 
 	// 添加 POST /api/1
-	a.NotError(test.mux.Handle("/api/1", buildHandlerFunc(201), http.MethodPost))
+	a.NotError(test.router.Handle("/api/1", buildHandlerFunc(201), http.MethodPost))
 	test.matchTrue(http.MethodPost, "/api/1", 201)
 
 	// 删除 ANY /api/1
-	test.mux.Remove("/api/1")
+	test.router.Remove("/api/1")
 	test.matchTrue(http.MethodPost, "/api/1", http.StatusNotFound) // 404 表示整个节点都没了
 }
 
@@ -206,37 +212,40 @@ func TestRouter_Options(t *testing.T) {
 	test := newTester(t, false, true, false)
 
 	// 添加 GET /api/1
-	a.NotError(test.mux.Handle("/api/1", buildHandler(201), http.MethodGet))
+	a.NotError(test.router.Handle("/api/1", buildHandler(201), http.MethodGet))
 	test.optionsTrue("/api/1", http.StatusOK, "GET, OPTIONS")
 
 	// 添加 DELETE /api/1
-	a.NotError(test.mux.Handle("/api/1", buildHandler(201), http.MethodDelete))
+	a.NotError(test.router.Handle("/api/1", buildHandler(201), http.MethodDelete))
 	test.optionsTrue("/api/1", http.StatusOK, "DELETE, GET, OPTIONS")
 
 	// 删除 DELETE /api/1
-	test.mux.Remove("/api/1", http.MethodDelete)
+	test.router.Remove("/api/1", http.MethodDelete)
 	test.optionsTrue("/api/1", http.StatusOK, "GET, OPTIONS")
 
 	// 通过 Options 自定义 Allow 报头
-	test.mux.Options("/api/1", "CUSTOM OPTIONS1")
+	test.router.Options("/api/1", "CUSTOM OPTIONS1")
 	test.optionsTrue("/api/1", http.StatusOK, "CUSTOM OPTIONS1")
-	test.mux.Options("/api/1", "CUSTOM OPTIONS2")
+	test.router.Options("/api/1", "CUSTOM OPTIONS2")
 	test.optionsTrue("/api/1", http.StatusOK, "CUSTOM OPTIONS2")
 
-	a.NotError(test.mux.HandleFunc("/api/1", buildHandlerFunc(201), http.MethodOptions))
+	a.NotError(test.router.HandleFunc("/api/1", buildHandlerFunc(201), http.MethodOptions))
 	test.optionsTrue("/api/1", 201, "")
 
 	// disableOptions 为 true
 	test = newTester(t, true, true, false)
 	test.optionsTrue("/api/1", http.StatusNotFound, "")
-	test.mux.Options("/api/1", "CUSTOM OPTIONS1") // 显示指定
+	test.router.Options("/api/1", "CUSTOM OPTIONS1") // 显示指定
 	test.optionsTrue("/api/1", http.StatusOK, "CUSTOM OPTIONS1")
 }
 
 func TestRouter_Params(t *testing.T) {
 	a := assert.New(t)
-	router := Default()
-	a.NotNil(router)
+	m := Default()
+	a.NotNil(m)
+	router, ok := m.NewRouter("def", group.MatcherFunc(group.Any))
+	a.True(ok).NotNil(router)
+
 	params := map[string]string{}
 
 	buildParamsHandler := func() http.Handler {
@@ -254,7 +263,7 @@ func TestRouter_Params(t *testing.T) {
 		r, err := http.NewRequest(method, url, nil)
 		a.NotError(err).NotNil(r)
 
-		router.ServeHTTP(w, r)
+		m.ServeHTTP(w, r)
 
 		a.Equal(w.Code, status)
 		if ps != nil { // 由于 params 是公用数据，会保存上一次获取的值，所以只在有值时才比较
@@ -286,10 +295,14 @@ func TestRouter_Params(t *testing.T) {
 
 func TestRouter_Clean(t *testing.T) {
 	a := assert.New(t)
-
 	m := Default()
-	m.Get("/m1", buildHandler(200)).
+	a.NotNil(m)
+
+	def, ok := m.NewRouter("def", group.MatcherFunc(group.Any))
+	a.True(ok).NotNil(def)
+	def.Get("/m1", buildHandler(200)).
 		Post("/m1", buildHandler(201))
+
 	router, ok := m.NewRouter("host", group.NewHosts("example.com"))
 	a.True(ok).NotNil(router)
 	router.Get("/m1", buildHandler(202)).
@@ -303,9 +316,9 @@ func TestRouter_Clean(t *testing.T) {
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "https://example.com/m1", nil)
 	m.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 202)
+	a.Equal(w.Result().StatusCode, 203)
 
-	m.Clean()
+	def.Clean()
 
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "/m1", nil)

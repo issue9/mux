@@ -8,10 +8,12 @@ import (
 	"testing"
 
 	"github.com/issue9/assert"
+
+	"github.com/issue9/mux/v4/group"
 )
 
 func (t *tester) resource(p string) *Resource {
-	return t.mux.Resource(p)
+	return t.router.Resource(p)
 }
 
 func TestResource(t *testing.T) {
@@ -83,31 +85,36 @@ func TestResource(t *testing.T) {
 
 func TestMux_Resource(t *testing.T) {
 	a := assert.New(t)
-	mux := New(false, true, false, nil, nil, "", nil)
-	a.NotNil(mux)
+	m := New(false, true, false, nil, nil)
+	a.NotNil(m)
+	def, ok := m.NewRouter("def", group.MatcherFunc(group.Any))
+	a.True(ok).NotNil(def)
 
-	r1 := mux.Resource("/abc/1")
+	r1 := def.Resource("/abc/1")
 	a.NotNil(r1)
-	a.Equal(r1.Mux(), mux)
+	a.Equal(r1.Router(), def)
 	a.Equal(r1.pattern, "/abc/1")
 
-	r2 := mux.Resource("/abc/1")
+	r2 := def.Resource("/abc/1")
 	a.NotNil(r2)
 	a.False(r1 == r2) // 不是同一个 *Resource
 
 	r2.Delete(buildHandler(201))
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodDelete, "/abc/1", nil)
-	mux.ServeHTTP(w, r)
+	m.ServeHTTP(w, r)
 	a.Equal(w.Result().StatusCode, 201)
 }
 
 func TestPrefix_Resource(t *testing.T) {
 	a := assert.New(t)
 
-	router := Default()
-	a.NotNil(router)
-	p := router.Prefix("/p1")
+	m := Default()
+	a.NotNil(m)
+	def, ok := m.NewRouter("def", group.MatcherFunc(group.Any))
+	a.True(ok).NotNil(def)
+
+	p := def.Prefix("/p1")
 
 	r1 := p.Resource("/abc/1")
 	a.NotNil(r1)
@@ -115,23 +122,25 @@ func TestPrefix_Resource(t *testing.T) {
 	r1.Delete(buildHandler(201))
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodDelete, "/p1/abc/1", nil)
-	router.ServeHTTP(w, r)
+	m.ServeHTTP(w, r)
 	a.Equal(w.Result().StatusCode, 201)
 }
 
 func TestResource_URL(t *testing.T) {
 	a := assert.New(t)
-	mux := New(false, true, false, nil, nil, "", nil)
-	a.NotNil(mux)
+	m := New(false, true, false, nil, nil)
+	a.NotNil(m)
+	def, ok := m.NewRouter("def", group.MatcherFunc(group.Any))
+	a.True(ok).NotNil(def)
 
 	// 非正则
-	res := mux.Resource("/api/v1")
+	res := def.Resource("/api/v1")
 	a.NotNil(res)
 	url, err := res.URL(map[string]string{"id": "1"})
 	a.NotError(err).Equal(url, "/api/v1")
 
 	// 正常的单个参数
-	res = mux.Resource("/api/{id:\\d+}/{path}")
+	res = def.Resource("/api/{id:\\d+}/{path}")
 	a.NotNil(res)
 	url, err = res.URL(map[string]string{"id": "1", "path": "p1"})
 	a.NotError(err).Equal(url, "/api/1/p1")
@@ -142,7 +151,7 @@ func TestResource_URL(t *testing.T) {
 	a.NotError(err).Equal(url, "/api/xxx/p1")
 
 	// 多个参数
-	res = mux.Resource("/api/{action}/{id:\\d+}")
+	res = def.Resource("/api/{action}/{id:\\d+}")
 	a.NotNil(res)
 	url, err = res.URL(map[string]string{"id": "1", "action": "blog"})
 	a.NotError(err).Equal(url, "/api/blog/1")

@@ -7,10 +7,12 @@ import (
 	"testing"
 
 	"github.com/issue9/assert"
+
+	"github.com/issue9/mux/v4/group"
 )
 
 func (t *tester) prefix(p string) *Prefix {
-	return t.mux.Prefix(p)
+	return t.router.Prefix(p)
 }
 
 func TestPrefix(t *testing.T) {
@@ -81,53 +83,59 @@ func TestPrefix(t *testing.T) {
 
 func TestMux_Prefix(t *testing.T) {
 	a := assert.New(t)
-	mux := New(false, true, false, nil, nil, "", nil)
-	a.NotNil(mux)
+	m := New(false, true, false, nil, nil)
+	a.NotNil(m)
+	def, ok := m.NewRouter("def", group.MatcherFunc(group.Any))
+	a.True(ok).NotNil(def)
 
-	p := mux.Prefix("/abc")
+	p := def.Prefix("/abc")
 	a.Equal(p.prefix, "/abc")
-	a.Equal(p.Mux(), mux)
+	a.Equal(p.Router(), def)
 
-	p = mux.Prefix("")
+	p = def.Prefix("")
 	a.Equal(p.prefix, "")
 }
 
 func TestPrefix_Prefix(t *testing.T) {
 	a := assert.New(t)
-	mux := New(false, true, false, nil, nil, "", nil)
-	a.NotNil(mux)
+	m := New(false, true, false, nil, nil)
+	a.NotNil(m)
+	def, ok := m.NewRouter("def", group.MatcherFunc(group.Any))
+	a.True(ok).NotNil(def)
 
-	p := mux.Prefix("/abc")
+	p := def.Prefix("/abc")
 	pp := p.Prefix("/def")
 	a.Equal(pp.prefix, "/abc/def")
-	a.Equal(p.Mux(), mux)
+	a.Equal(p.Router(), def)
 
-	p = mux.Prefix("")
+	p = def.Prefix("")
 	pp = p.Prefix("/abc")
 	a.Equal(pp.prefix, "/abc")
 }
 
 func TestPrefix_URL(t *testing.T) {
 	a := assert.New(t)
-	mux := New(false, true, false, nil, nil, "", nil)
-	a.NotNil(mux)
+	m := New(false, true, false, nil, nil)
+	a.NotNil(m)
+	def, ok := m.NewRouter("def", group.MatcherFunc(group.Any))
+	a.True(ok).NotNil(def)
 
 	// 非正则
-	p := mux.Prefix("/api")
+	p := def.Prefix("/api")
 	p.Any("/v1", nil)
 	a.NotNil(p)
 	url, err := p.URL("/v1", map[string]string{"id": "1"})
 	a.NotError(err).Equal(url, "/api/v1")
 
 	// 正常的单个参数
-	p = mux.Prefix("/api")
+	p = def.Prefix("/api")
 	p.Any("/{id:\\d+}/{path}", nil)
 	a.NotNil(p)
 	url, err = p.URL("/{id:\\d+}/{path}", map[string]string{"id": "1", "path": "p1"})
 	a.NotError(err).Equal(url, "/api/1/p1")
 
 	// 多个参数
-	p = mux.Prefix("/api")
+	p = def.Prefix("/api")
 	p.Any("/{action}/{id:\\d+}", nil)
 	a.NotNil(p)
 	url, err = p.URL("/{action}/{id:\\d+}", map[string]string{"id": "1", "action": "blog"})

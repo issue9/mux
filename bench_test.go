@@ -11,6 +11,8 @@ import (
 	"testing"
 
 	"github.com/issue9/assert"
+
+	"github.com/issue9/mux/v4/group"
 )
 
 var issue9Mux *Mux
@@ -28,9 +30,15 @@ func init() {
 			}
 		}
 
-		issue9Mux = New(false, true, false, nil, nil, "", nil)
+		issue9Mux = New(false, true, false, nil, nil)
+		var ok bool
+		def, ok := issue9Mux.NewRouter("def", group.MatcherFunc(group.Any))
+		if !ok {
+			panic("初始化 Router 出错")
+		}
+
 		for _, api := range apis {
-			if err := issue9Mux.HandleFunc(api.bracePattern, h, api.method); err != nil {
+			if err := def.HandleFunc(api.bracePattern, h, api.method); err != nil {
 				fmt.Println("calcMemStats:", err)
 			}
 		}

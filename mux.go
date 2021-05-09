@@ -35,7 +35,6 @@ var (
 //    Handle("/api/{version:\\d+}",h3, http.MethodGet, http.MethodPost) // 只匹配 GET 和 POST
 //  http.ListenAndServe(m)
 type Mux struct {
-	*Router
 	routers []*Router
 
 	notFound,
@@ -50,7 +49,7 @@ type Mux struct {
 }
 
 // Default New 的默认参数版本
-func Default() *Mux { return New(false, false, false, nil, nil, "", nil) }
+func Default() *Mux { return New(false, false, false, nil, nil) }
 
 // New 声明一个新的 Mux
 //
@@ -59,11 +58,7 @@ func Default() *Mux { return New(false, false, false, nil, nil, "", nil) }
 // skipCleanPath 是否不对访问路径作处理，比如 "//api" ==> "/api"；
 // notFound 404 页面的处理方式，为 nil 时会调用默认的方式进行处理；
 // methodNotAllowed 405 页面的处理方式，为 nil 时会调用默认的方式进行处理；
-// name 为当前路由组指定名称，可以为空，该名称即在 Router.Routes() 返回标记属于哪个路由组；
-// m 当前路由组的匹配规则，可以为空，表示无规则；
-func New(disableOptions, disableHead, skipCleanPath bool,
-	notFound, methodNotAllowed http.HandlerFunc,
-	name string, m group.Matcher) *Mux {
+func New(disableOptions, disableHead, skipCleanPath bool, notFound, methodNotAllowed http.HandlerFunc) *Mux {
 	if notFound == nil {
 		notFound = defaultNotFound
 	}
@@ -71,13 +66,7 @@ func New(disableOptions, disableHead, skipCleanPath bool,
 		methodNotAllowed = defaultMethodNotAllowed
 	}
 
-	if m == nil {
-		m = group.MatcherFunc(group.Any)
-	}
-
 	mux := &Mux{
-		Router: newRouter(disableOptions, disableHead, name, m),
-
 		notFound:         notFound,
 		methodNotAllowed: methodNotAllowed,
 
@@ -121,10 +110,6 @@ func (mux *Mux) match(req *http.Request) (*handlers.Handlers, params.Params) {
 			return m.tree.Handler(req.URL.Path)
 		}
 	}
-
-	if mux.matcher.Match(req) {
-		return mux.tree.Handler(req.URL.Path)
-	}
 	return nil, nil
 }
 
@@ -150,7 +135,7 @@ func (mux *Mux) NewRouter(name string, matcher group.Matcher) (r *Router, ok boo
 	dup := sliceutil.Count(mux.routers, func(i int) bool {
 		return mux.routers[i].name == name
 	})
-	if mux.Name() == name || dup > 0 {
+	if dup > 0 {
 		return nil, false
 	}
 
