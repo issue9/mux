@@ -48,7 +48,7 @@ res.URL(map[string]string{"id": "5"}) // 构建一条基于此路由项的路径
 http.ListenAndServe(":8080", m)
 ```
 
-## 语式
+## 语法
 
 ### 正则表达式
 
@@ -74,8 +74,8 @@ http.ListenAndServe(":8080", m)
 
 目前支持以下作为命名参数的内容约束：
 
-- digit 限定为数字字符，相当于正则的 [0-9]；
-- word 相当于正则的 [a-zA-Z0-9]；
+- digit 限定为数字字符，相当于正则的 `[0-9]`；
+- word 相当于正则的 `[a-zA-Z0-9]`；
 - any 表示匹配任意非空内容；
 - "" 为空表示任意内容，包括非内容；
 
@@ -111,7 +111,7 @@ http.ListenAndServe(":8080", m)
 
 ### 路由参数
 
-通过正则表达式匹配的路由，其中带命名的参数可通过 Params() 获取：
+通过正则表达式匹配的路由，其中带命名的参数可通过 `Params()` 获取：
 
 ```go
 params := Params(r)
@@ -126,7 +126,7 @@ id := params.MustInt("id", 0) // 0 表示在无法获取 id 参数的默认值
 
 ### 分组路由
 
-可以通过匹配 group.Matcher 接口，定义了一组特定要求的路由项。
+可以通过匹配 `group.Matcher` 接口，定义了一组特定要求的路由项。
 
 ```go
 // server.go
@@ -158,8 +158,8 @@ r.Do()
 当然用户也可以使用 `*.Options()` 函数指定特定的数据；
 或是直接使用 `*.Handle()` 指定一个自定义的实现方式。
 
-如果不需要的话，也可以在 New() 中将 disableOptions 设置为 true。
-显示设定 OPTIONS，不受 disableOptions 的影响。
+如果不需要的话，也可以在 `New()` 中将 `disableOptions` 设置为 `true`。
+显示设定 `OPTIONS`，不受 `disableOptions` 的影响。
 
 ```go
 m := mux.Default()
@@ -175,20 +175,38 @@ r.Handle("/posts/{id}", h, http.MethodOptions) // 显示指定一个处理函数
 
 ### HEAD
 
- 默认情况下，用户无须显示地实现 HEAD 请求，
- 系统会为每一个 GET 请求自动实现一个对应的 HEAD 请求，
- 当然也与 OPTIONS 一样，你也可以自通过 mux.Handle() 自己实现 HEAD 请求。
+默认情况下，用户无须显示地实现 `HEAD` 请求， 系统会为每一个 `GET` 请求自动实现一个对应的 `HEAD` 请求，
+当然也与 `OPTIONS` 一样，你也可以自通过 `mux.Handle()` 自己实现 `HEAD` 请求。
+
+### 中间件
+
+mux 本身就是一个实现了 [http.Handler](https://pkg.go.dev/net/http#Handler) 接口的中间件，
+所有实现官方接口 `http.Handler` 的都可以附加到 mux 上作为中间件使用。
+
+mux 本身也提供了对中间件的管理功能，同时 [middleware](https://github.com/issue9/middleware) 提供了常用的中间件功能。
+
+```go
+import "github.com/issue9/middleware/header"
+import "github.com/issue9/middleware/compress"
+
+h := header.New(map[string]string{
+    "Access-Control-Allow-Origin": "*"
+}
+
+c := compress.New(log.Default(), "*")
+
+m := Default()
+
+// 添加中间件
+m.AddMiddleware(h.Middleware).
+	AddMiddleware(c.Middleware)
+
+r, ok := m.NewRouter("def", group.NewHost("example.com"))
+```
 
 ## 性能
 
 <https://caixw.github.io/go-http-routers-testing/> 提供了与其它几个框架的对比情况。
-
-## 中间件
-
-mux 本身就是一个实现了 [http.Handler](https://godoc.org/net/http#Handler) 接口的中间件，
-所有实现官方接口 `http.Handler` 的都可以附加到 mux 上作为中间件使用。
-
-mux 本身也提供了对中间件的管理功能，同时 [middleware](https://github.com/issue9/middleware) 提供了常用的中间件功能。
 
 ## 版权
 
