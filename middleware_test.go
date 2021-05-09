@@ -29,8 +29,8 @@ func TestMux_insertFirst(t *testing.T) {
 	a.True(ok).NotNil(def)
 
 	def.Get("/get", buildHandler(201))
-	m.AddMiddleware(true, buildMiddleware(a, "1")).
-		AddMiddleware(true, buildMiddleware(a, "2"))
+	m.AddMiddlewareFunc(true, buildMiddleware(a, "1")).
+		AddMiddlewareFunc(true, buildMiddleware(a, "2"))
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "/get", nil)
@@ -56,8 +56,8 @@ func TestMux_insertLast(t *testing.T) {
 	a.True(ok).NotNil(def)
 
 	def.Get("/get", buildHandler(201))
-	m.AddMiddleware(false, buildMiddleware(a, "1")).
-		AddMiddleware(false, buildMiddleware(a, "2"))
+	m.AddMiddlewareFunc(false, buildMiddleware(a, "1")).
+		AddMiddlewareFunc(false, buildMiddleware(a, "2"))
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "/get", nil)
@@ -83,10 +83,10 @@ func TestMux_AddMiddleware(t *testing.T) {
 	a.True(ok).NotNil(def)
 
 	def.Get("/get", buildHandler(201))
-	m.AddMiddleware(false, buildMiddleware(a, "p1")).
-		AddMiddleware(true, buildMiddleware(a, "a1")).
-		AddMiddleware(false, buildMiddleware(a, "p2")).
-		AddMiddleware(true, buildMiddleware(a, "a2"))
+	m.AddMiddlewareFunc(false, buildMiddleware(a, "p1")).
+		AddMiddlewareFunc(true, buildMiddleware(a, "a1")).
+		AddMiddlewareFunc(false, buildMiddleware(a, "p2")).
+		AddMiddlewareFunc(true, buildMiddleware(a, "a2"))
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "/get", nil)
