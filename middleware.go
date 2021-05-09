@@ -17,9 +17,9 @@ func (mux *Mux) Append(m ...Middleware) {
 }
 
 // Prepend 添加中间件到顶部
-func (mux *Mux) Prepend(m Middleware) {
-	ms := make([]Middleware, 0, 1+len(mux.middlewares))
-	ms = append(ms, m)
+func (mux *Mux) Prepend(m ...Middleware) {
+	ms := make([]Middleware, 0, len(m)+len(mux.middlewares))
+	ms = append(ms, m...)
 	if len(mux.middlewares) > 0 {
 		ms = append(ms, mux.middlewares...)
 	}

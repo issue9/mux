@@ -25,14 +25,14 @@ func TestMux_Append(t *testing.T) {
 	a.NotNil(mux)
 
 	mux.Get("/get", buildHandler(201))
-	mux.Append(buildMiddleware(a, "1"))
-	mux.Append(buildMiddleware(a, "2"))
+	mux.Append(buildMiddleware(a, "1"), buildMiddleware(a, "2"))
+	mux.Append(buildMiddleware(a, "3"))
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "/get", nil)
 	mux.ServeHTTP(w, r)
 	a.Equal(w.Code, 201).
-		Equal(w.Body.String(), "21")
+		Equal(w.Body.String(), "321")
 
 	// reset
 
@@ -50,14 +50,14 @@ func TestMux_Prepend(t *testing.T) {
 	a.NotNil(mux)
 
 	mux.Get("/get", buildHandler(201))
-	mux.Prepend(buildMiddleware(a, "1"))
-	mux.Prepend(buildMiddleware(a, "2"))
+	mux.Prepend(buildMiddleware(a, "1"), buildMiddleware(a, "2"))
+	mux.Prepend(buildMiddleware(a, "3"), buildMiddleware(a, "4"))
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "/get", nil)
 	mux.ServeHTTP(w, r)
 	a.Equal(w.Code, 201).
-		Equal(w.Body.String(), "12")
+		Equal(w.Body.String(), "2143")
 
 	// reset
 

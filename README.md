@@ -7,7 +7,7 @@
 [![codecov](https://codecov.io/gh/issue9/mux/branch/master/graph/badge.svg)](https://codecov.io/gh/issue9/mux)
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/issue9/mux/v4)](https://pkg.go.dev/github.com/issue9/mux/v4)
 
-mux 是一个实现了 [http.Handler](https://pkg.go.dev/net/http#Handler) 的中间件，为用户提供了以下功能：
+mux Go 的路由器功能：
 
 1. 路由参数；
 1. 支持正则表达式作为路由项匹配方式；
@@ -16,6 +16,7 @@ mux 是一个实现了 [http.Handler](https://pkg.go.dev/net/http#Handler) 的�
 1. 根据路由生成地址；
 1. 自定义附加的路由匹配项，比如限定域名，或是限定版本号等；
 1. 任意风格的路由，比如 discuz 这种不以 / 作为分隔符的；
+1. 支持中间件；
 
 ```go
 m := mux.New(false, false, false, nil, nil, "", nil).
@@ -163,7 +164,7 @@ m.Handle("/posts/{id}", h, http.MethodOptions) // 显示指定一个处理函数
 mux 本身就是一个实现了 [http.Handler](https://godoc.org/net/http#Handler) 接口的中间件，
 所有实现官方接口 `http.Handler` 的都可以附加到 mux 上作为中间件使用。
 
-[middleware](https://github.com/issue9/middleware) 提供了常用的中间件功能。
+mux 本身也提供了对中间件的管理功能，同时 [middleware](https://github.com/issue9/middleware) 提供了常用的中间件功能。
 
 ## 版权
 
