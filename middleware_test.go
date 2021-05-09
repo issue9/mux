@@ -10,7 +10,7 @@ import (
 	"github.com/issue9/assert"
 )
 
-func buildMiddleware(a *assert.Assertion, text string) Middleware {
+func buildMiddleware(a *assert.Assertion, text string) MiddlewareFunc {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			h.ServeHTTP(w, r)
@@ -25,14 +25,14 @@ func TestMux_Append(t *testing.T) {
 	a.NotNil(mux)
 
 	mux.Get("/get", buildHandler(201))
-	mux.Append(buildMiddleware(a, "1"), buildMiddleware(a, "2"))
-	mux.Append(buildMiddleware(a, "3"))
+	mux.Append(buildMiddleware(a, "1")).
+		Append(buildMiddleware(a, "2"))
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "/get", nil)
 	mux.ServeHTTP(w, r)
 	a.Equal(w.Code, 201).
-		Equal(w.Body.String(), "321")
+		Equal(w.Body.String(), "21")
 
 	// reset
 
@@ -50,14 +50,14 @@ func TestMux_Prepend(t *testing.T) {
 	a.NotNil(mux)
 
 	mux.Get("/get", buildHandler(201))
-	mux.Prepend(buildMiddleware(a, "1"), buildMiddleware(a, "2"))
-	mux.Prepend(buildMiddleware(a, "3"), buildMiddleware(a, "4"))
+	mux.Prepend(buildMiddleware(a, "1")).
+		Prepend(buildMiddleware(a, "2"))
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "/get", nil)
 	mux.ServeHTTP(w, r)
 	a.Equal(w.Code, 201).
-		Equal(w.Body.String(), "2143")
+		Equal(w.Body.String(), "12")
 
 	// reset
 
@@ -75,10 +75,10 @@ func TestMux_Append_Prepend(t *testing.T) {
 	a.NotNil(mux)
 
 	mux.Get("/get", buildHandler(201))
-	mux.Prepend(buildMiddleware(a, "p1"))
-	mux.Append(buildMiddleware(a, "a1"))
-	mux.Prepend(buildMiddleware(a, "p2"))
-	mux.Append(buildMiddleware(a, "a2"))
+	mux.Prepend(buildMiddleware(a, "p1")).
+		Append(buildMiddleware(a, "a1")).
+		Prepend(buildMiddleware(a, "p2")).
+		Append(buildMiddleware(a, "a2"))
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "/get", nil)

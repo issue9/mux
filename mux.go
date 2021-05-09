@@ -45,7 +45,7 @@ type Mux struct {
 	disableHead,
 	skipCleanPath bool
 
-	middlewares []Middleware
+	middlewares []MiddlewareFunc
 	handler     http.Handler
 }
 
