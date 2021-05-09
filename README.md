@@ -26,7 +26,7 @@ h := header.New(map[string]string{
 })
 
 m := mux.New(false, false, false, nil, nil)
-router, ok := m.New("", group.NewHosts("example.com"))
+router, ok := m.New("example.com", group.NewHosts("example.com"))
 router.AddMiddleware(h.Middleware). // 中间件，输出跨域的报头。
     Get("/users/1", h).
     Post("/login", h).
@@ -116,7 +116,7 @@ http.ListenAndServe(":8080", m)
 
 m := mux.Default()
 
-r, ok := m.NewRouter("", group.Any)
+r, ok := m.NewRouter("default", group.Any)
 r.Get("/path", h1)
 
 host, ok := m.Matcher(group.NewHosts("*.example.com"))
@@ -158,7 +158,7 @@ id := params.MustInt("id", 0) // 0 表示在无法获取 id 参数的默认值
 
 ```go
 m := mux.Default()
-r, ok := m.NewRouter("", group.Any)
+r, ok := m.NewRouter("default", group.Any)
 
 r.Get("/posts/{id}", nil)     // 默认情况下， OPTIONS 的报头为 GET, OPTIONS
 r.Options("/posts/{id}", "*") // 强制改成 *
