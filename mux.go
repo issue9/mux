@@ -4,7 +4,6 @@
 package mux
 
 import (
-	"context"
 	"net/http"
 	"strings"
 
@@ -88,33 +87,13 @@ func (mux *Mux) serveHTTP(w http.ResponseWriter, r *http.Request) {
 		r.URL.Path = cleanPath(r.URL.Path)
 	}
 
-	hs, ps := mux.match(r)
-	if hs == nil {
-		mux.notFound(w, r)
-		return
-	}
-
-	h := hs.Handler(r.Method)
-	if h == nil {
-		w.Header().Set("Allow", hs.Options())
-		mux.methodNotAllowed(w, r)
-		return
-	}
-
-	if len(ps) > 0 {
-		r = r.WithContext(context.WithValue(r.Context(), params.ContextKeyParams, ps))
-	}
-
-	h.ServeHTTP(w, r)
-}
-
-func (mux *Mux) match(req *http.Request) (*handlers.Handlers, params.Params) {
-	for _, m := range mux.routers {
-		if m.matcher.Match(req) {
-			return m.tree.Handler(req.URL.Path)
+	for _, router := range mux.routers {
+		if router.matcher.Match(r) {
+			router.serveHTTP(w, r)
+			return
 		}
 	}
-	return nil, nil
+	mux.notFound(w, r)
 }
 
 // Routers 返回当前路由所属的子路由组列表
@@ -135,14 +114,15 @@ func (mux *Mux) NewRouter(name string, matcher group.Matcher) (r *Router, ok boo
 		panic("参数 matcher 不能为空")
 	}
 
-	dup := sliceutil.Count(mux.routers, func(i int) bool {
+	index := sliceutil.Index(mux.routers, func(i int) bool {
 		return mux.routers[i].name == name
 	})
-	if dup > 0 {
+	if index > -1 {
 		return nil, false
 	}
 
 	r = &Router{
+		mux:     mux,
 		name:    name,
 		matcher: matcher,
 		tree:    tree.New(mux.disableOptions, mux.disableHead),

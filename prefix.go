@@ -72,45 +72,45 @@ func (p *Prefix) Any(pattern string, h http.Handler) *Prefix {
 }
 
 // HandleFunc 功能同 Router.HandleFunc(prefix+pattern, fun, ...)
-func (p *Prefix) HandleFunc(pattern string, fun http.HandlerFunc, methods ...string) error {
-	return p.Handle(pattern, fun, methods...)
+func (p *Prefix) HandleFunc(pattern string, f http.HandlerFunc, methods ...string) error {
+	return p.Handle(pattern, f, methods...)
 }
 
-func (p *Prefix) handleFunc(pattern string, fun http.HandlerFunc, methods ...string) *Prefix {
-	if err := p.HandleFunc(pattern, fun, methods...); err != nil {
+func (p *Prefix) handleFunc(pattern string, f http.HandlerFunc, methods ...string) *Prefix {
+	if err := p.HandleFunc(pattern, f, methods...); err != nil {
 		panic(err)
 	}
 	return p
 }
 
 // GetFunc 相当于 Router.GetFunc(prefix+pattern, func) 的简易写法
-func (p *Prefix) GetFunc(pattern string, fun http.HandlerFunc) *Prefix {
-	return p.handleFunc(pattern, fun, http.MethodGet)
+func (p *Prefix) GetFunc(pattern string, f http.HandlerFunc) *Prefix {
+	return p.handleFunc(pattern, f, http.MethodGet)
 }
 
 // PutFunc 相当于 Router.PutFunc(prefix+pattern, func) 的简易写法
-func (p *Prefix) PutFunc(pattern string, fun http.HandlerFunc) *Prefix {
-	return p.handleFunc(pattern, fun, http.MethodPut)
+func (p *Prefix) PutFunc(pattern string, f http.HandlerFunc) *Prefix {
+	return p.handleFunc(pattern, f, http.MethodPut)
 }
 
 // PostFunc 相当 于Mux.PostFunc(prefix+pattern, func) 的简易写法
-func (p *Prefix) PostFunc(pattern string, fun http.HandlerFunc) *Prefix {
-	return p.handleFunc(pattern, fun, http.MethodPost)
+func (p *Prefix) PostFunc(pattern string, f http.HandlerFunc) *Prefix {
+	return p.handleFunc(pattern, f, http.MethodPost)
 }
 
 // DeleteFunc 相当于 Router.DeleteFunc(prefix+pattern, func) 的简易写法
-func (p *Prefix) DeleteFunc(pattern string, fun http.HandlerFunc) *Prefix {
-	return p.handleFunc(pattern, fun, http.MethodDelete)
+func (p *Prefix) DeleteFunc(pattern string, f http.HandlerFunc) *Prefix {
+	return p.handleFunc(pattern, f, http.MethodDelete)
 }
 
 // PatchFunc 相当于 Router.PatchFunc(prefix+pattern, func) 的简易写法
-func (p *Prefix) PatchFunc(pattern string, fun http.HandlerFunc) *Prefix {
-	return p.handleFunc(pattern, fun, http.MethodPatch)
+func (p *Prefix) PatchFunc(pattern string, f http.HandlerFunc) *Prefix {
+	return p.handleFunc(pattern, f, http.MethodPatch)
 }
 
 // AnyFunc 相当于 Router.AnyFunc(prefix+pattern, func) 的简易写法
-func (p *Prefix) AnyFunc(pattern string, fun http.HandlerFunc) *Prefix {
-	return p.handleFunc(pattern, fun)
+func (p *Prefix) AnyFunc(pattern string, f http.HandlerFunc) *Prefix {
+	return p.handleFunc(pattern, f)
 }
 
 // Remove 删除指定匹配模式的路由项

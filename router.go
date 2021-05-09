@@ -3,17 +3,20 @@
 package mux
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/issue9/mux/v4/group"
 	"github.com/issue9/mux/v4/internal/tree"
+	"github.com/issue9/mux/v4/params"
 )
 
 // Router 提供了基本的路由项添加和删除等功能
 type Router struct {
-	name    string        // 当前路由的名称
-	matcher group.Matcher // 当前路由的先决条件
-	tree    *tree.Tree    // 当前路由的路由项
+	mux     *Mux
+	name    string
+	matcher group.Matcher
+	tree    *tree.Tree
 }
 
 // Name 当前路由组的名称
@@ -117,42 +120,42 @@ func (r *Router) Any(pattern string, h http.Handler) *Router {
 }
 
 // HandleFunc 功能同 Router.Handle()，但是将第二个参数从 http.Handler 换成了 http.HandlerFunc
-func (r *Router) HandleFunc(pattern string, fun http.HandlerFunc, methods ...string) error {
-	return r.Handle(pattern, fun, methods...)
+func (r *Router) HandleFunc(pattern string, f http.HandlerFunc, methods ...string) error {
+	return r.Handle(pattern, f, methods...)
 }
 
-func (r *Router) handleFunc(pattern string, fun http.HandlerFunc, methods ...string) *Router {
-	return r.handle(pattern, fun, methods...)
+func (r *Router) handleFunc(pattern string, f http.HandlerFunc, methods ...string) *Router {
+	return r.handle(pattern, f, methods...)
 }
 
 // GetFunc 相当于 Router.HandleFunc(pattern, func, http.MethodGet) 的简易写法
-func (r *Router) GetFunc(pattern string, fun http.HandlerFunc) *Router {
-	return r.handleFunc(pattern, fun, http.MethodGet)
+func (r *Router) GetFunc(pattern string, f http.HandlerFunc) *Router {
+	return r.handleFunc(pattern, f, http.MethodGet)
 }
 
 // PutFunc 相当于 Router.HandleFunc(pattern, func, http.MethodPut) 的简易写法
-func (r *Router) PutFunc(pattern string, fun http.HandlerFunc) *Router {
-	return r.handleFunc(pattern, fun, http.MethodPut)
+func (r *Router) PutFunc(pattern string, f http.HandlerFunc) *Router {
+	return r.handleFunc(pattern, f, http.MethodPut)
 }
 
 // PostFunc 相当于 Router.HandleFunc(pattern, func, "POST") 的简易写法
-func (r *Router) PostFunc(pattern string, fun http.HandlerFunc) *Router {
-	return r.handleFunc(pattern, fun, http.MethodPost)
+func (r *Router) PostFunc(pattern string, f http.HandlerFunc) *Router {
+	return r.handleFunc(pattern, f, http.MethodPost)
 }
 
 // DeleteFunc 相当于 Router.HandleFunc(pattern, func, http.MethodDelete) 的简易写法
-func (r *Router) DeleteFunc(pattern string, fun http.HandlerFunc) *Router {
-	return r.handleFunc(pattern, fun, http.MethodDelete)
+func (r *Router) DeleteFunc(pattern string, f http.HandlerFunc) *Router {
+	return r.handleFunc(pattern, f, http.MethodDelete)
 }
 
 // PatchFunc 相当于 Router.HandleFunc(pattern, func, http.MethodPatch) 的简易写法
-func (r *Router) PatchFunc(pattern string, fun http.HandlerFunc) *Router {
-	return r.handleFunc(pattern, fun, http.MethodPatch)
+func (r *Router) PatchFunc(pattern string, f http.HandlerFunc) *Router {
+	return r.handleFunc(pattern, f, http.MethodPatch)
 }
 
 // AnyFunc 相当于 Router.HandleFunc(pattern, func) 的简易写法
-func (r *Router) AnyFunc(pattern string, fun http.HandlerFunc) *Router {
-	return r.handleFunc(pattern, fun)
+func (r *Router) AnyFunc(pattern string, f http.HandlerFunc) *Router {
+	return r.handleFunc(pattern, f)
 }
 
 // URL 根据参数生成地址
@@ -161,4 +164,25 @@ func (r *Router) AnyFunc(pattern string, fun http.HandlerFunc) *Router {
 // params 为路由项中的参数，键名为参数名，键值为参数值。
 func (r *Router) URL(pattern string, params map[string]string) (string, error) {
 	return r.tree.URL(pattern, params)
+}
+
+func (r *Router) serveHTTP(w http.ResponseWriter, req *http.Request) {
+	hs, ps := r.tree.Handler(req.URL.Path)
+	if ps == nil {
+		r.mux.notFound(w, req)
+		return
+	}
+
+	h := hs.Handler(req.Method)
+	if h == nil {
+		w.Header().Set("Allow", hs.Options())
+		r.mux.methodNotAllowed(w, req)
+		return
+	}
+
+	if len(ps) > 0 {
+		req = req.WithContext(context.WithValue(req.Context(), params.ContextKeyParams, ps))
+	}
+
+	h.ServeHTTP(w, req)
 }

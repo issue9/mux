@@ -75,12 +75,12 @@ func (r *Resource) Any(h http.Handler) *Resource {
 }
 
 // HandleFunc 功能同 Router.HandleFunc(pattern, fun, ...)
-func (r *Resource) HandleFunc(fun http.HandlerFunc, methods ...string) error {
-	return r.Handle(fun, methods...)
+func (r *Resource) HandleFunc(f http.HandlerFunc, methods ...string) error {
+	return r.Handle(f, methods...)
 }
 
-func (r *Resource) handleFunc(fun http.HandlerFunc, methods ...string) *Resource {
-	if err := r.HandleFunc(fun, methods...); err != nil {
+func (r *Resource) handleFunc(f http.HandlerFunc, methods ...string) *Resource {
+	if err := r.HandleFunc(f, methods...); err != nil {
 		panic(err)
 	}
 
@@ -88,33 +88,33 @@ func (r *Resource) handleFunc(fun http.HandlerFunc, methods ...string) *Resource
 }
 
 // GetFunc 相当于 Router.GetFunc(pattern, func) 的简易写法
-func (r *Resource) GetFunc(fun http.HandlerFunc) *Resource {
-	return r.handleFunc(fun, http.MethodGet)
+func (r *Resource) GetFunc(f http.HandlerFunc) *Resource {
+	return r.handleFunc(f, http.MethodGet)
 }
 
 // PutFunc 相当于 Router.PutFunc(pattern, func) 的简易写法
-func (r *Resource) PutFunc(fun http.HandlerFunc) *Resource {
-	return r.handleFunc(fun, http.MethodPut)
+func (r *Resource) PutFunc(f http.HandlerFunc) *Resource {
+	return r.handleFunc(f, http.MethodPut)
 }
 
 // PostFunc 相当于 Router.PostFunc(pattern, func) 的简易写法
-func (r *Resource) PostFunc(fun http.HandlerFunc) *Resource {
-	return r.handleFunc(fun, http.MethodPost)
+func (r *Resource) PostFunc(f http.HandlerFunc) *Resource {
+	return r.handleFunc(f, http.MethodPost)
 }
 
 // DeleteFunc 相当于 Router.DeleteFunc(pattern, func) 的简易写法
-func (r *Resource) DeleteFunc(fun http.HandlerFunc) *Resource {
-	return r.handleFunc(fun, http.MethodDelete)
+func (r *Resource) DeleteFunc(f http.HandlerFunc) *Resource {
+	return r.handleFunc(f, http.MethodDelete)
 }
 
 // PatchFunc 相当于 Router.PatchFunc(pattern, func) 的简易写法
-func (r *Resource) PatchFunc(fun http.HandlerFunc) *Resource {
-	return r.handleFunc(fun, http.MethodPatch)
+func (r *Resource) PatchFunc(f http.HandlerFunc) *Resource {
+	return r.handleFunc(f, http.MethodPatch)
 }
 
 // AnyFunc 相当于 Router.AnyFunc(pattern, func) 的简易写法
-func (r *Resource) AnyFunc(fun http.HandlerFunc) *Resource {
-	return r.handleFunc(fun)
+func (r *Resource) AnyFunc(f http.HandlerFunc) *Resource {
+	return r.handleFunc(f)
 }
 
 // Remove 删除指定匹配模式的路由项
