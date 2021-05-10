@@ -12,7 +12,8 @@ import (
 
 func BenchmarkHost_Match(b *testing.B) {
 	a := assert.New(b)
-	h := NewHosts("caixw.io", "caixw.oi", "*.example.com")
+	h, err := NewHosts("caixw.io", "caixw.oi", "*.example.com")
+	a.NotError(err).NotNil(h)
 	r := httptest.NewRequest(http.MethodGet, "https://caixw.io/test", nil)
 
 	for i := 0; i < b.N; i++ {

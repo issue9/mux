@@ -3,79 +3,55 @@
 package group
 
 import (
+	"context"
 	"net/http"
-	"strings"
 
-	"github.com/issue9/sliceutil"
+	"github.com/issue9/mux/v4/internal/tree"
+	"github.com/issue9/mux/v4/params"
 )
 
 // Hosts 限定域名的匹配工具
 type Hosts struct {
-	domains   []string // 域名列表
-	wildcards []string // 泛域名列表，只保存 * 之后的部分内容
+	tree *tree.Tree
 }
 
 // NewHosts 声明新的 Hosts 实例
-func NewHosts(domain ...string) *Hosts {
+func NewHosts(domain ...string) (*Hosts, error) {
 	h := &Hosts{
-		domains:   make([]string, 0, len(domain)),
-		wildcards: make([]string, 0, len(domain)),
+		tree: tree.New(false, false),
 	}
 
-	h.Add(domain...)
-
-	return h
+	if err := h.Add(domain...); err != nil {
+		return nil, err
+	}
+	return h, nil
 }
 
-// Match Matcher.Match
 func (hs *Hosts) Match(r *http.Request) (*http.Request, bool) {
 	hostname := r.URL.Hostname()
-	for _, domain := range hs.domains {
-		if domain == hostname {
-			return r, true
-		}
+	h, ps := hs.tree.Handler(hostname)
+	if h == nil {
+		return nil, false
 	}
 
-	for _, wildcard := range hs.wildcards {
-		if strings.HasSuffix(hostname, wildcard) {
-			return r, true
-		}
+	if len(ps) > 0 {
+		r = r.WithContext(context.WithValue(r.Context(), params.ContextKeyParams, ps))
 	}
-
-	return nil, false
+	return r, true
 }
 
 // Add 添加新的域名
-//
-// domain 可以是泛域名，比如 *.example.com，但不能是 s1.*.example.com。
-//
-// NOTE: 重复的值不会重复添加。
-func (hs *Hosts) Add(domain ...string) {
+func (hs *Hosts) Add(domain ...string) error {
 	for _, d := range domain {
-		switch {
-		case strings.HasPrefix(d, "*."):
-			d = d[1:] // 保留 . 符号
-			if sliceutil.Count(hs.wildcards, func(i int) bool { return d == hs.wildcards[i] }) <= 0 {
-				hs.wildcards = append(hs.wildcards, d)
-			}
-		default:
-			if sliceutil.Count(hs.domains, func(i int) bool { return d == hs.domains[i] }) <= 0 {
-				hs.domains = append(hs.domains, d)
-			}
+		err := hs.tree.Add(d, http.HandlerFunc(hs.emptyHandlerFunc), http.MethodGet)
+		if err != nil {
+			return err
 		}
 	}
+	return nil
 }
 
 // Delete 删除域名
-//
-// NOTE: 如果不存在，则不作任何改变。
-func (hs *Hosts) Delete(domain string) {
-	switch {
-	case strings.HasPrefix(domain, "*."):
-		size := sliceutil.Delete(hs.wildcards, func(i int) bool { return hs.wildcards[i] == domain[1:] })
-		hs.wildcards = hs.wildcards[:size]
-	default:
-		size := sliceutil.Delete(hs.domains, func(i int) bool { return hs.domains[i] == domain })
-		hs.domains = hs.domains[:size]
-	}
-}
+func (hs *Hosts) Delete(domain string) { hs.tree.Remove(domain) }
+
+func (hs *Hosts) emptyHandlerFunc(http.ResponseWriter, *http.Request) {}

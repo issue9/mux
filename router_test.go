@@ -124,7 +124,7 @@ func TestRouter_Routes(t *testing.T) {
 	def.Post("/m", buildHandler(1))
 	a.Equal(def.Routes(false, false), map[string][]string{"/m": {"GET", "HEAD", "OPTIONS", "POST"}})
 
-	r, ok := m.NewRouter("host-1", group.NewHosts())
+	r, ok := m.NewRouter("host-1", &group.PathVersion{})
 	a.True(ok).NotNil(r)
 	r.Get("/m", buildHandler(1))
 	a.Equal(r.Routes(false, false), map[string][]string{"/m": {"GET", "HEAD", "OPTIONS"}})
@@ -298,13 +298,17 @@ func TestRouter_Clean(t *testing.T) {
 	a := assert.New(t)
 	m := Default()
 	a.NotNil(m)
+	h, err := group.NewHosts("localhost")
+	a.NotError(err).NotNil(h)
 
-	def, ok := m.NewRouter("def", group.NewHosts("localhost"))
+	def, ok := m.NewRouter("def", h)
 	a.True(ok).NotNil(def)
 	def.Get("/m1", buildHandler(200)).
 		Post("/m1", buildHandler(201))
 
-	host, ok := m.NewRouter("host", group.NewHosts("example.com"))
+	h, err = group.NewHosts("example.com")
+	a.NotError(err).NotNil(h)
+	host, ok := m.NewRouter("host", h)
 	a.True(ok).NotNil(host)
 	host.Get("/m1", buildHandler(202)).
 		Post("/m1", buildHandler(203))

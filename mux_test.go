@@ -21,14 +21,16 @@ func TestMux_NewRouter(t *testing.T) {
 
 	// name 为空
 	a.PanicString(func() {
-		m.NewRouter("", group.NewHosts("example.com"))
+		h, err := group.NewHosts("example.com")
+		a.NotError(err).NotNil(h)
+		m.NewRouter("", h)
 	}, "不能为空")
 
-	r, ok := m.NewRouter("host", group.NewHosts())
+	r, ok := m.NewRouter("host", &group.PathVersion{})
 	a.True(ok).NotNil(r)
 	a.Equal(r.name, "host").Equal(r.Name(), "host")
 
-	r, ok = m.NewRouter("host", group.NewHosts())
+	r, ok = m.NewRouter("host", &group.PathVersion{})
 	a.False(ok).Nil(r)
 
 	r, ok = m.NewRouter("host-2", nil)
@@ -102,23 +104,23 @@ func TestMux_RemoveRouter(t *testing.T) {
 	a := assert.New(t)
 
 	m := Default()
-	r, ok := m.NewRouter("host", group.NewHosts())
+	r, ok := m.NewRouter("host", &group.PathVersion{})
 	a.True(ok).NotNil(r)
 	a.Equal(r.name, "host").Equal(r.Name(), "host")
 
-	r, ok = m.NewRouter("host-2", group.NewHosts())
+	r, ok = m.NewRouter("host-2", &group.PathVersion{})
 	a.True(ok).NotNil(r)
 	a.Equal(2, len(m.Routers()))
 
 	// 同名，添加不成功
-	r, ok = m.NewRouter("host", group.NewHosts())
+	r, ok = m.NewRouter("host", &group.PathVersion{})
 	a.False(ok).Nil(r)
 	a.Equal(2, len(m.Routers()))
 
 	m.RemoveRouter("host")
 	m.RemoveRouter("host") // 已经删除，不存在了
 	a.Equal(1, len(m.Routers()))
-	r, ok = m.NewRouter("host", group.NewHosts())
+	r, ok = m.NewRouter("host", &group.PathVersion{})
 	a.True(ok).NotNil(r)
 	a.Equal(2, len(m.Routers()))
 
@@ -129,9 +131,11 @@ func TestMux_RemoveRouter(t *testing.T) {
 
 func TestRouter_routers(t *testing.T) {
 	a := assert.New(t)
+	h, err := group.NewHosts("localhost")
+	a.NotError(err).NotNil(h)
 
 	m := Default()
-	def, ok := m.NewRouter("host", group.NewHosts("localhost"))
+	def, ok := m.NewRouter("host", h)
 	a.True(ok).NotNil(def)
 	w := httptest.NewRecorder()
 	def.Get("/t1", buildHandler(201))
@@ -157,7 +161,7 @@ func TestRouter_routers(t *testing.T) {
 	// resource
 	m = Default()
 	a.NotNil(m)
-	def, ok = m.NewRouter("def", group.NewHosts("localhost"))
+	def, ok = m.NewRouter("def", h)
 	a.True(ok).NotNil(def)
 	res := def.Resource("/r1")
 	res.Get(buildHandler(202))
@@ -174,7 +178,7 @@ func TestRouter_routers(t *testing.T) {
 	// prefix
 	m = Default()
 	a.NotNil(m)
-	def, ok = m.NewRouter("def", group.NewHosts("localhost"))
+	def, ok = m.NewRouter("def", h)
 	a.True(ok).NotNil(def)
 	p := def.Prefix("/prefix1")
 	p.Get("/p1", buildHandler(203))
@@ -191,7 +195,7 @@ func TestRouter_routers(t *testing.T) {
 	// prefix prefix
 	m = New(false, false, false, nil, nil)
 	a.NotNil(m)
-	def, ok = m.NewRouter("def", group.NewHosts("localhost"))
+	def, ok = m.NewRouter("def", h)
 	a.True(ok).NotNil(def)
 	p1 := def.Prefix("/prefix1")
 	p2 := p1.Prefix("/prefix2")
