@@ -19,16 +19,17 @@ mux 功能完备的 Go 路由器：
 1. 支持中间件；
 
 ```go
-import "github.com/issue9/middleware/header"
+import "github.com/issue9/middleware/v4/header"
 
 h := header.New(map[string]string{
 	"Access-Control-Allow-Origin": "*"
 })
 
 m := mux.New(false, false, false, nil, nil)
+m.AddMiddleware(h.Middleware) // 中间件，输出跨域的报头。
+
 router, ok := m.New("example.com", group.NewHosts("example.com"))
-router.AddMiddleware(h.Middleware). // 中间件，输出跨域的报头。
-    Get("/users/1", h).
+router.Get("/users/1", h).
     Post("/login", h).
     Get("/pages/{id:\\d+}.html", h). // 匹配 /pages/123.html 等格式，path = 123
     Get("/posts/{path}.html", h).    // 匹配 /posts/2020/11/11/title.html 等格式，path = 2020/11/11/title
@@ -150,6 +151,27 @@ r.Do()
 // 访问 h1 的内容
 r := http.NewRequest(http.MethodGet, "https://other_domain.com/v1/path", nil)
 r.Do()
+```
+
+### interceptor
+
+正常情况下，`/posts/{id:\d+}` 或是 `/posts/{id:[0-9]+}` 会被当作正则表达式处理，
+但是正则表达式的性能并不是很好，这个时候我们可以通完 `interceptor` 包进行拦截，
+采用自己的特定方法进行处理：
+```go
+import "github.com/issue9/mux/v4/interceptor"
+
+func digit(path string) bool {
+    for _, c := range path {
+        if c < '0' || c > '9' {
+            return false
+        }
+    }
+    return len(path) > 0
+}
+
+// 路由中的 \d+ 和 [0-9]+ 均采用 digit 函数进行处理，不再是正则表达式。
+interceptor.Register(digit, "\\d+", "[0-9]+")
 ```
 
 ### OPTIONS
