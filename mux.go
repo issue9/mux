@@ -5,6 +5,7 @@ package mux
 
 import (
 	"net/http"
+	"sort"
 	"strings"
 
 	"github.com/issue9/sliceutil"
@@ -99,21 +100,23 @@ func (mux *Mux) serveHTTP(w http.ResponseWriter, r *http.Request) {
 // Routers 返回当前路由所属的子路由组列表
 func (mux *Mux) Routers() []*Router { return mux.routers }
 
-// NewRouter 添加子路由组
+// NewRouter 添加子路由
 //
 // 该路由只有符合 group.Matcher 的要求才会进入，其它与 Router 功能相同。
 // 当 group.Matcher 与其它路由组的判断有重复时，第一条返回 true 的路由组获胜，
 // 即使该路由组最终返回 404，也不会再在其它路由组里查找相应的路由。
+// 所以在有多条子路由的情况下，第一条子路由不应该永远返回 true，
+// 这样会造成其它子路由永远无法到达。
 //
 // name 表示该路由组的名称，需要唯一，否则返回 false；
+// matcher 路由的准入条件，如果为空，则此条路由匹配时会被排在最后，
+// 只有一个路由的 matcher 为空，否则会 panic。
 func (mux *Mux) NewRouter(name string, matcher group.Matcher) (r *Router, ok bool) {
 	if name == "" {
 		panic("参数 name 不能为空")
 	}
-	if matcher == nil {
-		panic("参数 matcher 不能为空")
-	}
 
+	// 重名检测
 	index := sliceutil.Index(mux.routers, func(i int) bool {
 		return mux.routers[i].name == name
 	})
@@ -121,14 +124,34 @@ func (mux *Mux) NewRouter(name string, matcher group.Matcher) (r *Router, ok boo
 		return nil, false
 	}
 
+	last := matcher == nil
+	if last {
+		matcher = group.MatcherFunc(group.Any)
+		index := sliceutil.Index(mux.routers, func(i int) bool { return mux.routers[i].last })
+		if index > -1 {
+			panic("已经存在一个 matcher 参数为空的路由")
+		}
+	}
+
 	r = &Router{
 		mux:     mux,
 		name:    name,
 		matcher: matcher,
 		tree:    tree.New(mux.disableOptions, mux.disableHead),
+		last:    last,
 	}
 	mux.routers = append(mux.routers, r)
+	sortRouters(mux.routers)
 	return r, true
+}
+
+func sortRouters(rs []*Router) {
+	sort.SliceStable(rs, func(i, j int) bool {
+		if rs[i].last {
+			return rs[j].last
+		}
+		return rs[j].last
+	})
 }
 
 // RemoveRouter 删除子路由

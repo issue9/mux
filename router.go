@@ -17,6 +17,7 @@ type Router struct {
 	name    string
 	matcher group.Matcher
 	tree    *tree.Tree
+	last    bool // 在多路由中，有此标记的排在最后。
 }
 
 // Name 当前路由组的名称

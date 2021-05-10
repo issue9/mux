@@ -19,15 +19,10 @@ func TestMux_NewRouter(t *testing.T) {
 
 	m := Default()
 
-	// group.Matcher 为空
-	a.Panic(func() {
-		m.NewRouter("v1", nil)
-	})
-
 	// name 为空
-	a.Panic(func() {
+	a.PanicString(func() {
 		m.NewRouter("", group.NewHosts("example.com"))
-	})
+	}, "不能为空")
 
 	r, ok := m.NewRouter("host", group.NewHosts())
 	a.True(ok).NotNil(r)
@@ -36,9 +31,71 @@ func TestMux_NewRouter(t *testing.T) {
 	r, ok = m.NewRouter("host", group.NewHosts())
 	a.False(ok).Nil(r)
 
-	r, ok = m.NewRouter("host-2", group.NewHosts())
+	r, ok = m.NewRouter("host-2", nil)
 	a.True(ok).NotNil(r)
 	a.Equal(r.name, "host-2").Equal(r.Name(), "host-2")
+
+	a.PanicString(func() {
+		m.NewRouter("host-3", nil)
+	}, "已经存在")
+}
+
+func TestSortRouters(t *testing.T) {
+	a := assert.New(t)
+
+	rs := []*Router{
+		{
+			name: "0",
+			last: true,
+		},
+		{
+			name: "1",
+		},
+		{
+			name: "2",
+		},
+	}
+
+	sortRouters(rs)
+	a.Equal(rs[0].name, "1").
+		Equal(rs[1].name, "2").
+		Equal(rs[2].name, "0")
+
+	rs = []*Router{
+		{
+			name: "0",
+		},
+		{
+			name: "1",
+			last: true,
+		},
+		{
+			name: "2",
+		},
+	}
+
+	sortRouters(rs)
+	a.Equal(rs[0].name, "0").
+		Equal(rs[1].name, "2").
+		Equal(rs[2].name, "1")
+
+	rs = []*Router{
+		{
+			name: "0",
+		},
+		{
+			name: "1",
+		},
+		{
+			name: "2",
+			last: true,
+		},
+	}
+
+	sortRouters(rs)
+	a.Equal(rs[0].name, "0").
+		Equal(rs[1].name, "1").
+		Equal(rs[2].name, "2")
 }
 
 func TestMux_RemoveRouter(t *testing.T) {
@@ -167,7 +224,7 @@ func TestRouter_routers_multiple(t *testing.T) {
 
 	m := New(false, false, false, nil, nil)
 	a.NotNil(m)
-	def, ok := m.NewRouter("default", group.NewHosts("localhost"))
+	def, ok := m.NewRouter("default", nil)
 	a.True(ok).NotNil(def)
 	def.Get("/t1", buildHandler(201))
 
@@ -178,24 +235,25 @@ func TestRouter_routers_multiple(t *testing.T) {
 	a.True(ok).NotNil(v2)
 	v2.Get("/path", buildHandler(203))
 
+	// 指向 def
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "https://localhost/t1", nil)
 	m.ServeHTTP(w, r)
 	a.Equal(w.Result().StatusCode, 201)
 
-	// 永远指向 def
+	// 同时匹配 v1、v2，指向 v1
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "https://localhost/v1/path", nil)
 	m.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 404)
+	a.Equal(w.Result().StatusCode, 202)
 
-	// 永远指向 def
+	// 指向 v2
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "https://localhost/v2/path", nil)
 	m.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 404)
+	a.Equal(w.Result().StatusCode, 203)
 
-	// 不匹配 def，转向 v2
+	// 指向 v2
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "https://example.com/v2/path", nil)
 	m.ServeHTTP(w, r)
