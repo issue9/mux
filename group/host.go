@@ -41,6 +41,10 @@ func (hs *Hosts) Match(r *http.Request) (*http.Request, bool) {
 }
 
 // Add 添加新的域名
+//
+// 域名的格式和路由的语法格式是一样的，比如：
+//  api.example.com
+//  {sub:[a-z]+}.example.com
 func (hs *Hosts) Add(domain ...string) error {
 	for _, d := range domain {
 		err := hs.tree.Add(d, http.HandlerFunc(hs.emptyHandlerFunc), http.MethodGet)
