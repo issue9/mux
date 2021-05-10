@@ -16,7 +16,8 @@ func BenchmarkHost_Match(b *testing.B) {
 	r := httptest.NewRequest(http.MethodGet, "https://caixw.io/test", nil)
 
 	for i := 0; i < b.N; i++ {
-		a.True(h.Match(r))
+		_, ok := h.Match(r)
+		a.True(ok)
 	}
 }
 
@@ -27,7 +28,8 @@ func BenchmarkHeaderVersion_Match(b *testing.B) {
 	r.Header.Set("Accept", "application/json; version=1.0")
 
 	for i := 0; i < b.N; i++ {
-		a.True(h.Match(r))
+		_, ok := h.Match(r)
+		a.True(ok)
 	}
 }
 
@@ -38,7 +40,8 @@ func BenchmarkPathVersion_Match(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		r.URL.Path = "/v1/test" // 防止 r.URL.Path 被修改
-		a.True(h.Match(r))
+		_, ok := h.Match(r)
+		a.True(ok)
 	}
 }
 

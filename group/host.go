@@ -28,21 +28,21 @@ func NewHosts(domain ...string) *Hosts {
 }
 
 // Match Matcher.Match
-func (hs *Hosts) Match(r *http.Request) bool {
+func (hs *Hosts) Match(r *http.Request) (*http.Request, bool) {
 	hostname := r.URL.Hostname()
 	for _, domain := range hs.domains {
 		if domain == hostname {
-			return true
+			return r, true
 		}
 	}
 
 	for _, wildcard := range hs.wildcards {
 		if strings.HasSuffix(hostname, wildcard) {
-			return true
+			return r, true
 		}
 	}
 
-	return false
+	return nil, false
 }
 
 // Add 添加新的域名

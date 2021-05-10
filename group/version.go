@@ -46,25 +46,25 @@ func NewPathVersion(version ...string) *PathVersion {
 	return &PathVersion{Versions: version}
 }
 
-func (v *HeaderVersion) Match(r *http.Request) bool {
+func (v *HeaderVersion) Match(r *http.Request) (*http.Request, bool) {
 	ver := findVersionNumberInHeader(r.Header.Get("Accept"))
 	for _, vv := range v.Versions {
 		if vv == ver {
-			return true
+			return r, true
 		}
 	}
-	return false
+	return nil, false
 }
 
-func (v *PathVersion) Match(r *http.Request) bool {
+func (v *PathVersion) Match(r *http.Request) (*http.Request, bool) {
 	p := r.URL.Path
 	for _, ver := range v.Versions {
 		if strings.HasPrefix(p, ver) {
 			r.URL.Path = strings.TrimPrefix(p, ver[:len(ver)-1])
-			return true
+			return r, true
 		}
 	}
-	return false
+	return nil, false
 }
 
 // 从 accept 中找到版本号，或是没有找到时，返回第二个参数 false。

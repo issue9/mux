@@ -21,26 +21,32 @@ func TestHosts_Match(t *testing.T) {
 		Equal(len(h.wildcards), 1)
 
 	r := httptest.NewRequest(http.MethodGet, "http://caixw.io/test", nil)
-	a.True(h.Match(r))
+	rr, ok := h.Match(r)
+	a.True(ok).Equal(rr, r)
 
 	r = httptest.NewRequest(http.MethodGet, "https://caixw.io/test", nil)
-	a.True(h.Match(r))
+	rr, ok = h.Match(r)
+	a.True(ok).Equal(rr, r)
 
 	// 泛域名
 	r = httptest.NewRequest(http.MethodGet, "https://xx.example.com/test", nil)
-	a.True(h.Match(r))
+	rr, ok = h.Match(r)
+	a.True(ok).Equal(rr, r)
 
 	// 带端口
 	r = httptest.NewRequest(http.MethodGet, "http://caixw.io:88/test", nil)
-	a.True(h.Match(r))
+	rr, ok = h.Match(r)
+	a.True(ok).Equal(rr, r)
 
 	// 访问不允许的域名
 	r = httptest.NewRequest(http.MethodGet, "http://sub.caixw.io/test", nil)
-	a.False(h.Match(r))
+	rr, ok = h.Match(r)
+	a.False(ok).Nil(rr)
 
 	// 访问不允许的域名
 	r = httptest.NewRequest(http.MethodGet, "http://sub.1example.com/test", nil)
-	a.False(h.Match(r))
+	rr, ok = h.Match(r)
+	a.False(ok).Nil(rr)
 }
 
 func TestHosts_Add_Delete(t *testing.T) {

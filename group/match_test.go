@@ -13,6 +13,9 @@ var _ Matcher = MatcherFunc(Any)
 func TestAny(t *testing.T) {
 	a := assert.New(t)
 
-	a.True(Any(nil))
-	a.True(MatcherFunc(Any).Match(nil))
+	r, ok := Any(nil)
+	a.True(ok).Nil(r)
+
+	r, ok = MatcherFunc(Any).Match(nil)
+	a.True(ok).Nil(r)
 }

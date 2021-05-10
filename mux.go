@@ -89,8 +89,8 @@ func (mux *Mux) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, router := range mux.routers {
-		if router.matcher.Match(r) {
-			router.serveHTTP(w, r)
+		if req, ok := router.matcher.Match(r); ok {
+			router.serveHTTP(w, req)
 			return
 		}
 	}
