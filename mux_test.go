@@ -14,6 +14,17 @@ import (
 	"github.com/issue9/mux/v4/internal/handlers"
 )
 
+func TestMux_empty(t *testing.T) {
+	a := assert.New(t)
+	m := Default()
+	a.NotNil(m)
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/path", nil)
+	m.ServeHTTP(w, r)
+	a.Equal(w.Code, http.StatusNotFound)
+}
+
 func TestMux_NewRouter(t *testing.T) {
 	a := assert.New(t)
 
