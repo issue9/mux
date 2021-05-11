@@ -15,7 +15,7 @@ import (
 func buildMiddleware(a *assert.Assertion, text string) MiddlewareFunc {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			h.ServeHTTP(w, r)
+			h.ServeHTTP(w, r) // 先输出被包含的内容
 			a.NotError(w.Write([]byte(text)))
 		})
 	}
@@ -36,7 +36,7 @@ func TestMux_insertFirst(t *testing.T) {
 	r := httptest.NewRequest(http.MethodGet, "/get", nil)
 	m.ServeHTTP(w, r)
 	a.Equal(w.Code, 201).
-		Equal(w.Body.String(), "21")
+		Equal(w.Body.String(), "12")
 
 	// reset
 
@@ -63,7 +63,7 @@ func TestMux_insertLast(t *testing.T) {
 	r := httptest.NewRequest(http.MethodGet, "/get", nil)
 	m.ServeHTTP(w, r)
 	a.Equal(w.Code, 201).
-		Equal(w.Body.String(), "12")
+		Equal(w.Body.String(), "21")
 
 	// reset
 
@@ -92,7 +92,7 @@ func TestMux_AddMiddleware(t *testing.T) {
 	r := httptest.NewRequest(http.MethodGet, "/get", nil)
 	m.ServeHTTP(w, r)
 	a.Equal(w.Code, 201).
-		Equal(w.Body.String(), "a2a1p1p2")
+		Equal(w.Body.String(), "p2p1a1a2") // buildHandler 导致顶部的后输出
 
 	// reset
 

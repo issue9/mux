@@ -36,6 +36,13 @@ func (mux *Mux) AddMiddleware(first bool, f MiddlewareFunc) *Mux {
 }
 
 func (mux *Mux) insertFirst(f MiddlewareFunc) {
+	if mux.middlewares == nil {
+		mux.middlewares = make([]MiddlewareFunc, 0, 5)
+	}
+	mux.middlewares = append(mux.middlewares, f)
+}
+
+func (mux *Mux) insertLast(f MiddlewareFunc) {
 	// NOTE: 当允许传递多个参数时，不同用户对添加顺序理解可能会不一样：
 	// - 按顺序一次性添加；
 	// - 单个元素依次添加；
@@ -45,13 +52,6 @@ func (mux *Mux) insertFirst(f MiddlewareFunc) {
 		ms = append(ms, mux.middlewares...)
 	}
 	mux.middlewares = ms
-}
-
-func (mux *Mux) insertLast(f MiddlewareFunc) {
-	if mux.middlewares == nil {
-		mux.middlewares = make([]MiddlewareFunc, 0, 5)
-	}
-	mux.middlewares = append(mux.middlewares, f)
 }
 
 // Reset 清除中间件
