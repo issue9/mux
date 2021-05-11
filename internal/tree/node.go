@@ -231,7 +231,7 @@ func (n *node) url(params map[string]string) (string, error) {
 		switch node.segment.Type {
 		case syntax.String:
 			buf.WString(node.segment.Value)
-		case syntax.Named, syntax.Regexp:
+		case syntax.Named, syntax.Regexp, syntax.Interceptor:
 			param, exists := params[node.segment.Name]
 			if !exists {
 				return "", fmt.Errorf("未找到参数 %s 的值", node.segment.Name)
