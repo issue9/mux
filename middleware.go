@@ -7,6 +7,13 @@ import "net/http"
 // MiddlewareFunc 将一个 http.Handler 封装成另一个 http.Handler
 type MiddlewareFunc func(http.Handler) http.Handler
 
+// Middlewares 中间件管理
+type Middlewares struct {
+	http.Handler
+	middlewares []MiddlewareFunc
+	next        http.Handler
+}
+
 // ApplyMiddlewares 按顺序将所有的中间件应用于 h
 func ApplyMiddlewares(h http.Handler, f ...MiddlewareFunc) http.Handler {
 	for _, ff := range f {
@@ -20,46 +27,69 @@ func ApplyMiddlewaresFunc(h func(w http.ResponseWriter, r *http.Request), f ...M
 	return ApplyMiddlewares(http.HandlerFunc(h), f...)
 }
 
-// AddMiddleware 添加中间件
+// NewMiddlewares 声明新的 Middlewares 实例
+func NewMiddlewares(next http.Handler) *Middlewares {
+	return &Middlewares{
+		Handler:     next,
+		middlewares: make([]MiddlewareFunc, 0, 10),
+		next:        next,
+	}
+}
+
+// Prepend 添加中间件到顶部
 //
-// first 是否添加到顶部，顶部的中间件在运行过程中，最早被调用，多次添加，最后一次在顶部。
-// first == false 添加在尾部，末次添加的元素在最末尾。
-func (mux *Mux) AddMiddleware(first bool, f MiddlewareFunc) *Mux {
-	if first {
-		mux.insertFirst(f)
-	} else {
-		mux.insertLast(f)
-	}
-
-	mux.handler = ApplyMiddlewaresFunc(mux.serveHTTP, mux.middlewares...)
-	return mux
+// 顶部的中间件在运行过程中将最早被调用，多次添加，则最后一次的在顶部。
+func (ms *Middlewares) Prepend(m MiddlewareFunc) *Middlewares {
+	ms.middlewares = append(ms.middlewares, m)
+	ms.Handler = ApplyMiddlewares(ms.next, ms.middlewares...)
+	return ms
 }
 
-func (mux *Mux) insertFirst(f MiddlewareFunc) {
-	if mux.middlewares == nil {
-		mux.middlewares = make([]MiddlewareFunc, 0, 5)
+// Append 添加中间件到尾部
+//
+// 尾部的中间件将最后被调用，多次添加，则最后一次的在最末尾。
+func (ms *Middlewares) Append(f MiddlewareFunc) *Middlewares {
+	fs := make([]MiddlewareFunc, 0, 1+len(ms.middlewares))
+	fs = append(fs, f)
+	if len(ms.middlewares) > 0 {
+		fs = append(fs, ms.middlewares...)
 	}
-	mux.middlewares = append(mux.middlewares, f)
-}
-
-func (mux *Mux) insertLast(f MiddlewareFunc) {
-	// NOTE: 当允许传递多个参数时，不同用户对添加顺序理解可能会不一样：
-	// - 按顺序一次性添加；
-	// - 单个元素依次添加；
-	ms := make([]MiddlewareFunc, 0, 1+len(mux.middlewares))
-	ms = append(ms, f)
-	if len(mux.middlewares) > 0 {
-		ms = append(ms, mux.middlewares...)
-	}
-	mux.middlewares = ms
+	ms.middlewares = fs
+	ms.Handler = ApplyMiddlewares(ms.next, ms.middlewares...)
+	return ms
 }
 
 // Reset 清除中间件
-func (mux *Mux) Reset() {
-	mux.middlewares = mux.middlewares[:0]
-	mux.handler = http.HandlerFunc(mux.serveHTTP)
+func (ms *Middlewares) Reset() *Middlewares {
+	ms.middlewares = ms.middlewares[:0]
+	ms.Handler = ms.next
+	return ms
 }
 
-func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	mux.handler.ServeHTTP(w, r)
+// AppendMiddleware 添加中间件到尾部
+func (mux *Mux) AppendMiddleware(f MiddlewareFunc) *Mux {
+	mux.middlewares.Append(f)
+	return mux
 }
+
+// PrependMiddleware 添加中间件到顶部
+func (mux *Mux) PrependMiddleware(f MiddlewareFunc) *Mux {
+	mux.middlewares.Prepend(f)
+	return mux
+}
+
+func (mux *Mux) CleanMiddlewares() { mux.middlewares.Reset() }
+
+// AppendMiddleware 添加中间件到尾部
+func (r *Router) AppendMiddleware(f MiddlewareFunc) *Router {
+	r.middlewares.Append(f)
+	return r
+}
+
+// PrependMiddleware 添加中间件到顶部
+func (r *Router) PrependMiddleware(f MiddlewareFunc) *Router {
+	r.middlewares.Prepend(f)
+	return r
+}
+
+func (r *Router) CleanMiddlewares() { r.middlewares.Reset() }

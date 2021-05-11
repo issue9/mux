@@ -5,6 +5,9 @@ package mux
 import (
 	"context"
 	"net/http"
+	"sort"
+
+	"github.com/issue9/sliceutil"
 
 	"github.com/issue9/mux/v4/group"
 	"github.com/issue9/mux/v4/internal/tree"
@@ -13,11 +16,78 @@ import (
 
 // Router 提供了基本的路由项添加和删除等功能
 type Router struct {
-	mux     *Mux
-	name    string
-	matcher group.Matcher
-	tree    *tree.Tree
-	last    bool // 在多路由中，有此标记的排在最后。
+	mux         *Mux
+	name        string
+	matcher     group.Matcher
+	tree        *tree.Tree
+	middlewares *Middlewares
+	last        bool // 在多路由中，有此标记的排在最后。
+}
+
+// Routers 返回当前路由所属的子路由组列表
+func (mux *Mux) Routers() []*Router { return mux.routers }
+
+// NewRouter 添加子路由
+//
+// 该路由只有符合 group.Matcher 的要求才会进入，其它与 Router 功能相同。
+// 当 group.Matcher 与其它路由组的判断有重复时，第一条返回 true 的路由组获胜，
+// 即使该路由组最终返回 404，也不会再在其它路由组里查找相应的路由。
+// 所以在有多条子路由的情况下，第一条子路由不应该永远返回 true，
+// 这样会造成其它子路由永远无法到达。
+//
+// name 表示该路由组的名称，需要唯一，否则返回 false；
+// matcher 路由的准入条件，如果为空，则此条路由匹配时会被排在最后，
+// 只有一个路由的 matcher 为空，否则会 panic。
+func (mux *Mux) NewRouter(name string, matcher group.Matcher) (r *Router, ok bool) {
+	if name == "" {
+		panic("参数 name 不能为空")
+	}
+
+	// 重名检测
+	index := sliceutil.Index(mux.routers, func(i int) bool {
+		return mux.routers[i].name == name
+	})
+	if index > -1 {
+		return nil, false
+	}
+
+	last := matcher == nil
+	if last {
+		matcher = group.MatcherFunc(group.Any)
+		index := sliceutil.Index(mux.routers, func(i int) bool { return mux.routers[i].last })
+		if index > -1 {
+			panic("已经存在一个 matcher 参数为空的路由")
+		}
+	}
+
+	r = &Router{
+		mux:     mux,
+		name:    name,
+		matcher: matcher,
+		tree:    tree.New(mux.disableOptions, mux.disableHead),
+		last:    last,
+	}
+	r.middlewares = NewMiddlewares(http.HandlerFunc(r.serveHTTP))
+	mux.routers = append(mux.routers, r)
+	sortRouters(mux.routers)
+	return r, true
+}
+
+func sortRouters(rs []*Router) {
+	sort.SliceStable(rs, func(i, j int) bool {
+		if rs[i].last {
+			return rs[j].last
+		}
+		return rs[j].last
+	})
+}
+
+// RemoveRouter 删除子路由
+func (mux *Mux) RemoveRouter(name string) {
+	size := sliceutil.Delete(mux.routers, func(i int) bool {
+		return mux.routers[i].name == name
+	})
+	mux.routers = mux.routers[:size]
 }
 
 // Name 当前路由组的名称

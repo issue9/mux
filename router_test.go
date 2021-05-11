@@ -335,3 +335,118 @@ func TestRouter_Clean(t *testing.T) {
 	m.ServeHTTP(w, r)
 	a.Equal(w.Result().StatusCode, 202)
 }
+
+func TestMux_NewRouter(t *testing.T) {
+	a := assert.New(t)
+
+	m := Default()
+
+	// name 为空
+	a.PanicString(func() {
+		h, err := group.NewHosts("example.com")
+		a.NotError(err).NotNil(h)
+		m.NewRouter("", h)
+	}, "不能为空")
+
+	r, ok := m.NewRouter("host", &group.PathVersion{})
+	a.True(ok).NotNil(r)
+	a.Equal(r.name, "host").Equal(r.Name(), "host")
+
+	r, ok = m.NewRouter("host", &group.PathVersion{})
+	a.False(ok).Nil(r)
+
+	r, ok = m.NewRouter("host-2", nil)
+	a.True(ok).NotNil(r)
+	a.Equal(r.name, "host-2").Equal(r.Name(), "host-2")
+
+	a.PanicString(func() {
+		m.NewRouter("host-3", nil)
+	}, "已经存在")
+}
+
+func TestSortRouters(t *testing.T) {
+	a := assert.New(t)
+
+	rs := []*Router{
+		{
+			name: "0",
+			last: true,
+		},
+		{
+			name: "1",
+		},
+		{
+			name: "2",
+		},
+	}
+
+	sortRouters(rs)
+	a.Equal(rs[0].name, "1").
+		Equal(rs[1].name, "2").
+		Equal(rs[2].name, "0")
+
+	rs = []*Router{
+		{
+			name: "0",
+		},
+		{
+			name: "1",
+			last: true,
+		},
+		{
+			name: "2",
+		},
+	}
+
+	sortRouters(rs)
+	a.Equal(rs[0].name, "0").
+		Equal(rs[1].name, "2").
+		Equal(rs[2].name, "1")
+
+	rs = []*Router{
+		{
+			name: "0",
+		},
+		{
+			name: "1",
+		},
+		{
+			name: "2",
+			last: true,
+		},
+	}
+
+	sortRouters(rs)
+	a.Equal(rs[0].name, "0").
+		Equal(rs[1].name, "1").
+		Equal(rs[2].name, "2")
+}
+
+func TestMux_RemoveRouter(t *testing.T) {
+	a := assert.New(t)
+
+	m := Default()
+	r, ok := m.NewRouter("host", &group.PathVersion{})
+	a.True(ok).NotNil(r)
+	a.Equal(r.name, "host").Equal(r.Name(), "host")
+
+	r, ok = m.NewRouter("host-2", &group.PathVersion{})
+	a.True(ok).NotNil(r)
+	a.Equal(2, len(m.Routers()))
+
+	// 同名，添加不成功
+	r, ok = m.NewRouter("host", &group.PathVersion{})
+	a.False(ok).Nil(r)
+	a.Equal(2, len(m.Routers()))
+
+	m.RemoveRouter("host")
+	m.RemoveRouter("host") // 已经删除，不存在了
+	a.Equal(1, len(m.Routers()))
+	r, ok = m.NewRouter("host", &group.PathVersion{})
+	a.True(ok).NotNil(r)
+	a.Equal(2, len(m.Routers()))
+
+	// 删除空名，不出错。
+	m.RemoveRouter("")
+	a.Equal(2, len(m.Routers()))
+}
