@@ -9,14 +9,6 @@ import (
 	"sort"
 )
 
-type optionsState int8
-
-// 表示对 OPTIONAL 请求中 Allow 报头中输出内容的处理方式。
-const (
-	optionsStateDefault     optionsState = iota // 默认情况
-	optionsStateFixedString                     // 设置为固定的字符串
-)
-
 // Methods 所有支持请求方法
 var Methods = []string{
 	http.MethodGet,
@@ -39,9 +31,10 @@ var addAny = Methods[:len(Methods)-2]
 type Handlers struct {
 	handlers map[string]http.Handler // 请求方法及其对应的 http.Handler
 
-	optionsAllow string       // 缓存的 OPTIONS 请求的 allow 报头内容
-	optionsState optionsState // OPTIONS 请求的处理方式
-	disableHead  bool
+	optionsAllow      string // 缓存的 OPTIONS 请求的 allow 报头内容
+	fixedOptionsAllow bool
+
+	disableHead bool
 }
 
 // New 声明一个新的 Handlers 实例
@@ -49,9 +42,8 @@ type Handlers struct {
 // disableHead 是否自动添加 HEAD 请求内容。
 func New(disableHead bool) *Handlers {
 	return &Handlers{
-		handlers:     make(map[string]http.Handler, 4), // 大部分不会超过 4 条数据
-		optionsState: optionsStateDefault,
-		disableHead:  disableHead,
+		handlers:    make(map[string]http.Handler, 4), // 大部分不会超过 4 条数据
+		disableHead: disableHead,
 	}
 }
 
@@ -95,8 +87,7 @@ func (hs *Handlers) addSingle(h http.Handler, m string) error {
 			hs.handlers[http.MethodOptions] = http.HandlerFunc(hs.optionsServeHTTP)
 		}
 
-		// 重新生成 optionsAllow 字符串
-		if hs.optionsState == optionsStateDefault {
+		if !hs.fixedOptionsAllow { // 重新生成 optionsAllow 字符串
 			hs.optionsAllow = hs.getOptionsAllow()
 		}
 	}
@@ -166,7 +157,7 @@ func (hs *Handlers) Remove(methods ...string) bool {
 		return true
 	}
 
-	if hs.optionsAllow != "" && hs.optionsState != optionsStateFixedString { // 为空，表示是主动删除 options
+	if hs.optionsAllow != "" && !hs.fixedOptionsAllow { // 为空，表示是主动删除 options
 		hs.optionsAllow = hs.getOptionsAllow()
 	}
 
@@ -176,7 +167,7 @@ func (hs *Handlers) Remove(methods ...string) bool {
 // SetAllow 设置 Options 请求头的 Allow 报头
 func (hs *Handlers) SetAllow(optionsAllow string) {
 	hs.optionsAllow = optionsAllow
-	hs.optionsState = optionsStateFixedString
+	hs.fixedOptionsAllow = true
 
 	if _, found := hs.handlers[http.MethodOptions]; !found {
 		hs.handlers[http.MethodOptions] = http.HandlerFunc(hs.optionsServeHTTP)
