@@ -13,38 +13,66 @@ import (
 func TestNewSegment(t *testing.T) {
 	a := assert.New(t)
 
-	seg := NewSegment("/post/1")
-	a.Equal(seg.Type, String).Equal(seg.Value, "/post/1")
+	seg, err := NewSegment("/post/1")
+	a.NotError(err).Equal(seg.Type, String).Equal(seg.Value, "/post/1")
 
-	seg = NewSegment("{id}/1")
-	a.Equal(seg.Type, Named).
+	seg, err = NewSegment("{id}/1")
+	a.NotError(err).Equal(seg.Type, Named).
 		Equal(seg.Value, "{id}/1").
 		False(seg.Endpoint).
 		Equal(seg.Suffix, "/1")
 
-	seg = NewSegment("{id}")
-	a.Equal(seg.Type, Named).
+	seg, err = NewSegment("{id}")
+	a.NotError(err).Equal(seg.Type, Named).
 		Equal(seg.Value, "{id}").
 		True(seg.Endpoint).
 		Empty(seg.Suffix)
 
-	seg = NewSegment("{id:any}")
-	a.Equal(seg.Type, Interceptor).
+	seg, err = NewSegment("{id:}")
+	a.NotError(err).Equal(seg.Type, Named).
+		Equal(seg.Value, "{id:}").
+		True(seg.Endpoint).
+		Empty(seg.Suffix)
+
+	seg, err = NewSegment("{id}:")
+	a.NotError(err).Equal(seg.Type, Named).
+		Equal(seg.Value, "{id}:").
+		False(seg.Endpoint).
+		Equal(seg.Suffix, ":")
+
+	seg, err = NewSegment("{id:any}")
+	a.NotError(err).Equal(seg.Type, Interceptor).
 		Equal(seg.Value, "{id:any}").
 		True(seg.Endpoint).
 		Empty(seg.Suffix)
 
-	seg = NewSegment("{id:digit}/1")
-	a.Equal(seg.Type, Interceptor).
+	seg, err = NewSegment("{id:digit}/1")
+	a.NotError(err).Equal(seg.Type, Interceptor).
 		Equal(seg.Value, "{id:digit}/1").
 		False(seg.Endpoint).
 		Equal(seg.Suffix, "/1")
 
-	seg = NewSegment("{id:\\d+}/1")
-	a.Equal(seg.Type, Regexp).
+	seg, err = NewSegment("{id:\\d+}/1")
+	a.NotError(err).Equal(seg.Type, Regexp).
 		Equal(seg.Value, "{id:\\d+}/1").
 		False(seg.Endpoint).
 		Equal(seg.Suffix, "/1")
+
+	seg, err = NewSegment("id:}{")
+	a.Error(err).Nil(seg)
+
+	seg, err = NewSegment("id:{}")
+	a.Error(err).Nil(seg)
+
+	seg, err = NewSegment("{path")
+	a.NotError(err).NotNil(seg).
+		Equal(seg.Type, String).
+		Equal(seg.Value, "{path")
+
+	seg, err = NewSegment("{:path")
+	a.NotError(err).NotNil(seg).
+		Equal(seg.Type, String).
+		Equal(seg.Value, "{:path")
 }
 
 func TestLongestPrefix(t *testing.T) {
@@ -71,34 +99,44 @@ func TestLongestPrefix(t *testing.T) {
 func TestSegment_Similarity(t *testing.T) {
 	a := assert.New(t)
 
-	seg := NewSegment("{id}/author")
-	a.NotNil(seg)
+	seg, err := NewSegment("{id}/author")
+	a.NotError(err).NotNil(seg)
 
-	s1 := NewSegment("{id}/author")
-	a.Equal(-1, seg.Similarity(s1))
+	s1, err := NewSegment("{id}/author")
+	a.NotError(err).Equal(-1, seg.Similarity(s1))
 
-	s1 = NewSegment("{id}/author/profile")
-	a.Equal(11, seg.Similarity(s1))
+	s1, err = NewSegment("{id}/author/profile")
+	a.NotError(err).Equal(11, seg.Similarity(s1))
 }
 
 func TestSegment_Split(t *testing.T) {
 	a := assert.New(t)
 
-	seg := NewSegment("{id}/author")
-	a.NotNil(seg)
+	seg, err := NewSegment("{id}/author")
+	a.NotError(err).NotNil(seg)
 
-	segs := seg.Split(4)
-	a.Equal(segs[0].Value, "{id}").
-		Equal(segs[1].Value, "/author")
+	segs, err := seg.Split(4)
+	a.NotError(err).
+		Equal(segs[0].Value, "{id}").
+		Equal(segs[0].Type, Named)
+	a.Equal(segs[1].Value, "/author").
+		Equal(segs[1].Type, String)
+
+	segs, err = seg.Split(2)
+	a.NotError(err)
+	a.Equal(segs[0].Value, "{i").
+		Equal(segs[0].Type, String)
+	a.Equal(segs[1].Value, "d}/author").
+		Equal(segs[1].Type, String)
 }
 
 func TestSegment_Match(t *testing.T) {
 	a := assert.New(t)
 
 	// Named:any
-	seg := NewSegment("{id:any}/author")
+	seg, err := NewSegment("{id:any}/author")
 	ps := params.Params{}
-	a.NotNil(seg)
+	a.NotError(err).NotNil(seg)
 	path := "1/author"
 	index := seg.Match(path, ps)
 	a.Empty(path[index:]).
@@ -106,7 +144,8 @@ func TestSegment_Match(t *testing.T) {
 
 	// Named 完全匹配
 	ps = params.Params{}
-	seg = NewSegment("{id}/author")
+	seg, err = NewSegment("{id}/author")
+	a.NotError(err).NotNil(seg)
 	path = "1/author"
 	index = seg.Match(path, ps)
 	a.Empty(path[index:]).
@@ -114,21 +153,24 @@ func TestSegment_Match(t *testing.T) {
 
 	// Named 部分匹配
 	ps = params.Params{}
-	seg = NewSegment("{id}/author")
+	seg, err = NewSegment("{id}/author")
+	a.NotError(err).NotNil(seg)
 	path = "1/author/email"
 	index = seg.Match(path, ps)
 	a.Equal(path[index:], "/email")
 
 	// Named 不匹配
 	ps = params.Params{}
-	seg = NewSegment("{id}/author")
+	seg, err = NewSegment("{id}/author")
+	a.NotError(err).NotNil(seg)
 	path = "1/aut"
 	index = seg.Match(path, ps)
 	a.Equal(index, -1)
 
 	// Named 1/2 匹配 {id}
 	ps = params.Params{}
-	seg = NewSegment("{id}/author")
+	seg, err = NewSegment("{id}/author")
+	a.NotError(err).NotNil(seg)
 	path = "1/2/author"
 	index = seg.Match(path, ps)
 	a.Equal(path[index:], "").
@@ -136,27 +178,31 @@ func TestSegment_Match(t *testing.T) {
 
 	// Interceptor 1/2 匹配 {id}
 	ps = params.Params{}
-	seg = NewSegment("{id:any}/author")
+	seg, err = NewSegment("{id:any}/author")
+	a.NotError(err).NotNil(seg)
 	path = "1/2/author"
 	index = seg.Match(path, ps)
 	a.Equal(path[index:], "").
 		Equal(ps, map[string]string{"id": "1/2"})
 
 	ps = params.Params{}
-	seg = NewSegment("{any}/123")
+	seg, err = NewSegment("{any}/123")
+	a.NotError(err).NotNil(seg)
 	path = "123"
 	index = seg.Match(path, ps)
 	a.Equal(index, -1)
 
 	ps = params.Params{}
-	seg = NewSegment("{any:any}/123")
+	seg, err = NewSegment("{any:any}/123")
+	a.NotError(err).NotNil(seg)
 	path = "123"
 	index = seg.Match(path, ps)
 	a.Equal(index, -1)
 
 	// 命名参数
 	ps = params.Params{}
-	seg = NewSegment("{any}123")
+	seg, err = NewSegment("{any}123")
+	a.NotError(err).NotNil(seg)
 	a.Equal(seg.Type, Named)
 	path = "123123"
 	index = seg.Match(path, ps)
@@ -164,7 +210,8 @@ func TestSegment_Match(t *testing.T) {
 
 	// Interceptor
 	ps = params.Params{}
-	seg = NewSegment("{any:any}123")
+	seg, err = NewSegment("{any:any}123")
+	a.NotError(err).NotNil(seg)
 	a.Equal(seg.Type, Interceptor)
 	path = "123123"
 	index = seg.Match(path, ps)
@@ -172,14 +219,16 @@ func TestSegment_Match(t *testing.T) {
 		Equal(ps, map[string]string{"any": "123"})
 
 	ps = params.Params{}
-	seg = NewSegment("{any:any}123")
+	seg, err = NewSegment("{any:any}123")
+	a.NotError(err).NotNil(seg)
 	path = "12345123"
 	index = seg.Match(path, ps)
 	a.Equal(index, 8).
 		Equal(ps, map[string]string{"any": "12345"})
 
 	ps = params.Params{}
-	seg = NewSegment("{any:digit}123")
+	seg, err = NewSegment("{any:digit}123")
+	a.NotError(err).NotNil(seg)
 	path = "12345123"
 	index = seg.Match(path, ps)
 	a.Equal(index, 8).
@@ -187,14 +236,16 @@ func TestSegment_Match(t *testing.T) {
 
 	// Named Endpoint 匹配
 	ps = params.Params{}
-	seg = NewSegment("{path}")
+	seg, err = NewSegment("{path}")
+	a.NotError(err).NotNil(seg)
 	path = "/posts/author"
 	index = seg.Match(path, ps)
 	a.Equal(path[index:], "")
 
 	// Named:digit Endpoint 匹配
 	ps = params.Params{}
-	seg = NewSegment("{id:digit}")
+	seg, err = NewSegment("{id:digit}")
+	a.NotError(err).NotNil(seg)
 	path = "123"
 	index = seg.Match(path, ps)
 	a.Equal(path[index:], "").
@@ -202,14 +253,15 @@ func TestSegment_Match(t *testing.T) {
 
 	// Named:digit Endpoint 不匹配
 	ps = params.Params{}
-	seg = NewSegment("{id:digit}")
+	seg, err = NewSegment("{id:digit}")
+	a.NotError(err).NotNil(seg)
 	path = "one"
 	index = seg.Match(path, ps)
 	a.Equal(index, -1).Empty(ps)
 
 	// Named:digit
-	seg = NewSegment("{id:digit}/author")
-	a.NotNil(seg)
+	seg, err = NewSegment("{id:digit}/author")
+	a.NotError(err).NotNil(seg)
 
 	// Named:digit 不匹配
 	ps = params.Params{}
@@ -224,8 +276,8 @@ func TestSegment_Match(t *testing.T) {
 	a.Equal(index, -1)
 
 	// String
-	seg = NewSegment("/posts/author")
-	a.NotNil(seg)
+	seg, err = NewSegment("/posts/author")
+	a.NotError(err).NotNil(seg)
 
 	// String 匹配
 	path = "/posts/author"
@@ -238,8 +290,8 @@ func TestSegment_Match(t *testing.T) {
 	a.Equal(path[index:], "/email")
 
 	// Regexp
-	seg = NewSegment("{id:\\d+}/author")
-	a.NotNil(seg)
+	seg, err = NewSegment("{id:\\d+}/author")
+	a.NotError(err).NotNil(seg)
 
 	// Regexp 完全匹配
 	ps = params.Params{}

@@ -13,8 +13,8 @@ import (
 func BenchmarkSegment_Match_Named(b *testing.B) {
 	a := assert.New(b)
 
-	seg := NewSegment("{id}/author")
-	a.NotNil(seg)
+	seg, err := NewSegment("{id}/author")
+	a.NotError(err).NotNil(seg)
 
 	ps := params.Params{}
 	path := "100000/author"
@@ -27,8 +27,8 @@ func BenchmarkSegment_Match_Named(b *testing.B) {
 func BenchmarkSegment_Match_Named_withMatcher(b *testing.B) {
 	a := assert.New(b)
 
-	seg := NewSegment("{id:digit}/author")
-	a.NotNil(seg)
+	seg, err := NewSegment("{id:digit}/author")
+	a.NotError(err).NotNil(seg)
 
 	ps := params.Params{}
 	path := "10000/author"
@@ -41,8 +41,8 @@ func BenchmarkSegment_Match_Named_withMatcher(b *testing.B) {
 func BenchmarkSegment_Match_String(b *testing.B) {
 	a := assert.New(b)
 
-	seg := NewSegment("/posts/author")
-	a.NotNil(seg)
+	seg, err := NewSegment("/posts/author")
+	a.NotError(err).NotNil(seg)
 
 	path := "/posts/author"
 	for i := 0; i < b.N; i++ {
@@ -54,8 +54,8 @@ func BenchmarkSegment_Match_String(b *testing.B) {
 func BenchmarkSegment_Match_Regexp(b *testing.B) {
 	a := assert.New(b)
 
-	seg := NewSegment("{id:\\d+}/author")
-	a.NotNil(seg)
+	seg, err := NewSegment("{id:\\d+}/author")
+	a.NotError(err).NotNil(seg)
 
 	path := "1/author"
 	ps := params.Params{}

@@ -231,8 +231,8 @@ func TestMethods(t *testing.T) {
 func TestIsWell(t *testing.T) {
 	a := assert.New(t)
 
-	a.Error(IsWell("/{path"))
-	a.Error(IsWell("/path}"))
+	a.NotError(IsWell("/{path"))
+	a.NotError(IsWell("/path}"))
 	a.Error(IsWell(""))
 }
 

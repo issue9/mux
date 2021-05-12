@@ -41,12 +41,6 @@ const (
 	separatorByte = ':' // 正则参数中名称和正则的分隔符
 )
 
-// 将路由语法转换成正则表达式语法，比如：
-//  {id:\\d+}/author => (?P<id>\\d+)
-var repl = strings.NewReplacer(string(startByte), "(?P<",
-	string(separatorByte), ">",
-	string(endByte), ")")
-
 func (t Type) String() string {
 	switch t {
 	case Named:
@@ -73,36 +67,45 @@ func Split(str string) ([]*Segment, error) {
 		return nil, errors.New("参数 str 不能为空")
 	}
 
-	ss := make([]*Segment, 0, strings.Count(str, string(startByte))+1)
-	s := newState()
-
-	for i := 0; i < len(str); i++ {
-		switch str[i] {
-		case startByte:
-			start := s.start
-			s.setStart(i)
-
-			if s.err == "" && i > 0 { // i==0 表示以 { 开头
-				ss = append(ss, NewSegment(str[start:i]))
-			}
-		case separatorByte:
-			s.setSeparator(i)
-		case endByte:
-			s.setEnd(i)
+	ss := splitString(str)
+	segs := make([]*Segment, 0, len(ss))
+	var lastFlag bool
+	for _, s := range ss {
+		if lastFlag && s[0] == startByte {
+			return nil, fmt.Errorf("两个命名参数不能连续出现：%s", str)
 		}
+		lastFlag = s[len(s)-1] == endByte
 
-		if s.err != "" {
-			return nil, errors.New(s.err)
+		seg, err := NewSegment(s)
+		if err != nil {
+			return nil, err
 		}
-	} // end for
-
-	if s.start < len(str) {
-		if s.state != endByte {
-			return nil, fmt.Errorf("缺少 %s 字符", string(endByte))
-		}
-
-		ss = append(ss, NewSegment(str[s.start:]))
+		segs = append(segs, seg)
 	}
 
-	return ss, nil
+	return segs, nil
+}
+
+func splitString(str string) []string {
+	ss := make([]string, 0, strings.Count(str, string(startByte))+1)
+
+	var end int
+	for {
+		start := strings.IndexByte(str[end:], startByte)
+		if start == -1 {
+			ss = append(ss, str)
+			break
+		} else if start > 0 {
+			ss = append(ss, str[:start+end])
+			str = str[start+end:]
+		}
+
+		end = strings.IndexByte(str, endByte)
+		if end == -1 {
+			ss = append(ss, str)
+			break
+		}
+	}
+
+	return ss
 }

@@ -66,7 +66,7 @@ func TestPrefix(t *testing.T) {
 
 	a := assert.New(t)
 	a.Panic(func() {
-		p.Options("/h/{1", "ABC")
+		p.Options("/h/}{1", "ABC")
 	})
 
 	// remove

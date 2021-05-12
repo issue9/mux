@@ -8,13 +8,6 @@ import (
 	"github.com/issue9/assert"
 )
 
-func TestRegexp(t *testing.T) {
-	a := assert.New(t)
-
-	a.Equal(repl.Replace("{id:\\d+}"), "(?P<id>\\d+)")
-	a.Equal(repl.Replace("{id:\\d+}/author"), "(?P<id>\\d+)/author")
-}
-
 func TestType_String(t *testing.T) {
 	a := assert.New(t)
 
@@ -29,7 +22,7 @@ func TestType_String(t *testing.T) {
 
 func TestSplit(t *testing.T) {
 	a := assert.New(t)
-	test := func(str string, isError bool, ss ...*Segment) {
+	test := func(str string, isError bool, ss ...string) {
 		s, err := Split(str)
 
 		if isError {
@@ -38,7 +31,10 @@ func TestSplit(t *testing.T) {
 		}
 
 		a.NotError(err).Equal(len(s), len(ss))
-		for index, seg := range ss {
+		for index, str := range ss {
+			seg, err := NewSegment(str)
+			a.NotError(err).NotNil(seg)
+
 			item := s[index]
 			a.Equal(seg.Value, item.Value).
 				Equal(seg.Name, item.Name).
@@ -47,44 +43,94 @@ func TestSplit(t *testing.T) {
 		}
 	}
 
-	test("/", false, NewSegment("/"))
+	test("/", false, "/")
 
-	test("/posts/1", false, NewSegment("/posts/1"))
+	test("/posts/1", false, "/posts/1")
+	test("/posts/}/author", false, "/posts/}/author")
+	test("/posts/:id/author", false, "/posts/:id/author")
 
-	test("{action}/1", false, NewSegment("{action}/1"))
-	test("{act/ion}/1", false, NewSegment("{act/ion}/1")) // 名称中包含非常规则字符
-	test("{中文}/1", false, NewSegment("{中文}/1"))           // 名称中包含中文
+	test("{action}/1", false, "{action}/1")
+	test("{act/ion}/1", false, "{act/ion}/1") // 名称中包含非常规则字符
+	test("{中文}/1", false, "{中文}/1")           // 名称中包含中文
 
 	// 以命名参数开头的
-	test("/{action}", false, NewSegment("/"), NewSegment("{action}"))
+	test("/{action}", false, "/", "{action}")
+
+	// : 出现在 {} 之外
+	test("{中文}/:1", false, "{中文}/:1")
 
 	// 以通配符结尾
-	test("/posts/{id}", false, NewSegment("/posts/"), NewSegment("{id}"))
+	test("/posts/{id}", false, "/posts/", "{id}")
 
-	test("/posts/{id}/author/profile", false, NewSegment("/posts/"), NewSegment("{id}/author/profile"))
+	test("/posts/{id}/author/profile", false, "/posts/", "{id}/author/profile")
+	test("/posts/{id:}", false, "/posts/", "{id:}")
+	test("/posts/{id}/{author", false, "/posts/", "{id}/", "{author")
 
 	// 以命名参数结尾的
-	test("/posts/{id}/author", false, NewSegment("/posts/"), NewSegment("{id}/author"))
+	test("/posts/{id}/author", false, "/posts/", "{id}/author")
 
-	test("/posts/{id:digit}/author", false, NewSegment("/posts/"), NewSegment("{id:digit}/author"))
+	test("/posts/{id:digit}/author", false, "/posts/", "{id:digit}/author")
 
 	// 命名参数及通配符
-	test("/posts/{id}/page/{page}", false, NewSegment("/posts/"), NewSegment("{id}/page/"), NewSegment("{page}"))
-	test("/posts/{id}/page/{page:digit}", false, NewSegment("/posts/"), NewSegment("{id}/page/"), NewSegment("{page:digit}"))
+	test("/posts/{id}/page/{page}", false, "/posts/", "{id}/page/", "{page}")
+	test("/posts/{id}/page/{page:digit}", false, "/posts/", "{id}/page/", "{page:digit}")
 
 	// 正则
-	test("/posts/{id:\\d+}", false, NewSegment("/posts/"), NewSegment("{id:\\d+}"))
+	test("/posts/{id:\\d+}", false, "/posts/", "{id:\\d+}")
 
 	// 正则，命名参数
-	test("/posts/{id:\\d+}/page/{page}", false, NewSegment("/posts/"), NewSegment("{id:\\d+}/page/"), NewSegment("{page}"))
+	test("/posts/{id:\\d+}/page/{page}", false, "/posts/", "{id:\\d+}/page/", "{page}")
 
-	test("/posts/{id:}", true)
+	// 一些错误格式
 	test("/posts/{{id:\\d+}/author", true)
 	test("/posts/{:\\d+}/author", true)
 	test("/posts/{}/author", true)
 	test("/posts/{id}{page}/", true)
-	test("/posts/:id/author", true)
-	test("/posts/{id}/{author", true)
-	test("/posts/}/author", true)
 	test("", true)
+}
+
+func TestSplitString(t *testing.T) {
+	a := assert.New(t)
+	test := func(input string, output ...string) {
+		ss := splitString(input)
+		a.Equal(ss, output)
+	}
+
+	test("/", "/")
+
+	test("/posts/1", "/posts/1")
+
+	test("/{path", "/", "{path")
+	test("{action}/1", "{action}/1")
+	test("{act/ion}/1", "{act/ion}/1") // 名称中包含非常规则字符
+	test("{中文}/1", "{中文}/1")           // 名称中包含中文
+
+	// 以命名参数开头的
+	test("/{action}", "/", "{action}")
+
+	// : 出现在 {} 之外
+	test("{中文}/:1", "{中文}/:1")
+
+	// 以通配符结尾
+	test("/posts/{id}", "/posts/", "{id}")
+
+	test("/posts/{id}/author/profile", "/posts/", "{id}/author/profile")
+	test("/posts/{id:}", "/posts/", "{id:}")
+
+	// 以命名参数结尾的
+	test("/posts/{id}/author", "/posts/", "{id}/author")
+
+	test("/posts/{id:digit}/author", "/posts/", "{id:digit}/author")
+
+	// 命名参数及通配符
+	test("/posts/{id}/page/{page}", "/posts/", "{id}/page/", "{page}")
+	test("/posts/{id}/page/{page:digit}", "/posts/", "{id}/page/", "{page:digit}")
+
+	// 正则
+	test("/posts/{id:\\d+}", "/posts/", "{id:\\d+}")
+
+	// 正则，命名参数
+	test("/posts/{id:\\d+}/page/{page}", "/posts/", "{id:\\d+}/page/", "{page}")
+
+	test("/posts/{{id:\\d+}/author", "/posts/", "{{id:\\d+}/author")
 }

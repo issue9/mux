@@ -37,8 +37,13 @@ type Tree struct {
 
 // New 声明一个 Tree 实例
 func New(disableOptions, disableHead bool) *Tree {
+	s, err := syntax.NewSegment("")
+	if err != nil {
+		panic("发生了不该发生的错误，应该是 syntax.NewSegment 逻辑发生变化" + err.Error())
+	}
+
 	return &Tree{
-		node:           node{segment: syntax.NewSegment("")},
+		node:           node{segment: s},
 		disableOptions: disableOptions,
 		disableHead:    disableHead,
 	}
@@ -87,7 +92,7 @@ func (tree *Tree) getNode(pattern string) (*node, error) {
 		return nil, err
 	}
 
-	return tree.node.getNode(segs), nil
+	return tree.node.getNode(segs)
 }
 
 // SetAllow 设置指定节点的 allow 报头

@@ -3,6 +3,7 @@
 package syntax
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -39,28 +40,30 @@ type Segment struct {
 // NewSegment 声明新的 Segment 变量
 //
 // 如果为非字符串类型的内容，应该是以 { 符号开头才是合法的。
-//
-/// 由调用方保证 val 的格式正确。
-func NewSegment(val string) *Segment {
+func NewSegment(val string) (*Segment, error) {
 	seg := &Segment{
 		Value: val,
 		Type:  String,
 	}
 
 	start := strings.IndexByte(val, startByte)
-	if start < 0 {
-		return seg
-	}
-	separator := strings.IndexByte(val, separatorByte)
 	end := strings.IndexByte(val, endByte)
+	if start == -1 || end == -1 {
+		return seg, nil
+	}
 
-	if separator < 0 {
+	if start > end || start+1 == end { // }{ 或是  {}
+		return nil, fmt.Errorf("无效的语法：%s", val)
+	}
+
+	separator := strings.IndexByte(val, separatorByte)
+	if separator == -1 || separator+1 == end || separator > end { // {abc} 或是 {abc:} 或是 {abc}:
 		seg.Type = Named
 		seg.Name = val[start+1 : end]
 		seg.Suffix = val[end+1:]
 		seg.Endpoint = val[len(val)-1] == endByte
 		seg.matcher = func(string) bool { return true }
-		return seg
+		return seg, nil
 	}
 
 	matcher, found := interceptor.Get(val[separator+1 : end])
@@ -70,14 +73,18 @@ func NewSegment(val string) *Segment {
 		seg.Suffix = val[end+1:]
 		seg.Endpoint = val[len(val)-1] == endByte
 		seg.matcher = matcher
-		return seg
+		return seg, nil
 	}
 
 	seg.Type = Regexp
-	seg.expr = regexp.MustCompile(repl.Replace(val))
 	seg.Name = val[start+1 : separator]
 	seg.Suffix = val[end+1:]
-	return seg
+	expr, err := regexp.Compile("(?P<" + seg.Name + ">" + val[separator+1:end] + ")" + seg.Suffix)
+	if err != nil {
+		return nil, err
+	}
+	seg.expr = expr
+	return seg, nil
 }
 
 // Similarity 与 s1 的相似度，-1 表示完全相同，
@@ -93,11 +100,16 @@ func (seg *Segment) Similarity(s1 *Segment) int {
 // Split 从 pos 位置拆分为两个
 //
 // pos 位置的字符归属于后一个元素。
-func (seg *Segment) Split(pos int) []*Segment {
-	return []*Segment{
-		NewSegment(seg.Value[:pos]),
-		NewSegment(seg.Value[pos:]),
+func (seg *Segment) Split(pos int) ([]*Segment, error) {
+	s1, err := NewSegment(seg.Value[:pos])
+	if err != nil {
+		return nil, err
 	}
+	s2, err := NewSegment(seg.Value[pos:])
+	if err != nil {
+		return nil, err
+	}
+	return []*Segment{s1, s2}, nil
 }
 
 // Match 路径是否与当前节点匹配

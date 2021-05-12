@@ -19,8 +19,8 @@ func TestNode_find(t *testing.T) {
 	addNode := func(p string, code int, methods ...string) {
 		segs, err := syntax.Split(p)
 		a.NotError(err).NotNil(segs)
-		nn := node.getNode(segs)
-		a.NotNil(nn)
+		nn, err := node.getNode(segs)
+		a.NotError(err).NotNil(nn)
 
 		if nn.handlers == nil {
 			nn.handlers = handlers.New(false, false)
@@ -44,7 +44,9 @@ func TestNode_find(t *testing.T) {
 func TestRemoveNodes(t *testing.T) {
 	a := assert.New(t)
 	newNode := func(str string) *node {
-		return &node{segment: syntax.NewSegment(str)}
+		s, err := syntax.NewSegment(str)
+		a.NotError(err).NotNil(s)
+		return &node{segment: s}
 	}
 
 	n1 := newNode("/1")
@@ -87,28 +89,33 @@ func TestRemoveNodes(t *testing.T) {
 func TestSplitNode(t *testing.T) {
 	a := assert.New(t)
 	newNode := func(str string) *node {
-		return &node{segment: syntax.NewSegment(str)}
+		s, err := syntax.NewSegment(str)
+		a.NotError(err).NotNil(s)
+		return &node{segment: s}
 	}
 	p := newNode("/blog")
 
 	// 没有父节点
 	a.Panic(func() {
-		nn := splitNode(p, 1)
+		nn, _ := splitNode(p, 1)
 		a.Nil(nn)
 	})
 
-	node := p.newChild(syntax.NewSegment("/posts/{id}/author"))
+	s, err := syntax.NewSegment("/posts/{id}/author")
+	a.NotError(err).NotNil(s)
+	node := p.newChild(s)
 	a.NotNil(node)
 
-	nn := splitNode(node, 7) // 从 { 开始拆分
-	a.NotNil(nn)
+	nn, err := splitNode(node, 7) // 从 { 开始拆分
+	a.NotError(err).NotNil(nn)
 	a.Equal(len(nn.children), 1).
 		Equal(nn.children[0].segment.Value, "{id}/author")
 	a.Equal(nn.parent, p)
 
-	nn = splitNode(node, 18) // 不需要拆分
-	a.NotNil(nn)
+	nn, err = splitNode(node, 18) // 不需要拆分
+	a.NotError(err).NotNil(nn)
 	a.Equal(0, len(nn.children))
 
-	a.Panic(func() { splitNode(node, 8) }) // 从 i 开始拆分，不可拆分
+	nn, err = splitNode(node, 8)
+	a.NotError(err).NotNil(nn)
 }

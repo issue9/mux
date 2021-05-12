@@ -69,25 +69,28 @@ func (n *node) priority() int {
 
 // 获取指定路径下的节点，若节点不存在，则添加。
 // segments 为被 syntax.Split 拆分之后的字符串数组。
-func (n *node) getNode(segments []*syntax.Segment) *node {
-	child := n.addSegment(segments[0])
+func (n *node) getNode(segments []*syntax.Segment) (*node, error) {
+	child, err := n.addSegment(segments[0])
+	if err != nil {
+		return nil, err
+	}
 
 	if len(segments) == 1 { // 最后一个节点
-		return child
+		return child, nil
 	}
 
 	return child.getNode(segments[1:])
 }
 
 // 将 seg 添加到当前节点，并返回新节点，如果找到相同的节点，则直接返回该子节点。
-func (n *node) addSegment(seg *syntax.Segment) *node {
+func (n *node) addSegment(seg *syntax.Segment) (*node, error) {
 	var child *node // 找到的最匹配节点
 	var l int       // 最大的匹配字符数量
 	for _, c := range n.children {
 		l1 := c.segment.Similarity(seg)
 
 		if l1 == -1 { // 找到完全相同的，则直接返回该节点
-			return c
+			return c, nil
 		}
 
 		if l1 > l { // 找到相似度更高的，保存该节点的信息
@@ -97,18 +100,25 @@ func (n *node) addSegment(seg *syntax.Segment) *node {
 	}
 
 	if l <= 0 { // 没有共同前缀，声明一个新的加入到当前节点
-		return n.newChild(seg)
+		return n.newChild(seg), nil
 	}
 
-	parent := splitNode(child, l)
+	parent, err := splitNode(child, l)
+	if err != nil {
+		return nil, err
+	}
 
 	// seg 与 parent 重叠
 	if len(seg.Value) == l {
-		return parent
+		return parent, nil
 	}
 
 	// seg.Value[:l] 与 child.segment.Value[:l] 暨 parent.Value 是相同的
-	return parent.addSegment(syntax.NewSegment(seg.Value[l:]))
+	s, err := syntax.NewSegment(seg.Value[l:])
+	if err != nil {
+		return nil, err
+	}
+	return parent.addSegment(s)
 }
 
 // 根据 s 内容为当前节点产生一个子节点，并返回该新节点。
@@ -264,10 +274,10 @@ func removeNodes(nodes []*node, pattern string) []*node {
 // 将节点 n 从 pos 位置进行拆分。后一段作为当前段的子节点，并返回当前节点。
 // 若 pos 大于或等于 n.pattern 的长度，则直接返回 n 不会拆分，pos 处的字符作为子节点的内容。
 //
-// 若 pos 位置是不可拆分的，或是 n.parent 为 nil，都将触发 panic
-func splitNode(n *node, pos int) *node {
+// 若 n.parent 为 nil，都将触发 panic
+func splitNode(n *node, pos int) (*node, error) {
 	if len(n.segment.Value) <= pos { // 不需要拆分
-		return n
+		return n, nil
 	}
 
 	p := n.parent
@@ -279,7 +289,10 @@ func splitNode(n *node, pos int) *node {
 	p.children = removeNodes(p.children, n.segment.Value)
 	p.buildIndexes()
 
-	segs := n.segment.Split(pos)
+	segs, err := n.segment.Split(pos)
+	if err != nil {
+		return nil, err
+	}
 	ret := p.newChild(segs[0])
 	c := ret.newChild(segs[1])
 	c.handlers = n.handlers
@@ -289,7 +302,7 @@ func splitNode(n *node, pos int) *node {
 		item.parent = c
 	}
 
-	return ret
+	return ret, nil
 }
 
 // 获取所有的路由地址列表
