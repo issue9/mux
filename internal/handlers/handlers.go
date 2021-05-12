@@ -50,7 +50,7 @@ var addAny = Methods[:len(Methods)-2]
 type Handlers struct {
 	handlers map[string]http.Handler // 请求方法及其对应的 http.Handler
 
-	optionsAllow string       // 缓存的 OPTIONS 请求的 allow 报头内容。
+	optionsAllow string       // 缓存的 OPTIONS 请求的 allow 报头内容
 	optionsState optionsState // OPTIONS 请求的处理方式
 	headState    headState
 }
@@ -144,6 +144,9 @@ func methodExists(m string) bool {
 
 func (hs *Handlers) optionsServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Allow", hs.optionsAllow)
+	if r.Header.Get("Origin") != "" { // preflight request
+		w.Header().Set("Access-Control-Allow-Methods", hs.optionsAllow)
+	}
 }
 
 func (hs *Handlers) headServeHTTP(h http.Handler) http.Handler {
