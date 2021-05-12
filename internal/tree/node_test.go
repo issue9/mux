@@ -23,7 +23,7 @@ func TestNode_find(t *testing.T) {
 		a.NotError(err).NotNil(nn)
 
 		if nn.handlers == nil {
-			nn.handlers = handlers.New(false, false)
+			nn.handlers = handlers.New(false)
 		}
 
 		a.NotError(nn.handlers.Add(buildHandler(code), methods...))

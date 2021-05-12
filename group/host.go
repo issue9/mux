@@ -18,7 +18,7 @@ type Hosts struct {
 // NewHosts 声明新的 Hosts 实例
 func NewHosts(domain ...string) (*Hosts, error) {
 	h := &Hosts{
-		tree: tree.New(false, false),
+		tree: tree.New(false),
 	}
 
 	if err := h.Add(domain...); err != nil {

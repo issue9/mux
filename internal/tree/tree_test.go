@@ -26,7 +26,7 @@ type tester struct {
 
 func newTester(a *assert.Assertion) *tester {
 	return &tester{
-		tree: New(false, false),
+		tree: New(false),
 		a:    a,
 	}
 }
@@ -38,7 +38,7 @@ func (n *tester) add(method, pattern string, code int) {
 	n.a.NotError(err).NotNil(nn)
 
 	if nn.handlers == nil {
-		nn.handlers = handlers.New(false, false)
+		nn.handlers = handlers.New(false)
 	}
 
 	n.a.NotError(nn.handlers.Add(buildHandler(code), method))
@@ -192,14 +192,14 @@ func TestTreeCN(t *testing.T) {
 
 func TestTree_Clean(t *testing.T) {
 	a := assert.New(t)
-	tree := New(false, false)
+	tree := New(false)
 
 	addNode := func(p string, code int, methods ...string) {
 		nn, err := tree.getNode(p)
 		a.NotError(err).NotNil(nn)
 
 		if nn.handlers == nil {
-			nn.handlers = handlers.New(false, false)
+			nn.handlers = handlers.New(false)
 		}
 
 		a.NotError(nn.handlers.Add(buildHandler(code), methods...))
@@ -222,7 +222,7 @@ func TestTree_Clean(t *testing.T) {
 
 func TestTree_Add_Remove(t *testing.T) {
 	a := assert.New(t)
-	tree := New(false, false)
+	tree := New(false)
 
 	a.NotError(tree.Add("/", buildHandler(1), http.MethodGet))
 	a.NotError(tree.Add("/posts/{id}", buildHandler(1), http.MethodGet))
@@ -243,7 +243,7 @@ func TestTree_Add_Remove(t *testing.T) {
 
 func TestTree_SetAllow(t *testing.T) {
 	a := assert.New(t)
-	tree := New(false, false)
+	tree := New(false)
 
 	a.NotError(tree.Add("/options", buildHandler(1), http.MethodGet, http.MethodDelete, http.MethodPatch))
 	a.NotError(tree.SetAllow("/options", "TEST1,TEST2"))
@@ -261,7 +261,7 @@ func TestTree_SetAllow(t *testing.T) {
 
 func TestTree_All(t *testing.T) {
 	a := assert.New(t)
-	tree := New(false, false)
+	tree := New(false)
 	a.NotNil(tree)
 
 	a.NotError(tree.Add("/", buildHandler(http.StatusOK), http.MethodGet))
@@ -281,7 +281,7 @@ func TestTree_All(t *testing.T) {
 // 路由正确性，由 TestTree_match 验证
 func BenchmarkTree_Handler(b *testing.B) {
 	a := assert.New(b)
-	tree := New(false, false)
+	tree := New(false)
 
 	// 添加路由项
 	a.NotError(tree.Add("/", buildHandler(1), http.MethodGet))

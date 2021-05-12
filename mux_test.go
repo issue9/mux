@@ -89,7 +89,7 @@ func TestRouter_routers(t *testing.T) {
 	a.Equal(w.Result().StatusCode, 203)
 
 	// prefix prefix
-	m = New(false, false, false, nil, nil)
+	m = New(false, false, nil, nil)
 	a.NotNil(m)
 	def, ok = m.NewRouter("def", h)
 	a.True(ok).NotNil(def)
@@ -122,7 +122,7 @@ func TestRouter_routers(t *testing.T) {
 func TestRouter_routers_multiple(t *testing.T) {
 	a := assert.New(t)
 
-	m := New(false, false, false, nil, nil)
+	m := New(false, false, nil, nil)
 	a.NotNil(m)
 	def, ok := m.NewRouter("default", nil)
 	a.True(ok).NotNil(def)
@@ -163,7 +163,7 @@ func TestRouter_routers_multiple(t *testing.T) {
 func TestMux_ServeHTTP(t *testing.T) {
 	a := assert.New(t)
 
-	test := newTester(t, false, true, false)
+	test := newTester(t, true, false)
 
 	a.NotError(test.router.Handle("/posts/{path}.html", buildHandler(201)))
 	test.matchTrue(http.MethodGet, "/posts/2017/1.html", 201)
@@ -179,7 +179,7 @@ func TestMux_ServeHTTP(t *testing.T) {
 func TestMux_ServeHTTP_Order(t *testing.T) {
 	a := assert.New(t)
 
-	test := newTester(t, false, true, false)
+	test := newTester(t, true, false)
 	a.NotError(test.router.GetFunc("/posts/{id}", buildHandlerFunc(203)))        // f3
 	a.NotError(test.router.GetFunc("/posts/{id:\\d+}", buildHandlerFunc(202)))   // f2
 	a.NotError(test.router.GetFunc("/posts/1", buildHandlerFunc(201)))           // f1
@@ -190,7 +190,7 @@ func TestMux_ServeHTTP_Order(t *testing.T) {
 	test.matchTrue(http.MethodGet, "/posts/", 203)                               // f3
 
 	// interceptor
-	test = newTester(t, false, true, false)
+	test = newTester(t, true, false)
 	a.NotError(interceptor.Register(interceptor.MatchDigit, "[0-9]+"))
 	a.NotError(test.router.GetFunc("/posts/{id}", buildHandlerFunc(203)))        // f3
 	a.NotError(test.router.GetFunc("/posts/{id:\\d+}", buildHandlerFunc(202)))   // f2 永远匹配不到
@@ -202,19 +202,19 @@ func TestMux_ServeHTTP_Order(t *testing.T) {
 	test.matchTrue(http.MethodGet, "/posts/", 203)                               // f3
 	interceptor.Deregister("[0-9]+")
 
-	test = newTester(t, false, true, false)
+	test = newTester(t, true, false)
 	a.NotError(test.router.GetFunc("/p1/{p1}/p2/{p2:\\d+}", buildHandlerFunc(201))) // f1
 	a.NotError(test.router.GetFunc("/p1/{p1}/p2/{p2:\\w+}", buildHandlerFunc(202))) // f2
 	test.matchTrue(http.MethodGet, "/p1/1/p2/1", 201)                               // f1
 	test.matchTrue(http.MethodGet, "/p1/2/p2/s", 202)                               // f2
 
-	test = newTester(t, false, true, false)
+	test = newTester(t, true, false)
 	a.NotError(test.router.GetFunc("/posts/{id}/{page}", buildHandlerFunc(202))) // f2
 	a.NotError(test.router.GetFunc("/posts/{id}/1", buildHandlerFunc(201)))      // f1
 	test.matchTrue(http.MethodGet, "/posts/1/1", 201)                            // f1 普通路由项完全匹配
 	test.matchTrue(http.MethodGet, "/posts/2/5", 202)                            // f2 命名完全匹配
 
-	test = newTester(t, false, true, false)
+	test = newTester(t, true, false)
 	a.NotError(test.router.GetFunc("/tags/{id}.html", buildHandlerFunc(201))) // f1
 	a.NotError(test.router.GetFunc("/tags.html", buildHandlerFunc(202)))      // f2
 	a.NotError(test.router.GetFunc("/{path}", buildHandlerFunc(203)))         // f3

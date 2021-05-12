@@ -43,7 +43,6 @@ type Mux struct {
 	notFound,
 	methodNotAllowed http.HandlerFunc
 
-	disableOptions,
 	disableHead,
 	skipCleanPath bool
 
@@ -51,16 +50,15 @@ type Mux struct {
 }
 
 // Default New 的默认参数版本
-func Default() *Mux { return New(false, false, false, nil, nil) }
+func Default() *Mux { return New(false, false, nil, nil) }
 
 // New 声明一个新的 Mux
 //
-// disableOptions 是否禁用自动生成 OPTIONS 功能；
 // disableHead 是否禁用根据 Get 请求自动生成 HEAD 请求；
 // skipCleanPath 是否不对访问路径作处理，比如 "//api" ==> "/api"；
 // notFound 404 页面的处理方式，为 nil 时会调用默认的方式进行处理；
 // methodNotAllowed 405 页面的处理方式，为 nil 时会调用默认的方式进行处理；
-func New(disableOptions, disableHead, skipCleanPath bool, notFound, methodNotAllowed http.HandlerFunc) *Mux {
+func New(disableHead, skipCleanPath bool, notFound, methodNotAllowed http.HandlerFunc) *Mux {
 	if notFound == nil {
 		notFound = defaultNotFound
 	}
@@ -74,9 +72,8 @@ func New(disableOptions, disableHead, skipCleanPath bool, notFound, methodNotAll
 		notFound:         notFound,
 		methodNotAllowed: methodNotAllowed,
 
-		disableOptions: disableOptions,
-		disableHead:    disableHead,
-		skipCleanPath:  skipCleanPath,
+		disableHead:   disableHead,
+		skipCleanPath: skipCleanPath,
 	}
 	mux.middlewares = NewMiddlewares(http.HandlerFunc(mux.serveHTTP))
 

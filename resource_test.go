@@ -18,7 +18,7 @@ func (t *tester) resource(p string) *Resource {
 
 func TestResource(t *testing.T) {
 	a := assert.New(t)
-	test := newTester(t, false, true, false)
+	test := newTester(t, true, false)
 	h := test.resource("/h/1")
 	a.NotNil(h)
 	f := test.resource("/f/1")
@@ -85,7 +85,7 @@ func TestResource(t *testing.T) {
 
 func TestMux_Resource(t *testing.T) {
 	a := assert.New(t)
-	m := New(false, true, false, nil, nil)
+	m := New(true, false, nil, nil)
 	a.NotNil(m)
 	def, ok := m.NewRouter("def", group.MatcherFunc(group.Any))
 	a.True(ok).NotNil(def)
@@ -128,7 +128,7 @@ func TestPrefix_Resource(t *testing.T) {
 
 func TestResource_URL(t *testing.T) {
 	a := assert.New(t)
-	m := New(false, true, false, nil, nil)
+	m := New(true, false, nil, nil)
 	a.NotNil(m)
 	def, ok := m.NewRouter("def", group.MatcherFunc(group.Any))
 	a.True(ok).NotNil(def)

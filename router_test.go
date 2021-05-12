@@ -32,8 +32,8 @@ type tester struct {
 	srv    *rest.Server
 }
 
-func newTester(t testing.TB, disableOptions, disableHead, skipClean bool) *tester {
-	mux := New(disableOptions, disableHead, skipClean, nil, nil)
+func newTester(t testing.TB, disableHead, skipClean bool) *tester {
+	mux := New(disableHead, skipClean, nil, nil)
 	r, ok := mux.NewRouter("default", group.MatcherFunc(group.Any))
 	assert.True(t, ok)
 	assert.NotNil(t, r)
@@ -61,7 +61,7 @@ func (t *tester) optionsTrue(path string, code int, allow string) {
 }
 
 func TestRouter(t *testing.T) {
-	test := newTester(t, false, true, false)
+	test := newTester(t, true, false)
 
 	// 测试 / 和 "" 是否访问同一地址
 	test.router.Get("/", buildHandler(201))
@@ -131,7 +131,7 @@ func TestRouter_Routes(t *testing.T) {
 }
 
 func TestRouter_Head(t *testing.T) {
-	test := newTester(t, false, false, false)
+	test := newTester(t, false, false)
 
 	test.router.Get("/", buildHandler(201))
 	test.matchTrue(http.MethodGet, "", 201)
@@ -176,7 +176,7 @@ func TestRouter_Head(t *testing.T) {
 
 func TestRouter_Handle_Remove(t *testing.T) {
 	a := assert.New(t)
-	test := newTester(t, false, true, false)
+	test := newTester(t, true, false)
 
 	// 添加 GET /api/1
 	// 添加 PUT /api/1
@@ -213,7 +213,7 @@ func TestRouter_Handle_Remove(t *testing.T) {
 
 func TestRouter_Options(t *testing.T) {
 	a := assert.New(t)
-	test := newTester(t, false, true, false)
+	test := newTester(t, true, false)
 
 	// 添加 GET /api/1
 	a.NotError(test.router.Handle("/api/1", buildHandler(201), http.MethodGet))
@@ -233,11 +233,11 @@ func TestRouter_Options(t *testing.T) {
 	test.router.Options("/api/1", "CUSTOM OPTIONS2")
 	test.optionsTrue("/api/1", http.StatusOK, "CUSTOM OPTIONS2")
 
-	a.NotError(test.router.HandleFunc("/api/1", buildHandlerFunc(201), http.MethodOptions))
-	test.optionsTrue("/api/1", 201, "")
+	// 主动添加 Options
+	a.Error(test.router.HandleFunc("/api/1", buildHandlerFunc(201), http.MethodOptions))
 
 	// disableOptions 为 true
-	test = newTester(t, true, true, false)
+	test = newTester(t, true, false)
 	test.optionsTrue("/api/1", http.StatusNotFound, "")
 	test.router.Options("/api/1", "CUSTOM OPTIONS1") // 显示指定
 	test.optionsTrue("/api/1", http.StatusOK, "CUSTOM OPTIONS1")

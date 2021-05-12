@@ -16,7 +16,7 @@ func (t *tester) prefix(p string) *Prefix {
 }
 
 func TestPrefix(t *testing.T) {
-	test := newTester(t, false, true, false)
+	test := newTester(t, true, false)
 	p := test.prefix("/p")
 
 	p.Get("/h/1", buildHandler(201))
@@ -83,7 +83,7 @@ func TestPrefix(t *testing.T) {
 
 func TestMux_Prefix(t *testing.T) {
 	a := assert.New(t)
-	m := New(false, true, false, nil, nil)
+	m := New(true, false, nil, nil)
 	a.NotNil(m)
 	def, ok := m.NewRouter("def", group.MatcherFunc(group.Any))
 	a.True(ok).NotNil(def)
@@ -98,7 +98,7 @@ func TestMux_Prefix(t *testing.T) {
 
 func TestPrefix_Prefix(t *testing.T) {
 	a := assert.New(t)
-	m := New(false, true, false, nil, nil)
+	m := New(true, false, nil, nil)
 	a.NotNil(m)
 	def, ok := m.NewRouter("def", group.MatcherFunc(group.Any))
 	a.True(ok).NotNil(def)
@@ -115,7 +115,7 @@ func TestPrefix_Prefix(t *testing.T) {
 
 func TestPrefix_URL(t *testing.T) {
 	a := assert.New(t)
-	m := New(false, true, false, nil, nil)
+	m := New(true, false, nil, nil)
 	a.NotNil(m)
 	def, ok := m.NewRouter("def", group.MatcherFunc(group.Any))
 	a.True(ok).NotNil(def)

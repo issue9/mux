@@ -31,21 +31,19 @@ import (
 //               +---- /emails
 type Tree struct {
 	node
-	disableOptions bool
-	disableHead    bool
+	disableHead bool
 }
 
 // New 声明一个 Tree 实例
-func New(disableOptions, disableHead bool) *Tree {
+func New(disableHead bool) *Tree {
 	s, err := syntax.NewSegment("")
 	if err != nil {
 		panic("发生了不该发生的错误，应该是 syntax.NewSegment 逻辑发生变化" + err.Error())
 	}
 
 	return &Tree{
-		node:           node{segment: s},
-		disableOptions: disableOptions,
-		disableHead:    disableHead,
+		node:        node{segment: s},
+		disableHead: disableHead,
 	}
 }
 
@@ -59,7 +57,7 @@ func (tree *Tree) Add(pattern string, h http.Handler, methods ...string) error {
 	}
 
 	if n.handlers == nil {
-		n.handlers = handlers.New(tree.disableOptions, tree.disableHead)
+		n.handlers = handlers.New(tree.disableHead)
 	}
 
 	return n.handlers.Add(h, methods...)
@@ -105,7 +103,7 @@ func (tree *Tree) SetAllow(pattern, allow string) error {
 	}
 
 	if n.handlers == nil {
-		n.handlers = handlers.New(tree.disableOptions, tree.disableHead)
+		n.handlers = handlers.New(tree.disableHead)
 	}
 
 	n.handlers.SetAllow(allow)

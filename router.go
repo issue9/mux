@@ -65,7 +65,7 @@ func (mux *Mux) NewRouter(name string, matcher group.Matcher) (r *Router, ok boo
 		mux:     mux,
 		name:    name,
 		matcher: matcher,
-		tree:    tree.New(mux.disableOptions, mux.disableHead),
+		tree:    tree.New(mux.disableHead),
 		last:    last,
 	}
 	r.middlewares = NewMiddlewares(http.HandlerFunc(r.serveHTTP))

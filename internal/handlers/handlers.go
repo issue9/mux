@@ -13,10 +13,8 @@ type optionsState int8
 
 // 表示对 OPTIONAL 请求中 Allow 报头中输出内容的处理方式。
 const (
-	optionsStateDefault      optionsState = iota // 默认情况
-	optionsStateFixedString                      // 设置为固定的字符串
-	optionsStateFixedHandler                     // 设置为固定的 http.Handler
-	optionsStateDisable                          // 禁用，不会自动生 optionAllow 的值
+	optionsStateDefault     optionsState = iota // 默认情况
+	optionsStateFixedString                     // 设置为固定的字符串
 )
 
 // Methods 所有支持请求方法
@@ -49,21 +47,12 @@ type Handlers struct {
 // New 声明一个新的 Handlers 实例
 //
 // disableHead 是否自动添加 HEAD 请求内容。
-func New(disableOptions, disableHead bool) *Handlers {
-	ret := &Handlers{
+func New(disableHead bool) *Handlers {
+	return &Handlers{
 		handlers:     make(map[string]http.Handler, 4), // 大部分不会超过 4 条数据
 		optionsState: optionsStateDefault,
 		disableHead:  disableHead,
 	}
-
-	if disableOptions {
-		ret.optionsState = optionsStateDisable
-	} else {
-		ret.handlers[http.MethodOptions] = http.HandlerFunc(ret.optionsServeHTTP)
-		ret.optionsAllow = ret.getOptionsAllow()
-	}
-
-	return ret
 }
 
 // Add 添加一个处理函数
@@ -84,14 +73,9 @@ func (hs *Handlers) Add(h http.Handler, methods ...string) error {
 func (hs *Handlers) addSingle(h http.Handler, m string) error {
 	switch m {
 	case http.MethodOptions:
-		if hs.optionsState == optionsStateFixedHandler { // 被强制修改过，不能再受理。
-			return fmt.Errorf("该请求方法 %s 已经存在", m)
-		}
-
-		hs.handlers[m] = h
-		hs.optionsState = optionsStateFixedHandler
+		return fmt.Errorf("无法手动添加 OPTIONS 请求方法")
 	case http.MethodHead:
-		return fmt.Errorf("无法手动添加 head 请求方法")
+		return fmt.Errorf("无法手动添加 HEAD 请求方法")
 	default:
 		if !methodExists(m) {
 			return fmt.Errorf("该请求方法 %s 不被支持", m)
@@ -102,9 +86,13 @@ func (hs *Handlers) addSingle(h http.Handler, m string) error {
 		}
 		hs.handlers[m] = h
 
-		// GET 请求，且状态为 Auto 的时候，可以自动添加
+		// GET
 		if m == http.MethodGet && !hs.disableHead {
 			hs.handlers[http.MethodHead] = hs.headServeHTTP(h)
+		}
+
+		if _, found := hs.handlers[http.MethodOptions]; !found {
+			hs.handlers[http.MethodOptions] = http.HandlerFunc(hs.optionsServeHTTP)
 		}
 
 		// 重新生成 optionsAllow 字符串
@@ -150,7 +138,7 @@ func (hs *Handlers) getOptionsAllow() string {
 // 返回值表示是否已经被清空。
 func (hs *Handlers) Remove(methods ...string) bool {
 	if len(methods) == 0 {
-		hs.handlers = make(map[string]http.Handler, 8)
+		hs.handlers = make(map[string]http.Handler, 4)
 		hs.optionsAllow = ""
 		return true
 	}
@@ -158,8 +146,8 @@ func (hs *Handlers) Remove(methods ...string) bool {
 	for _, m := range methods {
 		delete(hs.handlers, m)
 
-		if m == http.MethodOptions { // 明确要删除 OPTIONS，则将其 optionsState 转为禁止使用
-			hs.optionsState = optionsStateDisable
+		if m == http.MethodOptions { // 明确要删除 OPTIONS，则将其 optionsAllow 设置为空
+			hs.optionsAllow = ""
 		} else if m == http.MethodGet { // HEAD 跟随 GET 一起删除
 			delete(hs.handlers, http.MethodHead)
 		}
@@ -172,27 +160,27 @@ func (hs *Handlers) Remove(methods ...string) bool {
 	}
 
 	// 只有一个 OPTIONS 了，且未经外界强制修改，则将其也一并删除。
-	if hs.Len() == 1 &&
-		hs.handlers[http.MethodOptions] != nil &&
-		hs.optionsState == optionsStateDefault {
+	if hs.Len() == 1 && hs.handlers[http.MethodOptions] != nil {
 		delete(hs.handlers, http.MethodOptions)
 		hs.optionsAllow = ""
 		return true
 	}
 
-	if hs.optionsState == optionsStateDefault {
+	if hs.optionsAllow != "" && hs.optionsState != optionsStateFixedString { // 为空，表示是主动删除 options
 		hs.optionsAllow = hs.getOptionsAllow()
 	}
+
 	return false
 }
 
 // SetAllow 设置 Options 请求头的 Allow 报头
 func (hs *Handlers) SetAllow(optionsAllow string) {
-	if hs.optionsState == optionsStateDisable {
-		hs.handlers[http.MethodOptions] = http.HandlerFunc(hs.optionsServeHTTP)
-	}
 	hs.optionsAllow = optionsAllow
 	hs.optionsState = optionsStateFixedString
+
+	if _, found := hs.handlers[http.MethodOptions]; !found {
+		hs.handlers[http.MethodOptions] = http.HandlerFunc(hs.optionsServeHTTP)
+	}
 }
 
 // Handler 获取指定方法对应的处理函数
@@ -215,8 +203,7 @@ func (hs *Handlers) Methods(ignoreHead, ignoreOptions bool) []string {
 	methods := make([]string, 0, len(hs.handlers))
 
 	for key := range hs.handlers {
-		if (key == http.MethodOptions && ignoreOptions && hs.optionsState == optionsStateDefault) ||
-			key == http.MethodHead && ignoreHead {
+		if (key == http.MethodOptions && ignoreOptions) || key == http.MethodHead && ignoreHead {
 			continue
 		}
 
