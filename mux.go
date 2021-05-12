@@ -1,6 +1,12 @@
 // SPDX-License-Identifier: MIT
 
 // Package mux 功能完备的路由中间件
+//
+// 语法
+//
+// 路由支持以 {} 的形式包含参数，比如：/posts/{id}.html，id 在解析时会解析任意字符。
+// 也可以在 {} 中约束参数的范围，比如 /posts/{id:\\d+}.html，表示 id 只能匹配数字。
+// 路由地址可以是 ascii 字符，但是参数名称如果是非 ascii，在正则表达式中无法使用。
 package mux
 
 import (
