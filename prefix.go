@@ -2,9 +2,7 @@
 
 package mux
 
-import (
-	"net/http"
-)
+import "net/http"
 
 // Prefix 可以将具有统一前缀的路由项集中在一起操作
 //

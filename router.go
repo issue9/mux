@@ -129,9 +129,7 @@ func (r *Router) Handle(pattern string, h http.Handler, methods ...string) error
 
 // SetAllow 将 OPTIONS 请求方法的报头 allow 值固定为指定的值
 //
-// 若无特殊需求，不用调用此方法，系统会自动计算符合当前路由的请求方法列表。
-// 如果想实现对处理方法的自定义，可以显示地调用 Handle 方法:
-//  Router.Handle("/api/1", handle, http.MethodOptions)
+// NOTE: 若无特殊需求，不用调用此方法，系统会自动计算符合当前路由的请求方法列表。
 //
 // Options 与 SetAllow 功能上完全相同，只是对错误处理上有所有区别。
 // Options 在出错时 panic，而 SetAllow 会返回错误信息。
@@ -141,9 +139,7 @@ func (r *Router) SetAllow(pattern string, allow string) error {
 
 // Options 将 OPTIONS 请求方法的报头 allow 值固定为指定的值
 //
-// 若无特殊需求，不用调用此方法，系统会自动计算符合当前路由的请求方法列表。
-// 如果想实现对处理方法的自定义，可以显示地调用 Handle 方法:
-//  Router.Handle("/api/1", handle, http.MethodOptions)
+// NOTE: 若无特殊需求，不用调用此方法，系统会自动计算符合当前路由的请求方法列表。
 //
 // Options 与 SetAllow 功能上完全相同，只是对错误处理上有所有区别。
 // Options 在出错时 panic，而 SetAllow 会返回错误信息。
