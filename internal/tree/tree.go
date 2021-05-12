@@ -112,18 +112,6 @@ func (tree *Tree) SetAllow(pattern, allow string) error {
 	return nil
 }
 
-// URL 根据参数生成地址
-//
-// 若节点不存在，则会自动生成。
-func (tree *Tree) URL(pattern string, params map[string]string) (string, error) {
-	node, err := tree.getNode(pattern)
-	if err != nil {
-		return "", err
-	}
-
-	return node.url(params)
-}
-
 // Handler 找到与当前内容匹配的 handlers.Handlers 实例
 func (tree *Tree) Handler(path string) (*handlers.Handlers, params.Params) {
 	ps := make(params.Params, 3)

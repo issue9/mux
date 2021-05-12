@@ -10,6 +10,7 @@ import (
 	"github.com/issue9/sliceutil"
 
 	"github.com/issue9/mux/v4/group"
+	"github.com/issue9/mux/v4/internal/syntax"
 	"github.com/issue9/mux/v4/internal/tree"
 	"github.com/issue9/mux/v4/params"
 )
@@ -234,7 +235,7 @@ func (r *Router) AnyFunc(pattern string, f http.HandlerFunc) *Router {
 // pattern 为路由项的定义内容；
 // params 为路由项中的参数，键名为参数名，键值为参数值。
 func (r *Router) URL(pattern string, params map[string]string) (string, error) {
-	return r.tree.URL(pattern, params)
+	return syntax.URL(pattern, params)
 }
 
 func (r *Router) serveHTTP(w http.ResponseWriter, req *http.Request) {

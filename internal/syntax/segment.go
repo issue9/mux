@@ -58,8 +58,12 @@ func NewSegment(val string) (*Segment, error) {
 
 	separator := strings.IndexByte(val, separatorByte)
 	if separator == -1 || separator+1 == end || separator > end { // {abc} 或是 {abc:} 或是 {abc}:
-		seg.Type = Named
 		seg.Name = val[start+1 : end]
+		if separator != -1 && separator < end {
+			seg.Name = val[start+1 : separator]
+		}
+
+		seg.Type = Named
 		seg.Suffix = val[end+1:]
 		seg.Endpoint = val[len(val)-1] == endByte
 		seg.matcher = func(string) bool { return true }

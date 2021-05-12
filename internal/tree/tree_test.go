@@ -73,13 +73,6 @@ func (n *tester) paramsTrue(method, path string, code int, params map[string]str
 	n.a.Equal(ps, params)
 }
 
-// 验证 node.URL 的正确性
-func (n *tester) urlTrue(pattern string, params map[string]string, url string) {
-	u, err := n.tree.URL(pattern, params)
-	n.a.NotError(err)
-	n.a.Equal(u, url)
-}
-
 func TestTree_match(t *testing.T) {
 	a := assert.New(t)
 	test := newTester(a)
@@ -184,22 +177,6 @@ func TestTree_Params(t *testing.T) {
 	test.paramsTrue(http.MethodGet, "/posts/1.html/author/profile/", 2, map[string]string{"id": "1.html", "action": "profile"})
 }
 
-func TestTree_URL(t *testing.T) {
-	a := assert.New(t)
-	test := newTester(a)
-
-	// 添加路由项
-	test.add(http.MethodGet, "/posts/{id}", 1)                       // 命名
-	test.add(http.MethodGet, "/posts/{id}/author/{action}/", 2)      // 命名
-	test.add(http.MethodGet, "/posts/{id:\\d+}", 3)                  // 正则
-	test.add(http.MethodGet, "/posts/{id:\\d+}/author/{action}/", 4) // 正则
-
-	test.urlTrue("/posts/{id:\\d+}", map[string]string{"id": "100"}, "/posts/100")
-	test.urlTrue("/posts/{id:\\d+}/author/{action}/", map[string]string{"id": "100", "action": "p"}, "/posts/100/author/p/")
-	test.urlTrue("/posts/{id}", map[string]string{"id": "100.htm"}, "/posts/100.htm")
-	test.urlTrue("/posts/{id}/author/{action}/", map[string]string{"id": "100.htm", "action": "p"}, "/posts/100.htm/author/p/")
-}
-
 func TestTreeCN(t *testing.T) {
 	a := assert.New(t)
 	test := newTester(a)
@@ -211,7 +188,6 @@ func TestTreeCN(t *testing.T) {
 	test.matchTrue(http.MethodGet, "/posts/1", 1)
 	test.matchTrue(http.MethodGet, "/文章/1", 2)
 	test.paramsTrue(http.MethodGet, "/文章/1.html", 2, map[string]string{"编号": "1.html"})
-	test.urlTrue("/文章/{编号}", map[string]string{"编号": "100.htm"}, "/文章/100.htm")
 }
 
 func TestTree_Clean(t *testing.T) {

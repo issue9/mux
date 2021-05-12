@@ -2,7 +2,9 @@
 
 package mux
 
-import "net/http"
+import (
+	"net/http"
+)
 
 // Prefix 可以将具有统一前缀的路由项集中在一起操作
 //
@@ -136,7 +138,7 @@ func (p *Prefix) Clean() *Prefix {
 // 若 name 作为路由项定义，会加上 Prefix.prefix 作为前缀；
 // params 为路由项中的参数，键名为参数名，键值为参数值。
 func (p *Prefix) URL(pattern string, params map[string]string) (string, error) {
-	return p.router.tree.URL(p.prefix+pattern, params)
+	return p.router.URL(p.prefix+pattern, params)
 }
 
 // Prefix 在现有 Prefix 的基础上声明一个新的 Prefix 实例

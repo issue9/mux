@@ -134,3 +134,65 @@ func TestSplitString(t *testing.T) {
 
 	test("/posts/{{id:\\d+}/author", "/posts/", "{{id:\\d+}/author")
 }
+
+func TestTree_URL(t *testing.T) {
+	a := assert.New(t)
+	data := []*struct {
+		pattern string
+		ps      map[string]string
+		output  string
+		err     bool
+	}{
+		{
+			pattern: "/posts/{id}",
+			ps:      map[string]string{"id": "100"},
+			output:  "/posts/100",
+		},
+		{
+			pattern: "/posts/{id",
+			ps:      map[string]string{"id": "100"},
+			output:  "/posts/{id",
+		},
+		{
+			pattern: "/posts/{id:}",
+			ps:      map[string]string{"id": "100"},
+			output:  "/posts/100",
+		},
+		{
+			pattern: "/posts/{id}:",
+			ps:      map[string]string{"id": "100"},
+			output:  "/posts/100:",
+		},
+		{
+			pattern: "/posts/{id:\\d+}",
+			ps:      map[string]string{"id": "100"},
+			output:  "/posts/100",
+		},
+		{
+			pattern: "/posts/{id:\\d+}/author/{page}/",
+			ps:      map[string]string{"id": "100", "page": "200"},
+			output:  "/posts/100/author/200/",
+		},
+		{
+			pattern: "/posts/{编号}/作者/{page}/",
+			ps:      map[string]string{"编号": "100", "page": "200"},
+			output:  "/posts/100/作者/200/",
+		},
+
+		{ // 参数未指定
+			pattern: "/posts/{id:\\d+}",
+			err:     true,
+		},
+	}
+
+	for _, item := range data {
+		output, err := URL(item.pattern, item.ps)
+		if item.err {
+			a.Error(err, "解析 %s 未出现预期的错误", item.pattern).
+				Empty(item.output)
+		} else {
+			a.NotError(err, "解析 %s 出现错误: %s", item.pattern, err).
+				Equal(output, item.output)
+		}
+	}
+}

@@ -32,13 +32,15 @@ func TestNewSegment(t *testing.T) {
 	a.NotError(err).Equal(seg.Type, Named).
 		Equal(seg.Value, "{id:}").
 		True(seg.Endpoint).
-		Empty(seg.Suffix)
+		Empty(seg.Suffix).
+		Equal(seg.Name, "id")
 
 	seg, err = NewSegment("{id}:")
 	a.NotError(err).Equal(seg.Type, Named).
 		Equal(seg.Value, "{id}:").
 		False(seg.Endpoint).
-		Equal(seg.Suffix, ":")
+		Equal(seg.Suffix, ":").
+		Equal(seg.Name, "id")
 
 	seg, err = NewSegment("{id:any}")
 	a.NotError(err).Equal(seg.Type, Interceptor).

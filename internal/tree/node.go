@@ -3,11 +3,8 @@
 package tree
 
 import (
-	"fmt"
 	"sort"
 	"strings"
-
-	"github.com/issue9/errwrap"
 
 	"github.com/issue9/mux/v4/internal/handlers"
 	"github.com/issue9/mux/v4/internal/syntax"
@@ -226,35 +223,6 @@ LOOP:
 	}
 
 	return nil
-}
-
-// URL 根据参数生成地址
-func (n *node) url(params map[string]string) (string, error) {
-	nodes := make([]*node, 0, 5)
-	for curr := n; curr.parent != nil; curr = curr.parent { // 从尾部向上开始获取节点
-		nodes = append(nodes, curr)
-	}
-
-	var buf errwrap.StringBuilder
-	for i := len(nodes) - 1; i >= 0; i-- {
-		node := nodes[i]
-		switch node.segment.Type {
-		case syntax.String:
-			buf.WString(node.segment.Value)
-		case syntax.Named, syntax.Regexp, syntax.Interceptor:
-			param, exists := params[node.segment.Name]
-			if !exists {
-				return "", fmt.Errorf("未找到参数 %s 的值", node.segment.Name)
-			}
-			buf.WString(param).
-				WString(node.segment.Suffix) // 如果是 endpoint suffix 肯定为空
-		} // end switch
-	} // end for
-
-	if buf.Err != nil {
-		return "", buf.Err
-	}
-	return buf.String(), nil
 }
 
 // 从 nodes 中删除一个 pattern 字段为指定值的元素，

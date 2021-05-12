@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/issue9/errwrap"
 )
 
 // Type 路由项的类型
@@ -54,6 +56,33 @@ func (t Type) String() string {
 	default:
 		panic("不存在的类型")
 	}
+}
+
+// URL 将 params 中的参数填入 pattern
+//
+// 如果 pattern 中存在，但是不存在于 params，将出错，
+// 但是如果只存在于 params，但是不存在于 pattern 是可以的。
+func URL(pattern string, params map[string]string) (string, error) {
+	segs, err := Split(pattern)
+	if err != nil {
+		return "", err
+	}
+
+	buf := errwrap.StringBuilder{}
+	for _, seg := range segs {
+		if seg.Type == String {
+			buf.WString(seg.Value)
+			continue
+		}
+
+		val, found := params[seg.Name]
+		if !found {
+			return "", fmt.Errorf("未找到参数 %s 的值", seg.Name)
+		}
+		buf.WString(val).WString(seg.Suffix)
+	}
+
+	return buf.String(), buf.Err
 }
 
 // Split 将字符串解析成字符串数组
