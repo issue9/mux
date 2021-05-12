@@ -54,11 +54,10 @@ func TestHandlers_Add(t *testing.T) {
 	a.NotNil(hs)
 	a.NotError(hs.Add(getHandler, http.MethodGet, http.MethodPut))
 	a.Equal(hs.Len(), 4) // 包含自动生成的 OPTIONS 和 HEAD
-	a.Equal(hs.headState, headStateAuto)
+	a.False(hs.disableHead)
 	// 特意指定 head
-	a.NotError(hs.Add(getHandler, http.MethodHead))
-	a.Equal(hs.Len(), 4) // 不会变多
-	a.Equal(hs.headState, headStateFixed)
+	a.ErrorString(hs.Add(getHandler, http.MethodHead), "无法手动添加 head 请求方法")
+	a.Equal(hs.Len(), 4)                         // 不会变多
 	a.Error(hs.Add(getHandler, http.MethodHead)) // 多次添加
 }
 
@@ -80,16 +79,18 @@ func TestHandlers_Add_Remove(t *testing.T) {
 	a.NotError(hs.Remove(http.MethodOptions))
 	a.NotError(hs.Add(getHandler, http.MethodOptions))
 
-	// HEAD，和 GET 一起删除
+	// HEAD 和 GET 一起删除
 	a.NotError(hs.Add(getHandler, http.MethodGet))
+	a.NotNil(hs.handlers[http.MethodHead]) // 自动添加 HEAD
 	a.False(hs.Remove(http.MethodGet))
-	a.Equal(hs.headState, headStateAuto)
-	a.Nil(hs.handlers[http.MethodHead])
+	a.Nil(hs.handlers[http.MethodHead]) // 自动删除 HEAD
 
-	// HEAD 特意添加 HEAD
+	// 先删除 HEAD，再删除 GET
 	a.NotError(hs.Add(getHandler, http.MethodGet))
-	a.NotError(hs.Add(getHandler, http.MethodHead))
-	a.Equal(hs.headState, headStateFixed)
+	a.NotNil(hs.handlers[http.MethodHead]) // 自动添加 HEAD
+	a.False(hs.Remove(http.MethodHead))
+	a.Nil(hs.handlers[http.MethodHead])   // 自动删除 HEAD
+	a.NotNil(hs.handlers[http.MethodGet]) // Get 还在
 
 	// 删除不存在的内容
 	a.False(hs.Remove("not exists"))
@@ -149,31 +150,6 @@ func TestHandlers_optionsAllow(t *testing.T) {
 	test("options")
 }
 
-func TestHandlers_head(t *testing.T) {
-	a := assert.New(t)
-
-	hs := New(false, false)
-	a.NotNil(hs)
-
-	test := func(val string) {
-		w := httptest.NewRecorder()
-		r := httptest.NewRequest("HEAD", "/empty", nil)
-		h := hs.Handler(http.MethodHead)
-		a.NotNil(h)
-		h.ServeHTTP(w, r)
-		a.Equal(w.Body.String(), val)
-	}
-
-	// 通过 Get 获取的 Head
-	a.NotError(hs.Add(getHandler, http.MethodGet))
-	test("")
-
-	// 主动添加
-	a.NotError(hs.Add(getHandler, http.MethodHead))
-	test("hello")
-
-}
-
 func TestHandlers_Methods(t *testing.T) {
 	a := assert.New(t)
 
@@ -221,20 +197,15 @@ func TestHandlers_Methods(t *testing.T) {
 	a.Equal(hs.Methods(true, true), []string{http.MethodPut})
 	a.NotError(hs.Add(getHandler, http.MethodGet))
 
-	// 强制指定 HEAD
-	a.NotError(hs.Add(getHandler, http.MethodHead))
-	a.Equal(hs.Methods(false, false), []string{http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodPut})
-	a.Equal(hs.Methods(true, true), []string{http.MethodGet, http.MethodHead, http.MethodPut})
-
-	// 强制指定 OPTIONS
+	// 强制指定 OPTIONS，不影响 methods() 的返回
 	hs.SetAllow("xx")
 	a.Equal(hs.Methods(false, false), []string{http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodPut})
-	a.Equal(hs.Methods(true, true), []string{http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodPut})
+	a.Equal(hs.Methods(true, true), []string{http.MethodGet, http.MethodOptions, http.MethodPut})
 
-	// 删除除 HEAD,OPTIONS 之外的其它请求方法
+	// 删除除 OPTIONS 之外的其它请求方法
 	hs.Remove(http.MethodGet, http.MethodPut)
-	a.Equal(hs.Methods(false, false), []string{http.MethodHead, http.MethodOptions})
-	a.Equal(hs.Methods(true, true), []string{http.MethodHead, http.MethodOptions})
+	a.Equal(hs.Methods(false, false), []string{http.MethodOptions})
+	a.Equal(hs.Methods(true, true), []string{http.MethodOptions})
 
 	// 删除所有
 	hs.Remove()

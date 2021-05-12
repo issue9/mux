@@ -19,15 +19,6 @@ const (
 	optionsStateDisable                          // 禁用，不会自动生 optionAllow 的值
 )
 
-type headState int8
-
-// 表示对 HEAD 请求是否根据 GET 请求自动生成。
-const (
-	headStateDefault headState = iota // 不作任何额外操作
-	headStateAuto                     // 自动生成，有 GET 就生成，作为默认值
-	headStateFixed                    // 有固定的 Handler
-)
-
 // Methods 所有支持请求方法
 var Methods = []string{
 	http.MethodGet,
@@ -52,7 +43,7 @@ type Handlers struct {
 
 	optionsAllow string       // 缓存的 OPTIONS 请求的 allow 报头内容
 	optionsState optionsState // OPTIONS 请求的处理方式
-	headState    headState
+	disableHead  bool
 }
 
 // New 声明一个新的 Handlers 实例
@@ -62,11 +53,7 @@ func New(disableOptions, disableHead bool) *Handlers {
 	ret := &Handlers{
 		handlers:     make(map[string]http.Handler, 4), // 大部分不会超过 4 条数据
 		optionsState: optionsStateDefault,
-		headState:    headStateDefault,
-	}
-
-	if !disableHead {
-		ret.headState = headStateAuto
+		disableHead:  disableHead,
 	}
 
 	if disableOptions {
@@ -104,12 +91,7 @@ func (hs *Handlers) addSingle(h http.Handler, m string) error {
 		hs.handlers[m] = h
 		hs.optionsState = optionsStateFixedHandler
 	case http.MethodHead:
-		if hs.headState == headStateFixed {
-			return fmt.Errorf("该请求方法 %s 已经存在", m)
-		}
-
-		hs.handlers[m] = h
-		hs.headState = headStateFixed
+		return fmt.Errorf("无法手动添加 head 请求方法")
 	default:
 		if !methodExists(m) {
 			return fmt.Errorf("该请求方法 %s 不被支持", m)
@@ -121,7 +103,7 @@ func (hs *Handlers) addSingle(h http.Handler, m string) error {
 		hs.handlers[m] = h
 
 		// GET 请求，且状态为 Auto 的时候，可以自动添加
-		if m == http.MethodGet && hs.headState == headStateAuto {
+		if m == http.MethodGet && !hs.disableHead {
 			hs.handlers[http.MethodHead] = hs.headServeHTTP(h)
 		}
 
@@ -178,7 +160,7 @@ func (hs *Handlers) Remove(methods ...string) bool {
 
 		if m == http.MethodOptions { // 明确要删除 OPTIONS，则将其 optionsState 转为禁止使用
 			hs.optionsState = optionsStateDisable
-		} else if m == http.MethodGet && hs.headState == headStateAuto { // 跟随 get 一起删除
+		} else if m == http.MethodGet { // HEAD 跟随 GET 一起删除
 			delete(hs.handlers, http.MethodHead)
 		}
 	}
@@ -234,7 +216,7 @@ func (hs *Handlers) Methods(ignoreHead, ignoreOptions bool) []string {
 
 	for key := range hs.handlers {
 		if (key == http.MethodOptions && ignoreOptions && hs.optionsState == optionsStateDefault) ||
-			key == http.MethodHead && ignoreHead && hs.headState == headStateAuto {
+			key == http.MethodHead && ignoreHead {
 			continue
 		}
 
