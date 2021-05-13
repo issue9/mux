@@ -11,6 +11,8 @@ import (
 	"strings"
 )
 
+const defaultSize = 4 // Handlers.handlers 的初始容量
+
 // Methods 所有支持请求方法
 var Methods = []string{
 	http.MethodGet,
@@ -40,9 +42,9 @@ type Handlers struct {
 // disableHead 是否禁止自动添加 HEAD 请求内容
 func New(disableHead bool) *Handlers {
 	return &Handlers{
-		handlers:    make(map[string]http.Handler, 4), // 大部分不会超过 4 条数据
+		handlers:    make(map[string]http.Handler, defaultSize),
 		disableHead: disableHead,
-		methods:     make([]string, 0, 4),
+		methods:     make([]string, 0, defaultSize),
 	}
 }
 
@@ -124,7 +126,7 @@ func (hs *Handlers) buildMethods() {
 // 返回值表示是否已经被清空。
 func (hs *Handlers) Remove(methods ...string) (bool, error) {
 	if len(methods) == 0 {
-		hs.handlers = make(map[string]http.Handler, 4)
+		hs.handlers = make(map[string]http.Handler, defaultSize)
 		hs.buildMethods()
 		return hs.Len() == 0, nil
 	}
