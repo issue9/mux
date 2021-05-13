@@ -82,7 +82,7 @@ func TestMux_Resource(t *testing.T) {
 	a := assert.New(t)
 	m := New(true, false, nil, nil)
 	a.NotNil(m)
-	def, ok := m.NewRouter("def", group.MatcherFunc(group.Any))
+	def, ok := m.NewRouter("def", group.MatcherFunc(group.Any), Allowed())
 	a.True(ok).NotNil(def)
 
 	r1 := def.Resource("/abc/1")
@@ -106,7 +106,7 @@ func TestPrefix_Resource(t *testing.T) {
 
 	m := Default()
 	a.NotNil(m)
-	def, ok := m.NewRouter("def", group.MatcherFunc(group.Any))
+	def, ok := m.NewRouter("def", group.MatcherFunc(group.Any), Allowed())
 	a.True(ok).NotNil(def)
 
 	p := def.Prefix("/p1")
@@ -125,7 +125,7 @@ func TestResource_URL(t *testing.T) {
 	a := assert.New(t)
 	m := New(true, false, nil, nil)
 	a.NotNil(m)
-	def, ok := m.NewRouter("def", group.MatcherFunc(group.Any))
+	def, ok := m.NewRouter("def", group.MatcherFunc(group.Any), Allowed())
 	a.True(ok).NotNil(def)
 
 	// 非正则

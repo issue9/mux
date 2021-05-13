@@ -32,7 +32,7 @@ func init() {
 
 		issue9Mux = New(true, false, nil, nil)
 		var ok bool
-		def, ok := issue9Mux.NewRouter("def", group.MatcherFunc(group.Any))
+		def, ok := issue9Mux.NewRouter("def", group.MatcherFunc(group.Any), Allowed())
 		if !ok {
 			panic("初始化 Router 出错")
 		}

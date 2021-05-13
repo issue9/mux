@@ -101,9 +101,6 @@ func methodExists(m string) bool {
 
 func (hs *Handlers) optionsServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Allow", hs.optionsAllow)
-	if r.Header.Get("Origin") != "" { // preflight request
-		w.Header().Set("Access-Control-Allow-Methods", hs.optionsAllow)
-	}
 }
 
 func (hs *Handlers) headServeHTTP(h http.Handler) http.Handler {

@@ -22,6 +22,7 @@ type Router struct {
 	matcher     group.Matcher
 	tree        *tree.Tree
 	middlewares *Middlewares
+	cors        *CORS
 	last        bool // 在多路由中，有此标记的排在最后。
 }
 
@@ -39,7 +40,7 @@ func (mux *Mux) Routers() []*Router { return mux.routers }
 // name 表示该路由组的名称，需要唯一，否则返回 false；
 // matcher 路由的准入条件，如果为空，则此条路由匹配时会被排在最后，
 // 只有一个路由的 matcher 为空，否则会 panic。
-func (mux *Mux) NewRouter(name string, matcher group.Matcher) (r *Router, ok bool) {
+func (mux *Mux) NewRouter(name string, matcher group.Matcher, cors *CORS) (r *Router, ok bool) {
 	if name == "" {
 		panic("参数 name 不能为空")
 	}
@@ -61,11 +62,13 @@ func (mux *Mux) NewRouter(name string, matcher group.Matcher) (r *Router, ok boo
 		}
 	}
 
+	cors.build()
 	r = &Router{
 		mux:     mux,
 		name:    name,
 		matcher: matcher,
 		tree:    tree.New(mux.disableHead),
+		cors:    cors,
 		last:    last,
 	}
 	r.middlewares = NewMiddlewares(http.HandlerFunc(r.serveHTTP))
@@ -211,6 +214,8 @@ func (r *Router) serveHTTP(w http.ResponseWriter, req *http.Request) {
 		r.mux.notFound(w, req)
 		return
 	}
+
+	r.cors.handle(hs, w, req) // 处理跨域问题
 
 	h := hs.Handler(req.Method)
 	if h == nil {
