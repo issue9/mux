@@ -69,18 +69,13 @@ func TestResource(t *testing.T) {
 	test.matchTrue(http.MethodTrace, "/f/any", 206)
 
 	// remove
-	f.Remove(http.MethodGet, http.MethodHead)
+	a.NotError(f.Remove(http.MethodGet, http.MethodHead))
 	test.matchTrue(http.MethodGet, "/f/any", 405)
 	test.matchTrue(http.MethodDelete, "/f/any", 206)
 
-	f.Clean()
+	a.NotError(f.Clean())
 	test.matchTrue(http.MethodGet, "/f/any", 404)
 	test.matchTrue(http.MethodDelete, "/f/any", 404)
-
-	// options
-	f = test.resource("/f/options")
-	f.Options("ABC")
-	test.optionsTrue("/f/options", 200, "ABC")
 }
 
 func TestMux_Resource(t *testing.T) {

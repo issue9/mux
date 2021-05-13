@@ -95,26 +95,22 @@ func (mux *Mux) RemoveRouter(name string) {
 func (r *Router) Name() string { return r.name }
 
 // Clean 清除当前路由组的所有路由项
-func (r *Router) Clean() *Router {
+func (r *Router) Clean() error {
 	r.tree.Clean("")
-	return r
+	return nil
 }
 
 // Routes 返回当前路由组的路由项
-//
-// ignoreHead 是否忽略自动生成的 HEAD 请求；
-// ignoreOptions 是否忽略自动生成的 OPTIONS 请求；
-func (r *Router) Routes(ignoreHead, ignoreOptions bool) map[string][]string {
-	return r.tree.All(ignoreHead, ignoreOptions)
+func (r *Router) Routes() map[string][]string {
+	return r.tree.All()
 }
 
 // Remove 移除指定的路由项
 //
 // 当未指定 methods 时，将删除所有 method 匹配的项。
 // 指定错误的 methods 值，将自动忽略该值。
-func (r *Router) Remove(pattern string, methods ...string) *Router {
-	r.tree.Remove(pattern, methods...)
-	return r
+func (r *Router) Remove(pattern string, methods ...string) error {
+	return r.tree.Remove(pattern, methods...)
 }
 
 // Handle 添加一条路由数据
@@ -125,29 +121,6 @@ func (r *Router) Remove(pattern string, methods ...string) *Router {
 // 但不包含 OPTIONS 和 HEAD。
 func (r *Router) Handle(pattern string, h http.Handler, methods ...string) error {
 	return r.tree.Add(pattern, h, methods...)
-}
-
-// SetAllow 将 OPTIONS 请求方法的报头 allow 值固定为指定的值
-//
-// NOTE: 若无特殊需求，不用调用此方法，系统会自动计算符合当前路由的请求方法列表。
-//
-// Options 与 SetAllow 功能上完全相同，只是对错误处理上有所有区别。
-// Options 在出错时 panic，而 SetAllow 会返回错误信息。
-func (r *Router) SetAllow(pattern string, allow string) error {
-	return r.tree.SetAllow(pattern, allow)
-}
-
-// Options 将 OPTIONS 请求方法的报头 allow 值固定为指定的值
-//
-// NOTE: 若无特殊需求，不用调用此方法，系统会自动计算符合当前路由的请求方法列表。
-//
-// Options 与 SetAllow 功能上完全相同，只是对错误处理上有所有区别。
-// Options 在出错时 panic，而 SetAllow 会返回错误信息。
-func (r *Router) Options(pattern string, allow string) *Router {
-	if err := r.SetAllow(pattern, allow); err != nil {
-		panic(err)
-	}
-	return r
 }
 
 func (r *Router) handle(pattern string, h http.Handler, methods ...string) *Router {

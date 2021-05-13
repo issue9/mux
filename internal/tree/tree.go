@@ -64,23 +64,26 @@ func (tree *Tree) Add(pattern string, h http.Handler, methods ...string) error {
 }
 
 // Clean 清除路由项
-func (tree *Tree) Clean(prefix string) {
-	tree.clean(prefix)
-}
+func (tree *Tree) Clean(prefix string) { tree.clean(prefix) }
 
 // Remove 移除路由项
 //
 // methods 可以为空，表示删除所有内容。
-func (tree *Tree) Remove(pattern string, methods ...string) {
+func (tree *Tree) Remove(pattern string, methods ...string) error {
 	child := tree.find(pattern)
 	if child == nil || child.handlers == nil {
-		return
+		return nil
 	}
 
-	if child.handlers.Remove(methods...) && len(child.children) == 0 {
+	empty, err := child.handlers.Remove(methods...)
+	if err != nil {
+		return err
+	}
+	if empty && len(child.children) == 0 {
 		child.parent.children = removeNodes(child.parent.children, child.segment.Value)
 		child.parent.buildIndexes()
 	}
+	return nil
 }
 
 // 获取指定的节点，若节点不存在，则在该位置生成一个新节点。
@@ -91,23 +94,6 @@ func (tree *Tree) getNode(pattern string) (*node, error) {
 	}
 
 	return tree.node.getNode(segs)
-}
-
-// SetAllow 设置指定节点的 allow 报头
-//
-// 若节点不存在，则会自动生成该节点。
-func (tree *Tree) SetAllow(pattern, allow string) error {
-	n, err := tree.getNode(pattern)
-	if err != nil {
-		return err
-	}
-
-	if n.handlers == nil {
-		n.handlers = handlers.New(tree.disableHead)
-	}
-
-	n.handlers.SetAllow(allow)
-	return nil
 }
 
 // Handler 找到与当前内容匹配的 handlers.Handlers 实例
@@ -122,8 +108,8 @@ func (tree *Tree) Handler(path string) (*handlers.Handlers, params.Params) {
 }
 
 // All 获取当前的所有路径项
-func (tree *Tree) All(ignoreHead, ignoreOptions bool) map[string][]string {
+func (tree *Tree) All() map[string][]string {
 	routes := make(map[string][]string, 100)
-	tree.all(ignoreHead, ignoreOptions, "", routes)
+	tree.all("", routes)
 	return routes
 }

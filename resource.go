@@ -15,23 +15,6 @@ type Resource struct {
 	pattern string
 }
 
-// SetAllow 手动指定 OPTIONS 请求方法的值
-//
-// 具体说明可参考 Router.Options 方法。
-func (r *Resource) SetAllow(allow string) error {
-	return r.router.SetAllow(r.pattern, allow)
-}
-
-// Options 手动指定 OPTIONS 请求方法的值
-//
-// 具体说明可参考 Router.Options 方法。
-func (r *Resource) Options(allow string) *Resource {
-	if err := r.SetAllow(allow); err != nil {
-		panic(err)
-	}
-	return r
-}
-
 // Handle 相当于 Router.Handle(pattern, h, methods...) 的简易写法
 func (r *Resource) Handle(h http.Handler, methods ...string) error {
 	return r.router.Handle(r.pattern, h, methods...)
@@ -118,16 +101,12 @@ func (r *Resource) AnyFunc(f http.HandlerFunc) *Resource {
 }
 
 // Remove 删除指定匹配模式的路由项
-func (r *Resource) Remove(methods ...string) *Resource {
-	r.router.Remove(r.pattern, methods...)
-	return r
+func (r *Resource) Remove(methods ...string) error {
+	return r.router.Remove(r.pattern, methods...)
 }
 
 // Clean 清除当前资源的所有路由项
-func (r *Resource) Clean() *Resource {
-	r.router.Remove(r.pattern)
-	return r
-}
+func (r *Resource) Clean() error { return r.router.Remove(r.pattern) }
 
 // URL 根据参数构建一条 URL
 //

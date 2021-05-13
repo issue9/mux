@@ -231,32 +231,14 @@ func TestTree_Add_Remove(t *testing.T) {
 	a.NotError(tree.Add("/posts/{id}/{author:\\w+}/profile", buildHandler(1), http.MethodGet))
 
 	a.True(tree.find("/posts/1/author").handlers.Len() > 0)
-	tree.Remove("/posts/1/author", http.MethodGet)
+	a.NotError(tree.Remove("/posts/1/author", http.MethodGet))
 	a.Nil(tree.find("/posts/1/author"))
 
-	tree.Remove("/posts/{id}/author", http.MethodGet) // 只删除 GET
+	a.NotError(tree.Remove("/posts/{id}/author", http.MethodGet)) // 只删除 GET
 	a.NotNil(tree.find("/posts/{id}/author"))
-	tree.Remove("/posts/{id}/author") // 删除所有请求方法
+	a.NotError(tree.Remove("/posts/{id}/author")) // 删除所有请求方法
 	a.Nil(tree.find("/posts/{id}/author"))
-	tree.Remove("/posts/{id}/author") // 删除已经不存在的节点，不会报错，不发生任何事情
-}
-
-func TestTree_SetAllow(t *testing.T) {
-	a := assert.New(t)
-	tree := New(false)
-
-	a.NotError(tree.Add("/options", buildHandler(1), http.MethodGet, http.MethodDelete, http.MethodPatch))
-	a.NotError(tree.SetAllow("/options", "TEST1,TEST2"))
-	n, err := tree.getNode("/options")
-	a.NotError(err).NotNil(n)
-	a.Equal(n.handlers.Options(), "TEST1,TEST2")
-
-	tree.Remove("/options", http.MethodGet)
-	a.Equal(n.handlers.Options(), "TEST1,TEST2")
-
-	// 删除完之后，清空 allow
-	tree.Remove("/options")
-	a.Equal(n.handlers.Options(), "")
+	a.NotError(tree.Remove("/posts/{id}/author")) // 删除已经不存在的节点，不会报错，不发生任何事情
 }
 
 func TestTree_All(t *testing.T) {
@@ -269,7 +251,7 @@ func TestTree_All(t *testing.T) {
 	a.NotError(tree.Add("/posts/{id}", buildHandler(http.StatusOK), http.MethodGet, http.MethodPut))
 	a.NotError(tree.Add("/posts/{id}/author", buildHandler(http.StatusOK), http.MethodGet))
 
-	routes := tree.All(false, false)
+	routes := tree.All()
 	a.Equal(routes, map[string][]string{
 		"/":                  {http.MethodGet, http.MethodHead, http.MethodOptions},
 		"/posts":             {http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodPost},

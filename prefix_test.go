@@ -16,6 +16,8 @@ func (t *tester) prefix(p string) *Prefix {
 }
 
 func TestPrefix(t *testing.T) {
+	a := assert.New(t)
+
 	test := newTester(t, true, false)
 	p := test.prefix("/p")
 
@@ -61,21 +63,13 @@ func TestPrefix(t *testing.T) {
 	test.matchTrue(http.MethodDelete, "/p/f/any", 206)
 	test.matchTrue(http.MethodTrace, "/p/f/any", 206)
 
-	p.Options("/h/1", "ABC")
-	test.optionsTrue("/p/h/1", 200, "ABC")
-
-	a := assert.New(t)
-	a.Panic(func() {
-		p.Options("/h/}{1", "ABC")
-	})
-
 	// remove
-	p.Remove("/f/any", http.MethodDelete, http.MethodGet)
+	a.NotError(p.Remove("/f/any", http.MethodDelete, http.MethodGet))
 	test.matchTrue(http.MethodGet, "/p/f/any", 405)   // 已经删除
 	test.matchTrue(http.MethodTrace, "/p/f/any", 206) // 未删除
 
 	// clean
-	p.Clean()
+	a.NotError(p.Clean())
 	test.matchTrue(http.MethodTrace, "/p/f/any", 404)
 	test.optionsTrue("/p/h/1", 404, "")
 	test.matchTrue(http.MethodDelete, "/p/f/1", 404)

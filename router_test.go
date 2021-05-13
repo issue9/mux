@@ -122,12 +122,12 @@ func TestRouter_Routes(t *testing.T) {
 	a.True(ok).NotNil(def)
 	def.Get("/m", buildHandler(1))
 	def.Post("/m", buildHandler(1))
-	a.Equal(def.Routes(false, false), map[string][]string{"/m": {"GET", "HEAD", "OPTIONS", "POST"}})
+	a.Equal(def.Routes(), map[string][]string{"/m": {"GET", "HEAD", "OPTIONS", "POST"}})
 
 	r, ok := m.NewRouter("host-1", &group.PathVersion{})
 	a.True(ok).NotNil(r)
 	r.Get("/m", buildHandler(1))
-	a.Equal(r.Routes(false, false), map[string][]string{"/m": {"GET", "HEAD", "OPTIONS"}})
+	a.Equal(r.Routes(), map[string][]string{"/m": {"GET", "HEAD", "OPTIONS"}})
 }
 
 func TestRouter_Head(t *testing.T) {
@@ -191,13 +191,13 @@ func TestRouter_Handle_Remove(t *testing.T) {
 	test.matchTrue(http.MethodDelete, "/api/1", http.StatusMethodNotAllowed) // 未实现
 
 	// 删除 GET /api/1
-	test.router.Remove("/api/1", http.MethodGet)
+	a.NotError(test.router.Remove("/api/1", http.MethodGet))
 	test.matchTrue(http.MethodGet, "/api/1", http.StatusMethodNotAllowed)
 	test.matchTrue(http.MethodPut, "/api/1", 201) // 不影响 PUT
 	test.matchTrue(http.MethodGet, "/api/2", 202)
 
 	// 删除 GET /api/2，只有一个，所以相当于整个节点被删除
-	test.router.Remove("/api/2", http.MethodGet)
+	a.NotError(test.router.Remove("/api/2", http.MethodGet))
 	test.matchTrue(http.MethodGet, "/api/1", http.StatusMethodNotAllowed)
 	test.matchTrue(http.MethodPut, "/api/1", 201)                 // 不影响 PUT
 	test.matchTrue(http.MethodGet, "/api/2", http.StatusNotFound) // 整个节点被删除
@@ -207,40 +207,8 @@ func TestRouter_Handle_Remove(t *testing.T) {
 	test.matchTrue(http.MethodPost, "/api/1", 201)
 
 	// 删除 ANY /api/1
-	test.router.Remove("/api/1")
+	a.NotError(test.router.Remove("/api/1"))
 	test.matchTrue(http.MethodPost, "/api/1", http.StatusNotFound) // 404 表示整个节点都没了
-}
-
-func TestRouter_Options(t *testing.T) {
-	a := assert.New(t)
-	test := newTester(t, true, false)
-
-	// 添加 GET /api/1
-	a.NotError(test.router.Handle("/api/1", buildHandler(201), http.MethodGet))
-	test.optionsTrue("/api/1", http.StatusOK, "GET, OPTIONS")
-
-	// 添加 DELETE /api/1
-	a.NotError(test.router.Handle("/api/1", buildHandler(201), http.MethodDelete))
-	test.optionsTrue("/api/1", http.StatusOK, "DELETE, GET, OPTIONS")
-
-	// 删除 DELETE /api/1
-	test.router.Remove("/api/1", http.MethodDelete)
-	test.optionsTrue("/api/1", http.StatusOK, "GET, OPTIONS")
-
-	// 通过 Options 自定义 Allow 报头
-	test.router.Options("/api/1", "CUSTOM OPTIONS1")
-	test.optionsTrue("/api/1", http.StatusOK, "CUSTOM OPTIONS1")
-	test.router.Options("/api/1", "CUSTOM OPTIONS2")
-	test.optionsTrue("/api/1", http.StatusOK, "CUSTOM OPTIONS2")
-
-	// 主动添加 Options
-	a.Error(test.router.HandleFunc("/api/1", buildHandlerFunc(201), http.MethodOptions))
-
-	// disableOptions 为 true
-	test = newTester(t, true, false)
-	test.optionsTrue("/api/1", http.StatusNotFound, "")
-	test.router.Options("/api/1", "CUSTOM OPTIONS1") // 显示指定
-	test.optionsTrue("/api/1", http.StatusOK, "CUSTOM OPTIONS1")
 }
 
 func TestRouter_Params(t *testing.T) {
@@ -326,7 +294,7 @@ func TestRouter_Clean(t *testing.T) {
 	m.ServeHTTP(w, r)
 	a.Equal(w.Result().StatusCode, 202)
 
-	def.Clean()
+	a.NotError(def.Clean())
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "/m1", nil)
 	m.ServeHTTP(w, r)
