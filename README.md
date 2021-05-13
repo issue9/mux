@@ -22,10 +22,10 @@ mux 功能完备的 Go 路由器：
 import "github.com/issue9/middleware/v4/header"
 
 h := header.New(map[string]string{
-	"Access-Control-Allow-Origin": "*"
+    "Access-Control-Allow-Origin": "*"
 })
 
-m := mux.New(false, false, false, nil, nil)
+m := mux.New(false, false, nil, nil)
 m.AddMiddleware(h.Middleware) // 中间件，输出跨域的报头。
 
 router, ok := m.New("example.com", group.NewHosts("example.com"))
