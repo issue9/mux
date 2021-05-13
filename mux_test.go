@@ -31,8 +31,8 @@ func TestRouter_routers(t *testing.T) {
 	a.NotError(err).NotNil(h)
 
 	m := Default()
-	def, ok := m.NewRouter("host", h, Allowed())
-	a.True(ok).NotNil(def)
+	def, err := m.NewRouter("host", h, Allowed())
+	a.NotError(err).NotNil(def)
 	w := httptest.NewRecorder()
 	def.Get("/t1", buildHandler(201))
 	r := httptest.NewRequest(http.MethodGet, "/t1", nil)
@@ -57,8 +57,8 @@ func TestRouter_routers(t *testing.T) {
 	// resource
 	m = Default()
 	a.NotNil(m)
-	def, ok = m.NewRouter("def", h, Allowed())
-	a.True(ok).NotNil(def)
+	def, err = m.NewRouter("def", h, Allowed())
+	a.NotError(err).NotNil(def)
 	res := def.Resource("/r1")
 	res.Get(buildHandler(202))
 	w = httptest.NewRecorder()
@@ -74,8 +74,8 @@ func TestRouter_routers(t *testing.T) {
 	// prefix
 	m = Default()
 	a.NotNil(m)
-	def, ok = m.NewRouter("def", h, Allowed())
-	a.True(ok).NotNil(def)
+	def, err = m.NewRouter("def", h, Allowed())
+	a.NotError(err).NotNil(def)
 	p := def.Prefix("/prefix1")
 	p.Get("/p1", buildHandler(203))
 	w = httptest.NewRecorder()
@@ -91,8 +91,8 @@ func TestRouter_routers(t *testing.T) {
 	// prefix prefix
 	m = New(false, false, nil, nil)
 	a.NotNil(m)
-	def, ok = m.NewRouter("def", h, Allowed())
-	a.True(ok).NotNil(def)
+	def, err = m.NewRouter("def", h, Allowed())
+	a.NotError(err).NotNil(def)
 	p1 := def.Prefix("/prefix1")
 	p2 := p1.Prefix("/prefix2")
 	p2.GetFunc("/p2", buildHandlerFunc(204))
@@ -108,8 +108,8 @@ func TestRouter_routers(t *testing.T) {
 
 	// 第二个 Prefix 为域名
 	m = Default()
-	def, ok = m.NewRouter("def", group.MatcherFunc(group.Any), Allowed())
-	a.True(ok).NotNil(def)
+	def, err = m.NewRouter("def", group.MatcherFunc(group.Any), Allowed())
+	a.NotError(err).NotNil(def)
 	p1 = def.Prefix("/prefix1")
 	p2 = p1.Prefix("example.com")
 	p2.GetFunc("/p2", buildHandlerFunc(205))
@@ -124,15 +124,15 @@ func TestRouter_routers_multiple(t *testing.T) {
 
 	m := New(false, false, nil, nil)
 	a.NotNil(m)
-	def, ok := m.NewRouter("default", nil, Allowed())
-	a.True(ok).NotNil(def)
+	def, err := m.NewRouter("default", nil, Allowed())
+	a.NotError(err).NotNil(def)
 	def.Get("/t1", buildHandler(201))
 
-	v1, ok := m.NewRouter("v1", group.NewPathVersion("v1"), Allowed())
-	a.True(ok).NotNil(v1)
+	v1, err := m.NewRouter("v1", group.NewPathVersion("v1"), Allowed())
+	a.NotError(err).NotNil(v1)
 	v1.Get("/path", buildHandler(202))
-	v2, ok := m.NewRouter("v2", group.NewPathVersion("v1", "v2"), Allowed())
-	a.True(ok).NotNil(v2)
+	v2, err := m.NewRouter("v2", group.NewPathVersion("v1", "v2"), Allowed())
+	a.NotError(err).NotNil(v2)
 	v2.Get("/path", buildHandler(203))
 
 	// 指向 def

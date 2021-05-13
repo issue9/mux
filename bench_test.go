@@ -31,10 +31,9 @@ func init() {
 		}
 
 		issue9Mux = New(true, false, nil, nil)
-		var ok bool
-		def, ok := issue9Mux.NewRouter("def", group.MatcherFunc(group.Any), Allowed())
-		if !ok {
-			panic("初始化 Router 出错")
+		def, err := issue9Mux.NewRouter("def", group.MatcherFunc(group.Any), Allowed())
+		if err != nil {
+			panic(err)
 		}
 
 		for _, api := range apis {

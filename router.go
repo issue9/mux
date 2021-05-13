@@ -4,6 +4,7 @@ package mux
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"sort"
 
@@ -14,6 +15,8 @@ import (
 	"github.com/issue9/mux/v4/internal/tree"
 	"github.com/issue9/mux/v4/params"
 )
+
+var ErrRouterExists = errors.New("该名称的路由已经存在")
 
 // Router 提供了基本的路由项添加和删除等功能
 type Router struct {
@@ -39,8 +42,9 @@ func (mux *Mux) Routers() []*Router { return mux.routers }
 //
 // name 表示该路由组的名称，需要唯一，否则返回 false；
 // matcher 路由的准入条件，如果为空，则此条路由匹配时会被排在最后，
-// 只有一个路由的 matcher 为空，否则会 panic。
-func (mux *Mux) NewRouter(name string, matcher group.Matcher, cors *CORS) (r *Router, ok bool) {
+// 只有一个路由的 matcher 为空，否则会 panic；
+// cors 跨域请求的相关设置项；
+func (mux *Mux) NewRouter(name string, matcher group.Matcher, cors *CORS) (*Router, error) {
 	if name == "" {
 		panic("参数 name 不能为空")
 	}
@@ -50,7 +54,7 @@ func (mux *Mux) NewRouter(name string, matcher group.Matcher, cors *CORS) (r *Ro
 		return mux.routers[i].name == name
 	})
 	if index > -1 {
-		return nil, false
+		return nil, ErrRouterExists
 	}
 
 	last := matcher == nil
@@ -62,8 +66,11 @@ func (mux *Mux) NewRouter(name string, matcher group.Matcher, cors *CORS) (r *Ro
 		}
 	}
 
-	cors.build()
-	r = &Router{
+	if err := cors.sanitize(); err != nil {
+		return nil, err
+	}
+
+	r := &Router{
 		mux:     mux,
 		name:    name,
 		matcher: matcher,
@@ -74,7 +81,7 @@ func (mux *Mux) NewRouter(name string, matcher group.Matcher, cors *CORS) (r *Ro
 	r.middlewares = NewMiddlewares(http.HandlerFunc(r.serveHTTP))
 	mux.routers = append(mux.routers, r)
 	sortRouters(mux.routers)
-	return r, true
+	return r, nil
 }
 
 func sortRouters(rs []*Router) {

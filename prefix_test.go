@@ -79,8 +79,8 @@ func TestMux_Prefix(t *testing.T) {
 	a := assert.New(t)
 	m := New(true, false, nil, nil)
 	a.NotNil(m)
-	def, ok := m.NewRouter("def", group.MatcherFunc(group.Any), Allowed())
-	a.True(ok).NotNil(def)
+	def, err := m.NewRouter("def", group.MatcherFunc(group.Any), Allowed())
+	a.NotError(err).NotNil(def)
 
 	p := def.Prefix("/abc")
 	a.Equal(p.prefix, "/abc")
@@ -94,8 +94,8 @@ func TestPrefix_Prefix(t *testing.T) {
 	a := assert.New(t)
 	m := New(true, false, nil, nil)
 	a.NotNil(m)
-	def, ok := m.NewRouter("def", group.MatcherFunc(group.Any), Allowed())
-	a.True(ok).NotNil(def)
+	def, err := m.NewRouter("def", group.MatcherFunc(group.Any), Allowed())
+	a.NotError(err).NotNil(def)
 
 	p := def.Prefix("/abc")
 	pp := p.Prefix("/def")
@@ -111,8 +111,8 @@ func TestPrefix_URL(t *testing.T) {
 	a := assert.New(t)
 	m := New(true, false, nil, nil)
 	a.NotNil(m)
-	def, ok := m.NewRouter("def", group.MatcherFunc(group.Any), Allowed())
-	a.True(ok).NotNil(def)
+	def, err := m.NewRouter("def", group.MatcherFunc(group.Any), Allowed())
+	a.NotError(err).NotNil(def)
 
 	// 非正则
 	p := def.Prefix("/api")

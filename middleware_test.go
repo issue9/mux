@@ -25,8 +25,8 @@ func TestMux_PrependMiddleware(t *testing.T) {
 	a := assert.New(t)
 	m := Default()
 	a.NotNil(m)
-	def, ok := m.NewRouter("def", group.MatcherFunc(group.Any), Allowed())
-	a.True(ok).NotNil(def)
+	def, err := m.NewRouter("def", group.MatcherFunc(group.Any), Allowed())
+	a.NotError(err).NotNil(def)
 
 	def.Get("/get", buildHandler(201))
 	m.PrependMiddleware(buildMiddleware(a, "1")).
@@ -52,8 +52,8 @@ func TestMux_AppendMiddleware(t *testing.T) {
 	a := assert.New(t)
 	m := Default()
 	a.NotNil(m)
-	def, ok := m.NewRouter("def", group.MatcherFunc(group.Any), Allowed())
-	a.True(ok).NotNil(def)
+	def, err := m.NewRouter("def", group.MatcherFunc(group.Any), Allowed())
+	a.NotError(err).NotNil(def)
 
 	def.Get("/get", buildHandler(201))
 	m.AppendMiddleware(buildMiddleware(a, "1")).
@@ -79,8 +79,8 @@ func TestMux_AddMiddleware(t *testing.T) {
 	a := assert.New(t)
 	m := Default()
 	a.NotNil(m)
-	def, ok := m.NewRouter("def", group.MatcherFunc(group.Any), Allowed())
-	a.True(ok).NotNil(def)
+	def, err := m.NewRouter("def", group.MatcherFunc(group.Any), Allowed())
+	a.NotError(err).NotNil(def)
 
 	def.Get("/get", buildHandler(201))
 	m.AppendMiddleware(buildMiddleware(a, "p1")).
@@ -114,8 +114,8 @@ func TestRouter_AddMiddleware(t *testing.T) {
 		AppendMiddleware(buildMiddleware(a, "p2")).
 		PrependMiddleware(buildMiddleware(a, "a2"))
 
-	def, ok := m.NewRouter("def", group.MatcherFunc(group.Any), Allowed())
-	a.True(ok).NotNil(def)
+	def, err := m.NewRouter("def", group.MatcherFunc(group.Any), Allowed())
+	a.NotError(err).NotNil(def)
 	def.Get("/get", buildHandler(201))
 	def.AppendMiddleware(buildMiddleware(a, "rp1")).
 		PrependMiddleware(buildMiddleware(a, "ra1")).

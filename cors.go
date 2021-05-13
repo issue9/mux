@@ -3,6 +3,7 @@
 package mux
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -53,7 +54,7 @@ func Denied() *CORS {
 	return &CORS{}
 }
 
-func (c *CORS) build() {
+func (c *CORS) sanitize() error {
 	for _, o := range c.AllowedOrigins {
 		if o == "*" {
 			c.anyOrigins = true
@@ -76,17 +77,47 @@ func (c *CORS) build() {
 	}
 
 	c.maxAgeString = strconv.FormatUint(c.MaxAge, 10)
+
+	if c.anyOrigins && c.AllowCredentials {
+		return errors.New("AllowedOrigin=* 和 AllowCredentials=true 不能同时成立")
+	}
+
+	return nil
 }
 
 func (c *CORS) handle(hs *handlers.Handlers, w http.ResponseWriter, r *http.Request) {
-	origin := r.Header.Get("Origin")
-	if origin == "" {
-		return
+	// Origin 是可以为空的，所以采用 Access-Control-Request-Method 判断是否为预检。
+	reqMethod := r.Header.Get("Access-Control-Request-Method")
+	preflight := r.Method == http.MethodOptions && reqMethod != ""
+
+	wh := w.Header()
+
+	if preflight {
+		// Access-Control-Allow-Methods
+		methods := hs.Methods()
+		if sliceutil.Index(methods, func(i int) bool { return methods[i] == reqMethod }) == -1 {
+			return
+		}
+		wh.Set("Access-Control-Allow-Methods", hs.Options())
+		wh.Add("Vary", "Access-Control-Request-Method")
+
+		// Access-Control-Allow-Headers
+		if !c.headerIsAllowed(r) {
+			return
+		}
+		if c.allowedHeadersString != "" {
+			wh.Set("Access-Control-Allow-Headers", c.allowedHeadersString)
+		}
+		wh.Add("Vary", "Access-Control-Request-Headers")
+
+		// Access-Control-Max-Age
+		if c.maxAgeString != "" {
+			wh.Set("Access-Control-Max-Age", c.maxAgeString)
+		}
 	}
 
-	h := w.Header()
-
 	// Access-Control-Allow-Origin
+	origin := r.Header.Get("Origin")
 	allowOrigin := "*"
 	if !c.anyOrigins {
 		i := sliceutil.Index(c.AllowedOrigins, func(i int) bool { return c.AllowedOrigins[i] == origin })
@@ -94,28 +125,29 @@ func (c *CORS) handle(hs *handlers.Handlers, w http.ResponseWriter, r *http.Requ
 			allowOrigin = origin
 		}
 	}
-	h.Set("Access-Control-Allow-Origin", allowOrigin)
-
-	// Access-Control-Allow-Methods
-	h.Set("Access-Control-Allow-Methods", hs.Options())
-
-	// Access-Control-Allow-Headers
-	if c.allowedHeadersString != "" {
-		h.Set("Access-Control-Allow-Headers", c.allowedHeadersString)
-	}
+	wh.Set("Access-Control-Allow-Origin", allowOrigin)
+	wh.Add("Vary", "Origin")
 
 	// Access-Control-Allow-Credentials
 	if c.AllowCredentials {
-		h.Set("Access-Control-Allow-Credentials", "true")
-	}
-
-	// Access-Control-Max-Age
-	if c.maxAgeString != "" {
-		h.Set("Access-Control-Max-Age", c.maxAgeString)
+		wh.Set("Access-Control-Allow-Credentials", "true")
 	}
 
 	// Access-Control-Expose-Headers
 	if c.exposedHeadersString != "" {
-		h.Set("Access-Control-Expose-Headers", c.exposedHeadersString)
+		wh.Set("Access-Control-Expose-Headers", c.exposedHeadersString)
 	}
+}
+
+func (c *CORS) headerIsAllowed(r *http.Request) bool {
+	headers := strings.Split(r.Header.Get("Access-Control-Request-Method"), ",")
+	for _, v := range headers {
+		v = strings.TrimSpace(v)
+		i := sliceutil.Index(c.AllowedHeaders, func(i int) bool { return c.AllowedHeaders[i] == v })
+		if i == -1 {
+			return false
+		}
+	}
+
+	return true
 }
