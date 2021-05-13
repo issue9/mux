@@ -11,8 +11,8 @@ mux 功能完备的 Go 路由器：
 
 1. 路由参数；
 1. 支持正则表达式作为路由项匹配方式；
-1. 丰富的 OPTIONS 请求处理方式；
-1. 自动生成 HEAD 请求内容；
+1. 自动生成 OPTIONS 请求处理方式；
+1. 自动生成 HEAD 请求处理方式；
 1. 根据路由反向生成地址；
 1. 任意风格的路由，比如 discuz 这种不以 / 作为分隔符的；
 1. 分组路由，比如按域名，或是版本号等；
@@ -122,7 +122,6 @@ id, err := params.Int("id")
 id := params.MustInt("id", 0) // 0 表示在无法获取 id 参数的默认值
 ```
 
-
 ## 高级用法
 
 ### 分组路由
@@ -158,6 +157,7 @@ r.Do()
 正常情况下，`/posts/{id:\d+}` 或是 `/posts/{id:[0-9]+}` 会被当作正则表达式处理，
 但是正则表达式的性能并不是很好，这个时候我们可以通完 `interceptor` 包进行拦截，
 采用自己的特定方法进行处理：
+
 ```go
 import "github.com/issue9/mux/v4/interceptor"
 
@@ -221,7 +221,7 @@ m := Default()
 
 // 添加中间件
 m.AddMiddleware(h.Middleware).
-	AddMiddleware(c.Middleware)
+    AddMiddleware(c.Middleware)
 
 r, ok := m.NewRouter("def", group.NewHost("example.com"))
 ```
