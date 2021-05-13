@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-// Package tree 提供了以树形结构保存路由项的相关操作。
+// Package tree 提供了以树形结构保存路由项的相关操作
 package tree
 
 import (

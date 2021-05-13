@@ -24,9 +24,7 @@ var Methods = []string{
 	http.MethodHead,
 }
 
-// 除 OPTIONS 和 HEAD 之外的所有支持的元素
-//
-// 在 Add 方法中用到。
+// Add 未指定请求方法时，所采用的默认值。
 var addAny = Methods[:len(Methods)-2]
 
 // Handlers 用于表示某节点下各个请求方法对应的处理函数
@@ -39,7 +37,7 @@ type Handlers struct {
 
 // New 声明一个新的 Handlers 实例
 //
-// disableHead 是否自动添加 HEAD 请求内容。
+// disableHead 是否禁止自动添加 HEAD 请求内容
 func New(disableHead bool) *Handlers {
 	return &Handlers{
 		handlers:    make(map[string]http.Handler, 4), // 大部分不会超过 4 条数据
@@ -60,6 +58,12 @@ func (hs *Handlers) Add(h http.Handler, methods ...string) error {
 		}
 	}
 
+	// 查看是否需要添加 OPTIONS
+	if _, found := hs.handlers[http.MethodOptions]; !found {
+		hs.handlers[http.MethodOptions] = http.HandlerFunc(hs.optionsServeHTTP)
+	}
+
+	hs.buildMethods()
 	return nil
 }
 
@@ -77,17 +81,10 @@ func (hs *Handlers) addSingle(h http.Handler, m string) error {
 	}
 	hs.handlers[m] = h
 
-	// 如果是 GET，则顺便添加 HEAD
-	if m == http.MethodGet && !hs.disableHead {
+	if m == http.MethodGet && !hs.disableHead { // 如果是 GET，则顺便添加 HEAD
 		hs.handlers[http.MethodHead] = hs.headServeHTTP(h)
 	}
 
-	// 查看是否需要添加 OPTIONS
-	if _, found := hs.handlers[http.MethodOptions]; !found {
-		hs.handlers[http.MethodOptions] = http.HandlerFunc(hs.optionsServeHTTP)
-	}
-
-	hs.buildMethods()
 	return nil
 }
 
