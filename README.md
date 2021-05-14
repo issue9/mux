@@ -173,25 +173,33 @@ func digit(path string) bool {
 interceptor.Register(digit, "\\d+", "[0-9]+")
 ```
 
-### OPTIONS
+### CORS
 
-默认情况下，用户无须显示地实现它，系统会自动实现。
-当然用户也可以使用 `*.Options()` 函数指定特定的数据；
-或是直接使用 `*.Handle()` 指定一个自定义的实现方式。
+CORS 不再是以中间件的形式提供，而是通过 NewRouter 直接传递有关 CORS 的配置信息，
+这样可以更好地处理每个地址支持的请求方法。
 
-如果不需要的话，也可以在 `New()` 中将 `disableOptions` 设置为 `true`。
-显示设定 `OPTIONS`，不受 `disableOptions` 的影响。
+OPTIONS 请求方法由系统自动生成。
 
 ```go
 m := mux.Default()
-r, ok := m.NewRouter("default", group.Any, AllowedCORS())
+r, ok := m.NewRouter("default", group.Any, AllowedCORS()) // 任意跨域请求
 
 r.Get("/posts/{id}", nil)     // 默认情况下， OPTIONS 的报头为 GET, OPTIONS
-r.Options("/posts/{id}", "*") // 强制改成 *
-r.Delete("/posts/{id}", nil)  // OPTIONS 依然为 *
 
-r.Remove("/posts/{id}", http.MethodOptions)    // 在当前路由上禁用 OPTIONS
-r.Handle("/posts/{id}", h, http.MethodOptions) // 显示指定一个处理函数 h
+http.ListenAndServe(":8080", m)
+
+// client.go
+
+// 访问 h2 的内容
+r := http.NewRequest(http.MethodGet, "https://localhost:8080/posts/1", nil)
+r.Header.Set("Origin", "http://example.com")
+r.Do() // 跨域，可以正常访问
+
+
+r = http.NewRequest(http.MethodOptions, "https://localhost:8080/posts/1", nil)
+r.Header.Set("Origin", "http://example.com")
+r.Header.Set("Access-Control-Request-Method", "GET")
+r.Do() // 预检请求，可以正常访问
 ```
 
 ### HEAD
@@ -207,20 +215,14 @@ mux 本身就是一个实现了 [http.Handler](https://pkg.go.dev/net/http#Handl
 mux 本身也提供了对中间件的管理功能，同时 [middleware](https://github.com/issue9/middleware) 提供了常用的中间件功能。
 
 ```go
-import "github.com/issue9/middleware/header"
 import "github.com/issue9/middleware/compress"
-
-h := header.New(map[string]string{
-    "Access-Control-Allow-Origin": "*"
-}
 
 c := compress.New(log.Default(), "*")
 
 m := Default()
 
 // 添加中间件
-m.AddMiddleware(h.Middleware).
-    AddMiddleware(c.Middleware)
+m.AddMiddleware(c.Middleware)
 
 r, ok := m.NewRouter("def", group.NewHost("example.com"), AllowedCORS())
 ```
