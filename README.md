@@ -16,19 +16,18 @@ mux 功能完备的 Go 路由器：
 1. 根据路由反向生成地址；
 1. 任意风格的路由，比如 discuz 这种不以 / 作为分隔符的；
 1. 分组路由，比如按域名，或是版本号等；
+1. CORS 跨域资源的处理；
 1. 支持中间件；
 
 ```go
-import "github.com/issue9/middleware/v4/header"
+import "github.com/issue9/middleware/v4/compress"
 
-h := header.New(map[string]string{
-    "Access-Control-Allow-Origin": "*"
-})
+c := compress.New()
 
 m := mux.New(false, false, nil, nil)
-m.AddMiddleware(h.Middleware) // 中间件，输出跨域的报头。
+m.AddMiddleware(h.Middleware) // 中间件，为内容这提供 gzip 等压缩的支持。
 
-router, ok := m.New("example.com", group.NewHosts("example.com"))
+router, ok := m.NewRouter("example.com", group.NewHosts("example.com"), AllowedCORS())
 router.Get("/users/1", h).
     Post("/login", h).
     Get("/pages/{id:\\d+}.html", h). // 匹配 /pages/123.html 等格式，path = 123
@@ -133,10 +132,10 @@ id := params.MustInt("id", 0) // 0 表示在无法获取 id 参数的默认值
 
 m := mux.Default()
 
-def, ok := m.NewRouter("default", group.NewPathVersion("v1"))
+def, ok := m.NewRouter("default", group.NewPathVersion("v1"), AllowedCORS())
 def.Get("/path", h1)
 
-host, ok := m.NewRouter("host", group.NewHosts("*.example.com"))
+host, ok := m.NewRouter("host", group.NewHosts("*.example.com"), AllowedCORS())
 host.Get("/path", h2)
 
 http.ListenAndServe(":8080", m)
@@ -185,7 +184,7 @@ interceptor.Register(digit, "\\d+", "[0-9]+")
 
 ```go
 m := mux.Default()
-r, ok := m.NewRouter("default", group.Any)
+r, ok := m.NewRouter("default", group.Any, AllowedCORS())
 
 r.Get("/posts/{id}", nil)     // 默认情况下， OPTIONS 的报头为 GET, OPTIONS
 r.Options("/posts/{id}", "*") // 强制改成 *
@@ -223,7 +222,7 @@ m := Default()
 m.AddMiddleware(h.Middleware).
     AddMiddleware(c.Middleware)
 
-r, ok := m.NewRouter("def", group.NewHost("example.com"))
+r, ok := m.NewRouter("def", group.NewHost("example.com"), AllowedCORS())
 ```
 
 ## 性能
