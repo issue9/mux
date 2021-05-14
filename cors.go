@@ -56,9 +56,7 @@ func AllowedCORS() *CORS {
 }
 
 // DeniedCORS 禁用跨域请求
-func DeniedCORS() *CORS {
-	return &CORS{}
-}
+func DeniedCORS() *CORS { return &CORS{} }
 
 func (c *CORS) sanitize() error {
 	for _, o := range c.AllowedOrigins {
