@@ -34,7 +34,7 @@ type tester struct {
 
 func newTester(t testing.TB, disableHead, skipClean bool) *tester {
 	mux := New(disableHead, skipClean, nil, nil)
-	r, err := mux.NewRouter("default", group.MatcherFunc(group.Any), Allowed())
+	r, err := mux.NewRouter("default", group.MatcherFunc(group.Any), AllowedCORS())
 	assert.NotError(t, err)
 	assert.NotNil(t, r)
 
@@ -118,13 +118,13 @@ func TestRouter_Routes(t *testing.T) {
 
 	m := Default()
 
-	def, err := m.NewRouter("def", group.MatcherFunc(group.Any), Allowed())
+	def, err := m.NewRouter("def", group.MatcherFunc(group.Any), AllowedCORS())
 	a.NotError(err).NotNil(def)
 	def.Get("/m", buildHandler(1))
 	def.Post("/m", buildHandler(1))
 	a.Equal(def.Routes(), map[string][]string{"/m": {"GET", "HEAD", "OPTIONS", "POST"}})
 
-	r, err := m.NewRouter("host-1", &group.PathVersion{}, Allowed())
+	r, err := m.NewRouter("host-1", &group.PathVersion{}, AllowedCORS())
 	a.NotError(err).NotNil(r)
 	r.Get("/m", buildHandler(1))
 	a.Equal(r.Routes(), map[string][]string{"/m": {"GET", "HEAD", "OPTIONS"}})
@@ -215,7 +215,7 @@ func TestRouter_Params(t *testing.T) {
 	a := assert.New(t)
 	m := Default()
 	a.NotNil(m)
-	router, err := m.NewRouter("def", group.MatcherFunc(group.Any), Allowed())
+	router, err := m.NewRouter("def", group.MatcherFunc(group.Any), AllowedCORS())
 	a.NotError(err).NotNil(router)
 
 	params := map[string]string{}
@@ -272,14 +272,14 @@ func TestRouter_Clean(t *testing.T) {
 	h, err := group.NewHosts("localhost")
 	a.NotError(err).NotNil(h)
 
-	def, err := m.NewRouter("def", h, Allowed())
+	def, err := m.NewRouter("def", h, AllowedCORS())
 	a.NotError(err).NotNil(def)
 	def.Get("/m1", buildHandler(200)).
 		Post("/m1", buildHandler(201))
 
 	h, err = group.NewHosts("example.com")
 	a.NotError(err).NotNil(h)
-	host, err := m.NewRouter("host", h, Allowed())
+	host, err := m.NewRouter("host", h, AllowedCORS())
 	a.NotError(err).NotNil(host)
 	host.Get("/m1", buildHandler(202)).
 		Post("/m1", buildHandler(203))
@@ -316,22 +316,22 @@ func TestMux_NewRouter(t *testing.T) {
 	a.PanicString(func() {
 		h, err := group.NewHosts("example.com")
 		a.NotError(err).NotNil(h)
-		m.NewRouter("", h, Allowed())
+		m.NewRouter("", h, AllowedCORS())
 	}, "不能为空")
 
-	r, err := m.NewRouter("host", &group.PathVersion{}, Allowed())
+	r, err := m.NewRouter("host", &group.PathVersion{}, AllowedCORS())
 	a.NotError(err).NotNil(r)
 	a.Equal(r.name, "host").Equal(r.Name(), "host")
 
-	r, err = m.NewRouter("host", &group.PathVersion{}, Allowed())
+	r, err = m.NewRouter("host", &group.PathVersion{}, AllowedCORS())
 	a.ErrorIs(err, ErrRouterExists).Nil(r)
 
-	r, err = m.NewRouter("host-2", nil, Allowed())
+	r, err = m.NewRouter("host-2", nil, AllowedCORS())
 	a.NotError(err).NotNil(r)
 	a.Equal(r.name, "host-2").Equal(r.Name(), "host-2")
 
 	a.PanicString(func() {
-		m.NewRouter("host-3", nil, Allowed())
+		m.NewRouter("host-3", nil, AllowedCORS())
 	}, "已经存在")
 }
 
@@ -397,23 +397,23 @@ func TestMux_RemoveRouter(t *testing.T) {
 	a := assert.New(t)
 
 	m := Default()
-	r, err := m.NewRouter("host", &group.PathVersion{}, Allowed())
+	r, err := m.NewRouter("host", &group.PathVersion{}, AllowedCORS())
 	a.NotError(err).NotNil(r)
 	a.Equal(r.name, "host").Equal(r.Name(), "host")
 
-	r, err = m.NewRouter("host-2", &group.PathVersion{}, Allowed())
+	r, err = m.NewRouter("host-2", &group.PathVersion{}, AllowedCORS())
 	a.NotError(err).NotNil(r)
 	a.Equal(2, len(m.Routers()))
 
 	// 同名，添加不成功
-	r, err = m.NewRouter("host", &group.PathVersion{}, Allowed())
+	r, err = m.NewRouter("host", &group.PathVersion{}, AllowedCORS())
 	a.ErrorIs(err, ErrRouterExists).Nil(r)
 	a.Equal(2, len(m.Routers()))
 
 	m.RemoveRouter("host")
 	m.RemoveRouter("host") // 已经删除，不存在了
 	a.Equal(1, len(m.Routers()))
-	r, err = m.NewRouter("host", &group.PathVersion{}, Allowed())
+	r, err = m.NewRouter("host", &group.PathVersion{}, AllowedCORS())
 	a.NotError(err).NotNil(r)
 	a.Equal(2, len(m.Routers()))
 

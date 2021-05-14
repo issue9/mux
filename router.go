@@ -16,6 +16,7 @@ import (
 	"github.com/issue9/mux/v4/params"
 )
 
+// ErrRouterExists 表示是否存在同名的路由名称
 var ErrRouterExists = errors.New("该名称的路由已经存在")
 
 // Router 提供了基本的路由项添加和删除等功能

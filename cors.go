@@ -21,20 +21,24 @@ type CORS struct {
 	//
 	// 可以是 *，如果包含了 *，那么其它的设置将不再启作用。
 	// 此字段将被用于与请求头的 Origin 字段作验证，以确定是否放行该请求。
+	//
+	// 如果此值为空，表示不启用跨域的相关设置。
 	AllowedOrigins []string
 	anyOrigins     bool
+	deny           bool
 
 	// AllowedHeaders 实际请求中允许携带的报头
 	//
-	// 应该始终包含 Origin 报头，可以是 *。
+	// 可以包含 *，表示可以是任意值，其它值将不再启作用。
 	AllowedHeaders       []string
 	allowedHeadersString string
+	anyHeaders           bool
 
 	// ExposedHeaders Access-Control-Expose-Headers
 	ExposedHeaders       []string
 	exposedHeadersString string
 
-	// MaxAge 当前报头信息可补缓存的秒数
+	// MaxAge 当前报头信息可被缓存的秒数
 	MaxAge       uint64
 	maxAgeString string
 
@@ -42,7 +46,8 @@ type CORS struct {
 	AllowCredentials bool
 }
 
-func Allowed() *CORS {
+// AllowedCORS 允许跨域请求
+func AllowedCORS() *CORS {
 	return &CORS{
 		AllowedOrigins: []string{"*"},
 		AllowedHeaders: []string{"*"},
@@ -50,7 +55,8 @@ func Allowed() *CORS {
 	}
 }
 
-func Denied() *CORS {
+// DeniedCORS 禁用跨域请求
+func DeniedCORS() *CORS {
 	return &CORS{}
 }
 
@@ -61,22 +67,26 @@ func (c *CORS) sanitize() error {
 			break
 		}
 	}
+	c.deny = len(c.AllowedOrigins) == 0
 
 	for _, h := range c.AllowedHeaders {
 		if h == "*" {
 			c.allowedHeadersString = "*"
+			c.anyHeaders = true
 			break
 		}
 	}
 	if c.allowedHeadersString == "" && len(c.AllowedHeaders) > 0 {
-		c.allowedHeadersString = strings.Join(c.AllowedHeaders, ", ")
+		c.allowedHeadersString = strings.Join(c.AllowedHeaders, ",")
 	}
 
 	if len(c.ExposedHeaders) > 0 {
-		c.exposedHeadersString = strings.Join(c.ExposedHeaders, ", ")
+		c.exposedHeadersString = strings.Join(c.ExposedHeaders, ",")
 	}
 
-	c.maxAgeString = strconv.FormatUint(c.MaxAge, 10)
+	if c.MaxAge > 0 {
+		c.maxAgeString = strconv.FormatUint(c.MaxAge, 10)
+	}
 
 	if c.anyOrigins && c.AllowCredentials {
 		return errors.New("AllowedOrigin=* 和 AllowCredentials=true 不能同时成立")
@@ -86,6 +96,10 @@ func (c *CORS) sanitize() error {
 }
 
 func (c *CORS) handle(hs *handlers.Handlers, w http.ResponseWriter, r *http.Request) {
+	if c.deny {
+		return
+	}
+
 	// Origin 是可以为空的，所以采用 Access-Control-Request-Method 判断是否为预检。
 	reqMethod := r.Header.Get("Access-Control-Request-Method")
 	preflight := r.Method == http.MethodOptions && reqMethod != ""
@@ -107,8 +121,8 @@ func (c *CORS) handle(hs *handlers.Handlers, w http.ResponseWriter, r *http.Requ
 		}
 		if c.allowedHeadersString != "" {
 			wh.Set("Access-Control-Allow-Headers", c.allowedHeadersString)
+			wh.Add("Vary", "Access-Control-Request-Headers")
 		}
-		wh.Add("Vary", "Access-Control-Request-Headers")
 
 		// Access-Control-Max-Age
 		if c.maxAgeString != "" {
@@ -117,13 +131,14 @@ func (c *CORS) handle(hs *handlers.Handlers, w http.ResponseWriter, r *http.Requ
 	}
 
 	// Access-Control-Allow-Origin
-	origin := r.Header.Get("Origin")
 	allowOrigin := "*"
 	if !c.anyOrigins {
+		origin := r.Header.Get("Origin")
 		i := sliceutil.Index(c.AllowedOrigins, func(i int) bool { return c.AllowedOrigins[i] == origin })
-		if i >= 0 {
-			allowOrigin = origin
+		if i == -1 {
+			return
 		}
+		allowOrigin = origin
 	}
 	wh.Set("Access-Control-Allow-Origin", allowOrigin)
 	wh.Add("Vary", "Origin")
@@ -140,7 +155,16 @@ func (c *CORS) handle(hs *handlers.Handlers, w http.ResponseWriter, r *http.Requ
 }
 
 func (c *CORS) headerIsAllowed(r *http.Request) bool {
-	headers := strings.Split(r.Header.Get("Access-Control-Request-Method"), ",")
+	if c.anyHeaders {
+		return true
+	}
+
+	h := strings.TrimSpace(r.Header.Get("Access-Control-Request-Headers"))
+	if h == "" {
+		return true
+	}
+
+	headers := strings.Split(h, ",")
 	for _, v := range headers {
 		v = strings.TrimSpace(v)
 		i := sliceutil.Index(c.AllowedHeaders, func(i int) bool { return c.AllowedHeaders[i] == v })

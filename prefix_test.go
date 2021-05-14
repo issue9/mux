@@ -79,7 +79,7 @@ func TestMux_Prefix(t *testing.T) {
 	a := assert.New(t)
 	m := New(true, false, nil, nil)
 	a.NotNil(m)
-	def, err := m.NewRouter("def", group.MatcherFunc(group.Any), Allowed())
+	def, err := m.NewRouter("def", group.MatcherFunc(group.Any), AllowedCORS())
 	a.NotError(err).NotNil(def)
 
 	p := def.Prefix("/abc")
@@ -94,7 +94,7 @@ func TestPrefix_Prefix(t *testing.T) {
 	a := assert.New(t)
 	m := New(true, false, nil, nil)
 	a.NotNil(m)
-	def, err := m.NewRouter("def", group.MatcherFunc(group.Any), Allowed())
+	def, err := m.NewRouter("def", group.MatcherFunc(group.Any), AllowedCORS())
 	a.NotError(err).NotNil(def)
 
 	p := def.Prefix("/abc")
@@ -111,7 +111,7 @@ func TestPrefix_URL(t *testing.T) {
 	a := assert.New(t)
 	m := New(true, false, nil, nil)
 	a.NotNil(m)
-	def, err := m.NewRouter("def", group.MatcherFunc(group.Any), Allowed())
+	def, err := m.NewRouter("def", group.MatcherFunc(group.Any), AllowedCORS())
 	a.NotError(err).NotNil(def)
 
 	// 非正则

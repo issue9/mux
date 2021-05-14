@@ -25,7 +25,7 @@ func TestMux_PrependMiddleware(t *testing.T) {
 	a := assert.New(t)
 	m := Default()
 	a.NotNil(m)
-	def, err := m.NewRouter("def", group.MatcherFunc(group.Any), Allowed())
+	def, err := m.NewRouter("def", group.MatcherFunc(group.Any), AllowedCORS())
 	a.NotError(err).NotNil(def)
 
 	def.Get("/get", buildHandler(201))
@@ -52,7 +52,7 @@ func TestMux_AppendMiddleware(t *testing.T) {
 	a := assert.New(t)
 	m := Default()
 	a.NotNil(m)
-	def, err := m.NewRouter("def", group.MatcherFunc(group.Any), Allowed())
+	def, err := m.NewRouter("def", group.MatcherFunc(group.Any), AllowedCORS())
 	a.NotError(err).NotNil(def)
 
 	def.Get("/get", buildHandler(201))
@@ -79,7 +79,7 @@ func TestMux_AddMiddleware(t *testing.T) {
 	a := assert.New(t)
 	m := Default()
 	a.NotNil(m)
-	def, err := m.NewRouter("def", group.MatcherFunc(group.Any), Allowed())
+	def, err := m.NewRouter("def", group.MatcherFunc(group.Any), AllowedCORS())
 	a.NotError(err).NotNil(def)
 
 	def.Get("/get", buildHandler(201))
@@ -114,7 +114,7 @@ func TestRouter_AddMiddleware(t *testing.T) {
 		AppendMiddleware(buildMiddleware(a, "p2")).
 		PrependMiddleware(buildMiddleware(a, "a2"))
 
-	def, err := m.NewRouter("def", group.MatcherFunc(group.Any), Allowed())
+	def, err := m.NewRouter("def", group.MatcherFunc(group.Any), AllowedCORS())
 	a.NotError(err).NotNil(def)
 	def.Get("/get", buildHandler(201))
 	def.AppendMiddleware(buildMiddleware(a, "rp1")).

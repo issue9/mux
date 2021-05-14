@@ -31,7 +31,7 @@ func init() {
 		}
 
 		issue9Mux = New(true, false, nil, nil)
-		def, err := issue9Mux.NewRouter("def", group.MatcherFunc(group.Any), Allowed())
+		def, err := issue9Mux.NewRouter("def", group.MatcherFunc(group.Any), AllowedCORS())
 		if err != nil {
 			panic(err)
 		}
