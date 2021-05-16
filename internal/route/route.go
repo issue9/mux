@@ -9,9 +9,11 @@ import (
 	"net/http"
 	"sort"
 	"strings"
+
+	"github.com/issue9/sliceutil"
 )
 
-const defaultSize = 4 // Route 的初始容量
+const defaultSize = 4 // Route.handlers 的初始容量
 
 // Methods 所有支持请求方法
 var Methods = []string{
@@ -49,105 +51,96 @@ func New(disableHead bool) *Route {
 }
 
 // Add 添加一个处理函数
-func (hs *Route) Add(h http.Handler, methods ...string) error {
+func (r *Route) Add(h http.Handler, methods ...string) error {
 	if len(methods) == 0 {
 		methods = addAny
 	}
 
 	for _, m := range methods {
-		if err := hs.addSingle(h, m); err != nil {
+		if err := r.add(h, m); err != nil {
 			return err
 		}
 	}
 
 	// 查看是否需要添加 OPTIONS
-	if _, found := hs.handlers[http.MethodOptions]; !found {
-		hs.handlers[http.MethodOptions] = http.HandlerFunc(hs.optionsServeHTTP)
+	if _, found := r.handlers[http.MethodOptions]; !found {
+		r.handlers[http.MethodOptions] = http.HandlerFunc(r.optionsServeHTTP)
 	}
 
-	hs.buildMethods()
+	r.buildMethods()
 	return nil
 }
 
-func (hs *Route) addSingle(h http.Handler, m string) error {
+func (r *Route) add(h http.Handler, m string) error {
 	if m == http.MethodHead || m == http.MethodOptions {
 		return fmt.Errorf("无法手动添加 OPTIONS/HEAD 请求方法")
 	}
 
-	if !methodExists(m) {
+	if sliceutil.Index(Methods, func(i int) bool { return Methods[i] == m }) == -1 {
 		return fmt.Errorf("该请求方法 %s 不被支持", m)
 	}
 
-	if _, found := hs.handlers[m]; found {
+	if _, found := r.handlers[m]; found {
 		return fmt.Errorf("该请求方法 %s 已经存在", m)
 	}
-	hs.handlers[m] = h
+	r.handlers[m] = h
 
-	if m == http.MethodGet && !hs.disableHead { // 如果是 GET，则顺便添加 HEAD
-		hs.handlers[http.MethodHead] = hs.headServeHTTP(h)
+	if m == http.MethodGet && !r.disableHead { // 如果是 GET，则顺便添加 HEAD
+		r.handlers[http.MethodHead] = r.headServeHTTP(h)
 	}
 
 	return nil
 }
 
-func methodExists(m string) bool {
-	for _, mm := range Methods {
-		if mm == m {
-			return true
-		}
-	}
-	return false
+func (r *Route) optionsServeHTTP(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Allow", r.optionsAllow)
 }
 
-func (hs *Route) optionsServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Allow", hs.optionsAllow)
-}
-
-func (hs *Route) buildMethods() {
-	hs.methods = hs.methods[:0]
-	for method := range hs.handlers {
-		hs.methods = append(hs.methods, method)
+func (r *Route) buildMethods() {
+	r.methods = r.methods[:0]
+	for method := range r.handlers {
+		r.methods = append(r.methods, method)
 	}
-	sort.Strings(hs.methods)
-	hs.optionsAllow = strings.Join(hs.methods, ", ")
+	sort.Strings(r.methods)
+	r.optionsAllow = strings.Join(r.methods, ", ")
 }
 
 // Remove 移除某个请求方法对应的处理函数
 //
 // 返回值表示是否已经被清空。
-func (hs *Route) Remove(methods ...string) (bool, error) {
+func (r *Route) Remove(methods ...string) (bool, error) {
 	if len(methods) == 0 {
-		hs.handlers = make(map[string]http.Handler, defaultSize)
-		hs.buildMethods()
-		return hs.Len() == 0, nil
+		r.handlers = make(map[string]http.Handler, defaultSize)
+		r.buildMethods()
+		return r.Len() == 0, nil
 	}
 
 	for _, m := range methods {
-		delete(hs.handlers, m)
+		delete(r.handlers, m)
 
 		if m == http.MethodOptions {
 			return false, errors.New("不能手动删除 OPTIONS。")
 		} else if m == http.MethodGet { // HEAD 跟随 GET 一起删除
-			delete(hs.handlers, http.MethodHead)
+			delete(r.handlers, http.MethodHead)
 		}
 	}
 
-	if _, found := hs.handlers[http.MethodOptions]; found && hs.Len() == 1 { // 只有一个 OPTIONS 了
-		delete(hs.handlers, http.MethodOptions)
+	if _, found := r.handlers[http.MethodOptions]; found && r.Len() == 1 { // 只有一个 OPTIONS 了
+		delete(r.handlers, http.MethodOptions)
 	}
 
-	hs.buildMethods()
-	return hs.Len() == 0, nil
+	r.buildMethods()
+	return r.Len() == 0, nil
 }
 
 // Handler 获取指定方法对应的处理函数
-func (hs *Route) Handler(method string) http.Handler { return hs.handlers[method] }
+func (r *Route) Handler(method string) http.Handler { return r.handlers[method] }
 
 // Options 获取当前支持的请求方法列表字符串
-func (hs *Route) Options() string { return hs.optionsAllow }
+func (r *Route) Options() string { return r.optionsAllow }
 
 // Len 获取当前支持请求方法数量
-func (hs *Route) Len() int { return len(hs.handlers) }
+func (r *Route) Len() int { return len(r.handlers) }
 
 // Methods 当前节点支持的请求方法
-func (hs *Route) Methods() []string { return hs.methods }
+func (r *Route) Methods() []string { return r.methods }

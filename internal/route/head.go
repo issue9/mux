@@ -10,7 +10,7 @@ type headResponse struct {
 
 func (resp *headResponse) Write([]byte) (int, error) { return 0, nil }
 
-func (hs *Route) headServeHTTP(h http.Handler) http.Handler {
+func (r *Route) headServeHTTP(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		h.ServeHTTP(&headResponse{ResponseWriter: w}, r)
 	})

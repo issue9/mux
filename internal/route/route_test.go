@@ -20,36 +20,36 @@ var getHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 func TestRoute_Add(t *testing.T) {
 	a := assert.New(t)
 
-	hs := New(true)
-	a.NotNil(hs)
-	a.NotError(hs.Add(getHandler))
-	a.Equal(hs.Len(), len(addAny)+1) // 包含自动生成的 OPTIONS
+	r := New(true)
+	a.NotNil(r)
+	a.NotError(r.Add(getHandler))
+	a.Equal(r.Len(), len(addAny)+1) // 包含自动生成的 OPTIONS
 
-	hs = New(true)
-	a.NotNil(hs)
-	a.NotError(hs.Add(getHandler, http.MethodGet, http.MethodPut))
-	a.Equal(hs.Len(), 3) // 包含自动生成的 OPTIONS
-	a.Error(hs.Add(getHandler, "Not Exists"))
+	r = New(true)
+	a.NotNil(r)
+	a.NotError(r.Add(getHandler, http.MethodGet, http.MethodPut))
+	a.Equal(r.Len(), 3) // 包含自动生成的 OPTIONS
+	a.Error(r.Add(getHandler, "Not Exists"))
 
 	// head
 
-	hs = New(false)
-	a.NotNil(hs)
-	a.NotError(hs.Add(getHandler, http.MethodGet, http.MethodPut))
-	a.Equal(hs.Len(), 4) // 包含自动生成的 OPTIONS 和 HEAD
-	a.False(hs.disableHead)
+	r = New(false)
+	a.NotNil(r)
+	a.NotError(r.Add(getHandler, http.MethodGet, http.MethodPut))
+	a.Equal(r.Len(), 4) // 包含自动生成的 OPTIONS 和 HEAD
+	a.False(r.disableHead)
 
 	// 特意指定 head
-	a.ErrorString(hs.Add(getHandler, http.MethodHead), "无法手动添加 OPTIONS/HEAD 请求方法")
-	a.Equal(hs.Len(), 4)                         // 不会变多
-	a.Error(hs.Add(getHandler, http.MethodHead)) // 多次添加
+	a.ErrorString(r.Add(getHandler, http.MethodHead), "无法手动添加 OPTIONS/HEAD 请求方法")
+	a.Equal(r.Len(), 4)                         // 不会变多
+	a.Error(r.Add(getHandler, http.MethodHead)) // 多次添加
 
 	// options
 
-	hs = New(false)
-	a.NotNil(hs)
-	a.NotError(hs.Add(getHandler, http.MethodGet, http.MethodPut))
-	a.ErrorString(hs.Add(getHandler, http.MethodOptions), "无法手动添加 OPTIONS/HEAD 请求方法")
+	r = New(false)
+	a.NotNil(r)
+	a.NotError(r.Add(getHandler, http.MethodGet, http.MethodPut))
+	a.ErrorString(r.Add(getHandler, http.MethodOptions), "无法手动添加 OPTIONS/HEAD 请求方法")
 }
 
 func TestRoute_Add_Remove(t *testing.T) {
@@ -115,30 +115,30 @@ func TestRoute_Add_Remove(t *testing.T) {
 func TestRoute_methods(t *testing.T) {
 	a := assert.New(t)
 
-	hs := New(true)
-	a.NotNil(hs)
+	r := New(true)
+	a.NotNil(r)
 
 	test := func(allow string) {
 		w := httptest.NewRecorder()
-		r := httptest.NewRequest("OPTIONS", "/empty", nil)
-		h := hs.Handler(http.MethodOptions)
+		req := httptest.NewRequest("OPTIONS", "/empty", nil)
+		h := r.Handler(http.MethodOptions)
 		a.NotNil(h)
-		h.ServeHTTP(w, r)
+		h.ServeHTTP(w, req)
 		a.Equal(w.Header().Get("Allow"), allow)
 	}
 
 	// 默认
-	a.Equal(hs.Options(), "")
+	a.Equal(r.Options(), "")
 
-	a.NotError(hs.Add(getHandler, http.MethodGet))
+	a.NotError(r.Add(getHandler, http.MethodGet))
 	test("GET, OPTIONS")
-	a.Equal(hs.Options(), "GET, OPTIONS")
+	a.Equal(r.Options(), "GET, OPTIONS")
 
-	a.NotError(hs.Add(getHandler, http.MethodPost))
-	a.Equal(hs.Options(), "GET, OPTIONS, POST")
+	a.NotError(r.Add(getHandler, http.MethodPost))
+	a.Equal(r.Options(), "GET, OPTIONS, POST")
 	test("GET, OPTIONS, POST")
 
-	a.False(hs.Remove(http.MethodGet))
+	a.False(r.Remove(http.MethodGet))
 	test("OPTIONS, POST")
-	a.Equal(hs.Options(), "OPTIONS, POST")
+	a.Equal(r.Options(), "OPTIONS, POST")
 }
