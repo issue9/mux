@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/issue9/assert"
-	"github.com/issue9/mux/v5/internal/handlers"
+	"github.com/issue9/mux/v5/internal/route"
 )
 
 func TestCORS_sanitize(t *testing.T) {
@@ -48,7 +48,7 @@ func TestCORS_sanitize(t *testing.T) {
 
 func TestCORS_handle(t *testing.T) {
 	a := assert.New(t)
-	hs := handlers.New(true)
+	hs := route.New(true)
 	a.NotError(hs.Add(nil, http.MethodGet, http.MethodDelete))
 
 	// deny

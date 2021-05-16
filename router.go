@@ -112,7 +112,7 @@ func (r *Router) Clean() error {
 }
 
 // Routes 返回当前路由组的路由项
-func (r *Router) Routes() map[string][]string { return r.tree.All() }
+func (r *Router) Routes() map[string][]string { return r.tree.Routes() }
 
 // Remove 移除指定的路由项
 //

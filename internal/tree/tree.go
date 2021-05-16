@@ -6,7 +6,7 @@ package tree
 import (
 	"net/http"
 
-	"github.com/issue9/mux/v5/internal/handlers"
+	"github.com/issue9/mux/v5/internal/route"
 	"github.com/issue9/mux/v5/internal/syntax"
 	"github.com/issue9/mux/v5/params"
 )
@@ -57,7 +57,7 @@ func (tree *Tree) Add(pattern string, h http.Handler, methods ...string) error {
 	}
 
 	if n.handlers == nil {
-		n.handlers = handlers.New(tree.disableHead)
+		n.handlers = route.New(tree.disableHead)
 	}
 
 	return n.handlers.Add(h, methods...)
@@ -92,12 +92,11 @@ func (tree *Tree) getNode(pattern string) (*node, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return tree.node.getNode(segs)
 }
 
 // Handler 找到与当前内容匹配的 handlers.Handlers 实例
-func (tree *Tree) Handler(path string) (*handlers.Handlers, params.Params) {
+func (tree *Tree) Handler(path string) (*route.Route, params.Params) {
 	ps := make(params.Params, 3)
 	node := tree.match(path, ps)
 
@@ -107,9 +106,9 @@ func (tree *Tree) Handler(path string) (*handlers.Handlers, params.Params) {
 	return node.handlers, ps
 }
 
-// All 获取当前的所有路径项
-func (tree *Tree) All() map[string][]string {
+// Routes 获取当前的所有路由项
+func (tree *Tree) Routes() map[string][]string {
 	routes := make(map[string][]string, 100)
-	tree.all("", routes)
+	tree.routes("", routes)
 	return routes
 }

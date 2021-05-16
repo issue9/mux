@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
-// Package handlers 用于处理节点下与处理函数相关的逻辑
-package handlers
+// Package route 处理路由节点的逻辑
+package route
 
 import (
 	"errors"
@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-const defaultSize = 4 // Handlers.handlers 的初始容量
+const defaultSize = 4 // Route 的初始容量
 
 // Methods 所有支持请求方法
 var Methods = []string{
@@ -29,8 +29,8 @@ var Methods = []string{
 // Add 未指定请求方法时，所采用的默认值。
 var addAny = Methods[:len(Methods)-2]
 
-// Handlers 用于表示某节点下各个请求方法对应的处理函数
-type Handlers struct {
+// Route 用于表示某节点下各个请求方法对应的处理函数
+type Route struct {
 	handlers     map[string]http.Handler // 请求方法及其对应的 http.Handler
 	disableHead  bool
 	methods      []string
@@ -40,8 +40,8 @@ type Handlers struct {
 // New 声明一个新的 Handlers 实例
 //
 // disableHead 是否禁止自动添加 HEAD 请求内容
-func New(disableHead bool) *Handlers {
-	return &Handlers{
+func New(disableHead bool) *Route {
+	return &Route{
 		handlers:    make(map[string]http.Handler, defaultSize),
 		disableHead: disableHead,
 		methods:     make([]string, 0, defaultSize),
@@ -49,7 +49,7 @@ func New(disableHead bool) *Handlers {
 }
 
 // Add 添加一个处理函数
-func (hs *Handlers) Add(h http.Handler, methods ...string) error {
+func (hs *Route) Add(h http.Handler, methods ...string) error {
 	if len(methods) == 0 {
 		methods = addAny
 	}
@@ -69,7 +69,7 @@ func (hs *Handlers) Add(h http.Handler, methods ...string) error {
 	return nil
 }
 
-func (hs *Handlers) addSingle(h http.Handler, m string) error {
+func (hs *Route) addSingle(h http.Handler, m string) error {
 	if m == http.MethodHead || m == http.MethodOptions {
 		return fmt.Errorf("无法手动添加 OPTIONS/HEAD 请求方法")
 	}
@@ -99,17 +99,17 @@ func methodExists(m string) bool {
 	return false
 }
 
-func (hs *Handlers) optionsServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (hs *Route) optionsServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Allow", hs.optionsAllow)
 }
 
-func (hs *Handlers) headServeHTTP(h http.Handler) http.Handler {
+func (hs *Route) headServeHTTP(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		h.ServeHTTP(&headResponse{ResponseWriter: w}, r)
 	})
 }
 
-func (hs *Handlers) buildMethods() {
+func (hs *Route) buildMethods() {
 	hs.methods = hs.methods[:0]
 	for method := range hs.handlers {
 		hs.methods = append(hs.methods, method)
@@ -121,7 +121,7 @@ func (hs *Handlers) buildMethods() {
 // Remove 移除某个请求方法对应的处理函数
 //
 // 返回值表示是否已经被清空。
-func (hs *Handlers) Remove(methods ...string) (bool, error) {
+func (hs *Route) Remove(methods ...string) (bool, error) {
 	if len(methods) == 0 {
 		hs.handlers = make(map[string]http.Handler, defaultSize)
 		hs.buildMethods()
@@ -147,13 +147,13 @@ func (hs *Handlers) Remove(methods ...string) (bool, error) {
 }
 
 // Handler 获取指定方法对应的处理函数
-func (hs *Handlers) Handler(method string) http.Handler { return hs.handlers[method] }
+func (hs *Route) Handler(method string) http.Handler { return hs.handlers[method] }
 
 // Options 获取当前支持的请求方法列表字符串
-func (hs *Handlers) Options() string { return hs.optionsAllow }
+func (hs *Route) Options() string { return hs.optionsAllow }
 
 // Len 获取当前支持请求方法数量
-func (hs *Handlers) Len() int { return len(hs.handlers) }
+func (hs *Route) Len() int { return len(hs.handlers) }
 
 // Methods 当前节点支持的请求方法
-func (hs *Handlers) Methods() []string { return hs.methods }
+func (hs *Route) Methods() []string { return hs.methods }

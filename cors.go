@@ -10,7 +10,7 @@ import (
 
 	"github.com/issue9/sliceutil"
 
-	"github.com/issue9/mux/v5/internal/handlers"
+	"github.com/issue9/mux/v5/internal/route"
 )
 
 // CORS 跨域请求设置项
@@ -93,7 +93,7 @@ func (c *CORS) sanitize() error {
 	return nil
 }
 
-func (c *CORS) handle(hs *handlers.Handlers, w http.ResponseWriter, r *http.Request) {
+func (c *CORS) handle(hs *route.Route, w http.ResponseWriter, r *http.Request) {
 	if c.deny {
 		return
 	}

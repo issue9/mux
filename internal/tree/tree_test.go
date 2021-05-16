@@ -9,7 +9,7 @@ import (
 
 	"github.com/issue9/assert"
 
-	"github.com/issue9/mux/v5/internal/handlers"
+	"github.com/issue9/mux/v5/internal/route"
 	"github.com/issue9/mux/v5/params"
 )
 
@@ -38,7 +38,7 @@ func (n *tester) add(method, pattern string, code int) {
 	n.a.NotError(err).NotNil(nn)
 
 	if nn.handlers == nil {
-		nn.handlers = handlers.New(false)
+		nn.handlers = route.New(false)
 	}
 
 	n.a.NotError(nn.handlers.Add(buildHandler(code), method))
@@ -199,7 +199,7 @@ func TestTree_Clean(t *testing.T) {
 		a.NotError(err).NotNil(nn)
 
 		if nn.handlers == nil {
-			nn.handlers = handlers.New(false)
+			nn.handlers = route.New(false)
 		}
 
 		a.NotError(nn.handlers.Add(buildHandler(code), methods...))
@@ -251,7 +251,7 @@ func TestTree_All(t *testing.T) {
 	a.NotError(tree.Add("/posts/{id}", buildHandler(http.StatusOK), http.MethodGet, http.MethodPut))
 	a.NotError(tree.Add("/posts/{id}/author", buildHandler(http.StatusOK), http.MethodGet))
 
-	routes := tree.All()
+	routes := tree.Routes()
 	a.Equal(routes, map[string][]string{
 		"/":                  {http.MethodGet, http.MethodHead, http.MethodOptions},
 		"/posts":             {http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodPost},

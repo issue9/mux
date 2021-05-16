@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/issue9/mux/v5/internal/handlers"
+	"github.com/issue9/mux/v5/internal/route"
 	"github.com/issue9/mux/v5/internal/syntax"
 	"github.com/issue9/mux/v5/params"
 )
@@ -17,7 +17,7 @@ const indexesSize = 5
 // 表示路由中的节点
 type node struct {
 	parent   *node
-	handlers *handlers.Handlers
+	handlers *route.Route
 	children []*node
 	segment  *syntax.Segment
 
@@ -52,7 +52,7 @@ func (n *node) buildIndexes() {
 // parent.children 根据此值进行排序。
 // 不同的节点类型拥有不同的优先级，相同类型的，则有子节点的优先级低。
 func (n *node) priority() int {
-	// 目前节点类型只有 3 种，10
+	// 目前节点类型只有 4 种，10
 	// 可以保证在当前类型的节点进行加权时，不会超过其它节点。
 	ret := int(n.segment.Type) * 10
 
@@ -60,7 +60,6 @@ func (n *node) priority() int {
 	if len(n.children) > 0 || n.segment.Endpoint {
 		return ret + 1
 	}
-
 	return ret
 }
 
@@ -75,7 +74,6 @@ func (n *node) getNode(segments []*syntax.Segment) (*node, error) {
 	if len(segments) == 1 { // 最后一个节点
 		return child, nil
 	}
-
 	return child.getNode(segments[1:])
 }
 
@@ -180,8 +178,6 @@ func (n *node) clean(prefix string) {
 }
 
 // 从子节点中查找与当前路径匹配的节点，若找不到，则返回 nil。
-//
-// NOTE: 此函数与 node.trace 是一样的，记得同步两边的代码。
 func (n *node) match(path string, params params.Params) *node {
 	if len(n.indexes) > 0 && len(path) > 0 { // 普通字符串的匹配
 		node := n.children[n.indexes[path[0]]]
@@ -274,7 +270,7 @@ func splitNode(n *node, pos int) (*node, error) {
 }
 
 // 获取所有的路由地址列表
-func (n *node) all(parent string, routes map[string][]string) {
+func (n *node) routes(parent string, routes map[string][]string) {
 	path := parent + n.segment.Value
 
 	if n.handlers != nil && n.handlers.Len() > 0 {
@@ -282,6 +278,6 @@ func (n *node) all(parent string, routes map[string][]string) {
 	}
 
 	for _, v := range n.children {
-		v.all(path, routes)
+		v.routes(path, routes)
 	}
 }

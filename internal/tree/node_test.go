@@ -8,9 +8,23 @@ import (
 
 	"github.com/issue9/assert"
 
-	"github.com/issue9/mux/v5/internal/handlers"
+	"github.com/issue9/mux/v5/internal/route"
 	"github.com/issue9/mux/v5/internal/syntax"
 )
+
+// 获取当前路由下有处理函数的节点数量
+func (n *node) len() int {
+	var cnt int
+	for _, child := range n.children {
+		cnt += child.len()
+	}
+
+	if n.handlers != nil && n.handlers.Len() > 0 {
+		cnt++
+	}
+
+	return cnt
+}
 
 func TestNode_find(t *testing.T) {
 	a := assert.New(t)
@@ -23,7 +37,7 @@ func TestNode_find(t *testing.T) {
 		a.NotError(err).NotNil(nn)
 
 		if nn.handlers == nil {
-			nn.handlers = handlers.New(false)
+			nn.handlers = route.New(false)
 		}
 
 		a.NotError(nn.handlers.Add(buildHandler(code), methods...))

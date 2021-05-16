@@ -11,7 +11,7 @@ import (
 
 	"github.com/issue9/mux/v5/group"
 	"github.com/issue9/mux/v5/interceptor"
-	"github.com/issue9/mux/v5/internal/handlers"
+	"github.com/issue9/mux/v5/internal/route"
 )
 
 func TestMux_empty(t *testing.T) {
@@ -225,7 +225,7 @@ func TestMux_ServeHTTP_Order(t *testing.T) {
 
 func TestMethods(t *testing.T) {
 	a := assert.New(t)
-	a.Equal(Methods(), handlers.Methods)
+	a.Equal(Methods(), route.Methods)
 }
 
 func TestIsWell(t *testing.T) {
