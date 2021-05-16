@@ -19,7 +19,7 @@ func (n *node) len() int {
 		cnt += child.len()
 	}
 
-	if n.handlers != nil && n.handlers.Len() > 0 {
+	if n.route != nil && n.route.Len() > 0 {
 		cnt++
 	}
 
@@ -36,11 +36,11 @@ func TestNode_find(t *testing.T) {
 		nn, err := node.getNode(segs)
 		a.NotError(err).NotNil(nn)
 
-		if nn.handlers == nil {
-			nn.handlers = route.New(false)
+		if nn.route == nil {
+			nn.route = route.New(false)
 		}
 
-		a.NotError(nn.handlers.Add(buildHandler(code), methods...))
+		a.NotError(nn.route.Add(buildHandler(code), methods...))
 	}
 
 	addNode("/", 1, http.MethodGet)

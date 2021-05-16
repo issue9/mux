@@ -56,11 +56,11 @@ func (tree *Tree) Add(pattern string, h http.Handler, methods ...string) error {
 		return err
 	}
 
-	if n.handlers == nil {
-		n.handlers = route.New(tree.disableHead)
+	if n.route == nil {
+		n.route = route.New(tree.disableHead)
 	}
 
-	return n.handlers.Add(h, methods...)
+	return n.route.Add(h, methods...)
 }
 
 // Clean 清除路由项
@@ -71,11 +71,11 @@ func (tree *Tree) Clean(prefix string) { tree.clean(prefix) }
 // methods 可以为空，表示删除所有内容。
 func (tree *Tree) Remove(pattern string, methods ...string) error {
 	child := tree.find(pattern)
-	if child == nil || child.handlers == nil {
+	if child == nil || child.route == nil {
 		return nil
 	}
 
-	empty, err := child.handlers.Remove(methods...)
+	empty, err := child.route.Remove(methods...)
 	if err != nil {
 		return err
 	}
@@ -95,15 +95,15 @@ func (tree *Tree) getNode(pattern string) (*node, error) {
 	return tree.node.getNode(segs)
 }
 
-// Handler 找到与当前内容匹配的 handlers.Handlers 实例
-func (tree *Tree) Handler(path string) (*route.Route, params.Params) {
+// Route 找到与当前内容匹配的 route.Route 实例
+func (tree *Tree) Route(path string) (*route.Route, params.Params) {
 	ps := make(params.Params, 3)
 	node := tree.match(path, ps)
 
-	if node == nil || node.handlers == nil || node.handlers.Len() == 0 {
+	if node == nil || node.route == nil || node.route.Len() == 0 {
 		return nil, nil
 	}
-	return node.handlers, ps
+	return node.route, ps
 }
 
 // Routes 获取当前的所有路由项

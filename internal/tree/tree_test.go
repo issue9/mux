@@ -37,17 +37,17 @@ func (n *tester) add(method, pattern string, code int) {
 	nn, err := n.tree.getNode(pattern)
 	n.a.NotError(err).NotNil(nn)
 
-	if nn.handlers == nil {
-		nn.handlers = route.New(false)
+	if nn.route == nil {
+		nn.route = route.New(false)
 	}
 
-	n.a.NotError(nn.handlers.Add(buildHandler(code), method))
+	n.a.NotError(nn.route.Add(buildHandler(code), method))
 }
 
 // 验证按照指定的 method 和 path 访问，是否会返回相同的 code 值，
 // 若是，则返回该节点以及对应的参数。
 func (n *tester) handler(method, path string, code int) (http.Handler, params.Params) {
-	hs, ps := n.tree.Handler(path)
+	hs, ps := n.tree.Route(path)
 	n.a.NotNil(ps).NotNil(hs)
 
 	h := hs.Handler(method)
@@ -198,11 +198,11 @@ func TestTree_Clean(t *testing.T) {
 		nn, err := tree.getNode(p)
 		a.NotError(err).NotNil(nn)
 
-		if nn.handlers == nil {
-			nn.handlers = route.New(false)
+		if nn.route == nil {
+			nn.route = route.New(false)
 		}
 
-		a.NotError(nn.handlers.Add(buildHandler(code), methods...))
+		a.NotError(nn.route.Add(buildHandler(code), methods...))
 	}
 
 	addNode("/", 1, http.MethodGet)
@@ -230,7 +230,7 @@ func TestTree_Add_Remove(t *testing.T) {
 	a.NotError(tree.Add("/posts/1/author", buildHandler(1), http.MethodGet))
 	a.NotError(tree.Add("/posts/{id}/{author:\\w+}/profile", buildHandler(1), http.MethodGet))
 
-	a.True(tree.find("/posts/1/author").handlers.Len() > 0)
+	a.True(tree.find("/posts/1/author").route.Len() > 0)
 	a.NotError(tree.Remove("/posts/1/author", http.MethodGet))
 	a.Nil(tree.find("/posts/1/author"))
 
@@ -289,7 +289,7 @@ func BenchmarkTree_Handler(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		index := i % len(paths)
-		h, _ := tree.Handler(paths[index])
+		h, _ := tree.Route(paths[index])
 		a.True(h.Len() > 0)
 	}
 }

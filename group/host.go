@@ -29,7 +29,7 @@ func NewHosts(domain ...string) (*Hosts, error) {
 
 func (hs *Hosts) Match(r *http.Request) (*http.Request, bool) {
 	hostname := r.URL.Hostname()
-	h, ps := hs.tree.Handler(hostname)
+	h, ps := hs.tree.Route(hostname)
 	if h == nil {
 		return nil, false
 	}

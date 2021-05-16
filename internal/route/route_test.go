@@ -17,7 +17,7 @@ var getHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	}
 })
 
-func TestHandlers_Add(t *testing.T) {
+func TestRoute_Add(t *testing.T) {
 	a := assert.New(t)
 
 	hs := New(true)
@@ -52,67 +52,67 @@ func TestHandlers_Add(t *testing.T) {
 	a.ErrorString(hs.Add(getHandler, http.MethodOptions), "无法手动添加 OPTIONS/HEAD 请求方法")
 }
 
-func TestHandlers_Add_Remove(t *testing.T) {
+func TestRoute_Add_Remove(t *testing.T) {
 	a := assert.New(t)
 
-	hs := New(false)
-	a.NotNil(hs)
-	a.Empty(hs.Methods()).Empty(hs.Options())
+	r := New(false)
+	a.NotNil(r)
+	a.Empty(r.Methods()).Empty(r.Options())
 
-	a.NotError(hs.Add(getHandler, http.MethodDelete, http.MethodPost))
-	a.Equal(hs.Methods(), []string{http.MethodDelete, http.MethodOptions, http.MethodPost}).
-		Equal(hs.Options(), "DELETE, OPTIONS, POST")
-	a.Error(hs.Add(getHandler, http.MethodPost)) // 存在相同的
+	a.NotError(r.Add(getHandler, http.MethodDelete, http.MethodPost))
+	a.Equal(r.Methods(), []string{http.MethodDelete, http.MethodOptions, http.MethodPost}).
+		Equal(r.Options(), "DELETE, OPTIONS, POST")
+	a.Error(r.Add(getHandler, http.MethodPost)) // 存在相同的
 
-	empty, err := hs.Remove(http.MethodPost)
+	empty, err := r.Remove(http.MethodPost)
 	a.NotError(err).False(empty)
-	a.Equal(hs.Methods(), []string{http.MethodDelete, http.MethodOptions}).
-		Equal(hs.Options(), "DELETE, OPTIONS")
+	a.Equal(r.Methods(), []string{http.MethodDelete, http.MethodOptions}).
+		Equal(r.Options(), "DELETE, OPTIONS")
 
-	empty, err = hs.Remove(http.MethodDelete)
+	empty, err = r.Remove(http.MethodDelete)
 	a.NotError(err).True(empty)
-	a.Empty(hs.Methods()).Empty(hs.Options())
+	a.Empty(r.Methods()).Empty(r.Options())
 
-	empty, err = hs.Remove(http.MethodDelete)
+	empty, err = r.Remove(http.MethodDelete)
 	a.NotError(err).True(empty)
-	a.Empty(hs.Methods()).Empty(hs.Options())
+	a.Empty(r.Methods()).Empty(r.Options())
 
 	// Get
 
-	a.NotError(hs.Add(getHandler, http.MethodGet))
-	a.NotNil(hs.handlers[http.MethodHead]) // 自动添加 HEAD
-	a.Equal(hs.Methods(), []string{http.MethodGet, http.MethodHead, http.MethodOptions}).
-		Equal(hs.Options(), "GET, HEAD, OPTIONS")
+	a.NotError(r.Add(getHandler, http.MethodGet))
+	a.NotNil(r.handlers[http.MethodHead]) // 自动添加 HEAD
+	a.Equal(r.Methods(), []string{http.MethodGet, http.MethodHead, http.MethodOptions}).
+		Equal(r.Options(), "GET, HEAD, OPTIONS")
 
-	empty, err = hs.Remove(http.MethodGet)
+	empty, err = r.Remove(http.MethodGet)
 	a.NotError(err).True(empty)
-	a.Empty(hs.Methods()).Empty(hs.Options())
+	a.Empty(r.Methods()).Empty(r.Options())
 
 	// 先删除 HEAD，再删除 GET
-	a.NotError(hs.Add(getHandler, http.MethodGet))
-	a.NotNil(hs.handlers[http.MethodHead]) // 自动添加 HEAD
-	a.Equal(hs.Methods(), []string{http.MethodGet, http.MethodHead, http.MethodOptions}).
-		Equal(hs.Options(), "GET, HEAD, OPTIONS")
+	a.NotError(r.Add(getHandler, http.MethodGet))
+	a.NotNil(r.handlers[http.MethodHead]) // 自动添加 HEAD
+	a.Equal(r.Methods(), []string{http.MethodGet, http.MethodHead, http.MethodOptions}).
+		Equal(r.Options(), "GET, HEAD, OPTIONS")
 
-	empty, err = hs.Remove(http.MethodHead)
-	a.NotError(err).False(empty).Nil(hs.handlers[http.MethodHead])
-	a.Equal(hs.Methods(), []string{http.MethodGet, http.MethodOptions}).
-		Equal(hs.Options(), "GET, OPTIONS")
-	a.NotNil(hs.handlers[http.MethodGet]) // Get 还在
+	empty, err = r.Remove(http.MethodHead)
+	a.NotError(err).False(empty).Nil(r.handlers[http.MethodHead])
+	a.Equal(r.Methods(), []string{http.MethodGet, http.MethodOptions}).
+		Equal(r.Options(), "GET, OPTIONS")
+	a.NotNil(r.handlers[http.MethodGet]) // Get 还在
 
 	// 删除不存在的内容
-	empty, err = hs.Remove("not exists")
+	empty, err = r.Remove("not exists")
 	a.False(empty).NotError(err)
 
-	empty, err = hs.Remove()
+	empty, err = r.Remove()
 	a.True(empty).NotError(err)
-	a.Empty(hs.Methods()).Empty(hs.Options())
+	a.Empty(r.Methods()).Empty(r.Options())
 
-	empty, err = hs.Remove(http.MethodOptions)
+	empty, err = r.Remove(http.MethodOptions)
 	a.ErrorString(err, "不能手动删除 OPTIONS").False(empty)
 }
 
-func TestHandlers_methods(t *testing.T) {
+func TestRoute_methods(t *testing.T) {
 	a := assert.New(t)
 
 	hs := New(true)

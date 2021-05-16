@@ -17,8 +17,8 @@ const indexesSize = 5
 // 表示路由中的节点
 type node struct {
 	parent   *node
-	handlers *route.Route
 	children []*node
+	route    *route.Route
 	segment  *syntax.Segment
 
 	// 保存着 *node 实例在 children 中的下标。
@@ -214,7 +214,7 @@ LOOP:
 	}
 
 	// 没有子节点匹配，len(path)==0，且子节点不为空，可以判定与当前节点匹配。
-	if len(path) == 0 && n.handlers != nil && n.handlers.Len() > 0 {
+	if len(path) == 0 && n.route != nil && n.route.Len() > 0 {
 		return n
 	}
 
@@ -259,7 +259,7 @@ func splitNode(n *node, pos int) (*node, error) {
 	}
 	ret := p.newChild(segs[0])
 	c := ret.newChild(segs[1])
-	c.handlers = n.handlers
+	c.route = n.route
 	c.children = n.children
 	c.indexes = n.indexes
 	for _, item := range c.children {
@@ -273,8 +273,8 @@ func splitNode(n *node, pos int) (*node, error) {
 func (n *node) routes(parent string, routes map[string][]string) {
 	path := parent + n.segment.Value
 
-	if n.handlers != nil && n.handlers.Len() > 0 {
-		routes[path] = n.handlers.Methods()
+	if n.route != nil && n.route.Len() > 0 {
+		routes[path] = n.route.Methods()
 	}
 
 	for _, v := range n.children {

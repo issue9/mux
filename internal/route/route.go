@@ -37,7 +37,7 @@ type Route struct {
 	optionsAllow string
 }
 
-// New 声明一个新的 Handlers 实例
+// New 声明一个新的 Route 实例
 //
 // disableHead 是否禁止自动添加 HEAD 请求内容
 func New(disableHead bool) *Route {
@@ -101,12 +101,6 @@ func methodExists(m string) bool {
 
 func (hs *Route) optionsServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Allow", hs.optionsAllow)
-}
-
-func (hs *Route) headServeHTTP(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		h.ServeHTTP(&headResponse{ResponseWriter: w}, r)
-	})
 }
 
 func (hs *Route) buildMethods() {

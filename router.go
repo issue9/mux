@@ -217,7 +217,7 @@ func (r *Router) URL(pattern string, params map[string]string) (string, error) {
 }
 
 func (r *Router) serveHTTP(w http.ResponseWriter, req *http.Request) {
-	hs, ps := r.tree.Handler(req.URL.Path)
+	hs, ps := r.tree.Route(req.URL.Path)
 	if ps == nil {
 		r.mux.notFound(w, req)
 		return

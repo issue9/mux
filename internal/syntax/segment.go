@@ -33,7 +33,7 @@ type Segment struct {
 	// 正则表达式特有参数，用于缓存当前节点的正则编译结果。
 	expr *regexp.Regexp
 
-	// 正则表达式的拦截器的处理函数
+	// 拦截器的处理函数
 	matcher interceptor.MatchFunc
 }
 
