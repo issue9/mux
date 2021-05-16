@@ -6,9 +6,9 @@ package tree
 import (
 	"net/http"
 
-	"github.com/issue9/mux/v4/internal/handlers"
-	"github.com/issue9/mux/v4/internal/syntax"
-	"github.com/issue9/mux/v4/params"
+	"github.com/issue9/mux/v5/internal/handlers"
+	"github.com/issue9/mux/v5/internal/syntax"
+	"github.com/issue9/mux/v5/params"
 )
 
 // Tree 以树节点的形式保存的路由

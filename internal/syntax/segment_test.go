@@ -7,7 +7,7 @@ import (
 
 	"github.com/issue9/assert"
 
-	"github.com/issue9/mux/v4/params"
+	"github.com/issue9/mux/v5/params"
 )
 
 func TestNewSegment(t *testing.T) {

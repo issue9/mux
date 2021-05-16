@@ -10,10 +10,10 @@ import (
 
 	"github.com/issue9/sliceutil"
 
-	"github.com/issue9/mux/v4/group"
-	"github.com/issue9/mux/v4/internal/syntax"
-	"github.com/issue9/mux/v4/internal/tree"
-	"github.com/issue9/mux/v4/params"
+	"github.com/issue9/mux/v5/group"
+	"github.com/issue9/mux/v5/internal/syntax"
+	"github.com/issue9/mux/v5/internal/tree"
+	"github.com/issue9/mux/v5/params"
 )
 
 // ErrRouterExists 表示是否存在同名的路由名称

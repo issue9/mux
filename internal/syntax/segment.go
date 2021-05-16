@@ -7,8 +7,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/issue9/mux/v4/interceptor"
-	"github.com/issue9/mux/v4/params"
+	"github.com/issue9/mux/v5/interceptor"
+	"github.com/issue9/mux/v5/params"
 )
 
 // Segment 路由项被拆分之后的分段内容

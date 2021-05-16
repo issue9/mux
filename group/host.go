@@ -6,8 +6,8 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/issue9/mux/v4/internal/tree"
-	"github.com/issue9/mux/v4/params"
+	"github.com/issue9/mux/v5/internal/tree"
+	"github.com/issue9/mux/v5/params"
 )
 
 // Hosts 限定域名的匹配工具

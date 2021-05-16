@@ -10,7 +10,7 @@ import (
 
 	"github.com/issue9/sliceutil"
 
-	"github.com/issue9/mux/v4/internal/handlers"
+	"github.com/issue9/mux/v5/internal/handlers"
 )
 
 // CORS 跨域请求设置项

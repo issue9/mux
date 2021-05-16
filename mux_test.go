@@ -9,9 +9,9 @@ import (
 
 	"github.com/issue9/assert"
 
-	"github.com/issue9/mux/v4/group"
-	"github.com/issue9/mux/v4/interceptor"
-	"github.com/issue9/mux/v4/internal/handlers"
+	"github.com/issue9/mux/v5/group"
+	"github.com/issue9/mux/v5/interceptor"
+	"github.com/issue9/mux/v5/internal/handlers"
 )
 
 func TestMux_empty(t *testing.T) {

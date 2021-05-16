@@ -6,9 +6,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/issue9/mux/v4/internal/handlers"
-	"github.com/issue9/mux/v4/internal/syntax"
-	"github.com/issue9/mux/v4/params"
+	"github.com/issue9/mux/v5/internal/handlers"
+	"github.com/issue9/mux/v5/internal/syntax"
+	"github.com/issue9/mux/v5/params"
 )
 
 // node.children 的数量只有达到此值时，才会为其建立 indexes 索引表。

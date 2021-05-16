@@ -9,7 +9,7 @@ import (
 
 	"github.com/issue9/assert"
 
-	"github.com/issue9/mux/v4/group"
+	"github.com/issue9/mux/v5/group"
 )
 
 func buildMiddleware(a *assert.Assertion, text string) MiddlewareFunc {

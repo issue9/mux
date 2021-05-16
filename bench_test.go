@@ -12,7 +12,7 @@ import (
 
 	"github.com/issue9/assert"
 
-	"github.com/issue9/mux/v4/group"
+	"github.com/issue9/mux/v5/group"
 )
 
 var issue9Mux *Mux

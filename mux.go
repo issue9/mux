@@ -13,9 +13,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/issue9/mux/v4/internal/handlers"
-	"github.com/issue9/mux/v4/internal/syntax"
-	"github.com/issue9/mux/v4/params"
+	"github.com/issue9/mux/v5/internal/handlers"
+	"github.com/issue9/mux/v5/internal/syntax"
+	"github.com/issue9/mux/v5/params"
 )
 
 var (

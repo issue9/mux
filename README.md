@@ -5,7 +5,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/issue9/mux)](https://goreportcard.com/report/github.com/issue9/mux)
 [![license](https://img.shields.io/github/license/issue9/mux)](LICENSE)
 [![codecov](https://codecov.io/gh/issue9/mux/branch/master/graph/badge.svg)](https://codecov.io/gh/issue9/mux)
-[![PkgGoDev](https://pkg.go.dev/badge/github.com/issue9/mux/v4)](https://pkg.go.dev/github.com/issue9/mux/v4)
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/issue9/mux/v5)](https://pkg.go.dev/github.com/issue9/mux/v5)
 
 mux 功能完备的 Go 路由器：
 
@@ -79,7 +79,7 @@ http.ListenAndServe(":8080", m)
 - any 表示匹配任意非空内容；
 - "" 为空表示任意内容，包括非内容；
 
-用户也可以自行添加新的约束符。具体可参考 <https://pkg.go.dev/github.com/issue9/mux/v4/interceptor>
+用户也可以自行添加新的约束符。具体可参考 <https://pkg.go.dev/github.com/issue9/mux/v5/interceptor>
 
 在路由字符串中若是以命名参数结尾的，则表示可以匹配之后的任意字符。
 
@@ -158,7 +158,7 @@ r.Do()
 采用自己的特定方法进行处理：
 
 ```go
-import "github.com/issue9/mux/v4/interceptor"
+import "github.com/issue9/mux/v5/interceptor"
 
 func digit(path string) bool {
     for _, c := range path {
