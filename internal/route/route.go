@@ -7,8 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"sort"
-	"strings"
 
 	"github.com/issue9/sliceutil"
 )
@@ -33,10 +31,9 @@ var addAny = Methods[:len(Methods)-2]
 
 // Route 用于表示某节点下各个请求方法对应的处理函数
 type Route struct {
-	handlers     map[string]http.Handler // 请求方法及其对应的 http.Handler
-	disableHead  bool
-	methods      []string
-	optionsAllow string
+	handlers    map[string]http.Handler // 请求方法及其对应的 http.Handler
+	disableHead bool
+	methodIndex int
 }
 
 // New 声明一个新的 Route 实例
@@ -46,7 +43,6 @@ func New(disableHead bool) *Route {
 	return &Route{
 		handlers:    make(map[string]http.Handler, defaultSize),
 		disableHead: disableHead,
-		methods:     make([]string, 0, defaultSize),
 	}
 }
 
@@ -93,16 +89,7 @@ func (r *Route) add(h http.Handler, m string) error {
 }
 
 func (r *Route) optionsServeHTTP(w http.ResponseWriter, req *http.Request) {
-	w.Header().Set("Allow", r.optionsAllow)
-}
-
-func (r *Route) buildMethods() {
-	r.methods = r.methods[:0]
-	for method := range r.handlers {
-		r.methods = append(r.methods, method)
-	}
-	sort.Strings(r.methods)
-	r.optionsAllow = strings.Join(r.methods, ", ")
+	w.Header().Set("Allow", r.Options())
 }
 
 // Remove 移除某个请求方法对应的处理函数
@@ -137,10 +124,10 @@ func (r *Route) Remove(methods ...string) (bool, error) {
 func (r *Route) Handler(method string) http.Handler { return r.handlers[method] }
 
 // Options 获取当前支持的请求方法列表字符串
-func (r *Route) Options() string { return r.optionsAllow }
+func (r *Route) Options() string { return indexes[r.methodIndex].options }
 
 // Len 获取当前支持请求方法数量
 func (r *Route) Len() int { return len(r.handlers) }
 
 // Methods 当前节点支持的请求方法
-func (r *Route) Methods() []string { return r.methods }
+func (r *Route) Methods() []string { return indexes[r.methodIndex].methods }
