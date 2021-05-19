@@ -34,14 +34,7 @@ func newTester(a *assert.Assertion) *tester {
 // 添加一条路由项。code 表示该路由项返回的报头，
 // 测试路由项的 code 需要唯一，之后也是通过此值来判断其命中的路由项。
 func (n *tester) add(method, pattern string, code int) {
-	nn, err := n.tree.getNode(pattern)
-	n.a.NotError(err).NotNil(nn)
-
-	if nn.handlers == nil {
-		nn.handlers = make(map[string]http.Handler, handlersSize)
-	}
-
-	n.a.NotError(nn.addMethods(n.tree.disableHead, buildHandler(code), method))
+	n.a.NotError(n.tree.Add(pattern, buildHandler(code), method))
 }
 
 // 验证按照指定的 method 和 path 访问，是否会返回相同的 code 值，
@@ -153,9 +146,8 @@ func TestTree_match(t *testing.T) {
 	test.add(http.MethodGet, "/admin/7", 7)
 	test.add(http.MethodGet, "/admin/{id}", 20)
 	a.Equal(len(test.tree.node.children[0].indexes), 7)
-	// /admin/5ndex.html 即部分匹配 /admin/5，更匹配 /admin/{id}
-	// 测试是否正确匹配
-	test.matchTrue(http.MethodGet, "/admin/5ndex.html", 20)
+	// /admin/5index.html 即部分匹配 /admin/5，更匹配 /admin/{id}，测试是否正确匹配
+	test.matchTrue(http.MethodGet, "/admin/5index.html", 20)
 }
 
 func TestTree_Params(t *testing.T) {
