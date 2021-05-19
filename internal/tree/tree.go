@@ -49,7 +49,7 @@ func New(disableHead bool) *Tree {
 
 // Add 添加路由项
 //
-// methods 可以为空，表示添加除 OPTIONS 之外所有支持的请求方法。
+// methods 可以为空，表示添加除 OPTIONS 和 HEAD 之外所有支持的请求方法。
 func (tree *Tree) Add(pattern string, h http.Handler, methods ...string) error {
 	n, err := tree.getNode(pattern)
 	if err != nil {
@@ -60,6 +60,9 @@ func (tree *Tree) Add(pattern string, h http.Handler, methods ...string) error {
 		n.handlers = make(map[string]http.Handler, handlersSize)
 	}
 
+	if len(methods) == 0 {
+		methods = addAny
+	}
 	return n.addMethods(tree.disableHead, h, methods...)
 }
 

@@ -77,10 +77,6 @@ func (n *Node) Methods() []string { return methodIndexes[n.methodIndex].methods 
 
 // 添加一个处理函数
 func (n *Node) addMethods(disableHead bool, h http.Handler, methods ...string) error {
-	if len(methods) == 0 {
-		methods = addAny
-	}
-
 	for _, m := range methods {
 		if m == http.MethodHead || m == http.MethodOptions {
 			return fmt.Errorf("无法手动添加 OPTIONS/HEAD 请求方法")
