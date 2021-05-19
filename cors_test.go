@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/issue9/assert"
-	"github.com/issue9/mux/v5/internal/route"
+	"github.com/issue9/mux/v5/internal/tree"
 )
 
 func TestCORS_sanitize(t *testing.T) {
@@ -48,8 +48,10 @@ func TestCORS_sanitize(t *testing.T) {
 
 func TestCORS_handle(t *testing.T) {
 	a := assert.New(t)
-	hs := route.New(true)
-	a.NotError(hs.Add(nil, http.MethodGet, http.MethodDelete))
+	tree := tree.New(true)
+	tree.Add("/path", nil, http.MethodGet, http.MethodDelete)
+	hs, ps := tree.Route("/path")
+	a.NotNil(hs).Empty(ps)
 
 	// deny
 

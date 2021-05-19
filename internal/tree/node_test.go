@@ -8,18 +8,17 @@ import (
 
 	"github.com/issue9/assert"
 
-	"github.com/issue9/mux/v5/internal/route"
 	"github.com/issue9/mux/v5/internal/syntax"
 )
 
 // 获取当前路由下有处理函数的节点数量
-func (n *node) len() int {
+func (n *Node) len() int {
 	var cnt int
 	for _, child := range n.children {
 		cnt += child.len()
 	}
 
-	if n.route != nil && n.route.Len() > 0 {
+	if len(n.handlers) > 0 {
 		cnt++
 	}
 
@@ -28,7 +27,7 @@ func (n *node) len() int {
 
 func TestNode_find(t *testing.T) {
 	a := assert.New(t)
-	node := &node{}
+	node := &Node{}
 
 	addNode := func(p string, code int, methods ...string) {
 		segs, err := syntax.Split(p)
@@ -36,11 +35,11 @@ func TestNode_find(t *testing.T) {
 		nn, err := node.getNode(segs)
 		a.NotError(err).NotNil(nn)
 
-		if nn.route == nil {
-			nn.route = route.New(false)
+		if nn.handlers == nil {
+			nn.handlers = make(map[string]http.Handler, handlersSize)
 		}
 
-		a.NotError(nn.route.Add(buildHandler(code), methods...))
+		a.NotError(nn.addMethods(false, buildHandler(code), methods...))
 	}
 
 	addNode("/", 1, http.MethodGet)
@@ -57,10 +56,10 @@ func TestNode_find(t *testing.T) {
 
 func TestRemoveNodes(t *testing.T) {
 	a := assert.New(t)
-	newNode := func(str string) *node {
+	newNode := func(str string) *Node {
 		s, err := syntax.NewSegment(str)
 		a.NotError(err).NotNil(s)
-		return &node{segment: s}
+		return &Node{segment: s}
 	}
 
 	n1 := newNode("/1")
@@ -69,7 +68,7 @@ func TestRemoveNodes(t *testing.T) {
 	n3 := newNode("/3")
 	n4 := newNode("/4")
 
-	nodes := []*node{n1, n2, n21, n3, n4}
+	nodes := []*Node{n1, n2, n21, n3, n4}
 
 	// 不存在的元素
 	nodes = removeNodes(nodes, "")
@@ -102,10 +101,10 @@ func TestRemoveNodes(t *testing.T) {
 
 func TestSplitNode(t *testing.T) {
 	a := assert.New(t)
-	newNode := func(str string) *node {
+	newNode := func(str string) *Node {
 		s, err := syntax.NewSegment(str)
 		a.NotError(err).NotNil(s)
-		return &node{segment: s}
+		return &Node{segment: s}
 	}
 	p := newNode("/blog")
 

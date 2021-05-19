@@ -4,9 +4,9 @@
 package tree
 
 import (
+	"errors"
 	"net/http"
 
-	"github.com/issue9/mux/v5/internal/route"
 	"github.com/issue9/mux/v5/internal/syntax"
 	"github.com/issue9/mux/v5/params"
 )
@@ -30,7 +30,7 @@ import (
 //               |
 //               +---- /emails
 type Tree struct {
-	node
+	node        *Node
 	disableHead bool
 }
 
@@ -42,7 +42,7 @@ func New(disableHead bool) *Tree {
 	}
 
 	return &Tree{
-		node:        node{segment: s},
+		node:        &Node{segment: s, handlers: make(map[string]http.Handler, handlersSize)},
 		disableHead: disableHead,
 	}
 }
@@ -56,30 +56,45 @@ func (tree *Tree) Add(pattern string, h http.Handler, methods ...string) error {
 		return err
 	}
 
-	if n.route == nil {
-		n.route = route.New(tree.disableHead)
+	if n.handlers == nil {
+		n.handlers = make(map[string]http.Handler, handlersSize)
 	}
 
-	return n.route.Add(h, methods...)
+	return n.addMethods(tree.disableHead, h, methods...)
 }
 
 // Clean 清除路由项
-func (tree *Tree) Clean(prefix string) { tree.clean(prefix) }
+func (tree *Tree) Clean(prefix string) { tree.node.clean(prefix) }
 
 // Remove 移除路由项
 //
 // methods 可以为空，表示删除所有内容。
 func (tree *Tree) Remove(pattern string, methods ...string) error {
-	child := tree.find(pattern)
-	if child == nil || child.route == nil {
+	child := tree.node.find(pattern)
+	if child == nil || len(child.handlers) == 0 {
 		return nil
 	}
 
-	empty, err := child.route.Remove(methods...)
-	if err != nil {
-		return err
+	if len(methods) == 0 {
+		child.handlers = make(map[string]http.Handler, handlersSize)
+	} else {
+		for _, m := range methods {
+			if m == http.MethodOptions {
+				return errors.New("不能手动删除 OPTIONS")
+			} else if m == http.MethodGet { // HEAD 跟随 GET 一起删除
+				delete(child.handlers, http.MethodHead)
+			}
+
+			delete(child.handlers, m)
+		}
+
+		if _, found := child.handlers[http.MethodOptions]; found && len(child.handlers) == 1 { // 只有一个 OPTIONS 了
+			delete(child.handlers, http.MethodOptions)
+		}
 	}
-	if empty && len(child.children) == 0 {
+	child.buildMethods()
+
+	if len(child.handlers) == 0 && len(child.children) == 0 {
 		child.parent.children = removeNodes(child.parent.children, child.segment.Value)
 		child.parent.buildIndexes()
 	}
@@ -87,7 +102,7 @@ func (tree *Tree) Remove(pattern string, methods ...string) error {
 }
 
 // 获取指定的节点，若节点不存在，则在该位置生成一个新节点。
-func (tree *Tree) getNode(pattern string) (*node, error) {
+func (tree *Tree) getNode(pattern string) (*Node, error) {
 	segs, err := syntax.Split(pattern)
 	if err != nil {
 		return nil, err
@@ -95,20 +110,20 @@ func (tree *Tree) getNode(pattern string) (*node, error) {
 	return tree.node.getNode(segs)
 }
 
-// Route 找到与当前内容匹配的 route.Route 实例
-func (tree *Tree) Route(path string) (*route.Route, params.Params) {
+// Route 找到与当前内容匹配的 Node 实例
+func (tree *Tree) Route(path string) (*Node, params.Params) {
 	ps := make(params.Params, 3)
-	node := tree.match(path, ps)
+	node := tree.node.match(path, ps)
 
-	if node == nil || node.route == nil || node.route.Len() == 0 {
+	if node == nil || len(node.handlers) == 0 {
 		return nil, nil
 	}
-	return node.route, ps
+	return node, ps
 }
 
 // Routes 获取当前的所有路由项
 func (tree *Tree) Routes() map[string][]string {
 	routes := make(map[string][]string, 100)
-	tree.routes("", routes)
+	tree.node.routes("", routes)
 	return routes
 }

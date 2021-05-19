@@ -9,9 +9,9 @@ import (
 )
 
 // Print 向 w 输出树状结构
-func (tree *Tree) Print(w io.Writer) { tree.print(w, 0) }
+func (tree *Tree) Print(w io.Writer) { tree.node.print(w, 0) }
 
-func (n *node) print(w io.Writer, deep int) {
+func (n *Node) print(w io.Writer, deep int) {
 	fmt.Fprintln(w, strings.Repeat(" ", deep*4), n.segment.Value)
 
 	for _, child := range n.children {

@@ -5,11 +5,11 @@ package tree
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/issue9/assert"
 
-	"github.com/issue9/mux/v5/internal/route"
 	"github.com/issue9/mux/v5/params"
 )
 
@@ -37,11 +37,11 @@ func (n *tester) add(method, pattern string, code int) {
 	nn, err := n.tree.getNode(pattern)
 	n.a.NotError(err).NotNil(nn)
 
-	if nn.route == nil {
-		nn.route = route.New(false)
+	if nn.handlers == nil {
+		nn.handlers = make(map[string]http.Handler, handlersSize)
 	}
 
-	n.a.NotError(nn.route.Add(buildHandler(code), method))
+	n.a.NotError(nn.addMethods(n.tree.disableHead, buildHandler(code), method))
 }
 
 // 验证按照指定的 method 和 path 访问，是否会返回相同的 code 值，
@@ -152,7 +152,7 @@ func TestTree_match(t *testing.T) {
 	test.add(http.MethodGet, "/admin/6", 6)
 	test.add(http.MethodGet, "/admin/7", 7)
 	test.add(http.MethodGet, "/admin/{id}", 20)
-	a.Equal(len(test.tree.children[0].indexes), 7)
+	a.Equal(len(test.tree.node.children[0].indexes), 7)
 	// /admin/5ndex.html 即部分匹配 /admin/5，更匹配 /admin/{id}
 	// 测试是否正确匹配
 	test.matchTrue(http.MethodGet, "/admin/5ndex.html", 20)
@@ -195,14 +195,7 @@ func TestTree_Clean(t *testing.T) {
 	tree := New(false)
 
 	addNode := func(p string, code int, methods ...string) {
-		nn, err := tree.getNode(p)
-		a.NotError(err).NotNil(nn)
-
-		if nn.route == nil {
-			nn.route = route.New(false)
-		}
-
-		a.NotError(nn.route.Add(buildHandler(code), methods...))
+		a.NotError(tree.Add(p, buildHandler(code), methods...))
 	}
 
 	addNode("/", 1, http.MethodGet)
@@ -211,18 +204,20 @@ func TestTree_Clean(t *testing.T) {
 	addNode("/posts/{id}/author", 1, http.MethodGet)
 	addNode("/posts/{id}/{author:\\w+}/profile", 1, http.MethodGet)
 
-	a.Equal(tree.len(), 5)
+	a.Equal(tree.node.len(), 5)
 
 	tree.Clean("/posts/{id")
-	a.Equal(tree.len(), 2)
+	a.Equal(tree.node.len(), 2)
 
 	tree.Clean("")
-	a.Equal(tree.len(), 0)
+	a.Equal(tree.node.len(), 0)
 }
 
 func TestTree_Add_Remove(t *testing.T) {
 	a := assert.New(t)
+
 	tree := New(false)
+	a.NotNil(tree)
 
 	a.NotError(tree.Add("/", buildHandler(1), http.MethodGet))
 	a.NotError(tree.Add("/posts/{id}", buildHandler(1), http.MethodGet))
@@ -230,18 +225,62 @@ func TestTree_Add_Remove(t *testing.T) {
 	a.NotError(tree.Add("/posts/1/author", buildHandler(1), http.MethodGet))
 	a.NotError(tree.Add("/posts/{id}/{author:\\w+}/profile", buildHandler(1), http.MethodGet))
 
-	a.True(tree.find("/posts/1/author").route.Len() > 0)
+	a.NotEmpty(tree.node.find("/posts/1/author").handlers)
 	a.NotError(tree.Remove("/posts/1/author", http.MethodGet))
-	a.Nil(tree.find("/posts/1/author"))
+	a.Nil(tree.node.find("/posts/1/author"))
 
 	a.NotError(tree.Remove("/posts/{id}/author", http.MethodGet)) // 只删除 GET
-	a.NotNil(tree.find("/posts/{id}/author"))
+	a.NotNil(tree.node.find("/posts/{id}/author"))
 	a.NotError(tree.Remove("/posts/{id}/author")) // 删除所有请求方法
-	a.Nil(tree.find("/posts/{id}/author"))
+	a.Nil(tree.node.find("/posts/{id}/author"))
 	a.NotError(tree.Remove("/posts/{id}/author")) // 删除已经不存在的节点，不会报错，不发生任何事情
+
+	// addAny
+
+	tree = New(false)
+	a.NotNil(tree)
+	a.NotError(tree.Add("/path", buildHandler(1)))
+	node := tree.node.find("/path")
+	a.Equal(len(Methods), len(node.handlers))
+	a.Equal(len(Methods), len(node.Methods()))
+	a.Equal(node.Options(), strings.Join(node.Methods(), ", "))
+
+	// head
+
+	tree = New(false)
+	a.NotNil(tree)
+	a.NotError(tree.Add("/path", buildHandler(1), http.MethodGet))
+	node = tree.node.find("/path")
+	a.Equal(3, len(node.handlers)).
+		NotNil(node.handlers[http.MethodHead]).
+		NotNil(node.handlers[http.MethodOptions])
+
+	a.NotError(tree.Remove("/path", http.MethodGet))
+	a.Equal(0, len(node.handlers))
+
+	tree = New(true)
+	a.NotNil(tree)
+	a.NotError(tree.Add("/path", buildHandler(1), http.MethodGet))
+	node = tree.node.find("/path")
+	a.Equal(2, len(node.handlers)).
+		Nil(node.handlers[http.MethodHead]).
+		NotNil(node.handlers[http.MethodOptions])
+
+	a.NotError(tree.Remove("/path", http.MethodGet))
+	a.Equal(0, len(node.handlers))
+
+	// error
+
+	tree = New(false)
+	a.NotNil(tree)
+	a.ErrorString(tree.Add("/path", buildHandler(1), http.MethodHead), "无法手动添加 OPTIONS/HEAD 请求方法")
+	a.ErrorString(tree.Add("/path", buildHandler(1), "NOT-SUPPORTED"), "NOT-SUPPORTED")
+	a.NotError(tree.Add("/path", buildHandler(1), http.MethodDelete))
+	a.ErrorString(tree.Add("/path", buildHandler(1), http.MethodDelete), http.MethodDelete)
+	a.ErrorString(tree.Remove("/path", http.MethodOptions), "不能手动删除 OPTIONS")
 }
 
-func TestTree_All(t *testing.T) {
+func TestTree_Routes(t *testing.T) {
 	a := assert.New(t)
 	tree := New(false)
 	a.NotNil(tree)
@@ -260,7 +299,6 @@ func TestTree_All(t *testing.T) {
 	})
 }
 
-// 路由正确性，由 TestTree_match 验证
 func BenchmarkTree_Handler(b *testing.B) {
 	a := assert.New(b)
 	tree := New(false)
@@ -290,6 +328,6 @@ func BenchmarkTree_Handler(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		index := i % len(paths)
 		h, _ := tree.Route(paths[index])
-		a.True(h.Len() > 0)
+		a.True(len(h.handlers) > 0)
 	}
 }

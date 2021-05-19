@@ -13,8 +13,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/issue9/mux/v5/internal/route"
 	"github.com/issue9/mux/v5/internal/syntax"
+	"github.com/issue9/mux/v5/internal/tree"
 	"github.com/issue9/mux/v5/params"
 )
 
@@ -111,8 +111,8 @@ func IsWell(pattern string) error {
 
 // Methods 返回所有支持的请求方法
 func Methods() []string {
-	methods := make([]string, len(route.Methods))
-	copy(methods, route.Methods)
+	methods := make([]string, len(tree.Methods))
+	copy(methods, tree.Methods)
 	return methods
 }
 

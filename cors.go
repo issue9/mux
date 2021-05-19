@@ -8,9 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/issue9/mux/v5/internal/tree"
 	"github.com/issue9/sliceutil"
-
-	"github.com/issue9/mux/v5/internal/route"
 )
 
 // CORS 跨域请求设置项
@@ -93,7 +92,7 @@ func (c *CORS) sanitize() error {
 	return nil
 }
 
-func (c *CORS) handle(hs *route.Route, w http.ResponseWriter, r *http.Request) {
+func (c *CORS) handle(node *tree.Node, w http.ResponseWriter, r *http.Request) {
 	if c.deny {
 		return
 	}
@@ -106,11 +105,11 @@ func (c *CORS) handle(hs *route.Route, w http.ResponseWriter, r *http.Request) {
 
 	if preflight {
 		// Access-Control-Allow-Methods
-		methods := hs.Methods()
+		methods := node.Methods()
 		if sliceutil.Index(methods, func(i int) bool { return methods[i] == reqMethod }) == -1 {
 			return
 		}
-		wh.Set("Access-Control-Allow-Methods", hs.Options())
+		wh.Set("Access-Control-Allow-Methods", node.Options())
 		wh.Add("Vary", "Access-Control-Request-Method")
 
 		// Access-Control-Allow-Headers
