@@ -8,8 +8,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/issue9/mux/v5/internal/tree"
 	"github.com/issue9/sliceutil"
+
+	"github.com/issue9/mux/v5/internal/tree"
 )
 
 // CORS 跨域请求设置项

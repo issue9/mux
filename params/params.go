@@ -34,6 +34,9 @@ func Get(r *http.Request) Params {
 	return nil
 }
 
+// WithValue 将参数 ps 附加在 r 上
+//
+// 与 context.WithValue 功能相同，但是考虑了在同一个 r 上调用多次 WithValue 的情况。
 func WithValue(r *http.Request, ps Params) *http.Request {
 	if len(ps) == 0 {
 		return r
