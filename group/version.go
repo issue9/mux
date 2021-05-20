@@ -62,8 +62,7 @@ func (v *HeaderVersion) Match(r *http.Request) (*http.Request, bool) {
 	for _, vv := range v.Versions {
 		if vv == ver {
 			if v.Key != "" {
-				ps := params.Params{v.Key: vv}
-				r = r.WithContext(context.WithValue(r.Context(), params.ContextKeyParams, ps))
+				r = params.WithValue(r, params.Params{v.Key: vv})
 			}
 			return r, true
 		}
@@ -81,6 +80,7 @@ func (v *PathVersion) Match(r *http.Request) (*http.Request, bool) {
 				ps[v.key] = vv
 			}
 
+			// 无论 ps 是否为空，都复制 r
 			r = r.WithContext(context.WithValue(r.Context(), params.ContextKeyParams, ps))
 			r.URL.Path = strings.TrimPrefix(p, vv)
 			return r, true

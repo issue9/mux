@@ -132,7 +132,7 @@ id := params.MustInt("id", 0) // 0 表示在无法获取 id 参数的默认值
 
 m := mux.Default()
 
-def, ok := m.NewRouter("default", group.NewPathVersion("v1"), AllowedCORS())
+def, ok := m.NewRouter("default", group.NewPathVersion("version-key", "v1"), AllowedCORS())
 def.Get("/path", h1)
 
 host, ok := m.NewRouter("host", group.NewHosts("*.example.com"), AllowedCORS())

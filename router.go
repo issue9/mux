@@ -3,7 +3,6 @@
 package mux
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"sort"
@@ -233,7 +232,7 @@ func (r *Router) serveHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if len(ps) > 0 {
-		req = req.WithContext(context.WithValue(req.Context(), params.ContextKeyParams, ps))
+		req = params.WithValue(req, ps)
 	}
 
 	h.ServeHTTP(w, req)

@@ -5,31 +5,39 @@ package params
 import (
 	"context"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/issue9/assert"
 )
 
 func getParams(params map[string]string, a *assert.Assertion) Params {
-	r, err := http.NewRequest(http.MethodGet, "/to/path", nil)
-	a.NotError(err).NotNil(r)
-
-	ctx := context.WithValue(r.Context(), ContextKeyParams, Params(params))
-	r = r.WithContext(ctx)
+	r := httptest.NewRequest(http.MethodGet, "/to/path", nil)
+	r = WithValue(r, params)
 	return Get(r)
 }
 
-func TestGetParams(t *testing.T) {
+func TestWithValue(t *testing.T) {
 	a := assert.New(t)
 
-	r, err := http.NewRequest(http.MethodGet, "/to/path", nil)
-	a.NotError(err).NotNil(r)
+	r := httptest.NewRequest(http.MethodGet, "/to/path", nil)
+	a.Equal(WithValue(r, Params{}), r)
+
+	r = httptest.NewRequest(http.MethodGet, "/to/path", nil)
+	r = WithValue(r, Params{"k1": "v1"})
+	r = WithValue(r, map[string]string{"k2": "v2"})
+	a.Equal(Get(r), map[string]string{"k1": "v1", "k2": "v2"})
+}
+
+func TestGet(t *testing.T) {
+	a := assert.New(t)
+
+	r := httptest.NewRequest(http.MethodGet, "/to/path", nil)
 	ps := Get(r)
 	a.Nil(ps)
 
 	maps := map[string]string{"key1": "1"}
-	r, err = http.NewRequest(http.MethodGet, "/to/path", nil)
-	a.NotError(err).NotNil(r)
+	r = httptest.NewRequest(http.MethodGet, "/to/path", nil)
 	ctx := context.WithValue(r.Context(), ContextKeyParams, Params(maps))
 	r = r.WithContext(ctx)
 	ps = Get(r)

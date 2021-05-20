@@ -3,7 +3,6 @@
 package group
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/issue9/mux/v5/internal/tree"
@@ -34,10 +33,7 @@ func (hs *Hosts) Match(r *http.Request) (*http.Request, bool) {
 		return nil, false
 	}
 
-	if len(ps) > 0 {
-		r = r.WithContext(context.WithValue(r.Context(), params.ContextKeyParams, ps))
-	}
-	return r, true
+	return params.WithValue(r, ps), true
 }
 
 // Add 添加新的域名

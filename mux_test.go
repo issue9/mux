@@ -12,6 +12,7 @@ import (
 	"github.com/issue9/mux/v5/group"
 	"github.com/issue9/mux/v5/interceptor"
 	"github.com/issue9/mux/v5/internal/tree"
+	"github.com/issue9/mux/v5/params"
 )
 
 func TestMux_empty(t *testing.T) {
@@ -23,6 +24,31 @@ func TestMux_empty(t *testing.T) {
 	r := httptest.NewRequest(http.MethodGet, "/path", nil)
 	m.ServeHTTP(w, r)
 	a.Equal(w.Code, http.StatusNotFound)
+}
+
+func TestGroup(t *testing.T) {
+	a := assert.New(t)
+	exit := make(chan bool, 1)
+
+	h, err := group.NewHosts("{sub}.example.com")
+	a.NotError(err).NotNil(h)
+
+	m := Default()
+	def, err := m.NewRouter("host", h, AllowedCORS())
+	a.NotError(err).NotNil(def)
+
+	def.GetFunc("/posts/{id:digit}.html", func(w http.ResponseWriter, r *http.Request) {
+		ps := params.Get(r)
+		a.Equal(ps.MustString("sub", "not-found"), "abc").
+			Equal(ps.MustInt("id", -1), 5)
+		w.WriteHeader(http.StatusAccepted)
+		exit <- true
+	})
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "https://abc.example.com/posts/5.html", nil)
+	m.ServeHTTP(w, r)
+	a.Equal(w.Code, http.StatusAccepted)
+	<-exit
 }
 
 func TestRouter_routers(t *testing.T) {
@@ -128,10 +154,10 @@ func TestRouter_routers_multiple(t *testing.T) {
 	a.NotError(err).NotNil(def)
 	def.Get("/t1", buildHandler(201))
 
-	v1, err := m.NewRouter("v1", group.NewPathVersion("v1"), AllowedCORS())
+	v1, err := m.NewRouter("v1", group.NewPathVersion("", "v1"), AllowedCORS())
 	a.NotError(err).NotNil(v1)
 	v1.Get("/path", buildHandler(202))
-	v2, err := m.NewRouter("v2", group.NewPathVersion("v1", "v2"), AllowedCORS())
+	v2, err := m.NewRouter("v2", group.NewPathVersion("", "v1", "v2"), AllowedCORS())
 	a.NotError(err).NotNil(v2)
 	v2.Get("/path", buildHandler(203))
 

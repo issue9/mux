@@ -4,6 +4,7 @@
 package params
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"strconv"
@@ -31,6 +32,19 @@ func Get(r *http.Request) Params {
 	}
 
 	return nil
+}
+
+func WithValue(r *http.Request, ps Params) *http.Request {
+	if len(ps) == 0 {
+		return r
+	}
+
+	if ps2 := Get(r); len(ps2) > 0 {
+		for k, v := range ps2 {
+			ps[k] = v
+		}
+	}
+	return r.WithContext(context.WithValue(r.Context(), ContextKeyParams, ps))
 }
 
 // Exists 查找指定名称的参数是否存在
