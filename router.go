@@ -43,7 +43,7 @@ func (mux *Mux) Routers() []*Router { return mux.routers }
 //
 // name 表示该路由组的名称，需要唯一，否则返回 false；
 // matcher 路由的准入条件，如果为空，则此条路由匹配时会被排在最后，
-// 只有一个路由的 matcher 为空，否则会 panic；
+// 只能有一个路由的 matcher 为空，否则会 panic；
 // cors 跨域请求的相关设置项；
 func (mux *Mux) NewRouter(name string, matcher group.Matcher, cors *CORS) (*Router, error) {
 	if name == "" {

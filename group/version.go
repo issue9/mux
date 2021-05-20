@@ -3,32 +3,43 @@
 package group
 
 import (
+	"context"
 	"net/http"
 	"strings"
+
+	"github.com/issue9/mux/v5/params"
 )
 
 const versionString = "version="
 
 // PathVersion 匹配路径中的版本号
 //
-// 会修改 *http.Request.URL.Path 的值，去掉匹配的版本号路径部分，比如：
+// 会修改 http.Request.URL.Path 的值，去掉匹配的版本号路径部分，比如：
 //  /v1/path.html
 // 如果匹配 v1 版本，会修改为：
 //  /path.html
 type PathVersion struct {
+	key string
+
 	// 需要匹配的版本号列表，需要以 / 作分隔，比如 /v3/  /v4/  /v11/
-	Versions []string
+	versions []string
 }
 
 // HeaderVersion 匹配报头的版本号
 //
 // 匹配报头 Accept 中的报头信息。
 type HeaderVersion struct {
+	// 将版本号作为参数保存到上下文中是的名称，如果不需要，可以设置为空值。
+	Key string
+
+	// 支持的版本号列表。
 	Versions []string
 }
 
 // NewPathVersion 声明 PathVersion 实例
-func NewPathVersion(version ...string) *PathVersion {
+//
+// key 将版本号作为参数保存到上下文中是的名称，如果不需要，可以设置为空值。
+func NewPathVersion(key string, version ...string) *PathVersion {
 	for i, v := range version {
 		if v == "" {
 			panic("参数 v 不能为空值")
@@ -43,13 +54,17 @@ func NewPathVersion(version ...string) *PathVersion {
 		version[i] = v
 	}
 
-	return &PathVersion{Versions: version}
+	return &PathVersion{key: key, versions: version}
 }
 
 func (v *HeaderVersion) Match(r *http.Request) (*http.Request, bool) {
 	ver := findVersionNumberInHeader(r.Header.Get("Accept"))
 	for _, vv := range v.Versions {
 		if vv == ver {
+			if v.Key != "" {
+				ps := params.Params{v.Key: vv}
+				r = r.WithContext(context.WithValue(r.Context(), params.ContextKeyParams, ps))
+			}
 			return r, true
 		}
 	}
@@ -58,9 +73,16 @@ func (v *HeaderVersion) Match(r *http.Request) (*http.Request, bool) {
 
 func (v *PathVersion) Match(r *http.Request) (*http.Request, bool) {
 	p := r.URL.Path
-	for _, ver := range v.Versions {
+	for _, ver := range v.versions {
 		if strings.HasPrefix(p, ver) {
-			r.URL.Path = strings.TrimPrefix(p, ver[:len(ver)-1])
+			vv := ver[:len(ver)-1]
+			ps := params.Params{}
+			if v.key != "" {
+				ps[v.key] = vv
+			}
+
+			r = r.WithContext(context.WithValue(r.Context(), params.ContextKeyParams, ps))
+			r.URL.Path = strings.TrimPrefix(p, vv)
 			return r, true
 		}
 	}

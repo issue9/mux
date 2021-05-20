@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/issue9/assert"
+	"github.com/issue9/mux/v5/params"
 )
 
 var (
@@ -76,10 +77,10 @@ func TestHeaderVersion_Match(t *testing.T) {
 func TestPathVersion_Match(t *testing.T) {
 	a := assert.New(t)
 
-	h := NewPathVersion("v3", "/v2", "/v1")
+	h := NewPathVersion("version", "v3", "/v2", "/v1")
 
 	a.Panic(func() {
-		NewPathVersion("", "v3")
+		NewPathVersion("version", "", "v3")
 	})
 
 	// 相同版本号
@@ -87,7 +88,9 @@ func TestPathVersion_Match(t *testing.T) {
 	a.NotNil(r)
 	rr, ok := h.Match(r)
 	a.True(ok).NotNil(rr)
-	a.Equal(rr.URL.Path, "/test")
+	a.Equal(rr.URL.Path, "/test").
+		Equal(r.URL.Path, "/v1/test").
+		Equal(params.Get(rr).MustString("version", "not-found"), "/v1")
 
 	// 空版本
 	r = httptest.NewRequest(http.MethodGet, "http://caixw.io/test", nil)
@@ -105,7 +108,7 @@ func TestPathVersion_Match(t *testing.T) {
 
 	// 空值，不匹配任何内容
 
-	h = NewPathVersion()
+	h = NewPathVersion("version")
 	r = httptest.NewRequest(http.MethodGet, "https://caixw.io/test", nil)
 	r.Header.Set("Accept", "application/json; version=1.0")
 	a.NotNil(r)
