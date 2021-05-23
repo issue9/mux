@@ -16,14 +16,21 @@ import (
 // ErrRouterExists 表示是否存在同名的路由名称
 var ErrRouterExists = errors.New("该名称的路由已经存在")
 
+// Groups 管理一组路由
 type Groups struct {
-	routers     []*Router
-	middlewares *mux.Middlewares
+	routers []*Router
+	ms      *mux.Middlewares
+
+	disableHead,
+	skipCleanPath bool
+
+	cors *mux.CORS
 
 	notFound,
 	methodNotAllowed http.HandlerFunc
 }
 
+// Router 单个路由
 type Router struct {
 	*mux.Router
 	g       *Groups
@@ -32,13 +39,16 @@ type Router struct {
 }
 
 // Default 返回默认参数的 New
-func Default() *Groups { return New(nil, nil) }
+func Default() *Groups { return New(false, false, mux.DeniedCORS(), nil, nil) }
 
 // New 声明一个新的 Mux
 //
+// disableHead 是否禁用根据 Get 请求自动生成 HEAD 请求；
+// skipCleanPath 是否不对访问路径作处理，比如 "//api" ==> "/api"；
+// cors 跨域请求的相关设置项；
 // notFound 404 页面的处理方式，为 nil 时会调用默认的方式进行处理；
 // methodNotAllowed 405 页面的处理方式，为 nil 时会调用默认的方式进行处理；
-func New(notFound, methodNotAllowed http.HandlerFunc) *Groups {
+func New(disableHead, skipCleanPath bool, cors *mux.CORS, notFound, methodNotAllowed http.HandlerFunc) *Groups {
 	if notFound == nil {
 		notFound = tree.DefaultNotFound
 	}
@@ -47,17 +57,19 @@ func New(notFound, methodNotAllowed http.HandlerFunc) *Groups {
 	}
 
 	g := &Groups{
-		routers:          make([]*Router, 0, 1),
+		routers: make([]*Router, 0, 1),
+
+		disableHead:      disableHead,
+		skipCleanPath:    skipCleanPath,
+		cors:             cors,
 		notFound:         notFound,
 		methodNotAllowed: methodNotAllowed,
 	}
-	g.middlewares = mux.NewMiddlewares(http.HandlerFunc(g.serveHTTP))
+	g.ms = mux.NewMiddlewares(http.HandlerFunc(g.serveHTTP))
 	return g
 }
 
-func (g *Groups) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	g.middlewares.ServeHTTP(w, r)
-}
+func (g *Groups) ServeHTTP(w http.ResponseWriter, r *http.Request) { g.ms.ServeHTTP(w, r) }
 
 func (g *Groups) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	for _, router := range g.routers {
@@ -69,7 +81,22 @@ func (g *Groups) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	g.notFound(w, r)
 }
 
-// AddRouter 添加一个路由组
+// NewRouter 声明新路由
+//
+// 与 AddRouter 的区别在于，NewRouter 参数从 Groups 继承，而 AddRouter 的路由，其参数可自定义。
+func (g *Groups) NewRouter(name string, matcher Matcher) (*mux.Router, error) {
+	r, err := mux.NewRouter(g.disableHead, g.skipCleanPath, g.cors, g.notFound, g.methodNotAllowed)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = g.AddRouter(name, matcher, r); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// AddRouter 添加路由
 //
 // 该路由只有符合 Matcher 的要求才会进入，其它与 Router 功能相同。
 // 当 Matcher 与其它路由组的判断有重复时，第一条返回 true 的路由组获胜，
@@ -129,17 +156,17 @@ func (g *Groups) RemoveRouter(name string) {
 
 // AppendMiddleware 添加中间件到尾部
 func (g *Groups) AppendMiddleware(f mux.MiddlewareFunc) *Groups {
-	g.middlewares.Append(f)
+	g.ms.Append(f)
 	return g
 }
 
 // PrependMiddleware 添加中间件到顶部
 func (g *Groups) PrependMiddleware(f mux.MiddlewareFunc) *Groups {
-	g.middlewares.Prepend(f)
+	g.ms.Prepend(f)
 	return g
 }
 
-func (g *Groups) CleanMiddlewares() { g.middlewares.Reset() }
+func (g *Groups) CleanMiddlewares() { g.ms.Reset() }
 
 // Name 返回名称
 func (r *Router) Name() string { return r.name }

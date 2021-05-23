@@ -179,6 +179,8 @@ func TestGroups_AddRouter(t *testing.T) {
 
 	// 同名添加不成功
 	a.ErrorIs(g.AddRouter("host", &PathVersion{}, mux.DefaultRouter()), ErrRouterExists)
+	rr, err := g.NewRouter("host", &PathVersion{})
+	a.ErrorIs(err, ErrRouterExists).Nil(rr)
 
 	a.Nil(g.Router("not-exists"))
 }
@@ -221,8 +223,8 @@ func TestGroup(t *testing.T) {
 	h, err := NewHosts("{sub}.example.com")
 	a.NotError(err).NotNil(h)
 
-	def := mux.DefaultRouter()
-	a.NotError(g.AddRouter("host", h, def))
+	def, err := g.NewRouter("host", h)
+	a.NotError(err).NotNil(def)
 
 	def.GetFunc("/posts/{id:digit}.html", func(w http.ResponseWriter, r *http.Request) {
 		ps := params.Get(r)

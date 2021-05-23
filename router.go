@@ -10,7 +10,7 @@ import (
 	"github.com/issue9/mux/v5/params"
 )
 
-// Router 提供了基本的路由项添加和删除等功能
+// Router 路由
 //
 // 可以对路径按正则或是请求方法进行匹配。用法如下：
 //  router := DefaultRouter()
@@ -39,7 +39,7 @@ func DefaultRouter() *Router {
 	return r
 }
 
-// NewRouter 添加子路由
+// NewRouter 声明路由
 //
 // disableHead 是否禁用根据 Get 请求自动生成 HEAD 请求；
 // skipCleanPath 是否不对访问路径作处理，比如 "//api" ==> "/api"；
