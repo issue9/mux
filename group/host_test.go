@@ -58,6 +58,20 @@ func TestHosts_Match(t *testing.T) {
 	a.False(ok).Nil(rr)
 }
 
+func TestNewHosts(t *testing.T) {
+	a := assert.New(t)
+
+	h, err := NewHosts()
+	a.NotError(err).NotNil(h)
+
+	h, err = NewHosts("{sub}.example.com")
+	a.NotError(err).NotNil(h)
+
+	// 相同的值
+	h, err = NewHosts("{sub}.example.com", "{sub}.example.com")
+	a.Error(err).Nil(h)
+}
+
 func TestHosts_Add_Delete(t *testing.T) {
 	a := assert.New(t)
 
