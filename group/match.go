@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
 
-// Package group 提供了按条件进行分组路由的功能
 package group
 
 import "net/http"

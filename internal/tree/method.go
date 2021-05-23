@@ -30,6 +30,14 @@ var (
 	methodIndexMap map[string]int
 
 	methodIndexes = map[int]methodIndexEntity{}
+
+	DefaultNotFound = func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+	}
+
+	DefaultMethodNotAllowed = func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+	}
 )
 
 type headResponse struct {

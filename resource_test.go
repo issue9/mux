@@ -8,8 +8,6 @@ import (
 	"testing"
 
 	"github.com/issue9/assert"
-
-	"github.com/issue9/mux/v5/group"
 )
 
 func (t *tester) resource(p string) *Resource {
@@ -78,12 +76,10 @@ func TestResource(t *testing.T) {
 	test.matchTrue(http.MethodDelete, "/f/any", 404)
 }
 
-func TestMux_Resource(t *testing.T) {
+func TestRouter_Resource(t *testing.T) {
 	a := assert.New(t)
-	m := New(true, false, nil, nil)
-	a.NotNil(m)
-	def, err := m.NewRouter("def", group.MatcherFunc(group.Any), AllowedCORS())
-	a.NotError(err).NotNil(def)
+	def := DefaultRouter()
+	a.NotNil(def)
 
 	r1 := def.Resource("/abc/1")
 	a.NotNil(r1)
@@ -97,17 +93,15 @@ func TestMux_Resource(t *testing.T) {
 	r2.Delete(buildHandler(201))
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodDelete, "/abc/1", nil)
-	m.ServeHTTP(w, r)
+	def.ServeHTTP(w, r)
 	a.Equal(w.Result().StatusCode, 201)
 }
 
 func TestPrefix_Resource(t *testing.T) {
 	a := assert.New(t)
 
-	m := Default()
-	a.NotNil(m)
-	def, err := m.NewRouter("def", group.MatcherFunc(group.Any), AllowedCORS())
-	a.NotError(err).NotNil(def)
+	def := DefaultRouter()
+	a.NotNil(def)
 
 	p := def.Prefix("/p1")
 
@@ -117,15 +111,13 @@ func TestPrefix_Resource(t *testing.T) {
 	r1.Delete(buildHandler(201))
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodDelete, "/p1/abc/1", nil)
-	m.ServeHTTP(w, r)
+	def.ServeHTTP(w, r)
 	a.Equal(w.Result().StatusCode, 201)
 }
 
 func TestResource_URL(t *testing.T) {
 	a := assert.New(t)
-	m := New(true, false, nil, nil)
-	a.NotNil(m)
-	def, err := m.NewRouter("def", group.MatcherFunc(group.Any), AllowedCORS())
+	def, err := NewRouter(true, false, AllowedCORS(), nil, nil)
 	a.NotError(err).NotNil(def)
 
 	// 非正则

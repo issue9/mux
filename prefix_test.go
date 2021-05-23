@@ -7,8 +7,6 @@ import (
 	"testing"
 
 	"github.com/issue9/assert"
-
-	"github.com/issue9/mux/v5/group"
 )
 
 func (t *tester) prefix(p string) *Prefix {
@@ -75,11 +73,9 @@ func TestPrefix(t *testing.T) {
 	test.matchTrue(http.MethodDelete, "/p/f/1", 404)
 }
 
-func TestMux_Prefix(t *testing.T) {
+func TestRouter_Prefix(t *testing.T) {
 	a := assert.New(t)
-	m := New(true, false, nil, nil)
-	a.NotNil(m)
-	def, err := m.NewRouter("def", group.MatcherFunc(group.Any), AllowedCORS())
+	def, err := NewRouter(true, false, AllowedCORS(), nil, nil)
 	a.NotError(err).NotNil(def)
 
 	p := def.Prefix("/abc")
@@ -92,9 +88,7 @@ func TestMux_Prefix(t *testing.T) {
 
 func TestPrefix_Prefix(t *testing.T) {
 	a := assert.New(t)
-	m := New(true, false, nil, nil)
-	a.NotNil(m)
-	def, err := m.NewRouter("def", group.MatcherFunc(group.Any), AllowedCORS())
+	def, err := NewRouter(true, false, AllowedCORS(), nil, nil)
 	a.NotError(err).NotNil(def)
 
 	p := def.Prefix("/abc")
@@ -109,9 +103,7 @@ func TestPrefix_Prefix(t *testing.T) {
 
 func TestPrefix_URL(t *testing.T) {
 	a := assert.New(t)
-	m := New(true, false, nil, nil)
-	a.NotNil(m)
-	def, err := m.NewRouter("def", group.MatcherFunc(group.Any), AllowedCORS())
+	def, err := NewRouter(true, false, AllowedCORS(), nil, nil)
 	a.NotError(err).NotNil(def)
 
 	// 非正则

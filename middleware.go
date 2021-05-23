@@ -67,29 +67,15 @@ func (ms *Middlewares) Reset() *Middlewares {
 }
 
 // AppendMiddleware 添加中间件到尾部
-func (mux *Mux) AppendMiddleware(f MiddlewareFunc) *Mux {
-	mux.middlewares.Append(f)
-	return mux
-}
-
-// PrependMiddleware 添加中间件到顶部
-func (mux *Mux) PrependMiddleware(f MiddlewareFunc) *Mux {
-	mux.middlewares.Prepend(f)
-	return mux
-}
-
-func (mux *Mux) CleanMiddlewares() { mux.middlewares.Reset() }
-
-// AppendMiddleware 添加中间件到尾部
 func (r *Router) AppendMiddleware(f MiddlewareFunc) *Router {
-	r.middlewares.Append(f)
+	r.ms.Append(f)
 	return r
 }
 
 // PrependMiddleware 添加中间件到顶部
 func (r *Router) PrependMiddleware(f MiddlewareFunc) *Router {
-	r.middlewares.Prepend(f)
+	r.ms.Prepend(f)
 	return r
 }
 
-func (r *Router) CleanMiddlewares() { r.middlewares.Reset() }
+func (r *Router) CleanMiddlewares() { r.ms.Reset() }

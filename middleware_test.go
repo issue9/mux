@@ -8,8 +8,6 @@ import (
 	"testing"
 
 	"github.com/issue9/assert"
-
-	"github.com/issue9/mux/v5/group"
 )
 
 func buildMiddleware(a *assert.Assertion, text string) MiddlewareFunc {
@@ -21,100 +19,10 @@ func buildMiddleware(a *assert.Assertion, text string) MiddlewareFunc {
 	}
 }
 
-func TestMux_PrependMiddleware(t *testing.T) {
-	a := assert.New(t)
-	m := Default()
-	a.NotNil(m)
-	def, err := m.NewRouter("def", group.MatcherFunc(group.Any), AllowedCORS())
-	a.NotError(err).NotNil(def)
-
-	def.Get("/get", buildHandler(201))
-	m.PrependMiddleware(buildMiddleware(a, "1")).
-		PrependMiddleware(buildMiddleware(a, "2"))
-
-	w := httptest.NewRecorder()
-	r := httptest.NewRequest(http.MethodGet, "/get", nil)
-	m.ServeHTTP(w, r)
-	a.Equal(w.Code, 201).
-		Equal(w.Body.String(), "12")
-
-	// CleanMiddlewares
-
-	m.CleanMiddlewares()
-	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "/get", nil)
-	m.ServeHTTP(w, r)
-	a.Equal(w.Code, 201).
-		Empty(w.Body.String())
-}
-
-func TestMux_AppendMiddleware(t *testing.T) {
-	a := assert.New(t)
-	m := Default()
-	a.NotNil(m)
-	def, err := m.NewRouter("def", group.MatcherFunc(group.Any), AllowedCORS())
-	a.NotError(err).NotNil(def)
-
-	def.Get("/get", buildHandler(201))
-	m.AppendMiddleware(buildMiddleware(a, "1")).
-		AppendMiddleware(buildMiddleware(a, "2"))
-
-	w := httptest.NewRecorder()
-	r := httptest.NewRequest(http.MethodGet, "/get", nil)
-	m.ServeHTTP(w, r)
-	a.Equal(w.Code, 201).
-		Equal(w.Body.String(), "21")
-
-	// CleanMiddlewares
-
-	m.CleanMiddlewares()
-	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "/get", nil)
-	m.ServeHTTP(w, r)
-	a.Equal(w.Code, 201).
-		Empty(w.Body.String())
-}
-
-func TestMux_AddMiddleware(t *testing.T) {
-	a := assert.New(t)
-	m := Default()
-	a.NotNil(m)
-	def, err := m.NewRouter("def", group.MatcherFunc(group.Any), AllowedCORS())
-	a.NotError(err).NotNil(def)
-
-	def.Get("/get", buildHandler(201))
-	m.AppendMiddleware(buildMiddleware(a, "p1")).
-		PrependMiddleware(buildMiddleware(a, "a1")).
-		AppendMiddleware(buildMiddleware(a, "p2")).
-		PrependMiddleware(buildMiddleware(a, "a2"))
-
-	w := httptest.NewRecorder()
-	r := httptest.NewRequest(http.MethodGet, "/get", nil)
-	m.ServeHTTP(w, r)
-	a.Equal(w.Code, 201).
-		Equal(w.Body.String(), "p2p1a1a2") // buildHandler 导致顶部的后输出
-
-	// CleanMiddlewares
-
-	m.CleanMiddlewares()
-	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "/get", nil)
-	m.ServeHTTP(w, r)
-	a.Equal(w.Code, 201).
-		Empty(w.Body.String())
-}
-
 func TestRouter_AddMiddleware(t *testing.T) {
 	a := assert.New(t)
-	m := Default()
-	a.NotNil(m)
 
-	m.AppendMiddleware(buildMiddleware(a, "p1")).
-		PrependMiddleware(buildMiddleware(a, "a1")).
-		AppendMiddleware(buildMiddleware(a, "p2")).
-		PrependMiddleware(buildMiddleware(a, "a2"))
-
-	def, err := m.NewRouter("def", group.MatcherFunc(group.Any), AllowedCORS())
+	def, err := NewRouter(false, false, AllowedCORS(), nil, nil)
 	a.NotError(err).NotNil(def)
 	def.Get("/get", buildHandler(201))
 	def.AppendMiddleware(buildMiddleware(a, "rp1")).
@@ -124,23 +32,16 @@ func TestRouter_AddMiddleware(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "/get", nil)
-	m.ServeHTTP(w, r)
+	def.ServeHTTP(w, r)
 	a.Equal(w.Code, 201).
-		Equal(w.Body.String(), "rp2rp1ra1ra2p2p1a1a2") // buildHandler 导致顶部的后输出
+		Equal(w.Body.String(), "rp2rp1ra1ra2") // buildHandler 导致顶部的后输出
 
 	// CleanMiddlewares
-
-	m.CleanMiddlewares()
-	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "/get", nil)
-	m.ServeHTTP(w, r)
-	a.Equal(w.Code, 201).
-		Equal(w.Body.String(), "rp2rp1ra1ra2")
 
 	def.CleanMiddlewares()
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "/get", nil)
-	m.ServeHTTP(w, r)
+	def.ServeHTTP(w, r)
 	a.Equal(w.Code, 201).
 		Empty(w.Body.String())
 }

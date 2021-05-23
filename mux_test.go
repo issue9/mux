@@ -4,187 +4,13 @@ package mux
 
 import (
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/issue9/assert"
 
-	"github.com/issue9/mux/v5/group"
 	"github.com/issue9/mux/v5/interceptor"
 	"github.com/issue9/mux/v5/internal/tree"
-	"github.com/issue9/mux/v5/params"
 )
-
-func TestMux_empty(t *testing.T) {
-	a := assert.New(t)
-	m := Default()
-	a.NotNil(m)
-
-	w := httptest.NewRecorder()
-	r := httptest.NewRequest(http.MethodGet, "/path", nil)
-	m.ServeHTTP(w, r)
-	a.Equal(w.Code, http.StatusNotFound)
-}
-
-func TestGroup(t *testing.T) {
-	a := assert.New(t)
-	exit := make(chan bool, 1)
-
-	h, err := group.NewHosts("{sub}.example.com")
-	a.NotError(err).NotNil(h)
-
-	m := Default()
-	def, err := m.NewRouter("host", h, AllowedCORS())
-	a.NotError(err).NotNil(def)
-
-	def.GetFunc("/posts/{id:digit}.html", func(w http.ResponseWriter, r *http.Request) {
-		ps := params.Get(r)
-		a.Equal(ps.MustString("sub", "not-found"), "abc").
-			Equal(ps.MustInt("id", -1), 5)
-		w.WriteHeader(http.StatusAccepted)
-		exit <- true
-	})
-	w := httptest.NewRecorder()
-	r := httptest.NewRequest(http.MethodGet, "https://abc.example.com/posts/5.html", nil)
-	m.ServeHTTP(w, r)
-	a.Equal(w.Code, http.StatusAccepted)
-	<-exit
-}
-
-func TestRouter_routers(t *testing.T) {
-	a := assert.New(t)
-	h, err := group.NewHosts("localhost")
-	a.NotError(err).NotNil(h)
-
-	m := Default()
-	def, err := m.NewRouter("host", h, AllowedCORS())
-	a.NotError(err).NotNil(def)
-	w := httptest.NewRecorder()
-	def.Get("/t1", buildHandler(201))
-	r := httptest.NewRequest(http.MethodGet, "/t1", nil)
-	m.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 404)
-
-	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "https://localhost/t1", nil)
-	m.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 201)
-
-	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "https://localhost/t1", nil)
-	m.ServeHTTP(w, r) // 由 h 直接访问
-	a.Equal(w.Result().StatusCode, 201)
-
-	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "/t1", nil)
-	m.ServeHTTP(w, r) // 由 h 直接访问
-	a.Equal(w.Result().StatusCode, 404)
-
-	// resource
-	m = Default()
-	a.NotNil(m)
-	def, err = m.NewRouter("def", h, AllowedCORS())
-	a.NotError(err).NotNil(def)
-	res := def.Resource("/r1")
-	res.Get(buildHandler(202))
-	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "/r1", nil)
-	m.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 404)
-
-	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "http://localhost/r1", nil)
-	m.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 202)
-
-	// prefix
-	m = Default()
-	a.NotNil(m)
-	def, err = m.NewRouter("def", h, AllowedCORS())
-	a.NotError(err).NotNil(def)
-	p := def.Prefix("/prefix1")
-	p.Get("/p1", buildHandler(203))
-	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "/prefix1/p1", nil)
-	m.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 404)
-
-	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "http://localhost:88/prefix1/p1", nil)
-	m.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 203)
-
-	// prefix prefix
-	m = New(false, false, nil, nil)
-	a.NotNil(m)
-	def, err = m.NewRouter("def", h, AllowedCORS())
-	a.NotError(err).NotNil(def)
-	p1 := def.Prefix("/prefix1")
-	p2 := p1.Prefix("/prefix2")
-	p2.GetFunc("/p2", buildHandlerFunc(204))
-	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "/prefix1/prefix2/p2", nil)
-	m.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 404)
-
-	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "http://localhost/prefix1/prefix2/p2", nil)
-	m.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 204)
-
-	// 第二个 Prefix 为域名
-	m = Default()
-	def, err = m.NewRouter("def", group.MatcherFunc(group.Any), AllowedCORS())
-	a.NotError(err).NotNil(def)
-	p1 = def.Prefix("/prefix1")
-	p2 = p1.Prefix("example.com")
-	p2.GetFunc("/p2", buildHandlerFunc(205))
-	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "/prefix1example.com/p2", nil)
-	m.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 205)
-}
-
-func TestRouter_routers_multiple(t *testing.T) {
-	a := assert.New(t)
-
-	m := New(false, false, nil, nil)
-	a.NotNil(m)
-	def, err := m.NewRouter("default", nil, AllowedCORS())
-	a.NotError(err).NotNil(def)
-	def.Get("/t1", buildHandler(201))
-
-	v1, err := m.NewRouter("v1", group.NewPathVersion("", "v1"), AllowedCORS())
-	a.NotError(err).NotNil(v1)
-	v1.Get("/path", buildHandler(202))
-	v2, err := m.NewRouter("v2", group.NewPathVersion("", "v1", "v2"), AllowedCORS())
-	a.NotError(err).NotNil(v2)
-	v2.Get("/path", buildHandler(203))
-
-	// 指向 def
-	w := httptest.NewRecorder()
-	r := httptest.NewRequest(http.MethodGet, "https://localhost/t1", nil)
-	m.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 201)
-
-	// 同时匹配 v1、v2，指向 v1
-	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "https://localhost/v1/path", nil)
-	m.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 202)
-
-	// 指向 v2
-	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "https://localhost/v2/path", nil)
-	m.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 203)
-
-	// 指向 v2
-	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "https://example.com/v2/path", nil)
-	m.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 203)
-}
 
 func TestMux_ServeHTTP(t *testing.T) {
 	a := assert.New(t)
@@ -202,7 +28,7 @@ func TestMux_ServeHTTP(t *testing.T) {
 }
 
 // 测试匹配顺序是否正确
-func TestMux_ServeHTTP_Order(t *testing.T) {
+func TestRouter_ServeHTTP_Order(t *testing.T) {
 	a := assert.New(t)
 
 	test := newTester(t, true, false)

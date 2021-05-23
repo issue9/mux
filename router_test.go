@@ -9,9 +9,9 @@ import (
 
 	"github.com/issue9/assert"
 	"github.com/issue9/assert/rest"
-
-	"github.com/issue9/mux/v5/group"
 )
+
+var _ http.Handler = &Router{}
 
 func buildHandler(code int) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -27,21 +27,18 @@ func buildHandlerFunc(code int) http.HandlerFunc {
 
 // mux 的测试工具
 type tester struct {
-	mux    *Mux
 	router *Router
 	srv    *rest.Server
 }
 
 func newTester(t testing.TB, disableHead, skipClean bool) *tester {
-	mux := New(disableHead, skipClean, nil, nil)
-	r, err := mux.NewRouter("default", group.MatcherFunc(group.Any), AllowedCORS())
+	r, err := NewRouter(disableHead, skipClean, AllowedCORS(), nil, nil)
 	assert.NotError(t, err)
 	assert.NotNil(t, r)
 
 	return &tester{
-		mux:    mux,
 		router: r,
-		srv:    rest.NewServer(t, mux, nil),
+		srv:    rest.NewServer(t, r, nil),
 	}
 }
 
@@ -111,23 +108,6 @@ func TestRouter(t *testing.T) {
 	test.matchTrue(http.MethodPatch, "/f/any", 206)
 	test.matchTrue(http.MethodDelete, "/f/any", 206)
 	test.matchTrue(http.MethodTrace, "/f/any", 206)
-}
-
-func TestRouter_Routes(t *testing.T) {
-	a := assert.New(t)
-
-	m := Default()
-
-	def, err := m.NewRouter("def", group.MatcherFunc(group.Any), AllowedCORS())
-	a.NotError(err).NotNil(def)
-	def.Get("/m", buildHandler(1))
-	def.Post("/m", buildHandler(1))
-	a.Equal(def.Routes(), map[string][]string{"/m": {"GET", "HEAD", "OPTIONS", "POST"}})
-
-	r, err := m.NewRouter("host-1", &group.PathVersion{}, AllowedCORS())
-	a.NotError(err).NotNil(r)
-	r.Get("/m", buildHandler(1))
-	a.Equal(r.Routes(), map[string][]string{"/m": {"GET", "HEAD", "OPTIONS"}})
 }
 
 func TestRouter_Head(t *testing.T) {
@@ -211,12 +191,26 @@ func TestRouter_Handle_Remove(t *testing.T) {
 	test.matchTrue(http.MethodPost, "/api/1", http.StatusNotFound) // 404 表示整个节点都没了
 }
 
+func TestRouter_Routes(t *testing.T) {
+	a := assert.New(t)
+
+	def := DefaultRouter()
+	a.NotNil(def)
+	def.Get("/m", buildHandler(1))
+	def.Post("/m", buildHandler(1))
+	a.Equal(def.Routes(), map[string][]string{"/m": {"GET", "HEAD", "OPTIONS", "POST"}})
+
+	def, err := NewRouter(true, false, nil, nil, nil)
+	a.NotError(err).NotNil(def)
+	def.Get("/m", buildHandler(1))
+	def.Post("/m", buildHandler(1))
+	a.Equal(def.Routes(), map[string][]string{"/m": {"GET", "OPTIONS", "POST"}})
+}
+
 func TestRouter_Params(t *testing.T) {
 	a := assert.New(t)
-	m := Default()
-	a.NotNil(m)
-	router, err := m.NewRouter("def", group.MatcherFunc(group.Any), AllowedCORS())
-	a.NotError(err).NotNil(router)
+	router := DefaultRouter()
+	a.NotNil(router)
 
 	params := map[string]string{}
 
@@ -235,7 +229,7 @@ func TestRouter_Params(t *testing.T) {
 		r, err := http.NewRequest(method, url, nil)
 		a.NotError(err).NotNil(r)
 
-		m.ServeHTTP(w, r)
+		router.ServeHTTP(w, r)
 
 		a.Equal(w.Code, status)
 		if ps != nil { // 由于 params 是公用数据，会保存上一次获取的值，所以只在有值时才比较
@@ -251,173 +245,39 @@ func TestRouter_Params(t *testing.T) {
 	requestParams(http.MethodGet, "/api/256", http.StatusMethodNotAllowed, nil) // 不存在的请求方法
 
 	// 添加 patch /api/v2/{version:\\d*}
+	a.NotError(router.Clean())
 	a.NotError(router.Patch("/api/v2/{version:\\d*}", buildParamsHandler()))
 	requestParams(http.MethodPatch, "/api/v2/2", http.StatusOK, map[string]string{"version": "2"})
 	requestParams(http.MethodPatch, "/api/v2/", http.StatusOK, map[string]string{"version": ""})
 
-	// 添加 patch /api/v2/{version:\\d+}/test
+	// 添加 patch /api/v2/{version:\\d*}/test
+	a.NotError(router.Clean())
 	a.NotError(router.Patch("/api/v2/{version:\\d*}/test", buildParamsHandler()))
 	requestParams(http.MethodPatch, "/api/v2/2/test", http.StatusOK, map[string]string{"version": "2"})
 	requestParams(http.MethodPatch, "/api/v2//test", http.StatusNotFound, nil) // 可选参数不能在路由中间
 
 	// 中文作为值
+	a.NotError(router.Clean())
 	a.NotError(router.Patch("/api/v3/{版本:digit}", buildParamsHandler()))
 	requestParams(http.MethodPatch, "/api/v3/2", http.StatusOK, map[string]string{"版本": "2"})
 }
 
 func TestRouter_Clean(t *testing.T) {
 	a := assert.New(t)
-	m := Default()
-	a.NotNil(m)
-	h, err := group.NewHosts("localhost")
-	a.NotError(err).NotNil(h)
 
-	def, err := m.NewRouter("def", h, AllowedCORS())
-	a.NotError(err).NotNil(def)
+	def := DefaultRouter()
+	a.NotNil(def)
 	def.Get("/m1", buildHandler(200)).
 		Post("/m1", buildHandler(201))
 
-	h, err = group.NewHosts("example.com")
-	a.NotError(err).NotNil(h)
-	host, err := m.NewRouter("host", h, AllowedCORS())
-	a.NotError(err).NotNil(host)
-	host.Get("/m1", buildHandler(202)).
-		Post("/m1", buildHandler(203))
-
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "http://localhost:88/m1", nil)
-	m.ServeHTTP(w, r)
+	def.ServeHTTP(w, r)
 	a.Equal(w.Result().StatusCode, 200)
-
-	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "https://example.com/m1", nil)
-	m.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 202)
 
 	a.NotError(def.Clean())
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "/m1", nil)
-	m.ServeHTTP(w, r)
+	def.ServeHTTP(w, r)
 	a.Equal(w.Result().StatusCode, 404)
-
-	// def.Clean 不影响 host 路由
-	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "https://example.com/m1", nil)
-	m.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 202)
-}
-
-func TestMux_NewRouter(t *testing.T) {
-	a := assert.New(t)
-
-	m := Default()
-
-	// name 为空
-	a.PanicString(func() {
-		h, err := group.NewHosts("example.com")
-		a.NotError(err).NotNil(h)
-		m.NewRouter("", h, AllowedCORS())
-	}, "不能为空")
-
-	r, err := m.NewRouter("host", &group.PathVersion{}, AllowedCORS())
-	a.NotError(err).NotNil(r)
-	a.Equal(r.name, "host").Equal(r.Name(), "host")
-
-	r, err = m.NewRouter("host", &group.PathVersion{}, AllowedCORS())
-	a.ErrorIs(err, ErrRouterExists).Nil(r)
-
-	r, err = m.NewRouter("host-2", nil, AllowedCORS())
-	a.NotError(err).NotNil(r)
-	a.Equal(r.name, "host-2").Equal(r.Name(), "host-2")
-
-	a.PanicString(func() {
-		m.NewRouter("host-3", nil, AllowedCORS())
-	}, "已经存在")
-}
-
-func TestSortRouters(t *testing.T) {
-	a := assert.New(t)
-
-	rs := []*Router{
-		{
-			name: "0",
-			last: true,
-		},
-		{
-			name: "1",
-		},
-		{
-			name: "2",
-		},
-	}
-
-	sortRouters(rs)
-	a.Equal(rs[0].name, "1").
-		Equal(rs[1].name, "2").
-		Equal(rs[2].name, "0")
-
-	rs = []*Router{
-		{
-			name: "0",
-		},
-		{
-			name: "1",
-			last: true,
-		},
-		{
-			name: "2",
-		},
-	}
-
-	sortRouters(rs)
-	a.Equal(rs[0].name, "0").
-		Equal(rs[1].name, "2").
-		Equal(rs[2].name, "1")
-
-	rs = []*Router{
-		{
-			name: "0",
-		},
-		{
-			name: "1",
-		},
-		{
-			name: "2",
-			last: true,
-		},
-	}
-
-	sortRouters(rs)
-	a.Equal(rs[0].name, "0").
-		Equal(rs[1].name, "1").
-		Equal(rs[2].name, "2")
-}
-
-func TestMux_RemoveRouter(t *testing.T) {
-	a := assert.New(t)
-
-	m := Default()
-	r, err := m.NewRouter("host", &group.PathVersion{}, AllowedCORS())
-	a.NotError(err).NotNil(r)
-	a.Equal(r.name, "host").Equal(r.Name(), "host")
-
-	r, err = m.NewRouter("host-2", &group.PathVersion{}, AllowedCORS())
-	a.NotError(err).NotNil(r)
-	a.Equal(2, len(m.Routers()))
-
-	// 同名，添加不成功
-	r, err = m.NewRouter("host", &group.PathVersion{}, AllowedCORS())
-	a.ErrorIs(err, ErrRouterExists).Nil(r)
-	a.Equal(2, len(m.Routers()))
-
-	m.RemoveRouter("host")
-	m.RemoveRouter("host") // 已经删除，不存在了
-	a.Equal(1, len(m.Routers()))
-	r, err = m.NewRouter("host", &group.PathVersion{}, AllowedCORS())
-	a.NotError(err).NotNil(r)
-	a.Equal(2, len(m.Routers()))
-
-	// 删除空名，不出错。
-	m.RemoveRouter("")
-	a.Equal(2, len(m.Routers()))
 }

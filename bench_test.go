@@ -11,11 +11,9 @@ import (
 	"testing"
 
 	"github.com/issue9/assert"
-
-	"github.com/issue9/mux/v5/group"
 )
 
-var issue9Mux *Mux
+var issue9Mux *Router
 
 func init() {
 	for _, api := range apis {
@@ -30,14 +28,10 @@ func init() {
 			}
 		}
 
-		issue9Mux = New(true, false, nil, nil)
-		def, err := issue9Mux.NewRouter("def", group.MatcherFunc(group.Any), AllowedCORS())
-		if err != nil {
-			panic(err)
-		}
+		issue9Mux = DefaultRouter()
 
 		for _, api := range apis {
-			if err := def.HandleFunc(api.bracePattern, h, api.method); err != nil {
+			if err := issue9Mux.HandleFunc(api.bracePattern, h, api.method); err != nil {
 				fmt.Println("calcMemStats:", err)
 			}
 		}
