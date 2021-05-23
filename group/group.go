@@ -10,6 +10,7 @@ import (
 	"github.com/issue9/sliceutil"
 
 	"github.com/issue9/mux/v5"
+	"github.com/issue9/mux/v5/internal/syntax"
 	"github.com/issue9/mux/v5/internal/tree"
 )
 
@@ -72,6 +73,10 @@ func New(disableHead, skipCleanPath bool, cors *mux.CORS, notFound, methodNotAll
 func (g *Groups) ServeHTTP(w http.ResponseWriter, r *http.Request) { g.ms.ServeHTTP(w, r) }
 
 func (g *Groups) serveHTTP(w http.ResponseWriter, r *http.Request) {
+	if !g.skipCleanPath {
+		r.URL.Path = syntax.CleanPath(r.URL.Path)
+	}
+
 	for _, router := range g.routers {
 		if req, ok := router.matcher.Match(r); ok {
 			router.ServeHTTP(w, req)

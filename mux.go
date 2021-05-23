@@ -11,7 +11,6 @@ package mux
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/issue9/mux/v5/internal/syntax"
 	"github.com/issue9/mux/v5/internal/tree"
@@ -34,41 +33,4 @@ func Methods() []string {
 	methods := make([]string, len(tree.Methods))
 	copy(methods, tree.Methods)
 	return methods
-}
-
-// 清除路径中的重复的 / 字符
-func cleanPath(p string) string {
-	if p == "" {
-		return "/"
-	}
-
-	var b strings.Builder
-	b.Grow(len(p) + 1)
-
-	if p[0] != '/' {
-		b.WriteByte('/')
-	}
-
-	index := strings.Index(p, "//")
-	if index == -1 {
-		b.WriteString(p)
-		return b.String()
-	}
-
-	b.WriteString(p[:index+1])
-
-	slash := true
-	for i := index + 2; i < len(p); i++ {
-		if p[i] == '/' {
-			if slash {
-				continue
-			}
-			slash = true
-		} else {
-			slash = false
-		}
-		b.WriteByte(p[i])
-	}
-
-	return b.String()
 }

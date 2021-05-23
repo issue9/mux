@@ -87,21 +87,3 @@ func TestIsWell(t *testing.T) {
 	a.NotError(IsWell("/path}"))
 	a.Error(IsWell(""))
 }
-
-func TestClearPath(t *testing.T) {
-	a := assert.New(t)
-
-	a.Equal(cleanPath(""), "/")
-
-	a.Equal(cleanPath("/api//"), "/api/")
-	a.Equal(cleanPath("api/"), "/api/")
-	a.Equal(cleanPath("api/////"), "/api/")
-	a.Equal(cleanPath("//api/////1"), "/api/1")
-
-	a.Equal(cleanPath("/api/"), "/api/")
-	a.Equal(cleanPath("/api/./"), "/api/./")
-
-	a.Equal(cleanPath("/api/.."), "/api/..")
-	a.Equal(cleanPath("/api/../"), "/api/../")
-	a.Equal(cleanPath("/api/../../"), "/api/../../")
-}

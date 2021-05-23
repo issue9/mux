@@ -9,8 +9,6 @@ import (
 	"runtime"
 	"strings"
 	"testing"
-
-	"github.com/issue9/assert"
 )
 
 var issue9Mux *Router
@@ -320,31 +318,4 @@ var apis = []*api{
 	{method: http.MethodPut, bracePattern: "/repos/{owner}/{repo}/branches/{branch}/protection/restrictions/users"},
 	{method: http.MethodPost, bracePattern: "/repos/{owner}/{repo}/branches/{branch}/protection/restrictions/users"},
 	{method: http.MethodDelete, bracePattern: "/repos/{owner}/{repo}/branches/{branch}/protection/restrictions/users"},
-}
-
-func BenchmarkCleanPath(b *testing.B) {
-	a := assert.New(b)
-
-	paths := []string{
-		"",
-		"/api//",
-		"/api////users/1",
-		"//api/users/1",
-		"api///users////1",
-		"api//",
-		"/api/",
-		"/api/./",
-		"/api/..",
-		"/api//../",
-		"/api/..//../",
-		"/api../",
-		"api../",
-	}
-
-	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		ret := cleanPath(paths[i%len(paths)])
-		a.True(len(ret) > 0)
-	}
 }

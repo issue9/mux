@@ -180,6 +180,9 @@ func (r *Router) AnyFunc(pattern string, f http.HandlerFunc) *Router {
 // pattern 为路由项的定义内容；
 // params 为路由项中的参数，键名为参数名，键值为参数值。
 func (r *Router) URL(pattern string, params map[string]string) (string, error) {
+	if r.skipCleanPath {
+		pattern = syntax.CleanPath(pattern)
+	}
 	return syntax.URL(pattern, params)
 }
 
@@ -189,7 +192,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 func (r *Router) serveHTTP(w http.ResponseWriter, req *http.Request) {
 	if !r.skipCleanPath {
-		req.URL.Path = cleanPath(req.URL.Path)
+		req.URL.Path = syntax.CleanPath(req.URL.Path)
 	}
 
 	hs, ps := r.tree.Route(req.URL.Path)
