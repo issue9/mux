@@ -38,98 +38,98 @@ func buildMiddleware(a *assert.Assertion, text string) mux.MiddlewareFunc {
 
 func TestGroups_PrependMiddleware(t *testing.T) {
 	a := assert.New(t)
-	m := Default()
-	a.NotNil(m)
+	g := Default()
+	a.NotNil(g)
 	def := mux.DefaultRouter()
-	a.NotError(m.AddRouter("def", MatcherFunc(Any), def))
+	a.NotError(g.AddRouter("def", MatcherFunc(Any), def))
 
 	def.Get("/get", buildHandler(201))
-	m.PrependMiddleware(buildMiddleware(a, "1")).
+	g.PrependMiddleware(buildMiddleware(a, "1")).
 		PrependMiddleware(buildMiddleware(a, "2"))
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "/get", nil)
-	m.ServeHTTP(w, r)
+	g.ServeHTTP(w, r)
 	a.Equal(w.Code, 201).
 		Equal(w.Body.String(), "12")
 
 	// CleanMiddlewares
 
-	m.CleanMiddlewares()
+	g.CleanMiddlewares()
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "/get", nil)
-	m.ServeHTTP(w, r)
+	g.ServeHTTP(w, r)
 	a.Equal(w.Code, 201).
 		Empty(w.Body.String())
 }
 
 func TestGroups_AppendMiddleware(t *testing.T) {
 	a := assert.New(t)
-	m := Default()
-	a.NotNil(m)
+	g := Default()
+	a.NotNil(g)
 	def := mux.DefaultRouter()
-	a.NotError(m.AddRouter("def", MatcherFunc(Any), def))
+	a.NotError(g.AddRouter("def", MatcherFunc(Any), def))
 
 	def.Get("/get", buildHandler(201))
-	m.AppendMiddleware(buildMiddleware(a, "1")).
+	g.AppendMiddleware(buildMiddleware(a, "1")).
 		AppendMiddleware(buildMiddleware(a, "2"))
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "/get", nil)
-	m.ServeHTTP(w, r)
+	g.ServeHTTP(w, r)
 	a.Equal(w.Code, 201).
 		Equal(w.Body.String(), "21")
 
 	// CleanMiddlewares
 
-	m.CleanMiddlewares()
+	g.CleanMiddlewares()
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "/get", nil)
-	m.ServeHTTP(w, r)
+	g.ServeHTTP(w, r)
 	a.Equal(w.Code, 201).
 		Empty(w.Body.String())
 }
 
 func TestGroups_AddMiddleware(t *testing.T) {
 	a := assert.New(t)
-	m := Default()
-	a.NotNil(m)
+	g := Default()
+	a.NotNil(g)
 	def := mux.DefaultRouter()
-	a.NotError(m.AddRouter("def", MatcherFunc(Any), def))
+	a.NotError(g.AddRouter("def", MatcherFunc(Any), def))
 
 	def.Get("/get", buildHandler(201))
-	m.AppendMiddleware(buildMiddleware(a, "p1")).
+	g.AppendMiddleware(buildMiddleware(a, "p1")).
 		PrependMiddleware(buildMiddleware(a, "a1")).
 		AppendMiddleware(buildMiddleware(a, "p2")).
 		PrependMiddleware(buildMiddleware(a, "a2"))
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "/get", nil)
-	m.ServeHTTP(w, r)
+	g.ServeHTTP(w, r)
 	a.Equal(w.Code, 201).
 		Equal(w.Body.String(), "p2p1a1a2") // buildHandler 导致顶部的后输出
 
 	// CleanMiddlewares
 
-	m.CleanMiddlewares()
+	g.CleanMiddlewares()
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "/get", nil)
-	m.ServeHTTP(w, r)
+	g.ServeHTTP(w, r)
 	a.Equal(w.Code, 201).
 		Empty(w.Body.String())
 }
 
 func TestRouter_AddMiddleware(t *testing.T) {
 	a := assert.New(t)
-	m := Default()
+	g := Default()
 
-	m.AppendMiddleware(buildMiddleware(a, "p1")).
+	g.AppendMiddleware(buildMiddleware(a, "p1")).
 		PrependMiddleware(buildMiddleware(a, "a1")).
 		AppendMiddleware(buildMiddleware(a, "p2")).
 		PrependMiddleware(buildMiddleware(a, "a2"))
 
 	def := mux.DefaultRouter()
-	a.NotError(m.AddRouter("def", MatcherFunc(Any), def))
+	a.NotError(g.AddRouter("def", MatcherFunc(Any), def))
 	def.Get("/get", buildHandler(201))
 	def.AppendMiddleware(buildMiddleware(a, "rp1")).
 		PrependMiddleware(buildMiddleware(a, "ra1")).
@@ -138,23 +138,23 @@ func TestRouter_AddMiddleware(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "/get", nil)
-	m.ServeHTTP(w, r)
+	g.ServeHTTP(w, r)
 	a.Equal(w.Code, 201).
 		Equal(w.Body.String(), "rp2rp1ra1ra2p2p1a1a2") // buildHandler 导致顶部的后输出
 
 	// CleanMiddlewares
 
-	m.CleanMiddlewares()
+	g.CleanMiddlewares()
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "/get", nil)
-	m.ServeHTTP(w, r)
+	g.ServeHTTP(w, r)
 	a.Equal(w.Code, 201).
 		Equal(w.Body.String(), "rp2rp1ra1ra2")
 
 	def.CleanMiddlewares()
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "/get", nil)
-	m.ServeHTTP(w, r)
+	g.ServeHTTP(w, r)
 	a.Equal(w.Code, 201).
 		Empty(w.Body.String())
 }
@@ -162,67 +162,67 @@ func TestRouter_AddMiddleware(t *testing.T) {
 func TestGroups_AddRouter(t *testing.T) {
 	a := assert.New(t)
 
-	m := Default()
+	g := Default()
 
 	// name 为空
 	a.PanicString(func() {
-		m.AddRouter("", &HeaderVersion{}, mux.DefaultRouter())
+		g.AddRouter("", &HeaderVersion{}, mux.DefaultRouter())
 	}, "name")
 
 	a.PanicString(func() {
-		m.AddRouter("name", nil, mux.DefaultRouter())
+		g.AddRouter("name", nil, mux.DefaultRouter())
 	}, "matcher")
 
-	a.NotError(m.AddRouter("host", &PathVersion{}, mux.DefaultRouter()))
-	r := m.Router("host")
+	a.NotError(g.AddRouter("host", &PathVersion{}, mux.DefaultRouter()))
+	r := g.Router("host")
 	a.Equal(r.Name(), "host")
 
 	// 同名添加不成功
-	a.ErrorIs(m.AddRouter("host", &PathVersion{}, mux.DefaultRouter()), ErrRouterExists)
+	a.ErrorIs(g.AddRouter("host", &PathVersion{}, mux.DefaultRouter()), ErrRouterExists)
 
-	a.Nil(m.Router("not-exists"))
+	a.Nil(g.Router("not-exists"))
 }
 
-func TestMux_RemoveRouter(t *testing.T) {
+func TestGroups_RemoveRouter(t *testing.T) {
 	a := assert.New(t)
-	m := Default()
-	a.NotNil(m)
+	g := Default()
+	a.NotNil(g)
 
-	a.NotError(m.AddRouter("host", &PathVersion{}, mux.DefaultRouter()))
-	a.NotError(m.AddRouter("host-2", &PathVersion{}, mux.DefaultRouter()))
+	a.NotError(g.AddRouter("host", &PathVersion{}, mux.DefaultRouter()))
+	a.NotError(g.AddRouter("host-2", &PathVersion{}, mux.DefaultRouter()))
 
-	m.RemoveRouter("host")
-	m.RemoveRouter("host") // 已经删除，不存在了
-	a.Equal(1, len(m.Routers()))
-	a.NotError(m.AddRouter("host", &PathVersion{}, mux.DefaultRouter()))
-	a.Equal(2, len(m.Routers()))
+	g.RemoveRouter("host")
+	g.RemoveRouter("host") // 已经删除，不存在了
+	a.Equal(1, len(g.Routers()))
+	a.NotError(g.AddRouter("host", &PathVersion{}, mux.DefaultRouter()))
+	a.Equal(2, len(g.Routers()))
 
 	// 删除空名，不出错。
-	m.RemoveRouter("")
-	a.Equal(2, len(m.Routers()))
+	g.RemoveRouter("")
+	a.Equal(2, len(g.Routers()))
 }
 
-func TestMux_empty(t *testing.T) {
+func TestGroups_empty(t *testing.T) {
 	a := assert.New(t)
-	m := Default()
-	a.NotNil(m)
+	g := Default()
+	a.NotNil(g)
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "/path", nil)
-	m.ServeHTTP(w, r)
+	g.ServeHTTP(w, r)
 	a.Equal(w.Code, http.StatusNotFound)
 }
 
 func TestGroup(t *testing.T) {
 	a := assert.New(t)
-	m := Default()
+	g := Default()
 	exit := make(chan bool, 1)
 
 	h, err := NewHosts("{sub}.example.com")
 	a.NotError(err).NotNil(h)
 
 	def := mux.DefaultRouter()
-	a.NotError(m.AddRouter("host", h, def))
+	a.NotError(g.AddRouter("host", h, def))
 
 	def.GetFunc("/posts/{id:digit}.html", func(w http.ResponseWriter, r *http.Request) {
 		ps := params.Get(r)
@@ -233,147 +233,147 @@ func TestGroup(t *testing.T) {
 	})
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "https://abc.example.com/posts/5.html", nil)
-	m.ServeHTTP(w, r)
+	g.ServeHTTP(w, r)
 	a.Equal(w.Code, http.StatusAccepted)
 	<-exit
 }
 
-func TestRouter_routers(t *testing.T) {
+func TestGroups_routers(t *testing.T) {
 	a := assert.New(t)
 	h, err := NewHosts("localhost")
 	a.NotError(err).NotNil(h)
 
-	m := Default()
-	a.NotNil(m)
+	g := Default()
+	a.NotNil(g)
 
 	def := mux.DefaultRouter()
-	a.NotError(m.AddRouter("host", h, def))
+	a.NotError(g.AddRouter("host", h, def))
 	w := httptest.NewRecorder()
 	def.Get("/t1", buildHandler(201))
 	r := httptest.NewRequest(http.MethodGet, "/t1", nil)
-	m.ServeHTTP(w, r)
+	g.ServeHTTP(w, r)
 	a.Equal(w.Result().StatusCode, 404)
 
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "https://localhost/t1", nil)
-	m.ServeHTTP(w, r)
+	g.ServeHTTP(w, r)
 	a.Equal(w.Result().StatusCode, 201)
 
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "https://localhost/t1", nil)
-	m.ServeHTTP(w, r) // 由 h 直接访问
+	g.ServeHTTP(w, r) // 由 h 直接访问
 	a.Equal(w.Result().StatusCode, 201)
 
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "/t1", nil)
-	m.ServeHTTP(w, r) // 由 h 直接访问
+	g.ServeHTTP(w, r) // 由 h 直接访问
 	a.Equal(w.Result().StatusCode, 404)
 
 	// resource
-	m = Default()
-	a.NotNil(m)
+	g = Default()
+	a.NotNil(g)
 	def = mux.DefaultRouter()
-	a.NotError(m.AddRouter("def", h, def))
+	a.NotError(g.AddRouter("def", h, def))
 	res := def.Resource("/r1")
 	res.Get(buildHandler(202))
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "/r1", nil)
-	m.ServeHTTP(w, r)
+	g.ServeHTTP(w, r)
 	a.Equal(w.Result().StatusCode, 404)
 
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "http://localhost/r1", nil)
-	m.ServeHTTP(w, r)
+	g.ServeHTTP(w, r)
 	a.Equal(w.Result().StatusCode, 202)
 
 	// prefix
-	m = Default()
-	a.NotNil(m)
+	g = Default()
+	a.NotNil(g)
 	def = mux.DefaultRouter()
-	a.NotError(m.AddRouter("def", h, def))
+	a.NotError(g.AddRouter("def", h, def))
 	p := def.Prefix("/prefix1")
 	p.Get("/p1", buildHandler(203))
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "/prefix1/p1", nil)
-	m.ServeHTTP(w, r)
+	g.ServeHTTP(w, r)
 	a.Equal(w.Result().StatusCode, 404)
 
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "http://localhost:88/prefix1/p1", nil)
-	m.ServeHTTP(w, r)
+	g.ServeHTTP(w, r)
 	a.Equal(w.Result().StatusCode, 203)
 
 	// prefix prefix
-	m = Default()
-	a.NotNil(m)
+	g = Default()
+	a.NotNil(g)
 	def = mux.DefaultRouter()
-	a.NotError(m.AddRouter("def", h, def))
+	a.NotError(g.AddRouter("def", h, def))
 	p1 := def.Prefix("/prefix1")
 	p2 := p1.Prefix("/prefix2")
 	p2.GetFunc("/p2", buildHandlerFunc(204))
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "/prefix1/prefix2/p2", nil)
-	m.ServeHTTP(w, r)
+	g.ServeHTTP(w, r)
 	a.Equal(w.Result().StatusCode, 404)
 
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "http://localhost/prefix1/prefix2/p2", nil)
-	m.ServeHTTP(w, r)
+	g.ServeHTTP(w, r)
 	a.Equal(w.Result().StatusCode, 204)
 
 	// 第二个 Prefix 为域名
-	m = Default()
+	g = Default()
 	def = mux.DefaultRouter()
-	a.NotError(m.AddRouter("def", MatcherFunc(Any), def))
+	a.NotError(g.AddRouter("def", MatcherFunc(Any), def))
 	p1 = def.Prefix("/prefix1")
 	p2 = p1.Prefix("example.com")
 	p2.GetFunc("/p2", buildHandlerFunc(205))
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "/prefix1example.com/p2", nil)
-	m.ServeHTTP(w, r)
+	g.ServeHTTP(w, r)
 	a.Equal(w.Result().StatusCode, 205)
 }
 
-func TestRouter_routers_multiple(t *testing.T) {
+func TestGroups_routers_multiple(t *testing.T) {
 	a := assert.New(t)
 
-	m := Default()
-	a.NotNil(m)
+	g := Default()
+	a.NotNil(g)
 
 	v1 := mux.DefaultRouter()
-	a.NotError(m.AddRouter("v1", NewPathVersion("", "v1"), v1))
+	a.NotError(g.AddRouter("v1", NewPathVersion("", "v1"), v1))
 	v1.Get("/path", buildHandler(202))
 
 	v2 := mux.DefaultRouter()
-	a.NotError(m.AddRouter("v2", NewPathVersion("", "v1", "v2"), v2))
+	a.NotError(g.AddRouter("v2", NewPathVersion("", "v1", "v2"), v2))
 	v2.Get("/path", buildHandler(203))
 
 	// def 匹配任意内容，放在最后。
 	def := mux.DefaultRouter()
-	a.NotError(m.AddRouter("default", MatcherFunc(Any), def))
+	a.NotError(g.AddRouter("default", MatcherFunc(Any), def))
 	def.Get("/t1", buildHandler(201))
 
 	// 指向 def
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "https://localhost/t1", nil)
-	m.ServeHTTP(w, r)
+	g.ServeHTTP(w, r)
 	a.Equal(w.Result().StatusCode, 201)
 
 	// 同时匹配 v1、v2，指向 v1
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "https://localhost/v1/path", nil)
-	m.ServeHTTP(w, r)
+	g.ServeHTTP(w, r)
 	a.Equal(w.Result().StatusCode, 202)
 
 	// 指向 v2
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "https://localhost/v2/path", nil)
-	m.ServeHTTP(w, r)
+	g.ServeHTTP(w, r)
 	a.Equal(w.Result().StatusCode, 203)
 
 	// 指向 v2
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "https://example.com/v2/path", nil)
-	m.ServeHTTP(w, r)
+	g.ServeHTTP(w, r)
 	a.Equal(w.Result().StatusCode, 203)
 }

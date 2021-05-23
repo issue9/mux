@@ -21,13 +21,12 @@ mux 功能完备的 Go 路由器：
 
 ```go
 import "github.com/issue9/middleware/v4/compress"
+import "github.com/issue9/mux/v5"
 
 c := compress.New()
 
-m := mux.New(false, false, nil, nil)
-m.AddMiddleware(h.Middleware) // 中间件，为内容这提供 gzip 等压缩的支持。
-
-router, ok := m.NewRouter("example.com", group.NewHosts("example.com"), AllowedCORS())
+router := mux.DefaultRouter()
+router.AppendMiddleware(c)
 router.Get("/users/1", h).
     Post("/login", h).
     Get("/pages/{id:\\d+}.html", h). // 匹配 /pages/123.html 等格式，path = 123
@@ -130,12 +129,17 @@ id := params.MustInt("id", 0) // 0 表示在无法获取 id 参数的默认值
 ```go
 // server.go
 
-m := mux.Default()
+import "github.com/issue9/mux/v5"
+import "github.com/issue9/mux/v5/group"
 
-def, ok := m.NewRouter("default", group.NewPathVersion("version-key", "v1"), AllowedCORS())
+m := group.Default()
+
+def := mux.DefaultRouter()
+err := m.AddRouter("default", group.NewPathVersion("version-key", "v1"), def)
 def.Get("/path", h1)
 
-host, ok := m.NewRouter("host", group.NewHosts("*.example.com"), AllowedCORS())
+host := mux.DefaultRouter()
+err := m.AddRouter("host", group.NewHosts("*.example.com"), host)
 host.Get("/path", h2)
 
 http.ListenAndServe(":8080", m)
@@ -181,8 +185,7 @@ CORS 不再是以中间件的形式提供，而是通过 NewRouter 直接传递�
 OPTIONS 请求方法由系统自动生成。
 
 ```go
-m := mux.Default()
-r, ok := m.NewRouter("default", group.Any, AllowedCORS()) // 任意跨域请求
+r, ok := mux.NewRouter(false, false, AllowedCORS(), nil, nil) // 任意跨域请求
 
 r.Get("/posts/{id}", nil)     // 默认情况下， OPTIONS 的报头为 GET, OPTIONS
 
@@ -215,16 +218,14 @@ mux 本身就是一个实现了 [http.Handler](https://pkg.go.dev/net/http#Handl
 mux 本身也提供了对中间件的管理功能，同时 [middleware](https://github.com/issue9/middleware) 提供了常用的中间件功能。
 
 ```go
-import "github.com/issue9/middleware/compress"
+import "github.com/issue9/middleware/v4/compress"
 
 c := compress.New(log.Default(), "*")
 
-m := Default()
+r := mux.DefaultRouter()
 
 // 添加中间件
-m.AddMiddleware(c.Middleware)
-
-r, ok := m.NewRouter("def", group.NewHost("example.com"), AllowedCORS())
+r.AppendMiddleware(c.Middleware)
 ```
 
 ## 性能
