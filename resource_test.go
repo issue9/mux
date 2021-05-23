@@ -126,22 +126,32 @@ func TestResource_URL(t *testing.T) {
 	url, err := res.URL(map[string]string{"id": "1"})
 	a.NotError(err).Equal(url, "/api/v1")
 
+	res = def.Resource("/api//v1")
+	a.NotNil(res)
+	url, err = res.URL(map[string]string{"id": "1"})
+	a.NotError(err).Equal(url, "/api//v1")
+
 	// 正常的单个参数
 	res = def.Resource("/api/{id:\\d+}/{path}")
 	a.NotNil(res)
 	url, err = res.URL(map[string]string{"id": "1", "path": "p1"})
 	a.NotError(err).Equal(url, "/api/1/p1")
 
-	// 不对正则参数做类型校验，可以生成不符合正则要求的路径。
-	// 方便特殊情况下使用。
+	// 不对正则参数做类型校验
 	url, err = res.URL(map[string]string{"id": "xxx", "path": "p1"})
 	a.NotError(err).Equal(url, "/api/xxx/p1")
+
+	res = def.Resource("/api/{id:\\d+}//{path}")
+	a.NotNil(res)
+	url, err = res.URL(map[string]string{"id": "1", "path": "p1"})
+	a.NotError(err).Equal(url, "/api/1//p1")
 
 	// 多个参数
 	res = def.Resource("/api/{action}/{id:\\d+}")
 	a.NotNil(res)
 	url, err = res.URL(map[string]string{"id": "1", "action": "blog"})
 	a.NotError(err).Equal(url, "/api/blog/1")
+
 	// 缺少参数
 	url, err = res.URL(map[string]string{"id": "1"})
 	a.Error(err).Equal(url, "")

@@ -103,29 +103,35 @@ func TestPrefix_Prefix(t *testing.T) {
 
 func TestPrefix_URL(t *testing.T) {
 	a := assert.New(t)
-	def, err := NewRouter(true, false, AllowedCORS(), nil, nil)
+	def, err := NewRouter(true, true, AllowedCORS(), nil, nil)
 	a.NotError(err).NotNil(def)
 
 	// 非正则
 	p := def.Prefix("/api")
-	p.Any("/v1", nil)
 	a.NotNil(p)
 	url, err := p.URL("/v1", map[string]string{"id": "1"})
 	a.NotError(err).Equal(url, "/api/v1")
 
+	p = def.Prefix("//api")
+	a.NotNil(p)
+	url, err = p.URL("/v1", map[string]string{"id": "1"})
+	a.NotError(err).Equal(url, "/api/v1")
+
 	// 正常的单个参数
 	p = def.Prefix("/api")
-	p.Any("/{id:\\d+}/{path}", nil)
 	a.NotNil(p)
 	url, err = p.URL("/{id:\\d+}/{path}", map[string]string{"id": "1", "path": "p1"})
 	a.NotError(err).Equal(url, "/api/1/p1")
 
+	url, err = p.URL("/{id:\\d+}///{path}", map[string]string{"id": "1", "path": "p1"})
+	a.NotError(err).Equal(url, "/api/1/p1")
+
 	// 多个参数
 	p = def.Prefix("/api")
-	p.Any("/{action}/{id:\\d+}", nil)
 	a.NotNil(p)
 	url, err = p.URL("/{action}/{id:\\d+}", map[string]string{"id": "1", "action": "blog"})
 	a.NotError(err).Equal(url, "/api/blog/1")
+
 	// 缺少参数
 	url, err = p.URL("/{action}/{id:\\d+}", map[string]string{"id": "1"})
 	a.Error(err).Equal(url, "")
