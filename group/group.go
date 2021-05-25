@@ -45,7 +45,9 @@ func Default() *Groups { return New(false, false, mux.DeniedCORS(), nil, nil) }
 // New 声明一个新的 Mux
 //
 // disableHead 是否禁用根据 Get 请求自动生成 HEAD 请求；
-// skipCleanPath 是否不对访问路径作处理，比如 "//api" ==> "/api"；
+// skipCleanPath 是否不对访问路径作处理，比如 "//api" ==> "/api"。
+// 如果为 false，将在所有路由组开始之前进行处理，
+// 即使通过 AddRouter 添加的路由，skipCleanPath 为 true，其得到的也是处理后的路径；
 // cors 跨域请求的相关设置项；
 // notFound 404 页面的处理方式，为 nil 时会调用默认的方式进行处理；
 // methodNotAllowed 405 页面的处理方式，为 nil 时会调用默认的方式进行处理；
