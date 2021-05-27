@@ -97,7 +97,6 @@ func (seg *Segment) Similarity(s1 *Segment) int {
 	if s1.Value == seg.Value { // 有完全相同的节点
 		return -1
 	}
-
 	return longestPrefix(s1.Value, seg.Value)
 }
 

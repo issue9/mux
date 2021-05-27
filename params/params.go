@@ -20,11 +20,7 @@ var ErrParamNotExists = errors.New("不存在该参数")
 // Params 获取和转换路由中的参数信息
 type Params map[string]string
 
-// Get 获得一个 Params 实例
-//
-// 以下情况两个参数都会返回 nil：
-//  非正则和命名路由；
-//  正则路由，但是所有匹配参数都是未命名的；
+// Get 获取当前请求实例上的参数列表
 func Get(r *http.Request) Params {
 	if params := r.Context().Value(contextKeyParams); params != nil {
 		return params.(Params)
@@ -45,6 +41,7 @@ func WithValue(r *http.Request, ps Params) *http.Request {
 			ps[k] = v
 		}
 	}
+
 	return r.WithContext(context.WithValue(r.Context(), contextKeyParams, ps))
 }
 
