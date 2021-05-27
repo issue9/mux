@@ -192,13 +192,11 @@ func (r *Router) serveHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	r.cors.handle(hs, w, req) // 处理跨域问题
-
-	h := hs.Handler(req.Method)
-	if h == nil {
-		w.Header().Set("Allow", hs.Options())
-		r.methodNotAllowed(w, req)
+	if h := hs.Handler(req.Method); h != nil {
+		r.cors.handle(hs, w, req) // 处理跨域问题
+		h.ServeHTTP(w, params.WithValue(req, ps))
 		return
 	}
-	h.ServeHTTP(w, params.WithValue(req, ps))
+	w.Header().Set("Allow", hs.Options())
+	r.methodNotAllowed(w, req)
 }
