@@ -78,16 +78,12 @@ func (g *Groups) serveHTTP(w http.ResponseWriter, r *http.Request) {
 // NewRouter 声明新路由
 //
 // 与 AddRouter 的区别在于，NewRouter 参数从 Groups 继承，而 AddRouter 的路由，其参数可自定义。
-func (g *Groups) NewRouter(name string, matcher Matcher) (*mux.Router, error) {
+func (g *Groups) NewRouter(name string, matcher Matcher) (*Router, error) {
 	r, err := mux.NewRouter(g.disableHead, g.cors, g.notFound, g.methodNotAllowed)
 	if err != nil {
 		return nil, err
 	}
-
-	if err = g.AddRouter(name, matcher, r); err != nil {
-		return nil, err
-	}
-	return r, nil
+	return g.addRouter(name, matcher, r)
 }
 
 // AddRouter 添加路由
@@ -102,6 +98,11 @@ func (g *Groups) NewRouter(name string, matcher Matcher) (*mux.Router, error) {
 // matcher 路由的准入条件，如果为空，则此条路由匹配时会被排在最后，
 // 只能有一个路由的 matcher 为空，否则会 panic；
 func (g *Groups) AddRouter(name string, matcher Matcher, r *mux.Router) error {
+	_, err := g.addRouter(name, matcher, r)
+	return err
+}
+
+func (g *Groups) addRouter(name string, matcher Matcher, r *mux.Router) (*Router, error) {
 	if name == "" {
 		panic("参数 name 不能为空")
 	}
@@ -114,16 +115,17 @@ func (g *Groups) AddRouter(name string, matcher Matcher, r *mux.Router) error {
 		return g.routers[i].name == name
 	})
 	if index > -1 {
-		return ErrRouterExists
+		return nil, ErrRouterExists
 	}
 
-	g.routers = append(g.routers, &Router{
+	router := &Router{
 		Router:  r,
 		name:    name,
 		matcher: matcher,
-	})
+	}
+	g.routers = append(g.routers, router)
 
-	return nil
+	return router, nil
 }
 
 // Router 返回指定名称的 *Router 实例
