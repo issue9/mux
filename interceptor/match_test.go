@@ -8,6 +8,18 @@ import (
 	"github.com/issue9/assert"
 )
 
+func TestMatchAny(t *testing.T) {
+	a := assert.New(t)
+
+	a.True(MatchAny("1"))
+	a.True(MatchAny("_"))
+	a.True(MatchAny("."))
+	a.True(MatchAny(" "))
+	a.True(MatchAny("\t"))
+
+	a.False(MatchAny(""))
+}
+
 func TestMatchDigit(t *testing.T) {
 	a := assert.New(t)
 

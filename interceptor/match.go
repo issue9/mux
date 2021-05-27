@@ -6,17 +6,15 @@ package interceptor
 type MatchFunc func(string) bool
 
 func init() {
-	if err := Register(MatchDigit, "digit"); err != nil {
-		panic(err)
+	r := func(f MatchFunc, name ...string) {
+		if err := Register(f, name...); err != nil {
+			panic(err)
+		}
 	}
 
-	if err := Register(MatchDigit, "word"); err != nil {
-		panic(err)
-	}
-
-	if err := Register(MatchAny, "any"); err != nil {
-		panic(err)
-	}
+	r(MatchDigit, "digit")
+	r(MatchWord, "word")
+	r(MatchAny, "any")
 }
 
 // MatchAny 匹配任意非空内容
