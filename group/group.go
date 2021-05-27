@@ -10,7 +10,6 @@ import (
 	"github.com/issue9/sliceutil"
 
 	"github.com/issue9/mux/v5"
-	"github.com/issue9/mux/v5/internal/syntax"
 	"github.com/issue9/mux/v5/internal/tree"
 )
 
@@ -22,8 +21,7 @@ type Groups struct {
 	routers []*Router
 	ms      *mux.Middlewares
 
-	disableHead,
-	skipCleanPath bool
+	disableHead bool
 
 	cors *mux.CORS
 
@@ -40,18 +38,15 @@ type Router struct {
 }
 
 // Default 返回默认参数的 New
-func Default() *Groups { return New(false, false, mux.DeniedCORS(), nil, nil) }
+func Default() *Groups { return New(false, mux.DeniedCORS(), nil, nil) }
 
 // New 声明一个新的 Mux
 //
 // disableHead 是否禁用根据 Get 请求自动生成 HEAD 请求；
-// skipCleanPath 是否不对访问路径作处理，比如 "//api" ==> "/api"。
-// 如果为 false，将在所有路由组开始之前进行处理，
-// 即使通过 AddRouter 添加的路由，skipCleanPath 为 true，其得到的也是处理后的路径；
 // cors 跨域请求的相关设置项；
 // notFound 404 页面的处理方式，为 nil 时会调用默认的方式进行处理；
 // methodNotAllowed 405 页面的处理方式，为 nil 时会调用默认的方式进行处理；
-func New(disableHead, skipCleanPath bool, cors *mux.CORS, notFound, methodNotAllowed http.HandlerFunc) *Groups {
+func New(disableHead bool, cors *mux.CORS, notFound, methodNotAllowed http.HandlerFunc) *Groups {
 	if notFound == nil {
 		notFound = tree.DefaultNotFound
 	}
@@ -63,7 +58,6 @@ func New(disableHead, skipCleanPath bool, cors *mux.CORS, notFound, methodNotAll
 		routers: make([]*Router, 0, 1),
 
 		disableHead:      disableHead,
-		skipCleanPath:    skipCleanPath,
 		cors:             cors,
 		notFound:         notFound,
 		methodNotAllowed: methodNotAllowed,
@@ -75,10 +69,6 @@ func New(disableHead, skipCleanPath bool, cors *mux.CORS, notFound, methodNotAll
 func (g *Groups) ServeHTTP(w http.ResponseWriter, r *http.Request) { g.ms.ServeHTTP(w, r) }
 
 func (g *Groups) serveHTTP(w http.ResponseWriter, r *http.Request) {
-	if !g.skipCleanPath {
-		r.URL.Path = syntax.CleanPath(r.URL.Path)
-	}
-
 	for _, router := range g.routers {
 		if req, ok := router.matcher.Match(r); ok {
 			router.ServeHTTP(w, req)
@@ -92,7 +82,7 @@ func (g *Groups) serveHTTP(w http.ResponseWriter, r *http.Request) {
 //
 // 与 AddRouter 的区别在于，NewRouter 参数从 Groups 继承，而 AddRouter 的路由，其参数可自定义。
 func (g *Groups) NewRouter(name string, matcher Matcher) (*mux.Router, error) {
-	r, err := mux.NewRouter(g.disableHead, g.skipCleanPath, g.cors, g.notFound, g.methodNotAllowed)
+	r, err := mux.NewRouter(g.disableHead, g.cors, g.notFound, g.methodNotAllowed)
 	if err != nil {
 		return nil, err
 	}

@@ -21,10 +21,9 @@ import (
 //
 // 如果需要同时对多个 Router 实例进行路由，可以采用  groups.Groups 对象管理多个 Router 实例。
 type Router struct {
-	skipCleanPath bool
-	tree          *tree.Tree
-	ms            *Middlewares
-	cors          *CORS
+	tree *tree.Tree
+	ms   *Middlewares
+	cors *CORS
 
 	notFound,
 	methodNotAllowed http.HandlerFunc
@@ -34,7 +33,7 @@ type Router struct {
 //
 // 相当于调用 NewRouter(false, false, DeniedCORS(), nil, nil)
 func DefaultRouter() *Router {
-	r, err := NewRouter(false, false, DeniedCORS(), nil, nil)
+	r, err := NewRouter(false, DeniedCORS(), nil, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -44,11 +43,10 @@ func DefaultRouter() *Router {
 // NewRouter 声明路由
 //
 // disableHead 是否禁用根据 Get 请求自动生成 HEAD 请求；
-// skipCleanPath 是否不对访问路径作处理，比如 "//api" ==> "/api"；
 // cors 跨域请求的相关设置项；
 // notFound 404 页面的处理方式，为 nil 时会调用默认的方式进行处理；
 // methodNotAllowed 405 页面的处理方式，为 nil 时会调用默认的方式进行处理；
-func NewRouter(disableHead, skipCleanPath bool, cors *CORS, notFound, methodNotAllowed http.HandlerFunc) (*Router, error) {
+func NewRouter(disableHead bool, cors *CORS, notFound, methodNotAllowed http.HandlerFunc) (*Router, error) {
 	if cors == nil {
 		cors = DeniedCORS()
 	}
@@ -64,7 +62,6 @@ func NewRouter(disableHead, skipCleanPath bool, cors *CORS, notFound, methodNotA
 	}
 
 	r := &Router{
-		skipCleanPath:    skipCleanPath,
 		tree:             tree.New(disableHead),
 		cors:             cors,
 		notFound:         notFound,
@@ -185,9 +182,6 @@ func (r *Router) AnyFunc(pattern string, f http.HandlerFunc) *Router {
 // pattern 为路由项的定义内容；
 // params 为路由项中的参数，键名为参数名，键值为参数值。
 func (r *Router) URL(pattern string, params map[string]string) (string, error) {
-	if r.skipCleanPath {
-		pattern = syntax.CleanPath(pattern)
-	}
 	return syntax.URL(pattern, params)
 }
 
@@ -196,10 +190,6 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 func (r *Router) serveHTTP(w http.ResponseWriter, req *http.Request) {
-	if !r.skipCleanPath {
-		req.URL.Path = syntax.CleanPath(req.URL.Path)
-	}
-
 	hs, ps := r.tree.Route(req.URL.Path)
 	if ps == nil {
 		r.notFound(w, req)

@@ -196,24 +196,3 @@ func TestTree_URL(t *testing.T) {
 		}
 	}
 }
-
-func TestClearPath(t *testing.T) {
-	a := assert.New(t)
-
-	a.Equal(CleanPath(""), "/")
-	a.Equal(CleanPath("{}"), "/{}")
-
-	a.Equal(CleanPath("/api//"), "/api/")
-	a.Equal(CleanPath("/{api}//"), "/{api}/")
-	a.Equal(CleanPath("/{api}/{}/"), "/{api}/{}/")
-	a.Equal(CleanPath("api/"), "/api/")
-	a.Equal(CleanPath("api/////"), "/api/")
-	a.Equal(CleanPath("//api/////1"), "/api/1")
-
-	a.Equal(CleanPath("/api/"), "/api/")
-	a.Equal(CleanPath("/api/./"), "/api/./")
-
-	a.Equal(CleanPath("/api/.."), "/api/..")
-	a.Equal(CleanPath("/api/../"), "/api/../")
-	a.Equal(CleanPath("/api/../../"), "/api/../../")
-}

@@ -14,7 +14,7 @@ func (t *tester) prefix(p string) *Prefix {
 }
 
 func TestPrefix(t *testing.T) {
-	test := newTester(t, true, false)
+	test := newTester(t, true)
 	p := test.prefix("/p")
 
 	p.Get("/h/1", buildHandler(201))
@@ -73,7 +73,7 @@ func TestPrefix(t *testing.T) {
 
 func TestRouter_Prefix(t *testing.T) {
 	a := assert.New(t)
-	def, err := NewRouter(true, false, AllowedCORS(), nil, nil)
+	def, err := NewRouter(true, AllowedCORS(), nil, nil)
 	a.NotError(err).NotNil(def)
 
 	p := def.Prefix("/abc")
@@ -86,7 +86,7 @@ func TestRouter_Prefix(t *testing.T) {
 
 func TestPrefix_Prefix(t *testing.T) {
 	a := assert.New(t)
-	def, err := NewRouter(true, false, AllowedCORS(), nil, nil)
+	def, err := NewRouter(true, AllowedCORS(), nil, nil)
 	a.NotError(err).NotNil(def)
 
 	p := def.Prefix("/abc")
@@ -101,7 +101,7 @@ func TestPrefix_Prefix(t *testing.T) {
 
 func TestPrefix_URL(t *testing.T) {
 	a := assert.New(t)
-	def, err := NewRouter(true, true, AllowedCORS(), nil, nil)
+	def, err := NewRouter(true, AllowedCORS(), nil, nil)
 	a.NotError(err).NotNil(def)
 
 	// 非正则
@@ -113,7 +113,7 @@ func TestPrefix_URL(t *testing.T) {
 	p = def.Prefix("//api")
 	a.NotNil(p)
 	url, err = p.URL("/v1", map[string]string{"id": "1"})
-	a.NotError(err).Equal(url, "/api/v1")
+	a.NotError(err).Equal(url, "//api/v1")
 
 	// 正常的单个参数
 	p = def.Prefix("/api")
@@ -122,7 +122,7 @@ func TestPrefix_URL(t *testing.T) {
 	a.NotError(err).Equal(url, "/api/1/p1")
 
 	url, err = p.URL("/{id:\\d+}///{path}", map[string]string{"id": "1", "path": "p1"})
-	a.NotError(err).Equal(url, "/api/1/p1")
+	a.NotError(err).Equal(url, "/api/1///p1")
 
 	// 多个参数
 	p = def.Prefix("/api")
