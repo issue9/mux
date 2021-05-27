@@ -38,7 +38,7 @@ func TestGet(t *testing.T) {
 
 	maps := map[string]string{"key1": "1"}
 	r = httptest.NewRequest(http.MethodGet, "/to/path", nil)
-	ctx := context.WithValue(r.Context(), ContextKeyParams, Params(maps))
+	ctx := context.WithValue(r.Context(), contextKeyParams, Params(maps))
 	r = r.WithContext(ctx)
 	ps = Get(r)
 	a.Equal(ps, maps)

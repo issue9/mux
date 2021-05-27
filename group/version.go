@@ -3,7 +3,6 @@
 package group
 
 import (
-	"context"
 	"net/http"
 	"strings"
 
@@ -80,8 +79,11 @@ func (v *PathVersion) Match(r *http.Request) (*http.Request, bool) {
 				ps[v.key] = vv
 			}
 
-			// 无论 ps 是否为空，都复制 r
-			r = r.WithContext(context.WithValue(r.Context(), params.ContextKeyParams, ps))
+			if len(ps) == 0 {
+				r = r.Clone(r.Context())
+			} else {
+				r = params.WithValue(r, ps)
+			}
 			r.URL.Path = strings.TrimPrefix(p, vv)
 			return r, true
 		}

@@ -10,10 +10,9 @@ import (
 	"strconv"
 )
 
-type contextKey int
+const contextKeyParams contextKey = 0
 
-// ContextKeyParams 存取路由参数的关键字
-const ContextKeyParams contextKey = 0
+type contextKey int
 
 // ErrParamNotExists 表示地址参数中并不存在该名称的值
 var ErrParamNotExists = errors.New("不存在该参数")
@@ -27,10 +26,9 @@ type Params map[string]string
 //  非正则和命名路由；
 //  正则路由，但是所有匹配参数都是未命名的；
 func Get(r *http.Request) Params {
-	if params := r.Context().Value(ContextKeyParams); params != nil {
+	if params := r.Context().Value(contextKeyParams); params != nil {
 		return params.(Params)
 	}
-
 	return nil
 }
 
@@ -47,7 +45,7 @@ func WithValue(r *http.Request, ps Params) *http.Request {
 			ps[k] = v
 		}
 	}
-	return r.WithContext(context.WithValue(r.Context(), ContextKeyParams, ps))
+	return r.WithContext(context.WithValue(r.Context(), contextKeyParams, ps))
 }
 
 // Exists 查找指定名称的参数是否存在
@@ -62,51 +60,41 @@ func (p Params) Exists(key string) bool {
 //
 // 当参数不存在时，返回 ErrParamNotExists 错误。
 func (p Params) String(key string) (string, error) {
-	v, found := p[key]
-	if !found {
-		return "", ErrParamNotExists
+	if v, found := p[key]; found {
+		return v, nil
 	}
-
-	return v, nil
+	return "", ErrParamNotExists
 }
 
 // MustString 获取地址参数中的名为 key 的变量并将其转换成 string
 //
 // 若不存在或是无法转换则返回 def。
 func (p Params) MustString(key, def string) string {
-	v, found := p[key]
-	if !found {
-		return def
+	if v, found := p[key]; found {
+		return v
 	}
-
-	return v
+	return def
 }
 
 // Int 获取地址参数中的名为 key 的变量并将其转换成 int64
 //
 // 当参数不存在时，返回 ErrParamNotExists 错误。
 func (p Params) Int(key string) (int64, error) {
-	str, found := p[key]
-	if !found {
-		return 0, ErrParamNotExists
+	if str, found := p[key]; found {
+		return strconv.ParseInt(str, 10, 64)
 	}
-
-	return strconv.ParseInt(str, 10, 64)
+	return 0, ErrParamNotExists
 }
 
 // MustInt 获取地址参数中的名为 key 的变量并将其转换成 int64
 //
 // 若不存在或是无法转换则返回 def。
 func (p Params) MustInt(key string, def int64) int64 {
-	str, found := p[key]
-	if !found {
-		return def
+	if str, found := p[key]; found {
+		if val, err := strconv.ParseInt(str, 10, 64); err == nil {
+			return val
+		}
 	}
-
-	if val, err := strconv.ParseInt(str, 10, 64); err == nil {
-		return val
-	}
-
 	return def
 }
 
@@ -114,27 +102,21 @@ func (p Params) MustInt(key string, def int64) int64 {
 //
 // 当参数不存在时，返回 ErrParamNotExists 错误。
 func (p Params) Uint(key string) (uint64, error) {
-	str, found := p[key]
-	if !found {
-		return 0, ErrParamNotExists
+	if str, found := p[key]; found {
+		return strconv.ParseUint(str, 10, 64)
 	}
-
-	return strconv.ParseUint(str, 10, 64)
+	return 0, ErrParamNotExists
 }
 
 // MustUint 获取地址参数中的名为 key 的变量并将其转换成 uint64
 //
 // 若不存在或是无法转换则返回 def。
 func (p Params) MustUint(key string, def uint64) uint64 {
-	str, found := p[key]
-	if !found {
-		return def
+	if str, found := p[key]; found {
+		if val, err := strconv.ParseUint(str, 10, 64); err == nil {
+			return val
+		}
 	}
-
-	if val, err := strconv.ParseUint(str, 10, 64); err == nil {
-		return val
-	}
-
 	return def
 }
 
@@ -142,27 +124,21 @@ func (p Params) MustUint(key string, def uint64) uint64 {
 //
 // 当参数不存在时，返回 ErrParamNotExists 错误。
 func (p Params) Bool(key string) (bool, error) {
-	str, found := p[key]
-	if !found {
-		return false, ErrParamNotExists
+	if str, found := p[key]; found {
+		return strconv.ParseBool(str)
 	}
-
-	return strconv.ParseBool(str)
+	return false, ErrParamNotExists
 }
 
 // MustBool 获取地址参数中的名为 key 的变量并将其转换成 bool
 //
 // 若不存在或是无法转换则返回 def。
 func (p Params) MustBool(key string, def bool) bool {
-	str, found := p[key]
-	if !found {
-		return def
+	if str, found := p[key]; found {
+		if val, err := strconv.ParseBool(str); err == nil {
+			return val
+		}
 	}
-
-	if val, err := strconv.ParseBool(str); err == nil {
-		return val
-	}
-
 	return def
 }
 
@@ -170,26 +146,20 @@ func (p Params) MustBool(key string, def bool) bool {
 //
 // 当参数不存在时，返回 ErrParamNotExists 错误。
 func (p Params) Float(key string) (float64, error) {
-	str, found := p[key]
-	if !found {
-		return 0, ErrParamNotExists
+	if str, found := p[key]; found {
+		return strconv.ParseFloat(str, 64)
 	}
-
-	return strconv.ParseFloat(str, 64)
+	return 0, ErrParamNotExists
 }
 
 // MustFloat 获取地址参数中的名为 key 的变量并将其转换成 float64
 //
 // 若不存在或是无法转换则返回 def。
 func (p Params) MustFloat(key string, def float64) float64 {
-	str, found := p[key]
-	if !found {
-		return def
+	if str, found := p[key]; found {
+		if val, err := strconv.ParseFloat(str, 64); err == nil {
+			return val
+		}
 	}
-
-	if val, err := strconv.ParseFloat(str, 64); err == nil {
-		return val
-	}
-
 	return def
 }
