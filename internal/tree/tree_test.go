@@ -271,6 +271,9 @@ func TestTree_Add_Remove(t *testing.T) {
 	a.ErrorString(tree.Add("/path", buildHandler(1), http.MethodDelete), http.MethodDelete)
 	tree.Remove("/path", http.MethodOptions) // remove options 不发生任何操作
 	a.Equal(tree.node.find("/path").Options(), "DELETE, OPTIONS")
+
+	a.ErrorString(tree.Add("/path/{id}/path/{id:\\d+}", buildHandler(1), http.MethodHead), "存在相同名称的路由参数")
+	a.ErrorString(tree.Add("/path/{id}{id2:\\d+}", buildHandler(1), http.MethodHead), "两个命名参数不能连续出现")
 }
 
 func TestTree_Routes(t *testing.T) {

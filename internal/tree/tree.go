@@ -4,6 +4,7 @@
 package tree
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/issue9/mux/v5/internal/syntax"
@@ -109,6 +110,18 @@ func (tree *Tree) getNode(pattern string) (*Node, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	names := make(map[string]int, len(segs))
+	for _, seg := range segs {
+		if seg.Type == syntax.String {
+			continue
+		}
+		if names[seg.Name] > 0 {
+			return nil, fmt.Errorf("存在相同名称的路由参数：%s", seg.Name)
+		}
+		names[seg.Name]++
+	}
+
 	return tree.node.getNode(segs)
 }
 
