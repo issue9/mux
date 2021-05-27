@@ -22,9 +22,7 @@ type Groups struct {
 	ms      *mux.Middlewares
 
 	disableHead bool
-
-	cors *mux.CORS
-
+	cors        *mux.CORS
 	notFound,
 	methodNotAllowed http.HandlerFunc
 }
@@ -32,7 +30,6 @@ type Groups struct {
 // Router 单个路由
 type Router struct {
 	*mux.Router
-	g       *Groups
 	name    string
 	matcher Matcher
 }
@@ -124,7 +121,6 @@ func (g *Groups) AddRouter(name string, matcher Matcher, r *mux.Router) error {
 		Router:  r,
 		name:    name,
 		matcher: matcher,
-		g:       g,
 	})
 
 	return nil
