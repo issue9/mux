@@ -161,19 +161,8 @@ func (g *Groups) RemoveRouter(name string) {
 	g.routers = g.routers[:size]
 }
 
-// AppendMiddleware 添加中间件到尾部
-func (g *Groups) AppendMiddleware(f mux.MiddlewareFunc) *Groups {
-	g.ms.Append(f)
-	return g
-}
-
-// PrependMiddleware 添加中间件到顶部
-func (g *Groups) PrependMiddleware(f mux.MiddlewareFunc) *Groups {
-	g.ms.Prepend(f)
-	return g
-}
-
-func (g *Groups) CleanMiddlewares() { g.ms.Reset() }
+// Middlewares 返回中间件管理接口
+func (g *Groups) Middlewares() *mux.Middlewares { return g.ms }
 
 // Name 返回名称
 func (r *Router) Name() string { return r.name }

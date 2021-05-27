@@ -44,8 +44,8 @@ func TestGroups_PrependMiddleware(t *testing.T) {
 	a.NotError(g.AddRouter("def", MatcherFunc(Any), def))
 
 	def.Get("/get", buildHandler(201))
-	g.PrependMiddleware(buildMiddleware(a, "1")).
-		PrependMiddleware(buildMiddleware(a, "2"))
+	g.Middlewares().Prepend(buildMiddleware(a, "1")).
+		Prepend(buildMiddleware(a, "2"))
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "/get", nil)
@@ -53,9 +53,9 @@ func TestGroups_PrependMiddleware(t *testing.T) {
 	a.Equal(w.Code, 201).
 		Equal(w.Body.String(), "12")
 
-	// CleanMiddlewares
+	// Reset
 
-	g.CleanMiddlewares()
+	g.Middlewares().Reset()
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "/get", nil)
 	g.ServeHTTP(w, r)
@@ -71,8 +71,8 @@ func TestGroups_AppendMiddleware(t *testing.T) {
 	a.NotError(g.AddRouter("def", MatcherFunc(Any), def))
 
 	def.Get("/get", buildHandler(201))
-	g.AppendMiddleware(buildMiddleware(a, "1")).
-		AppendMiddleware(buildMiddleware(a, "2"))
+	g.Middlewares().Append(buildMiddleware(a, "1")).
+		Append(buildMiddleware(a, "2"))
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "/get", nil)
@@ -80,9 +80,9 @@ func TestGroups_AppendMiddleware(t *testing.T) {
 	a.Equal(w.Code, 201).
 		Equal(w.Body.String(), "21")
 
-	// CleanMiddlewares
+	// Reset
 
-	g.CleanMiddlewares()
+	g.Middlewares().Reset()
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "/get", nil)
 	g.ServeHTTP(w, r)
@@ -98,10 +98,10 @@ func TestGroups_AddMiddleware(t *testing.T) {
 	a.NotError(g.AddRouter("def", MatcherFunc(Any), def))
 
 	def.Get("/get", buildHandler(201))
-	g.AppendMiddleware(buildMiddleware(a, "p1")).
-		PrependMiddleware(buildMiddleware(a, "a1")).
-		AppendMiddleware(buildMiddleware(a, "p2")).
-		PrependMiddleware(buildMiddleware(a, "a2"))
+	g.Middlewares().Append(buildMiddleware(a, "p1")).
+		Prepend(buildMiddleware(a, "a1")).
+		Append(buildMiddleware(a, "p2")).
+		Prepend(buildMiddleware(a, "a2"))
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "/get", nil)
@@ -109,9 +109,9 @@ func TestGroups_AddMiddleware(t *testing.T) {
 	a.Equal(w.Code, 201).
 		Equal(w.Body.String(), "p2p1a1a2") // buildHandler 导致顶部的后输出
 
-	// CleanMiddlewares
+	// Reset
 
-	g.CleanMiddlewares()
+	g.Middlewares().Reset()
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "/get", nil)
 	g.ServeHTTP(w, r)
@@ -123,18 +123,18 @@ func TestRouter_AddMiddleware(t *testing.T) {
 	a := assert.New(t)
 	g := Default()
 
-	g.AppendMiddleware(buildMiddleware(a, "p1")).
-		PrependMiddleware(buildMiddleware(a, "a1")).
-		AppendMiddleware(buildMiddleware(a, "p2")).
-		PrependMiddleware(buildMiddleware(a, "a2"))
+	g.Middlewares().Append(buildMiddleware(a, "p1")).
+		Prepend(buildMiddleware(a, "a1")).
+		Append(buildMiddleware(a, "p2")).
+		Prepend(buildMiddleware(a, "a2"))
 
 	def := mux.DefaultRouter()
 	a.NotError(g.AddRouter("def", MatcherFunc(Any), def))
 	def.Get("/get", buildHandler(201))
-	def.AppendMiddleware(buildMiddleware(a, "rp1")).
-		PrependMiddleware(buildMiddleware(a, "ra1")).
-		AppendMiddleware(buildMiddleware(a, "rp2")).
-		PrependMiddleware(buildMiddleware(a, "ra2"))
+	def.Middlewares().Append(buildMiddleware(a, "rp1")).
+		Prepend(buildMiddleware(a, "ra1")).
+		Append(buildMiddleware(a, "rp2")).
+		Prepend(buildMiddleware(a, "ra2"))
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "/get", nil)
@@ -142,16 +142,16 @@ func TestRouter_AddMiddleware(t *testing.T) {
 	a.Equal(w.Code, 201).
 		Equal(w.Body.String(), "rp2rp1ra1ra2p2p1a1a2") // buildHandler 导致顶部的后输出
 
-	// CleanMiddlewares
+	// Reset
 
-	g.CleanMiddlewares()
+	g.Middlewares().Reset()
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "/get", nil)
 	g.ServeHTTP(w, r)
 	a.Equal(w.Code, 201).
 		Equal(w.Body.String(), "rp2rp1ra1ra2")
 
-	def.CleanMiddlewares()
+	def.Middlewares().Reset()
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "/get", nil)
 	g.ServeHTTP(w, r)

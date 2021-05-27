@@ -66,16 +66,5 @@ func (ms *Middlewares) Reset() *Middlewares {
 	return ms
 }
 
-// AppendMiddleware 添加中间件到尾部
-func (r *Router) AppendMiddleware(f MiddlewareFunc) *Router {
-	r.ms.Append(f)
-	return r
-}
-
-// PrependMiddleware 添加中间件到顶部
-func (r *Router) PrependMiddleware(f MiddlewareFunc) *Router {
-	r.ms.Prepend(f)
-	return r
-}
-
-func (r *Router) CleanMiddlewares() { r.ms.Reset() }
+// Middlewares 返回中间件管理接口
+func (r *Router) Middlewares() *Middlewares { return r.ms }

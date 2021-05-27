@@ -25,10 +25,11 @@ func TestRouter_AddMiddleware(t *testing.T) {
 	def, err := NewRouter(false, false, AllowedCORS(), nil, nil)
 	a.NotError(err).NotNil(def)
 	def.Get("/get", buildHandler(201))
-	def.AppendMiddleware(buildMiddleware(a, "rp1")).
-		PrependMiddleware(buildMiddleware(a, "ra1")).
-		AppendMiddleware(buildMiddleware(a, "rp2")).
-		PrependMiddleware(buildMiddleware(a, "ra2"))
+	ms := def.Middlewares()
+	ms.Append(buildMiddleware(a, "rp1")).
+		Prepend(buildMiddleware(a, "ra1")).
+		Append(buildMiddleware(a, "rp2")).
+		Prepend(buildMiddleware(a, "ra2"))
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "/get", nil)
@@ -38,7 +39,7 @@ func TestRouter_AddMiddleware(t *testing.T) {
 
 	// CleanMiddlewares
 
-	def.CleanMiddlewares()
+	ms.Reset()
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "/get", nil)
 	def.ServeHTTP(w, r)
