@@ -200,10 +200,5 @@ func (r *Router) serveHTTP(w http.ResponseWriter, req *http.Request) {
 		r.methodNotAllowed(w, req)
 		return
 	}
-
-	if len(ps) > 0 {
-		req = params.WithValue(req, ps)
-	}
-
-	h.ServeHTTP(w, req)
+	h.ServeHTTP(w, params.WithValue(req, ps))
 }
