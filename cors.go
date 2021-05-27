@@ -39,7 +39,10 @@ type CORS struct {
 	exposedHeadersString string
 
 	// MaxAge 当前报头信息可被缓存的秒数
-	MaxAge       uint64
+	//
+	// 0 不输出该 Access-Control-Max-Age 报头；
+	// 其它 >= -1 的值正常输出数值；
+	MaxAge       int
 	maxAgeString string
 
 	// AllowCredentials 是否允许 cookie
@@ -82,8 +85,12 @@ func (c *CORS) sanitize() error {
 		c.exposedHeadersString = strings.Join(c.ExposedHeaders, ",")
 	}
 
-	if c.MaxAge > 0 {
-		c.maxAgeString = strconv.FormatUint(c.MaxAge, 10)
+	switch {
+	case c.MaxAge == 0:
+	case c.MaxAge >= -1:
+		c.maxAgeString = strconv.Itoa(c.MaxAge)
+	default:
+		return errors.New("MaxAge 的值只能是 >= -1")
 	}
 
 	if c.anyOrigins && c.AllowCredentials {

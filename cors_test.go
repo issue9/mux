@@ -31,6 +31,18 @@ func TestCORS_sanitize(t *testing.T) {
 	a.True(c.anyOrigins).Equal(c.maxAgeString, "50")
 
 	c = &CORS{
+		AllowedOrigins: []string{"*"},
+		MaxAge:         -1,
+	}
+	a.NotError(c.sanitize())
+	a.True(c.anyOrigins).Equal(c.maxAgeString, "-1")
+
+	c = &CORS{
+		MaxAge: -2,
+	}
+	a.ErrorString(c.sanitize(), "MaxAge 的值只能是 >= -1")
+
+	c = &CORS{
 		AllowedOrigins:   []string{"*"},
 		AllowCredentials: true,
 	}
