@@ -4,8 +4,9 @@ package mux
 
 import "net/http"
 
-// Resource 以资源地址为对象的路由配置
+// Resource 以资源地址为对象的路由
 //
+//  srv := DefaultRouter()
 //  r, _ := srv.Resource("/api/users/{id}")
 //  r.Get(h)  // 相当于 srv.Get("/api/users/{id}")
 //  r.Post(h) // 相当于 srv.Post("/api/users/{id}")

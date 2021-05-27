@@ -4,12 +4,13 @@ package mux
 
 import "net/http"
 
-// Prefix 可以将具有统一前缀的路由项集中在一起操作
+// Prefix 操纵统一前缀的路由
 //
 // example:
-//  p := srv.Prefix("/api")
-//  p.Get("/users")  // 相当于 srv.Get("/api/users")
-//  p.Get("/user/1") // 相当于 srv.Get("/api/user/1")
+// r := DefaultRouter()
+//  p := r.Prefix("/api")
+//  p.Get("/users")  // 相当于 r.Get("/api/users")
+//  p.Get("/user/1") // 相当于 r.Get("/api/user/1")
 type Prefix struct {
 	router *Router
 	prefix string
