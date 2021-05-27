@@ -4,7 +4,6 @@
 package tree
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/issue9/mux/v5/internal/syntax"
@@ -71,24 +70,25 @@ func (tree *Tree) Clean(prefix string) { tree.node.clean(prefix) }
 
 // Remove 移除路由项
 //
-// methods 可以为空，表示删除所有内容。
-func (tree *Tree) Remove(pattern string, methods ...string) error {
+// methods 可以为空，表示删除所有内容。单独删除 OPTIONS，将不会发生任何事情。
+func (tree *Tree) Remove(pattern string, methods ...string) {
 	child := tree.node.find(pattern)
 	if child == nil || len(child.handlers) == 0 {
-		return nil
+		return
 	}
 
 	if len(methods) == 0 {
 		child.handlers = make(map[string]http.Handler, handlersSize)
 	} else {
 		for _, m := range methods {
-			if m == http.MethodOptions {
-				return errors.New("不能手动删除 OPTIONS")
-			} else if m == http.MethodGet { // HEAD 跟随 GET 一起删除
+			switch m {
+			case http.MethodOptions: // OPTIONS 不作任何操作
+			case http.MethodGet:
 				delete(child.handlers, http.MethodHead)
+				fallthrough
+			default:
+				delete(child.handlers, m)
 			}
-
-			delete(child.handlers, m)
 		}
 
 		if _, found := child.handlers[http.MethodOptions]; found && len(child.handlers) == 1 { // 只有一个 OPTIONS 了
@@ -101,7 +101,6 @@ func (tree *Tree) Remove(pattern string, methods ...string) error {
 		child.parent.children = removeNodes(child.parent.children, child.segment.Value)
 		child.parent.buildIndexes()
 	}
-	return nil
 }
 
 // 获取指定的节点，若节点不存在，则在该位置生成一个新节点。

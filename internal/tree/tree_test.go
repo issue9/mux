@@ -218,14 +218,14 @@ func TestTree_Add_Remove(t *testing.T) {
 	a.NotError(tree.Add("/posts/{id}/{author:\\w+}/profile", buildHandler(1), http.MethodGet))
 
 	a.NotEmpty(tree.node.find("/posts/1/author").handlers)
-	a.NotError(tree.Remove("/posts/1/author", http.MethodGet))
+	tree.Remove("/posts/1/author", http.MethodGet)
 	a.Nil(tree.node.find("/posts/1/author"))
 
-	a.NotError(tree.Remove("/posts/{id}/author", http.MethodGet)) // 只删除 GET
+	tree.Remove("/posts/{id}/author", http.MethodGet) // 只删除 GET
 	a.NotNil(tree.node.find("/posts/{id}/author"))
-	a.NotError(tree.Remove("/posts/{id}/author")) // 删除所有请求方法
+	tree.Remove("/posts/{id}/author") // 删除所有请求方法
 	a.Nil(tree.node.find("/posts/{id}/author"))
-	a.NotError(tree.Remove("/posts/{id}/author")) // 删除已经不存在的节点，不会报错，不发生任何事情
+	tree.Remove("/posts/{id}/author") // 删除已经不存在的节点，不会报错，不发生任何事情
 
 	// addAny
 
@@ -247,7 +247,7 @@ func TestTree_Add_Remove(t *testing.T) {
 		NotNil(node.handlers[http.MethodHead]).
 		NotNil(node.handlers[http.MethodOptions])
 
-	a.NotError(tree.Remove("/path", http.MethodGet))
+	tree.Remove("/path", http.MethodGet)
 	a.Equal(0, len(node.handlers))
 
 	tree = New(true)
@@ -258,7 +258,7 @@ func TestTree_Add_Remove(t *testing.T) {
 		Nil(node.handlers[http.MethodHead]).
 		NotNil(node.handlers[http.MethodOptions])
 
-	a.NotError(tree.Remove("/path", http.MethodGet))
+	tree.Remove("/path", http.MethodGet)
 	a.Equal(0, len(node.handlers))
 
 	// error
@@ -269,7 +269,8 @@ func TestTree_Add_Remove(t *testing.T) {
 	a.ErrorString(tree.Add("/path", buildHandler(1), "NOT-SUPPORTED"), "NOT-SUPPORTED")
 	a.NotError(tree.Add("/path", buildHandler(1), http.MethodDelete))
 	a.ErrorString(tree.Add("/path", buildHandler(1), http.MethodDelete), http.MethodDelete)
-	a.ErrorString(tree.Remove("/path", http.MethodOptions), "不能手动删除 OPTIONS")
+	tree.Remove("/path", http.MethodOptions) // remove options 不发生任何操作
+	a.Equal(tree.node.find("/path").Options(), "DELETE, OPTIONS")
 }
 
 func TestTree_Routes(t *testing.T) {

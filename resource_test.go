@@ -67,11 +67,11 @@ func TestResource(t *testing.T) {
 	test.matchTrue(http.MethodTrace, "/f/any", 206)
 
 	// remove
-	a.NotError(f.Remove(http.MethodGet, http.MethodHead))
+	f.Remove(http.MethodGet, http.MethodHead)
 	test.matchTrue(http.MethodGet, "/f/any", 405)
 	test.matchTrue(http.MethodDelete, "/f/any", 206)
 
-	a.NotError(f.Clean())
+	f.Clean()
 	test.matchTrue(http.MethodGet, "/f/any", 404)
 	test.matchTrue(http.MethodDelete, "/f/any", 404)
 }

@@ -101,12 +101,10 @@ func (r *Resource) AnyFunc(f http.HandlerFunc) *Resource {
 }
 
 // Remove 删除指定匹配模式的路由项
-func (r *Resource) Remove(methods ...string) error {
-	return r.router.Remove(r.pattern, methods...)
-}
+func (r *Resource) Remove(methods ...string) { r.router.Remove(r.pattern, methods...) }
 
 // Clean 清除当前资源的所有路由项
-func (r *Resource) Clean() error { return r.router.Remove(r.pattern) }
+func (r *Resource) Clean() { r.router.Remove(r.pattern) }
 
 // URL 根据参数构建一条 URL
 //

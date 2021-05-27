@@ -171,13 +171,13 @@ func TestRouter_Handle_Remove(t *testing.T) {
 	test.matchTrue(http.MethodDelete, "/api/1", http.StatusMethodNotAllowed) // 未实现
 
 	// 删除 GET /api/1
-	a.NotError(test.router.Remove("/api/1", http.MethodGet))
+	test.router.Remove("/api/1", http.MethodGet)
 	test.matchTrue(http.MethodGet, "/api/1", http.StatusMethodNotAllowed)
 	test.matchTrue(http.MethodPut, "/api/1", 201) // 不影响 PUT
 	test.matchTrue(http.MethodGet, "/api/2", 202)
 
 	// 删除 GET /api/2，只有一个，所以相当于整个节点被删除
-	a.NotError(test.router.Remove("/api/2", http.MethodGet))
+	test.router.Remove("/api/2", http.MethodGet)
 	test.matchTrue(http.MethodGet, "/api/1", http.StatusMethodNotAllowed)
 	test.matchTrue(http.MethodPut, "/api/1", 201)                 // 不影响 PUT
 	test.matchTrue(http.MethodGet, "/api/2", http.StatusNotFound) // 整个节点被删除
@@ -187,7 +187,7 @@ func TestRouter_Handle_Remove(t *testing.T) {
 	test.matchTrue(http.MethodPost, "/api/1", 201)
 
 	// 删除 ANY /api/1
-	a.NotError(test.router.Remove("/api/1"))
+	test.router.Remove("/api/1")
 	test.matchTrue(http.MethodPost, "/api/1", http.StatusNotFound) // 404 表示整个节点都没了
 }
 
@@ -245,19 +245,19 @@ func TestRouter_Params(t *testing.T) {
 	requestParams(http.MethodGet, "/api/256", http.StatusMethodNotAllowed, nil) // 不存在的请求方法
 
 	// 添加 patch /api/v2/{version:\\d*}
-	a.NotError(router.Clean())
+	router.Clean()
 	a.NotError(router.Patch("/api/v2/{version:\\d*}", buildParamsHandler()))
 	requestParams(http.MethodPatch, "/api/v2/2", http.StatusOK, map[string]string{"version": "2"})
 	requestParams(http.MethodPatch, "/api/v2/", http.StatusOK, map[string]string{"version": ""})
 
 	// 添加 patch /api/v2/{version:\\d*}/test
-	a.NotError(router.Clean())
+	router.Clean()
 	a.NotError(router.Patch("/api/v2/{version:\\d*}/test", buildParamsHandler()))
 	requestParams(http.MethodPatch, "/api/v2/2/test", http.StatusOK, map[string]string{"version": "2"})
 	requestParams(http.MethodPatch, "/api/v2//test", http.StatusNotFound, nil) // 可选参数不能在路由中间
 
 	// 中文作为值
-	a.NotError(router.Clean())
+	router.Clean()
 	a.NotError(router.Patch("/api/v3/{版本:digit}", buildParamsHandler()))
 	requestParams(http.MethodPatch, "/api/v3/2", http.StatusOK, map[string]string{"版本": "2"})
 }
@@ -275,7 +275,7 @@ func TestRouter_Clean(t *testing.T) {
 	def.ServeHTTP(w, r)
 	a.Equal(w.Result().StatusCode, 200)
 
-	a.NotError(def.Clean())
+	def.Clean()
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "/m1", nil)
 	def.ServeHTTP(w, r)

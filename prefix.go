@@ -101,8 +101,8 @@ func (p *Prefix) AnyFunc(pattern string, f http.HandlerFunc) *Prefix {
 }
 
 // Remove 删除指定匹配模式的路由项
-func (p *Prefix) Remove(pattern string, methods ...string) error {
-	return p.router.Remove(p.prefix+pattern, methods...)
+func (p *Prefix) Remove(pattern string, methods ...string) {
+	p.router.Remove(p.prefix+pattern, methods...)
 }
 
 // Clean 清除所有以 Prefix.prefix 开头的路由项
@@ -111,10 +111,7 @@ func (p *Prefix) Remove(pattern string, methods ...string) error {
 //  p1 := mux.Prefix("prefix")
 //  p2 := mux.Prefix("prefix")
 //  p2.Clean() 将同时清除 p1 的内容，因为有相同的前缀。
-func (p *Prefix) Clean() error {
-	p.router.tree.Clean(p.prefix)
-	return nil
-}
+func (p *Prefix) Clean() { p.router.tree.Clean(p.prefix) }
 
 // URL 根据参数生成地址
 //

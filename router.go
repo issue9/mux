@@ -73,20 +73,19 @@ func NewRouter(disableHead, skipCleanPath bool, cors *CORS, notFound, methodNotA
 }
 
 // Clean 清除当前路由组的所有路由项
-func (r *Router) Clean() error {
-	r.tree.Clean("")
-	return nil
-}
+func (r *Router) Clean() { r.tree.Clean("") }
 
 // Routes 返回当前路由组的路由项
+//
+// 键名为请求地址，键值为对应的请求方法。
 func (r *Router) Routes() map[string][]string { return r.tree.Routes() }
 
 // Remove 移除指定的路由项
 //
 // 当未指定 methods 时，将删除所有 method 匹配的项。
 // 指定错误的 methods 值，将自动忽略该值。
-func (r *Router) Remove(pattern string, methods ...string) error {
-	return r.tree.Remove(pattern, methods...)
+func (r *Router) Remove(pattern string, methods ...string) {
+	r.tree.Remove(pattern, methods...)
 }
 
 // Handle 添加一条路由数据
