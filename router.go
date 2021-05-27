@@ -31,7 +31,7 @@ type Router struct {
 
 // DefaultRouter 返回默认参数的 NewRouter
 //
-// 相当于调用 NewRouter(false, false, DeniedCORS(), nil, nil)
+// 相当于调用 NewRouter(false, DeniedCORS(), nil, nil)
 func DefaultRouter() *Router {
 	r, err := NewRouter(false, DeniedCORS(), nil, nil)
 	if err != nil {
@@ -91,10 +91,6 @@ func (r *Router) Remove(pattern string, methods ...string) {
 //
 // pattern 为路由匹配模式，可以是正则匹配也可以是字符串匹配，
 // 若语法不正确，则直接 panic，可以通过 CheckSyntax 检测语法的有效性，其它接口也相同。
-// pattern 中通过 {} 指定参数名称，如果参数名中带 :，则 : 之后的为参数的约束条件，
-// 比如 /posts/{id}.html 表示匹配任意任意字符的参数 id。/posts/{id:\d+}.html，
-// 表示匹配正则表达式 \d+ 的参数 id。；
-//
 // methods 该路由项对应的请求方法，如果未指定值，则表示所有支持的请求方法，
 // 但不包含 OPTIONS 和 HEAD。
 func (r *Router) Handle(pattern string, h http.Handler, methods ...string) error {
