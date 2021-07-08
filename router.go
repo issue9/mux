@@ -186,17 +186,17 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 func (r *Router) serveHTTP(w http.ResponseWriter, req *http.Request) {
-	hs, ps := r.tree.Route(req.URL.Path)
+	node, ps := r.tree.Route(req.URL.Path)
 	if ps == nil {
 		r.notFound(w, req)
 		return
 	}
 
-	if h := hs.Handler(req.Method); h != nil {
-		r.cors.handle(hs, w, req) // 处理跨域问题
+	if h := node.Handler(req.Method); h != nil {
+		r.cors.handle(node, w, req) // 处理跨域问题
 		h.ServeHTTP(w, params.WithValue(req, ps))
 		return
 	}
-	w.Header().Set("Allow", hs.Options())
+	w.Header().Set("Allow", node.Options())
 	r.methodNotAllowed(w, req)
 }

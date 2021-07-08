@@ -31,7 +31,6 @@ router.Get("/users/1", h).
     Post("/login", h).
     Get("/pages/{id:\\d+}.html", h). // 匹配 /pages/123.html 等格式，path = 123
     Get("/posts/{path}.html", h).    // 匹配 /posts/2020/11/11/title.html 等格式，path = 2020/11/11/title
-    Options("/users/1", "GET").     // OPTIONS /user/1 手动指定该路由项的 OPTIONS 请求方法返回内容
 
 // 统一前缀路径的路由
 p := m.Prefix("/api")
