@@ -304,14 +304,18 @@ func TestRouter_ServeHTTP_Order(t *testing.T) {
 	a := assert.New(t)
 
 	test := newTester(t, true)
-	a.NotError(test.router.GetFunc("/posts/{id}", buildHandlerFunc(203)))        // f3
-	a.NotError(test.router.GetFunc("/posts/{id:\\d+}", buildHandlerFunc(202)))   // f2
-	a.NotError(test.router.GetFunc("/posts/1", buildHandlerFunc(201)))           // f1
-	a.NotError(test.router.GetFunc("/posts/{id:[0-9]+}", buildHandlerFunc(199))) // f0 两个正则，后添加的永远匹配不到
-	test.matchTrue(http.MethodGet, "/posts/1", 201)                              // f1 普通路由项完全匹配
-	test.matchTrue(http.MethodGet, "/posts/2", 202)                              // f1 正则路由
-	test.matchTrue(http.MethodGet, "/posts/abc", 203)                            // f3 命名路由
-	test.matchTrue(http.MethodGet, "/posts/", 203)                               // f3
+	a.NotError(test.router.GetFunc("/posts/{id}", buildHandlerFunc(203)))
+	a.NotError(test.router.GetFunc("/posts/{id:\\d+}", buildHandlerFunc(202)))
+	a.NotError(test.router.GetFunc("/posts/1", buildHandlerFunc(201)))
+	a.NotError(test.router.GetFunc("/posts/{id:[0-9]+}", buildHandlerFunc(199))) //  两个正则，后添加的永远匹配不到
+	a.NotError(test.router.GetFunc("/posts-{id:any}", buildHandlerFunc(204)))
+	a.NotError(test.router.GetFunc("/posts-", buildHandlerFunc(205)))
+	test.matchTrue(http.MethodGet, "/posts/1", 201)   // 普通路由项完全匹配
+	test.matchTrue(http.MethodGet, "/posts/2", 202)   // 正则路由
+	test.matchTrue(http.MethodGet, "/posts/abc", 203) // 命名路由
+	test.matchTrue(http.MethodGet, "/posts/", 203)    // 命名路由
+	test.matchTrue(http.MethodGet, "/posts-5", 204)   // 命名路由
+	test.matchTrue(http.MethodGet, "/posts-", 205)    // 204 只匹配非空
 
 	// interceptor
 	test = newTester(t, true)
