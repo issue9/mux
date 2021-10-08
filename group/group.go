@@ -95,8 +95,7 @@ func (g *Groups) NewRouter(name string, matcher Matcher) (*Router, error) {
 // 这样会造成其它子路由永远无法到达。
 //
 // name 表示该路由组的名称，需要唯一，否则返回 false；
-// matcher 路由的准入条件，如果为空，则此条路由匹配时会被排在最后，
-// 只能有一个路由的 matcher 为空，否则会 panic；
+// matcher 路由的准入条件；
 func (g *Groups) AddRouter(name string, matcher Matcher, r *mux.Router) error {
 	_, err := g.addRouter(name, matcher, r)
 	return err
