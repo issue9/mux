@@ -133,12 +133,12 @@ import "github.com/issue9/mux/v5/group"
 
 m := group.Default()
 
-def := mux.DefaultRouter()
-err := m.AddRouter("default", group.NewPathVersion("version-key", "v1"), def)
+def, err := mux.NewRouter("default", false, nil)
+err := m.AddRouter(group.NewPathVersion("version-key", "v1"), def)
 def.Get("/path", h1)
 
-host := mux.DefaultRouter()
-err := m.AddRouter("host", group.NewHosts("*.example.com"), host)
+host, err := mux.NewRouter("host", false, nil)
+err := m.AddRouter(group.NewHosts("*.example.com"), host)
 host.Get("/path", h2)
 
 http.ListenAndServe(":8080", m)
@@ -184,7 +184,7 @@ CORS 不再是以中间件的形式提供，而是通过 NewRouter 直接传递�
 OPTIONS 请求方法由系统自动生成。
 
 ```go
-r, ok := mux.NewRouter(false, AllowedCORS()) // 任意跨域请求
+r, ok := mux.NewRouter("name" ,false, AllowedCORS()) // 任意跨域请求
 
 r.Get("/posts/{id}", nil)     // 默认情况下， OPTIONS 的报头为 GET, OPTIONS
 

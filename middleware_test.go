@@ -22,8 +22,8 @@ func buildMiddleware(a *assert.Assertion, text string) MiddlewareFunc {
 func TestRouter_AddMiddleware(t *testing.T) {
 	a := assert.New(t)
 
-	def, err := NewRouter(false, AllowedCORS())
-	a.NotError(err).NotNil(def)
+	def := DefaultRouter()
+	a.NotNil(def)
 	def.Get("/get", buildHandler(201))
 	ms := def.Middlewares()
 	ms.Append(buildMiddleware(a, "rp1")).

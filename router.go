@@ -21,6 +21,7 @@ import (
 //
 // 如果需要同时对多个 Router 实例进行路由，可以采用  groups.Groups 对象管理多个 Router 实例。
 type Router struct {
+	name string
 	tree *tree.Tree
 	ms   *Middlewares
 	cors *CORS
@@ -28,9 +29,9 @@ type Router struct {
 
 // DefaultRouter 返回默认参数的 NewRouter
 //
-// 相当于调用 NewRouter(false, DeniedCORS())
+// 相当于调用 NewRouter("", false, DeniedCORS())
 func DefaultRouter() *Router {
-	r, err := NewRouter(false, DeniedCORS())
+	r, err := NewRouter("", false, DeniedCORS())
 	if err != nil {
 		panic(err)
 	}
@@ -39,9 +40,10 @@ func DefaultRouter() *Router {
 
 // NewRouter 声明路由
 //
+// name string 路由名称，可以为空；
 // disableHead 是否禁用根据 Get 请求自动生成 HEAD 请求；
 // cors 跨域请求的相关设置项；
-func NewRouter(disableHead bool, cors *CORS) (*Router, error) {
+func NewRouter(name string, disableHead bool, cors *CORS) (*Router, error) {
 	if cors == nil {
 		cors = DeniedCORS()
 	}
@@ -51,6 +53,7 @@ func NewRouter(disableHead bool, cors *CORS) (*Router, error) {
 	}
 
 	r := &Router{
+		name: name,
 		tree: tree.New(disableHead),
 		cors: cors,
 	}
@@ -187,3 +190,6 @@ func (r *Router) serveHTTP(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Allow", node.Options())
 	http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 }
+
+// Name 路由名称
+func (r *Router) Name() string { return r.name }
