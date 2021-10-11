@@ -10,7 +10,6 @@ import (
 	"github.com/issue9/sliceutil"
 
 	"github.com/issue9/mux/v5"
-	"github.com/issue9/mux/v5/internal/tree"
 )
 
 // ErrRouterExists 表示是否存在同名的路由名称
@@ -23,8 +22,6 @@ type Groups struct {
 
 	disableHead bool
 	cors        *mux.CORS
-	notFound,
-	methodNotAllowed http.HandlerFunc
 }
 
 // Router 单个路由
@@ -35,7 +32,7 @@ type Router struct {
 }
 
 // Default 返回默认参数的 New
-func Default() *Groups { return New(false, mux.DeniedCORS(), nil, nil) }
+func Default() *Groups { return New(false, mux.DeniedCORS()) }
 
 // New 声明一个新的 Mux
 //
@@ -43,21 +40,11 @@ func Default() *Groups { return New(false, mux.DeniedCORS(), nil, nil) }
 // cors 跨域请求的相关设置项；
 // notFound 404 页面的处理方式，为 nil 时会调用默认的方式进行处理；
 // methodNotAllowed 405 页面的处理方式，为 nil 时会调用默认的方式进行处理；
-func New(disableHead bool, cors *mux.CORS, notFound, methodNotAllowed http.HandlerFunc) *Groups {
-	if notFound == nil {
-		notFound = tree.DefaultNotFound
-	}
-	if methodNotAllowed == nil {
-		methodNotAllowed = tree.DefaultMethodNotAllowed
-	}
-
+func New(disableHead bool, cors *mux.CORS) *Groups {
 	g := &Groups{
-		routers: make([]*Router, 0, 1),
-
-		disableHead:      disableHead,
-		cors:             cors,
-		notFound:         notFound,
-		methodNotAllowed: methodNotAllowed,
+		routers:     make([]*Router, 0, 1),
+		disableHead: disableHead,
+		cors:        cors,
 	}
 	g.ms = mux.NewMiddlewares(http.HandlerFunc(g.serveHTTP))
 	return g
@@ -72,14 +59,14 @@ func (g *Groups) serveHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	g.notFound(w, r)
+	http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 }
 
 // NewRouter 声明新路由
 //
 // 与 AddRouter 的区别在于，NewRouter 参数从 Groups 继承，而 AddRouter 的路由，其参数可自定义。
 func (g *Groups) NewRouter(name string, matcher Matcher) (*Router, error) {
-	r, err := mux.NewRouter(g.disableHead, g.cors, g.notFound, g.methodNotAllowed)
+	r, err := mux.NewRouter(g.disableHead, g.cors)
 	if err != nil {
 		return nil, err
 	}

@@ -73,7 +73,7 @@ func TestPrefix(t *testing.T) {
 
 func TestRouter_Prefix(t *testing.T) {
 	a := assert.New(t)
-	def, err := NewRouter(true, AllowedCORS(), nil, nil)
+	def, err := NewRouter(true, AllowedCORS())
 	a.NotError(err).NotNil(def)
 
 	p := def.Prefix("/abc")
@@ -86,7 +86,7 @@ func TestRouter_Prefix(t *testing.T) {
 
 func TestPrefix_Prefix(t *testing.T) {
 	a := assert.New(t)
-	def, err := NewRouter(true, AllowedCORS(), nil, nil)
+	def, err := NewRouter(true, AllowedCORS())
 	a.NotError(err).NotNil(def)
 
 	p := def.Prefix("/abc")
@@ -101,7 +101,7 @@ func TestPrefix_Prefix(t *testing.T) {
 
 func TestPrefix_URL(t *testing.T) {
 	a := assert.New(t)
-	def, err := NewRouter(true, AllowedCORS(), nil, nil)
+	def, err := NewRouter(true, AllowedCORS())
 	a.NotError(err).NotNil(def)
 
 	// 非正则

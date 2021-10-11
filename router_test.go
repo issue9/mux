@@ -34,7 +34,7 @@ type tester struct {
 }
 
 func newTester(t testing.TB, disableHead bool) *tester {
-	r, err := NewRouter(disableHead, AllowedCORS(), nil, nil)
+	r, err := NewRouter(disableHead, AllowedCORS())
 	assert.NotError(t, err)
 	assert.NotNil(t, r)
 
@@ -202,7 +202,7 @@ func TestRouter_Routes(t *testing.T) {
 	def.Post("/m", buildHandler(1))
 	a.Equal(def.Routes(), map[string][]string{"/m": {"GET", "HEAD", "OPTIONS", "POST"}})
 
-	def, err := NewRouter(true, nil, nil, nil)
+	def, err := NewRouter(true, nil)
 	a.NotError(err).NotNil(def)
 	def.Get("/m", buildHandler(1))
 	def.Post("/m", buildHandler(1))

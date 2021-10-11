@@ -24,16 +24,13 @@ type Router struct {
 	tree *tree.Tree
 	ms   *Middlewares
 	cors *CORS
-
-	notFound,
-	methodNotAllowed http.HandlerFunc
 }
 
 // DefaultRouter 返回默认参数的 NewRouter
 //
-// 相当于调用 NewRouter(false, DeniedCORS(), nil, nil)
+// 相当于调用 NewRouter(false, DeniedCORS())
 func DefaultRouter() *Router {
-	r, err := NewRouter(false, DeniedCORS(), nil, nil)
+	r, err := NewRouter(false, DeniedCORS())
 	if err != nil {
 		panic(err)
 	}
@@ -44,17 +41,9 @@ func DefaultRouter() *Router {
 //
 // disableHead 是否禁用根据 Get 请求自动生成 HEAD 请求；
 // cors 跨域请求的相关设置项；
-// notFound 404 页面的处理方式，为 nil 时会调用默认的方式进行处理；
-// methodNotAllowed 405 页面的处理方式，为 nil 时会调用默认的方式进行处理；
-func NewRouter(disableHead bool, cors *CORS, notFound, methodNotAllowed http.HandlerFunc) (*Router, error) {
+func NewRouter(disableHead bool, cors *CORS) (*Router, error) {
 	if cors == nil {
 		cors = DeniedCORS()
-	}
-	if notFound == nil {
-		notFound = tree.DefaultNotFound
-	}
-	if methodNotAllowed == nil {
-		methodNotAllowed = tree.DefaultMethodNotAllowed
 	}
 
 	if err := cors.sanitize(); err != nil {
@@ -62,10 +51,8 @@ func NewRouter(disableHead bool, cors *CORS, notFound, methodNotAllowed http.Han
 	}
 
 	r := &Router{
-		tree:             tree.New(disableHead),
-		cors:             cors,
-		notFound:         notFound,
-		methodNotAllowed: methodNotAllowed,
+		tree: tree.New(disableHead),
+		cors: cors,
 	}
 	r.ms = NewMiddlewares(http.HandlerFunc(r.serveHTTP))
 	return r, nil
@@ -188,7 +175,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 func (r *Router) serveHTTP(w http.ResponseWriter, req *http.Request) {
 	node, ps := r.tree.Route(req.URL.Path)
 	if ps == nil {
-		r.notFound(w, req)
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
 
@@ -198,5 +185,5 @@ func (r *Router) serveHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	w.Header().Set("Allow", node.Options())
-	r.methodNotAllowed(w, req)
+	http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 }
