@@ -17,36 +17,38 @@ import (
 //
 // https://developer.mozilla.org/zh-CN/docs/Web/HTTP/CORS
 type CORS struct {
-	// AllowedOrigins 允许的外部域名列表
+	XMLName struct{} `json:"-" yaml:"-" xml:"cors"`
+
+	// AllowedOrigins 对应 Origin
 	//
 	// 可以是 *，如果包含了 *，那么其它的设置将不再启作用。
 	// 此字段将被用于与请求头的 Origin 字段作验证，以确定是否放行该请求。
 	//
 	// 如果此值为空，表示不启用跨域的相关设置。
-	AllowedOrigins []string
+	AllowedOrigins []string `json:"allowedOrigins,omitempty" yaml:"allowedOrigins,omitempty" xml:"allowedOrigins,omitempty"`
 	anyOrigins     bool
 	deny           bool
 
-	// AllowedHeaders 实际请求中允许携带的报头
+	// AllowedHeaders 对应 Access-Control-Allow-Headers
 	//
 	// 可以包含 *，表示可以是任意值，其它值将不再启作用。
-	AllowedHeaders       []string
+	AllowedHeaders       []string `json:"allowedHeaders,omitempty" yaml:"allowedHeaders,omitempty" xml:"allowedHeaders,omitempty"`
 	allowedHeadersString string
 	anyHeaders           bool
 
-	// ExposedHeaders Access-Control-Expose-Headers
-	ExposedHeaders       []string
+	// ExposedHeaders 对应 Access-Control-Expose-Headers
+	ExposedHeaders       []string `json:"exposedHeaders,omitempty" yaml:"exposedHeaders,omitempty" xml:"exposedHeaders,omitempty"`
 	exposedHeadersString string
 
 	// MaxAge 当前报头信息可被缓存的秒数
 	//
 	// 0 不输出该 Access-Control-Max-Age 报头；
 	// 其它 >= -1 的值正常输出数值；
-	MaxAge       int
+	MaxAge       int `json:"maxAge,omitempty" yaml:"maxAge,omitempty" xml:"maxAge,attr,omitempty"`
 	maxAgeString string
 
 	// AllowCredentials 是否允许 cookie
-	AllowCredentials bool
+	AllowCredentials bool `json:"allowCredentials,omitempty" yaml:"allowCredentials,omitempty" xml:"allowCredentials,attr,omitempty"`
 }
 
 // AllowedCORS 允许跨域请求
