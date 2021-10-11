@@ -16,6 +16,12 @@ import (
 var ErrRouterExists = errors.New("该名称的路由已经存在")
 
 // Groups 管理一组路由
+//
+// 当路由关联的 Matcher 返回 true 时，就会进入该路由。
+// 如果多条路由的 Matcher 都返回 true，则第一条路由获得权限，
+// 即使该路由最终返回 404，也不会再在其它路由里查找相应的路由。
+// 所以在有多条子路由的情况下，第一条子路由不应该永远返回 true，
+// 否则其它子路由永远无法到达。
 type Groups struct {
 	routers []*router
 	ms      *mux.Middlewares
@@ -60,30 +66,22 @@ func (g *Groups) serveHTTP(w http.ResponseWriter, r *http.Request) {
 
 // NewRouter 声明新路由
 //
-// 与 AddRouter 的区别在于，NewRouter 参数从 Groups 继承，而 AddRouter 的路由，其参数可自定义。
+// 与 AddRouter 的区别在于：NewRouter 参数从 Groups 继承，而 AddRouter 的路由，其参数可自定义。
 func (g *Groups) NewRouter(name string, matcher Matcher) (*mux.Router, error) {
 	r, err := mux.NewRouter(name, g.disableHead, g.cors)
 	if err != nil {
 		return nil, err
 	}
-	return g.addRouter(matcher, r)
+
+	if err := g.AddRouter(matcher, r); err != nil {
+		return nil, err
+	}
+
+	return r, nil
 }
 
 // AddRouter 添加路由
-//
-// 该路由只有符合 Matcher 的要求才会进入，其它与 mux.Router 功能相同。
-// 当 Matcher 与其它路由组的判断有重复时，第一条返回 true 的路由组获胜，
-// 即使该路由组最终返回 404，也不会再在其它路由组里查找相应的路由。
-// 所以在有多条子路由的情况下，第一条子路由不应该永远返回 true，
-// 这样会造成其它子路由永远无法到达。
-//
-// matcher 路由的准入条件；
 func (g *Groups) AddRouter(matcher Matcher, r *mux.Router) error {
-	_, err := g.addRouter(matcher, r)
-	return err
-}
-
-func (g *Groups) addRouter(matcher Matcher, r *mux.Router) (*mux.Router, error) {
 	if r.Name() == "" {
 		panic("参数 name 不能为空")
 	}
@@ -96,16 +94,11 @@ func (g *Groups) addRouter(matcher Matcher, r *mux.Router) (*mux.Router, error) 
 		return g.routers[i].Name() == r.Name()
 	})
 	if index > -1 {
-		return nil, ErrRouterExists
+		return ErrRouterExists
 	}
 
-	router := &router{
-		Router:  r,
-		matcher: matcher,
-	}
-	g.routers = append(g.routers, router)
-
-	return router.Router, nil
+	g.routers = append(g.routers, &router{Router: r, matcher: matcher})
+	return nil
 }
 
 // Router 返回指定名称的 *mux.Router 实例
