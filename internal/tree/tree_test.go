@@ -71,83 +71,83 @@ func TestTree_match(t *testing.T) {
 	test := newTester(a)
 
 	// 添加路由项
-	test.add(http.MethodGet, "/", 1)
-	test.add(http.MethodGet, "/posts/{id}", 2)
-	test.add(http.MethodGet, "/posts/{id}/author", 3)
-	test.add(http.MethodGet, "/posts/1/author", 4)
-	test.add(http.MethodGet, "/posts/{id:\\d+}", 5)
-	test.add(http.MethodGet, "/posts/{id:\\d+}/author", 6)
-	test.add(http.MethodGet, "/page/{page:\\d*}", 7) // 可选的正则节点
-	test.add(http.MethodGet, "/posts/{id}/{page}/author", 8)
+	test.add(http.MethodGet, "/", 201)
+	test.add(http.MethodGet, "/posts/{id}", 202)
+	test.add(http.MethodGet, "/posts/{id}/author", 203)
+	test.add(http.MethodGet, "/posts/1/author", 204)
+	test.add(http.MethodGet, "/posts/{id:\\d+}", 205)
+	test.add(http.MethodGet, "/posts/{id:\\d+}/author", 206)
+	test.add(http.MethodGet, "/page/{page:\\d*}", 207) // 可选的正则节点
+	test.add(http.MethodGet, "/posts/{id}/{page}/author", 208)
 
-	test.matchTrue(http.MethodGet, "/", 1)
-	test.matchTrue(http.MethodGet, "/posts/1", 5)             // 正则
-	test.matchTrue(http.MethodGet, "/posts/2", 5)             // 正则
-	test.matchTrue(http.MethodGet, "/posts/2/author", 6)      // 正则
-	test.matchTrue(http.MethodGet, "/posts/1/author", 4)      // 字符串
-	test.matchTrue(http.MethodGet, "/posts/1.html", 2)        // 命名参数
-	test.matchTrue(http.MethodGet, "/posts/1.html/page", 2)   // 命名参数
-	test.matchTrue(http.MethodGet, "/posts/2.html/author", 3) // 命名参数
-	test.matchTrue(http.MethodGet, "/page/", 7)
-	test.matchTrue(http.MethodGet, "/posts/2.html/2/author", 8) // 若 {id} 可匹配任意字符，此条也可匹配 3
+	test.matchTrue(http.MethodGet, "/", 201)
+	test.matchTrue(http.MethodGet, "/posts/1", 205)             // 正则
+	test.matchTrue(http.MethodGet, "/posts/2", 205)             // 正则
+	test.matchTrue(http.MethodGet, "/posts/2/author", 206)      // 正则
+	test.matchTrue(http.MethodGet, "/posts/1/author", 204)      // 字符串
+	test.matchTrue(http.MethodGet, "/posts/1.html", 202)        // 命名参数
+	test.matchTrue(http.MethodGet, "/posts/1.html/page", 202)   // 命名参数
+	test.matchTrue(http.MethodGet, "/posts/2.html/author", 203) // 命名参数
+	test.matchTrue(http.MethodGet, "/page/", 207)
+	test.matchTrue(http.MethodGet, "/posts/2.html/2/author", 208) // 若 {id} 可匹配任意字符，此条也可匹配 3
 
 	// 测试 digit 和 \\d 是否正常
 	test = newTester(a)
-	test.add(http.MethodGet, "/posts/{id:\\d}/author", 1)
-	test.add(http.MethodGet, "/posts/{id:digit}/author", 2)
-	test.matchTrue(http.MethodGet, "/posts/1/author", 2)
+	test.add(http.MethodGet, "/posts/{id:\\d}/author", 201)
+	test.add(http.MethodGet, "/posts/{id:digit}/author", 202)
+	test.matchTrue(http.MethodGet, "/posts/1/author", 202)
 
 	// 测试 digit 和 named 是否正常
 	test = newTester(a)
-	test.add(http.MethodGet, "/posts/{id}/author", 1)
-	test.add(http.MethodGet, "/posts/{id:digit}/author", 2)
-	test.matchTrue(http.MethodGet, "/posts/1/author", 2)
+	test.add(http.MethodGet, "/posts/{id}/author", 201)
+	test.add(http.MethodGet, "/posts/{id:digit}/author", 202)
+	test.matchTrue(http.MethodGet, "/posts/1/author", 202)
 
 	// 测试 digit 和 \\d 和 named 三者顺序是否正常
 	test = newTester(a)
-	test.add(http.MethodGet, "/posts/{id}/author", 1)
-	test.add(http.MethodGet, "/posts/{id:\\d}/author", 2)
-	test.add(http.MethodGet, "/posts/{id:digit}/author", 3)
-	test.matchTrue(http.MethodGet, "/posts/1/author", 3)
+	test.add(http.MethodGet, "/posts/{id}/author", 201)
+	test.add(http.MethodGet, "/posts/{id:\\d}/author", 202)
+	test.add(http.MethodGet, "/posts/{id:digit}/author", 203)
+	test.matchTrue(http.MethodGet, "/posts/1/author", 203)
 
 	// 以斜框结尾，是否能正常访问
 	test = newTester(a)
-	test.add(http.MethodGet, "/posts/{id}/", 1)
-	test.add(http.MethodGet, "/posts/{id}/author", 2)
-	test.matchTrue(http.MethodGet, "/posts/1/", 1)
-	test.matchTrue(http.MethodGet, "/posts/1.html/", 1)
-	test.matchTrue(http.MethodGet, "/posts/1/author", 2)
+	test.add(http.MethodGet, "/posts/{id}/", 201)
+	test.add(http.MethodGet, "/posts/{id}/author", 202)
+	test.matchTrue(http.MethodGet, "/posts/1/", 201)
+	test.matchTrue(http.MethodGet, "/posts/1.html/", 201)
+	test.matchTrue(http.MethodGet, "/posts/1/author", 202)
 
 	// 以 - 作为路径分隔符
 	test = newTester(a)
-	test.add(http.MethodGet, "/posts-{id}", 1)
-	test.add(http.MethodGet, "/posts-{id}-author", 2)
-	test.matchTrue(http.MethodGet, "/posts-1.html", 1)
-	test.matchTrue(http.MethodGet, "/posts-1-author", 2)
+	test.add(http.MethodGet, "/posts-{id}", 201)
+	test.add(http.MethodGet, "/posts-{id}-author", 202)
+	test.matchTrue(http.MethodGet, "/posts-1.html", 201)
+	test.matchTrue(http.MethodGet, "/posts-1-author", 202)
 
 	test = newTester(a)
-	test.add(http.MethodGet, "/admin/{path}", 1)
-	test.add(http.MethodGet, "/admin/items/{id:\\d+}", 2)
-	test.add(http.MethodGet, "/admin/items/{id:\\d+}/profile", 3)
-	test.add(http.MethodGet, "/admin/items/{id:\\d+}/profile/{type:\\d+}", 4)
-	test.matchTrue(http.MethodGet, "/admin/index.html", 1)
-	test.matchTrue(http.MethodGet, "/admin/items/1", 2)
-	test.matchTrue(http.MethodGet, "/admin/items/1/profile", 3)
-	test.matchTrue(http.MethodGet, "/admin/items/1/profile/1", 4)
+	test.add(http.MethodGet, "/admin/{path}", 201)
+	test.add(http.MethodGet, "/admin/items/{id:\\d+}", 202)
+	test.add(http.MethodGet, "/admin/items/{id:\\d+}/profile", 203)
+	test.add(http.MethodGet, "/admin/items/{id:\\d+}/profile/{type:\\d+}", 204)
+	test.matchTrue(http.MethodGet, "/admin/index.html", 201)
+	test.matchTrue(http.MethodGet, "/admin/items/1", 202)
+	test.matchTrue(http.MethodGet, "/admin/items/1/profile", 203)
+	test.matchTrue(http.MethodGet, "/admin/items/1/profile/1", 204)
 
 	// 测试 indexes 功能
 	test = newTester(a)
-	test.add(http.MethodGet, "/admin/1", 1)
-	test.add(http.MethodGet, "/admin/2", 2)
-	test.add(http.MethodGet, "/admin/3", 3)
-	test.add(http.MethodGet, "/admin/4", 4)
-	test.add(http.MethodGet, "/admin/5", 5)
-	test.add(http.MethodGet, "/admin/6", 6)
-	test.add(http.MethodGet, "/admin/7", 7)
-	test.add(http.MethodGet, "/admin/{id}", 20)
+	test.add(http.MethodGet, "/admin/1", 201)
+	test.add(http.MethodGet, "/admin/2", 202)
+	test.add(http.MethodGet, "/admin/3", 203)
+	test.add(http.MethodGet, "/admin/4", 204)
+	test.add(http.MethodGet, "/admin/5", 205)
+	test.add(http.MethodGet, "/admin/6", 206)
+	test.add(http.MethodGet, "/admin/7", 207)
+	test.add(http.MethodGet, "/admin/{id}", 220)
 	a.Equal(len(test.tree.node.children[0].indexes), 7)
 	// /admin/5index.html 即部分匹配 /admin/5，更匹配 /admin/{id}，测试是否正确匹配
-	test.matchTrue(http.MethodGet, "/admin/5index.html", 20)
+	test.matchTrue(http.MethodGet, "/admin/5index.html", 220)
 }
 
 func TestTree_Params(t *testing.T) {
@@ -155,18 +155,18 @@ func TestTree_Params(t *testing.T) {
 	test := newTester(a)
 
 	// 添加路由项
-	test.add(http.MethodGet, "/posts/{id}", 1)                       // 命名
-	test.add(http.MethodGet, "/posts/{id}/author/{action}/", 2)      // 命名
-	test.add(http.MethodGet, "/posts/{id:\\d+}", 3)                  // 正则
-	test.add(http.MethodGet, "/posts/{id:\\d+}/author/{action}/", 4) // 正则
+	test.add(http.MethodGet, "/posts/{id}", 201)                       // 命名
+	test.add(http.MethodGet, "/posts/{id}/author/{action}/", 202)      // 命名
+	test.add(http.MethodGet, "/posts/{id:\\d+}", 203)                  // 正则
+	test.add(http.MethodGet, "/posts/{id:\\d+}/author/{action}/", 204) // 正则
 
 	// 正则
-	test.paramsTrue(http.MethodGet, "/posts/1", 3, map[string]string{"id": "1"})
-	test.paramsTrue(http.MethodGet, "/posts/1/author/profile/", 4, map[string]string{"id": "1", "action": "profile"})
+	test.paramsTrue(http.MethodGet, "/posts/1", 203, map[string]string{"id": "1"})
+	test.paramsTrue(http.MethodGet, "/posts/1/author/profile/", 204, map[string]string{"id": "1", "action": "profile"})
 
 	// 命名
-	test.paramsTrue(http.MethodGet, "/posts/1.html", 1, map[string]string{"id": "1.html"})
-	test.paramsTrue(http.MethodGet, "/posts/1.html/author/profile/", 2, map[string]string{"id": "1.html", "action": "profile"})
+	test.paramsTrue(http.MethodGet, "/posts/1.html", 201, map[string]string{"id": "1.html"})
+	test.paramsTrue(http.MethodGet, "/posts/1.html/author/profile/", 202, map[string]string{"id": "1.html", "action": "profile"})
 }
 
 func TestTreeCN(t *testing.T) {
@@ -174,12 +174,12 @@ func TestTreeCN(t *testing.T) {
 	test := newTester(a)
 
 	// 添加路由项
-	test.add(http.MethodGet, "/posts/{id}", 1) // 命名
-	test.add(http.MethodGet, "/文章/{编号}", 2)    // 中文
+	test.add(http.MethodGet, "/posts/{id}", 201) // 命名
+	test.add(http.MethodGet, "/文章/{编号}", 202)    // 中文
 
-	test.matchTrue(http.MethodGet, "/posts/1", 1)
-	test.matchTrue(http.MethodGet, "/文章/1", 2)
-	test.paramsTrue(http.MethodGet, "/文章/1.html", 2, map[string]string{"编号": "1.html"})
+	test.matchTrue(http.MethodGet, "/posts/1", 201)
+	test.matchTrue(http.MethodGet, "/文章/1", 202)
+	test.paramsTrue(http.MethodGet, "/文章/1.html", 202, map[string]string{"编号": "1.html"})
 }
 
 func TestTree_Clean(t *testing.T) {
@@ -190,11 +190,11 @@ func TestTree_Clean(t *testing.T) {
 		a.NotError(tree.Add(p, buildHandler(code), methods...))
 	}
 
-	addNode("/", 1, http.MethodGet)
-	addNode("/posts/1/author", 1, http.MethodGet)
-	addNode("/posts/{id}", 1, http.MethodGet)
-	addNode("/posts/{id}/author", 1, http.MethodGet)
-	addNode("/posts/{id}/{author:\\w+}/profile", 1, http.MethodGet)
+	addNode("/", 201, http.MethodGet)
+	addNode("/posts/1/author", 201, http.MethodGet)
+	addNode("/posts/{id}", 201, http.MethodGet)
+	addNode("/posts/{id}/author", 201, http.MethodGet)
+	addNode("/posts/{id}/{author:\\w+}/profile", 201, http.MethodGet)
 
 	a.Equal(tree.node.len(), 5)
 
@@ -211,10 +211,10 @@ func TestTree_Add_Remove(t *testing.T) {
 	tree := New(false)
 	a.NotNil(tree)
 
-	a.NotError(tree.Add("/", buildHandler(1), http.MethodGet))
-	a.NotError(tree.Add("/posts/{id}", buildHandler(1), http.MethodGet))
-	a.NotError(tree.Add("/posts/{id}/author", buildHandler(1), http.MethodGet, http.MethodPut, http.MethodPost))
-	a.NotError(tree.Add("/posts/1/author", buildHandler(1), http.MethodGet))
+	a.NotError(tree.Add("/", buildHandler(http.StatusAccepted), http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}", buildHandler(http.StatusAccepted), http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}/author", buildHandler(http.StatusAccepted), http.MethodGet, http.MethodPut, http.MethodPost))
+	a.NotError(tree.Add("/posts/1/author", buildHandler(http.StatusAccepted), http.MethodGet))
 	a.NotError(tree.Add("/posts/{id}/{author:\\w+}/profile", buildHandler(1), http.MethodGet))
 
 	a.NotEmpty(tree.node.find("/posts/1/author").handlers)
@@ -231,7 +231,7 @@ func TestTree_Add_Remove(t *testing.T) {
 
 	tree = New(false)
 	a.NotNil(tree)
-	a.NotError(tree.Add("/path", buildHandler(1)))
+	a.NotError(tree.Add("/path", buildHandler(201)))
 	node := tree.node.find("/path")
 	a.Equal(len(Methods), len(node.handlers))
 	a.Equal(len(Methods), len(node.Methods()))
@@ -241,7 +241,7 @@ func TestTree_Add_Remove(t *testing.T) {
 
 	tree = New(false)
 	a.NotNil(tree)
-	a.NotError(tree.Add("/path", buildHandler(1), http.MethodGet))
+	a.NotError(tree.Add("/path", buildHandler(http.StatusAccepted), http.MethodGet))
 	node = tree.node.find("/path")
 	a.Equal(3, len(node.handlers)).
 		NotNil(node.handlers[http.MethodHead]).
@@ -252,7 +252,7 @@ func TestTree_Add_Remove(t *testing.T) {
 
 	tree = New(true)
 	a.NotNil(tree)
-	a.NotError(tree.Add("/path", buildHandler(1), http.MethodGet))
+	a.NotError(tree.Add("/path", buildHandler(http.StatusAccepted), http.MethodGet))
 	node = tree.node.find("/path")
 	a.Equal(2, len(node.handlers)).
 		Nil(node.handlers[http.MethodHead]).
@@ -265,10 +265,10 @@ func TestTree_Add_Remove(t *testing.T) {
 
 	tree = New(false)
 	a.NotNil(tree)
-	a.ErrorString(tree.Add("/path", buildHandler(1), http.MethodHead), "无法手动添加 OPTIONS/HEAD 请求方法")
-	a.ErrorString(tree.Add("/path", buildHandler(1), "NOT-SUPPORTED"), "NOT-SUPPORTED")
-	a.NotError(tree.Add("/path", buildHandler(1), http.MethodDelete))
-	a.ErrorString(tree.Add("/path", buildHandler(1), http.MethodDelete), http.MethodDelete)
+	a.ErrorString(tree.Add("/path", buildHandler(http.StatusAccepted), http.MethodHead), "无法手动添加 OPTIONS/HEAD 请求方法")
+	a.ErrorString(tree.Add("/path", buildHandler(http.StatusAccepted), "NOT-SUPPORTED"), "NOT-SUPPORTED")
+	a.NotError(tree.Add("/path", buildHandler(http.StatusAccepted), http.MethodDelete))
+	a.ErrorString(tree.Add("/path", buildHandler(http.StatusAccepted), http.MethodDelete), http.MethodDelete)
 	tree.Remove("/path", http.MethodOptions) // remove options 不发生任何操作
 	a.Equal(tree.node.find("/path").Options(), "DELETE, OPTIONS")
 
@@ -300,14 +300,14 @@ func BenchmarkTree_Handler(b *testing.B) {
 	tree := New(false)
 
 	// 添加路由项
-	a.NotError(tree.Add("/", buildHandler(1), http.MethodGet))
-	a.NotError(tree.Add("/posts/{id}", buildHandler(2), http.MethodGet))
-	a.NotError(tree.Add("/posts/{id}/author", buildHandler(3), http.MethodGet))
-	a.NotError(tree.Add("/posts/1/author", buildHandler(4), http.MethodGet))
-	a.NotError(tree.Add("/posts/{id:\\d+}", buildHandler(5), http.MethodGet))
-	a.NotError(tree.Add("/posts/{id:\\d+}/author", buildHandler(6), http.MethodGet))
-	a.NotError(tree.Add("/page/{page:\\d*}", buildHandler(7), http.MethodGet)) // 可选的正则节点
-	a.NotError(tree.Add("/posts/{id}/{page}/author", buildHandler(8), http.MethodGet))
+	a.NotError(tree.Add("/", buildHandler(http.StatusAccepted), http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}", buildHandler(202), http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}/author", buildHandler(203), http.MethodGet))
+	a.NotError(tree.Add("/posts/1/author", buildHandler(204), http.MethodGet))
+	a.NotError(tree.Add("/posts/{id:\\d+}", buildHandler(205), http.MethodGet))
+	a.NotError(tree.Add("/posts/{id:\\d+}/author", buildHandler(206), http.MethodGet))
+	a.NotError(tree.Add("/page/{page:\\d*}", buildHandler(207), http.MethodGet)) // 可选的正则节点
+	a.NotError(tree.Add("/posts/{id}/{page}/author", buildHandler(208), http.MethodGet))
 
 	paths := map[int]string{
 		0: "/",
