@@ -15,15 +15,10 @@ type Hosts struct {
 }
 
 // NewHosts 声明新的 Hosts 实例
-func NewHosts(domain ...string) (*Hosts, error) {
-	h := &Hosts{
-		tree: tree.New(false),
-	}
-
-	if err := h.Add(domain...); err != nil {
-		return nil, err
-	}
-	return h, nil
+func NewHosts(domain ...string) *Hosts {
+	h := &Hosts{tree: tree.New(false)}
+	h.Add(domain...)
+	return h
 }
 
 func (hs *Hosts) Match(r *http.Request) (*http.Request, bool) {
@@ -41,14 +36,15 @@ func (hs *Hosts) Match(r *http.Request) (*http.Request, bool) {
 // 域名的格式和路由的语法格式是一样的，比如：
 //  api.example.com
 //  {sub:[a-z]+}.example.com
-func (hs *Hosts) Add(domain ...string) error {
+// 如果存在命名参数，也可以通过 params.Get 获取。
+// 当语法错误时，会触发 panic，可通过 CheckSyntax 检测语法的正确性。
+func (hs *Hosts) Add(domain ...string) {
 	for _, d := range domain {
 		err := hs.tree.Add(d, http.HandlerFunc(hs.emptyHandlerFunc), http.MethodGet)
 		if err != nil {
-			return err
+			panic(err)
 		}
 	}
-	return nil
 }
 
 // Delete 删除域名

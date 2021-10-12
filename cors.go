@@ -38,9 +38,9 @@ type CORS struct {
 	ExposedHeaders       []string
 	exposedHeadersString string
 
-	// MaxAge 当前报头信息可被缓存的秒数
+	// MaxAge 对应 Access-Control-Max-Age
 	//
-	// 0 不输出该 Access-Control-Max-Age 报头；
+	// 0 不输出该报头；
 	// -1 表示禁用；
 	// 其它 >= -1 的值正常输出数值；
 	MaxAge       int

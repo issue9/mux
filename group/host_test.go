@@ -17,8 +17,8 @@ var _ Matcher = &Hosts{}
 func TestHosts_Match(t *testing.T) {
 	a := assert.New(t)
 
-	h, err := NewHosts("caixw.io", "caixw.oi", "{sub}.example.com")
-	a.NotError(err).NotNil(h)
+	h := NewHosts("caixw.io", "caixw.oi", "{sub}.example.com")
+	a.NotNil(h)
 
 	r := httptest.NewRequest(http.MethodGet, "http://caixw.io/test", nil)
 	rr, ok := h.Match(r)
@@ -61,27 +61,32 @@ func TestHosts_Match(t *testing.T) {
 func TestNewHosts(t *testing.T) {
 	a := assert.New(t)
 
-	h, err := NewHosts()
-	a.NotError(err).NotNil(h)
+	h := NewHosts()
+	a.NotNil(h)
 
-	h, err = NewHosts("{sub}.example.com")
-	a.NotError(err).NotNil(h)
+	h = NewHosts("{sub}.example.com")
+	a.NotNil(h)
 
 	// 相同的值
-	h, err = NewHosts("{sub}.example.com", "{sub}.example.com")
-	a.Error(err).Nil(h)
+	a.Panic(func() {
+		NewHosts("{sub}.example.com", "{sub}.example.com")
+	})
 }
 
 func TestHosts_Add_Delete(t *testing.T) {
 	a := assert.New(t)
 
-	h, err := NewHosts()
-	a.NotError(err).NotNil(h)
+	h := NewHosts()
+	a.NotNil(h)
 
-	a.NotError(h.Add("xx.example.com"))
-	a.Error(h.Add("xx.example.com"))
-	a.NotError(h.Add("{sub}.example.com"))
-	a.Error(h.Add("{sub}.example.com"))
+	h.Add("xx.example.com")
+	a.Panic(func() {
+		h.Add("xx.example.com")
+	})
+	h.Add("{sub}.example.com")
+	a.Panic(func() {
+		h.Add("{sub}.example.com")
+	})
 
 	// delete xx.example.com
 	r := httptest.NewRequest(http.MethodGet, "https://xx.example.com/api/path", nil)

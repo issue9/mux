@@ -21,7 +21,7 @@ var (
 		http.MethodPatch,
 		http.MethodConnect,
 		http.MethodTrace,
-		http.MethodOptions, // 必须在最后，后面的 addAny 需要此规则。
+		http.MethodOptions, // OPTIONS 和 HEAD 必须在最后，后面的 addAny 需要此规则。
 		http.MethodHead,
 	}
 
