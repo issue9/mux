@@ -29,9 +29,7 @@ func init() {
 		issue9Mux = DefaultRouter()
 
 		for _, api := range apis {
-			if err := issue9Mux.HandleFunc(api.bracePattern, h, api.method); err != nil {
-				fmt.Println("calcMemStats:", err)
-			}
+			issue9Mux.HandleFunc(api.bracePattern, h, api.method)
 		}
 	})
 }

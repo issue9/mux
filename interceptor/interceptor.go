@@ -37,20 +37,18 @@ var interceptors = &sync.Map{}
 // Register 注册拦截器
 //
 // val 表示需要处理的正则表达式，比如 {id:\\d+} 则为 \\d+。
-func Register(f MatchFunc, val ...string) error {
+func Register(f MatchFunc, val ...string) {
 	if len(val) == 0 {
 		panic("参数 val 不能为空")
 	}
 
 	for _, v := range val {
 		if _, exists := interceptors.Load(v); exists {
-			return fmt.Errorf("%s 已经存在", v)
+			panic(fmt.Errorf("%s 已经存在", v))
 		}
 
 		interceptors.Store(v, f)
 	}
-
-	return nil
 }
 
 // Deregister 注销拦截器

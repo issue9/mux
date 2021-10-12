@@ -15,8 +15,10 @@ func TestInterceptors(t *testing.T) {
 		Register(MatchAny)
 	})
 
-	a.NotError(Register(MatchWord, "[a-zA-Z0-9]+", "word1", "word2"))
-	a.Error(Register(MatchWord, "[a-zA-Z0-9]+")) // 已经存在
+	Register(MatchWord, "[a-zA-Z0-9]+", "word1", "word2")
+	a.PanicString(func() {
+		Register(MatchWord, "[a-zA-Z0-9]+")
+	}, "已经存在")
 	_, found := Get("word1")
 	a.True(found)
 	_, found = Get("[a-zA-Z0-9]+")

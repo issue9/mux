@@ -321,7 +321,7 @@ func TestRouter_ServeHTTP_Order(t *testing.T) {
 
 	// interceptor
 	test = newTester(t, true)
-	a.NotError(interceptor.Register(interceptor.MatchDigit, "[0-9]+"))
+	interceptor.Register(interceptor.MatchDigit, "[0-9]+")
 	a.NotError(test.router.GetFunc("/posts/{id}", buildHandlerFunc(203)))        // f3
 	a.NotError(test.router.GetFunc("/posts/{id:\\d+}", buildHandlerFunc(202)))   // f2 永远匹配不到
 	a.NotError(test.router.GetFunc("/posts/1", buildHandlerFunc(201)))           // f1

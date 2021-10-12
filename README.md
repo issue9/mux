@@ -133,12 +133,12 @@ import "github.com/issue9/mux/v5/group"
 
 m := group.Default()
 
-def, err := mux.NewRouter("default", false, nil)
-err := m.AddRouter(group.NewPathVersion("version-key", "v1"), def)
+def := mux.NewRouter("default", false, nil)
+m.AddRouter(group.NewPathVersion("version-key", "v1"), def)
 def.Get("/path", h1)
 
-host, err := mux.NewRouter("host", false, nil)
-err := m.AddRouter(group.NewHosts("*.example.com"), host)
+host := mux.NewRouter("host", false, nil)
+m.AddRouter(group.NewHosts("*.example.com"), host)
 host.Get("/path", h2)
 
 http.ListenAndServe(":8080", m)
