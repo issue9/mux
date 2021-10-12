@@ -30,26 +30,20 @@ type Router struct {
 // DefaultRouter 返回默认参数的 NewRouter
 //
 // 相当于调用 NewRouter("", false, DeniedCORS())
-func DefaultRouter() *Router {
-	r, err := NewRouter("", false, DeniedCORS())
-	if err != nil {
-		panic(err)
-	}
-	return r
-}
+func DefaultRouter() *Router { return NewRouter("", false, DeniedCORS()) }
 
 // NewRouter 声明路由
 //
 // name string 路由名称，可以为空；
 // disableHead 是否禁用根据 Get 请求自动生成 HEAD 请求；
-// cors 跨域请求的相关设置项；
-func NewRouter(name string, disableHead bool, cors *CORS) (*Router, error) {
+// cors 跨域请求的相关设置项，运行过程中不应该修改 cors 中的值，否则结束是未知的；
+func NewRouter(name string, disableHead bool, cors *CORS) *Router {
 	if cors == nil {
 		cors = DeniedCORS()
 	}
 
 	if err := cors.sanitize(); err != nil {
-		return nil, err
+		panic(err)
 	}
 
 	r := &Router{
@@ -58,7 +52,7 @@ func NewRouter(name string, disableHead bool, cors *CORS) (*Router, error) {
 		cors: cors,
 	}
 	r.ms = NewMiddlewares(http.HandlerFunc(r.serveHTTP))
-	return r, nil
+	return r
 }
 
 // Clean 清除当前路由组的所有路由项

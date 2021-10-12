@@ -117,8 +117,8 @@ func TestPrefix_Resource(t *testing.T) {
 
 func TestResource_URL(t *testing.T) {
 	a := assert.New(t)
-	def, err := NewRouter("", true, AllowedCORS())
-	a.NotError(err).NotNil(def)
+	def := NewRouter("", true, AllowedCORS())
+	a.NotNil(def)
 
 	// 非正则
 	res := def.Resource("/api/v1")

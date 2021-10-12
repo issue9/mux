@@ -64,12 +64,10 @@ func (g *Groups) serveHTTP(w http.ResponseWriter, r *http.Request) {
 // NewRouter 声明新路由
 //
 // 与 AddRouter 的区别在于：NewRouter 参数从 Groups 继承，而 AddRouter 的路由，其参数可自定义。
-func (g *Groups) NewRouter(name string, matcher Matcher) (*mux.Router, error) {
-	r, err := mux.NewRouter(name, g.disableHead, g.cors)
-	if err == nil {
-		g.AddRouter(matcher, r)
-	}
-	return r, err
+func (g *Groups) NewRouter(name string, matcher Matcher) *mux.Router {
+	r := mux.NewRouter(name, g.disableHead, g.cors)
+	g.AddRouter(matcher, r)
+	return r
 }
 
 // AddRouter 添加路由

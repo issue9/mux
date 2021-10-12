@@ -37,8 +37,8 @@ func buildMiddleware(a *assert.Assertion, text string) mux.MiddlewareFunc {
 }
 
 func newRouter(a *assert.Assertion, name string) *mux.Router {
-	r, err := mux.NewRouter(name, false, nil)
-	a.NotError(err).NotNil(r)
+	r := mux.NewRouter(name, false, nil)
+	a.NotNil(r)
 	return r
 }
 
@@ -239,8 +239,8 @@ func TestGroup(t *testing.T) {
 	h, err := NewHosts("{sub}.example.com")
 	a.NotError(err).NotNil(h)
 
-	def, err := g.NewRouter("host", h)
-	a.NotError(err).NotNil(def)
+	def := g.NewRouter("host", h)
+	a.NotNil(def)
 
 	def.GetFunc("/posts/{id:digit}.html", func(w http.ResponseWriter, r *http.Request) {
 		ps := params.Get(r)
