@@ -153,7 +153,9 @@ func TestRouter_Head(t *testing.T) {
 	test.matchTrue(http.MethodTrace, "/f/any", 206)
 
 	// 不能主动添加 Head
-	assert.Error(t, test.router.HandleFunc("/head", buildHandlerFunc(202), http.MethodHead))
+	assert.PanicString(t, func() {
+		test.router.HandleFunc("/head", buildHandlerFunc(202), http.MethodHead)
+	}, "OPTIONS/HEAD")
 }
 
 func TestRouter_Handle_Remove(t *testing.T) {

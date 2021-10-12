@@ -77,12 +77,8 @@ func (r *Router) Remove(pattern string, methods ...string) {
 // 若语法不正确，则直接 panic，可以通过 CheckSyntax 检测语法的有效性，其它接口也相同。
 // methods 该路由项对应的请求方法，如果未指定值，则表示所有支持的请求方法，
 // 但不包含 OPTIONS 和 HEAD。
-func (r *Router) Handle(pattern string, h http.Handler, methods ...string) error {
-	return r.tree.Add(pattern, h, methods...)
-}
-
-func (r *Router) handle(pattern string, h http.Handler, methods ...string) *Router {
-	if err := r.Handle(pattern, h, methods...); err != nil {
+func (r *Router) Handle(pattern string, h http.Handler, methods ...string) *Router {
+	if err := r.tree.Add(pattern, h, methods...); err != nil {
 		panic(err)
 	}
 	return r
@@ -90,71 +86,67 @@ func (r *Router) handle(pattern string, h http.Handler, methods ...string) *Rout
 
 // Get 相当于 Router.Handle(pattern, h, http.MethodGet) 的简易写法
 func (r *Router) Get(pattern string, h http.Handler) *Router {
-	return r.handle(pattern, h, http.MethodGet)
+	return r.Handle(pattern, h, http.MethodGet)
 }
 
 // Post 相当于 Router.Handle(pattern, h, http.MethodPost) 的简易写法
 func (r *Router) Post(pattern string, h http.Handler) *Router {
-	return r.handle(pattern, h, http.MethodPost)
+	return r.Handle(pattern, h, http.MethodPost)
 }
 
 // Delete 相当于 Router.Handle(pattern, h, http.MethodDelete) 的简易写法
 func (r *Router) Delete(pattern string, h http.Handler) *Router {
-	return r.handle(pattern, h, http.MethodDelete)
+	return r.Handle(pattern, h, http.MethodDelete)
 }
 
 // Put 相当于 Router.Handle(pattern, h, http.MethodPut) 的简易写法
 func (r *Router) Put(pattern string, h http.Handler) *Router {
-	return r.handle(pattern, h, http.MethodPut)
+	return r.Handle(pattern, h, http.MethodPut)
 }
 
 // Patch 相当于 Router.Handle(pattern, h, http.MethodPatch) 的简易写法
 func (r *Router) Patch(pattern string, h http.Handler) *Router {
-	return r.handle(pattern, h, http.MethodPatch)
+	return r.Handle(pattern, h, http.MethodPatch)
 }
 
 // Any 相当于 Router.Handle(pattern, h) 的简易写法
 func (r *Router) Any(pattern string, h http.Handler) *Router {
-	return r.handle(pattern, h)
+	return r.Handle(pattern, h)
 }
 
 // HandleFunc 功能同 Router.Handle()，但是将第二个参数从 http.Handler 换成了 http.HandlerFunc
-func (r *Router) HandleFunc(pattern string, f http.HandlerFunc, methods ...string) error {
+func (r *Router) HandleFunc(pattern string, f http.HandlerFunc, methods ...string) *Router {
 	return r.Handle(pattern, f, methods...)
-}
-
-func (r *Router) handleFunc(pattern string, f http.HandlerFunc, methods ...string) *Router {
-	return r.handle(pattern, f, methods...)
 }
 
 // GetFunc 相当于 Router.HandleFunc(pattern, func, http.MethodGet) 的简易写法
 func (r *Router) GetFunc(pattern string, f http.HandlerFunc) *Router {
-	return r.handleFunc(pattern, f, http.MethodGet)
+	return r.HandleFunc(pattern, f, http.MethodGet)
 }
 
 // PutFunc 相当于 Router.HandleFunc(pattern, func, http.MethodPut) 的简易写法
 func (r *Router) PutFunc(pattern string, f http.HandlerFunc) *Router {
-	return r.handleFunc(pattern, f, http.MethodPut)
+	return r.HandleFunc(pattern, f, http.MethodPut)
 }
 
 // PostFunc 相当于 Router.HandleFunc(pattern, func, "POST") 的简易写法
 func (r *Router) PostFunc(pattern string, f http.HandlerFunc) *Router {
-	return r.handleFunc(pattern, f, http.MethodPost)
+	return r.HandleFunc(pattern, f, http.MethodPost)
 }
 
 // DeleteFunc 相当于 Router.HandleFunc(pattern, func, http.MethodDelete) 的简易写法
 func (r *Router) DeleteFunc(pattern string, f http.HandlerFunc) *Router {
-	return r.handleFunc(pattern, f, http.MethodDelete)
+	return r.HandleFunc(pattern, f, http.MethodDelete)
 }
 
 // PatchFunc 相当于 Router.HandleFunc(pattern, func, http.MethodPatch) 的简易写法
 func (r *Router) PatchFunc(pattern string, f http.HandlerFunc) *Router {
-	return r.handleFunc(pattern, f, http.MethodPatch)
+	return r.HandleFunc(pattern, f, http.MethodPatch)
 }
 
 // AnyFunc 相当于 Router.HandleFunc(pattern, func) 的简易写法
 func (r *Router) AnyFunc(pattern string, f http.HandlerFunc) *Router {
-	return r.handleFunc(pattern, f)
+	return r.HandleFunc(pattern, f)
 }
 
 // URL 根据参数生成地址
