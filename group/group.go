@@ -4,16 +4,13 @@
 package group
 
 import (
-	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/issue9/sliceutil"
 
 	"github.com/issue9/mux/v5"
 )
-
-// ErrRouterExists 表示是否存在同名的路由名称
-var ErrRouterExists = errors.New("该名称的路由已经存在")
 
 // Groups 管理一组路由
 //
@@ -69,24 +66,20 @@ func (g *Groups) serveHTTP(w http.ResponseWriter, r *http.Request) {
 // 与 AddRouter 的区别在于：NewRouter 参数从 Groups 继承，而 AddRouter 的路由，其参数可自定义。
 func (g *Groups) NewRouter(name string, matcher Matcher) (*mux.Router, error) {
 	r, err := mux.NewRouter(name, g.disableHead, g.cors)
-	if err != nil {
-		return nil, err
+	if err == nil {
+		g.AddRouter(matcher, r)
 	}
-
-	if err := g.AddRouter(matcher, r); err != nil {
-		return nil, err
-	}
-
-	return r, nil
+	return r, err
 }
 
 // AddRouter 添加路由
-func (g *Groups) AddRouter(matcher Matcher, r *mux.Router) error {
-	if r.Name() == "" {
-		panic("参数 name 不能为空")
-	}
+func (g *Groups) AddRouter(matcher Matcher, r *mux.Router) {
 	if matcher == nil {
 		panic("参数 matcher 不能为空")
+	}
+
+	if r.Name() == "" {
+		panic("r.Name() 不能为空")
 	}
 
 	// 重名检测
@@ -94,11 +87,10 @@ func (g *Groups) AddRouter(matcher Matcher, r *mux.Router) error {
 		return g.routers[i].Name() == r.Name()
 	})
 	if index > -1 {
-		return ErrRouterExists
+		panic(fmt.Sprintf("已经存在名为 %s 的路由", r.Name()))
 	}
 
 	g.routers = append(g.routers, &router{Router: r, matcher: matcher})
-	return nil
 }
 
 // Router 返回指定名称的 *mux.Router 实例
