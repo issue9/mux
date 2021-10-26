@@ -19,21 +19,21 @@ func TestCORS_sanitize(t *testing.T) {
 	a.NotError(c.sanitize())
 	a.True(c.deny).
 		False(c.anyHeaders).
-		Empty(c.allowedHeadersString).
+		Empty(c.allowHeadersString).
 		False(c.anyOrigins).
 		Empty(c.exposedHeadersString).
 		Empty(c.maxAgeString)
 
 	c = &CORS{
-		AllowedOrigins: []string{"*"},
-		MaxAge:         50,
+		Origins: []string{"*"},
+		MaxAge:  50,
 	}
 	a.NotError(c.sanitize())
 	a.True(c.anyOrigins).Equal(c.maxAgeString, "50")
 
 	c = &CORS{
-		AllowedOrigins: []string{"*"},
-		MaxAge:         -1,
+		Origins: []string{"*"},
+		MaxAge:  -1,
 	}
 	a.NotError(c.sanitize())
 	a.True(c.anyOrigins).Equal(c.maxAgeString, "-1")
@@ -44,18 +44,18 @@ func TestCORS_sanitize(t *testing.T) {
 	a.ErrorString(c.sanitize(), "MaxAge 的值只能是 >= -1")
 
 	c = &CORS{
-		AllowedOrigins:   []string{"*"},
+		Origins:          []string{"*"},
 		AllowCredentials: true,
 	}
 	a.ErrorString(c.sanitize(), "不能同时成立")
 
 	c = &CORS{
-		AllowedHeaders: []string{"*"},
+		AllowHeaders:   []string{"*"},
 		ExposedHeaders: []string{"h1", "h2"},
 	}
 	a.NotError(c.sanitize())
 	a.True(c.anyHeaders).
-		Equal(c.allowedHeadersString, "*").
+		Equal(c.allowHeadersString, "*").
 		Equal(c.exposedHeadersString, "h1,h2")
 }
 
@@ -130,7 +130,7 @@ func TestCORS_handle(t *testing.T) {
 	// custom cors
 	c = &CORS{
 		ExposedHeaders:   []string{"h1"},
-		AllowedOrigins:   []string{"https://example.com/"},
+		Origins:          []string{"https://example.com/"},
 		AllowCredentials: true,
 		MaxAge:           50,
 	}
@@ -209,7 +209,7 @@ func TestCORS_headerIsAllowed(t *testing.T) {
 
 	// 自定义
 	c = &CORS{
-		AllowedHeaders: []string{"h1", "h2"},
+		AllowHeaders: []string{"h1", "h2"},
 	}
 	a.NotError(c.sanitize())
 

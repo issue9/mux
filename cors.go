@@ -17,22 +17,22 @@ import (
 //
 // https://developer.mozilla.org/zh-CN/docs/Web/HTTP/CORS
 type CORS struct {
-	// AllowedOrigins 对应 Origin
+	// Origins 对应 Origin
 	//
 	// 可以是 *，如果包含了 *，那么其它的设置将不再启作用。
 	// 此字段将被用于与请求头的 Origin 字段作验证，以确定是否放行该请求。
 	//
 	// 如果此值为空，表示不启用跨域的相关设置。
-	AllowedOrigins []string
-	anyOrigins     bool
-	deny           bool
+	Origins    []string
+	anyOrigins bool
+	deny       bool
 
-	// AllowedHeaders 对应 Access-Control-Allow-Headers
+	// AllowHeaders 对应 Access-Control-Allow-Headers
 	//
 	// 可以包含 *，表示可以是任意值，其它值将不再启作用。
-	AllowedHeaders       []string
-	allowedHeadersString string
-	anyHeaders           bool
+	AllowHeaders       []string
+	allowHeadersString string
+	anyHeaders         bool
 
 	// ExposedHeaders 对应 Access-Control-Expose-Headers
 	ExposedHeaders       []string
@@ -46,16 +46,16 @@ type CORS struct {
 	MaxAge       int
 	maxAgeString string
 
-	// AllowCredentials 是否允许 cookie
+	// AllowCredentials  对应 Access-Control-Allow-Credentials
 	AllowCredentials bool
 }
 
 // AllowedCORS 允许跨域请求
 func AllowedCORS() *CORS {
 	return &CORS{
-		AllowedOrigins: []string{"*"},
-		AllowedHeaders: []string{"*"},
-		MaxAge:         3600,
+		Origins:      []string{"*"},
+		AllowHeaders: []string{"*"},
+		MaxAge:       3600,
 	}
 }
 
@@ -63,23 +63,23 @@ func AllowedCORS() *CORS {
 func DeniedCORS() *CORS { return &CORS{} }
 
 func (c *CORS) sanitize() error {
-	for _, o := range c.AllowedOrigins {
+	for _, o := range c.Origins {
 		if o == "*" {
 			c.anyOrigins = true
 			break
 		}
 	}
-	c.deny = len(c.AllowedOrigins) == 0
+	c.deny = len(c.Origins) == 0
 
-	for _, h := range c.AllowedHeaders {
+	for _, h := range c.AllowHeaders {
 		if h == "*" {
-			c.allowedHeadersString = "*"
+			c.allowHeadersString = "*"
 			c.anyHeaders = true
 			break
 		}
 	}
-	if c.allowedHeadersString == "" && len(c.AllowedHeaders) > 0 {
-		c.allowedHeadersString = strings.Join(c.AllowedHeaders, ",")
+	if c.allowHeadersString == "" && len(c.AllowHeaders) > 0 {
+		c.allowHeadersString = strings.Join(c.AllowHeaders, ",")
 	}
 
 	if len(c.ExposedHeaders) > 0 {
@@ -125,8 +125,8 @@ func (c *CORS) handle(node *tree.Node, w http.ResponseWriter, r *http.Request) {
 		if !c.headerIsAllowed(r) {
 			return
 		}
-		if c.allowedHeadersString != "" {
-			wh.Set("Access-Control-Allow-Headers", c.allowedHeadersString)
+		if c.allowHeadersString != "" {
+			wh.Set("Access-Control-Allow-Headers", c.allowHeadersString)
 			wh.Add("Vary", "Access-Control-Request-Headers")
 		}
 
@@ -140,7 +140,7 @@ func (c *CORS) handle(node *tree.Node, w http.ResponseWriter, r *http.Request) {
 	allowOrigin := "*"
 	if !c.anyOrigins {
 		origin := r.Header.Get("Origin")
-		i := sliceutil.Index(c.AllowedOrigins, func(i int) bool { return c.AllowedOrigins[i] == origin })
+		i := sliceutil.Index(c.Origins, func(i int) bool { return c.Origins[i] == origin })
 		if i == -1 {
 			return
 		}
@@ -173,7 +173,7 @@ func (c *CORS) headerIsAllowed(r *http.Request) bool {
 	headers := strings.Split(h, ",")
 	for _, v := range headers {
 		v = strings.TrimSpace(v)
-		i := sliceutil.Index(c.AllowedHeaders, func(i int) bool { return c.AllowedHeaders[i] == v })
+		i := sliceutil.Index(c.AllowHeaders, func(i int) bool { return c.AllowHeaders[i] == v })
 		if i == -1 {
 			return false
 		}
