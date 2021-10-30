@@ -27,7 +27,7 @@ var (
 
 	addAny = Methods[:len(Methods)-2] // 添加请求方法时，所采用的默认值。
 
-	methodIndexMap map[string]int
+	methodIndexMap map[string]int // Methods 的反向对照表
 
 	methodIndexes = map[int]methodIndexEntity{}
 )
@@ -48,21 +48,32 @@ type methodIndexEntity struct {
 	options string
 }
 
+func buildMethodIndexes(index int) {
+	if _, found := methodIndexes[index]; found {
+		return
+	}
+
+	methods := make([]string, 0, len(Methods))
+	for method, i := range methodIndexMap {
+		if index&i == i {
+			methods = append(methods, method)
+		}
+	}
+	sort.Strings(methods)
+
+	entity := methodIndexEntity{
+		methods: methods,
+		options: strings.Join(methods, ", "),
+	}
+	methodIndexes[index] = entity
+}
+
 func (n *Node) buildMethods() {
 	n.methodIndex = 0
 	for method := range n.handlers {
 		n.methodIndex += methodIndexMap[method]
 	}
-
-	if _, found := methodIndexes[n.methodIndex]; !found {
-		methods := make([]string, 0, len(n.handlers))
-		for method := range n.handlers {
-			methods = append(methods, method)
-		}
-		sort.Strings(methods)
-		entity := methodIndexEntity{methods: methods, options: strings.Join(methods, ", ")}
-		methodIndexes[n.methodIndex] = entity
-	}
+	buildMethodIndexes(n.methodIndex)
 }
 
 func (n *Node) optionsServeHTTP(w http.ResponseWriter, req *http.Request) {

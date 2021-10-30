@@ -10,6 +10,24 @@ import (
 	"github.com/issue9/assert"
 )
 
+func TestBuildMethodIndexes(t *testing.T) {
+	a := assert.New(t)
+
+	a.Empty(methodIndexes)
+
+	index := methodIndexMap[http.MethodGet]
+	buildMethodIndexes(index)
+	a.Equal(1, len(methodIndexes)).
+		Equal(methodIndexes[index].options, "GET").
+		Equal(methodIndexes[index].methods, []string{"GET"})
+
+	index = methodIndexMap[http.MethodGet] + methodIndexMap[http.MethodPatch]
+	buildMethodIndexes(index)
+	a.Equal(2, len(methodIndexes)).
+		Equal(methodIndexes[index].options, "GET, PATCH").
+		Equal(methodIndexes[index].methods, []string{"GET", "PATCH"})
+}
+
 func TestNode_serveHTTP(t *testing.T) {
 	a := assert.New(t)
 	tree := New(false)
