@@ -108,7 +108,9 @@ func (c *CORS) handle(node *tree.Node, w http.ResponseWriter, r *http.Request) {
 
 	// Origin 是可以为空的，所以采用 Access-Control-Request-Method 判断是否为预检。
 	reqMethod := r.Header.Get("Access-Control-Request-Method")
-	preflight := r.Method == http.MethodOptions && reqMethod != ""
+	preflight := r.Method == http.MethodOptions &&
+		reqMethod != "" &&
+		r.URL.Path != "*" // OPTIONS * 不算预检，也不存在其它的请求方法处理方式。
 
 	wh := w.Header()
 

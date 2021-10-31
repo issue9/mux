@@ -77,8 +77,10 @@ func (n *Node) buildMethods() {
 }
 
 func (n *Node) optionsServeHTTP(w http.ResponseWriter, req *http.Request) {
-	w.Header().Set("Allow", n.Options())
+	optionsHandler(w, n.Options())
 }
+
+func optionsHandler(w http.ResponseWriter, opt string) { w.Header().Set("Allow", opt) }
 
 // Options 获取当前支持的请求方法列表字符串
 func (n *Node) Options() string { return methodIndexes[n.methodIndex].options }
@@ -87,9 +89,9 @@ func (n *Node) Options() string { return methodIndexes[n.methodIndex].options }
 func (n *Node) Methods() []string { return methodIndexes[n.methodIndex].methods }
 
 // 添加一个处理函数
-func (n *Node) addMethods(disableHead bool, h http.Handler, methods ...string) error {
+func (n *Node) addMethods(f bool, h http.Handler, methods ...string) error {
 	for _, m := range methods {
-		if m == http.MethodHead || m == http.MethodOptions {
+		if !f && (m == http.MethodHead || m == http.MethodOptions) {
 			return fmt.Errorf("无法手动添加 OPTIONS/HEAD 请求方法")
 		}
 
@@ -102,7 +104,7 @@ func (n *Node) addMethods(disableHead bool, h http.Handler, methods ...string) e
 		}
 		n.handlers[m] = h
 
-		if m == http.MethodGet && !disableHead { // 如果是 GET，则顺便添加 HEAD
+		if m == http.MethodGet && !n.root.disableHead { // 如果是 GET，则顺便添加 HEAD
 			n.handlers[http.MethodHead] = n.headServeHTTP(h)
 		}
 	}
@@ -113,7 +115,35 @@ func (n *Node) addMethods(disableHead bool, h http.Handler, methods ...string) e
 	}
 
 	n.buildMethods()
+
+	n.root.buildMethods(1, methods...)
+
 	return nil
+}
+
+func (tree *Tree) buildMethods(v int, methods ...string) {
+	if len(methods) == 0 {
+		methods = addAny
+	}
+
+	tree.methodIndex = methodIndexMap[http.MethodOptions]
+	for _, m := range methods {
+		if m == http.MethodOptions || m == http.MethodHead {
+			continue
+		}
+
+		tree.methods[m] += v
+		if tree.methods[m] <= 0 {
+			continue
+		}
+
+		tree.methodIndex += methodIndexMap[m]
+		if m == http.MethodGet && !tree.disableHead { // 通过是否有 GET 判断 HEAD 是否存在
+			tree.methodIndex += methodIndexMap[http.MethodHead]
+		}
+	}
+
+	buildMethodIndexes(tree.methodIndex)
 }
 
 func (resp *headResponse) Write([]byte) (int, error) { return 0, nil }

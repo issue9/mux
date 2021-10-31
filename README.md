@@ -18,6 +18,7 @@ mux 功能完备的 Go 路由器：
 1. 分组路由，比如按域名，或是版本号等；
 1. CORS 跨域资源的处理；
 1. 支持中间件；
+1. 支持 OPTIONS * 请求；
 
 ```go
 import "github.com/issue9/middleware/v4/compress"

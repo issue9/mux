@@ -11,7 +11,7 @@ import (
 	"github.com/issue9/mux/v5/internal/syntax"
 )
 
-// 获取当前路由下有处理函数的节点数量
+// 获取当前路由下所有处理函数的节点数量
 func (n *Node) len() int {
 	var cnt int
 	for _, child := range n.children {
@@ -27,7 +27,8 @@ func (n *Node) len() int {
 
 func TestNode_find(t *testing.T) {
 	a := assert.New(t)
-	node := &Node{}
+	tree := New(true, false)
+	node := &Node{root: tree}
 
 	addNode := func(p string, code int, methods ...string) {
 		segs, err := syntax.Split(p)

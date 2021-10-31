@@ -18,6 +18,8 @@ const (
 
 // Node 表示路由中的节点
 type Node struct {
+	root *Tree
+
 	parent  *Node
 	segment *syntax.Segment
 
@@ -34,7 +36,7 @@ type Node struct {
 	children []*Node
 }
 
-// 构建当前节点的索引表。
+// 构建当前节点的索引表
 func (n *Node) buildIndexes() {
 	if len(n.children) < indexesSize {
 		n.indexes = nil
@@ -125,6 +127,8 @@ func (n *Node) addSegment(seg *syntax.Segment) (*Node, error) {
 // 由调用方确保 s 的语法正确性，否则可能 panic。
 func (n *Node) newChild(s *syntax.Segment) *Node {
 	child := &Node{
+		root: n.root,
+
 		parent:  n,
 		segment: s,
 	}

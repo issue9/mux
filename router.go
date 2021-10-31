@@ -48,10 +48,11 @@ func NewRouter(name string, disableHead bool, cors *CORS) *Router {
 
 	r := &Router{
 		name: name,
-		tree: tree.New(disableHead),
+		tree: tree.New(disableHead, true),
 		cors: cors,
 	}
 	r.ms = NewMiddlewares(http.HandlerFunc(r.serveHTTP))
+
 	return r
 }
 
@@ -163,7 +164,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 func (r *Router) serveHTTP(w http.ResponseWriter, req *http.Request) {
 	node, ps := r.tree.Route(req.URL.Path)
-	if ps == nil {
+	if node == nil {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
@@ -173,6 +174,8 @@ func (r *Router) serveHTTP(w http.ResponseWriter, req *http.Request) {
 		h.ServeHTTP(w, params.WithValue(req, ps))
 		return
 	}
+
+	// 存在节点，但是不允许当前请求方法。
 	w.Header().Set("Allow", node.Options())
 	http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 }

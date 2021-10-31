@@ -30,27 +30,62 @@ import (
 //               |
 //               +---- /emails
 type Tree struct {
-	node        *Node
 	disableHead bool
+	node        *Node
+
+	// methods 保存着每个请求方法在所有子节点上的数量。
+	// 在每次添加和删除请求方法之后，更新 methodIndex 的值。
+	methods         map[string]int
+	methodIndex     int
+	optionsAsterisk bool
 }
 
 // New 声明一个 Tree 实例
-func New(disableHead bool) *Tree {
+//
+// optionsAsterisk 表示是否支持 options * 操作，如果为 true，同时还将空路径重定向到 *。
+func New(disableHead, optionsAsterisk bool) *Tree {
 	s, err := syntax.NewSegment("")
 	if err != nil {
 		panic("发生了不该发生的错误，应该是 syntax.NewSegment 逻辑发生变化" + err.Error())
 	}
 
-	return &Tree{
-		node:        &Node{segment: s, handlers: make(map[string]http.Handler, handlersSize)},
-		disableHead: disableHead,
+	methods := make(map[string]int, len(Methods))
+	for _, m := range Methods {
+		methods[m] = 0
 	}
+
+	t := &Tree{
+		disableHead: disableHead,
+		node:        &Node{segment: s, handlers: make(map[string]http.Handler, 1)},
+
+		methods:         methods,
+		methodIndex:     methodIndexMap[http.MethodOptions],
+		optionsAsterisk: optionsAsterisk,
+	}
+	t.node.root = t
+
+	if optionsAsterisk {
+		err := t.add(true, "*", http.HandlerFunc(t.optionsServeHTTP), http.MethodOptions)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	return t
+}
+
+func (tree *Tree) optionsServeHTTP(w http.ResponseWriter, req *http.Request) {
+	optionsHandler(w, methodIndexes[tree.methodIndex].options)
 }
 
 // Add 添加路由项
 //
 // methods 可以为空，表示添加除 OPTIONS 和 HEAD 之外所有支持的请求方法。
 func (tree *Tree) Add(pattern string, h http.Handler, methods ...string) error {
+	return tree.add(false, pattern, h, methods...)
+}
+
+func (tree *Tree) add(f bool, pattern string, h http.Handler, methods ...string) error {
 	n, err := tree.getNode(pattern)
 	if err != nil {
 		return err
@@ -63,7 +98,7 @@ func (tree *Tree) Add(pattern string, h http.Handler, methods ...string) error {
 	if len(methods) == 0 {
 		methods = addAny
 	}
-	return n.addMethods(tree.disableHead, h, methods...)
+	return n.addMethods(f, h, methods...)
 }
 
 // Clean 清除路由项
@@ -102,6 +137,8 @@ func (tree *Tree) Remove(pattern string, methods ...string) {
 		child.parent.children = removeNodes(child.parent.children, child.segment.Value)
 		child.parent.buildIndexes()
 	}
+
+	tree.buildMethods(-1, methods...)
 }
 
 // 获取指定的节点，若节点不存在，则在该位置生成一个新节点。
@@ -127,6 +164,10 @@ func (tree *Tree) getNode(pattern string) (*Node, error) {
 
 // Route 找到与当前内容匹配的 Node 实例
 func (tree *Tree) Route(path string) (*Node, params.Params) {
+	if path == "" && tree.optionsAsterisk {
+		path = "*"
+	}
+
 	ps := make(params.Params, 3)
 	node := tree.node.match(path, ps)
 

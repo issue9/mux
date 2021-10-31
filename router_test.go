@@ -31,6 +31,7 @@ func buildHandlerFunc(code int) http.HandlerFunc {
 type tester struct {
 	router *Router
 	srv    *rest.Server
+	a      *assert.Assertion
 }
 
 func newTester(t testing.TB, disableHead bool) *tester {
@@ -41,6 +42,7 @@ func newTester(t testing.TB, disableHead bool) *tester {
 	return &tester{
 		router: r,
 		srv:    rest.NewServer(t, r, nil),
+		a:      assert.New(t),
 	}
 }
 
@@ -59,6 +61,19 @@ func (t *tester) optionsTrue(path string, code int, allow string) {
 	t.srv.NewRequest(http.MethodOptions, path).Do().Status(code).Header("Allow", allow)
 }
 
+func (t *tester) optionsAsteriskTrue(allow string) {
+	s := httptest.NewServer(t.router)
+
+	r, err := http.NewRequest(http.MethodOptions, s.URL, nil)
+	t.a.NotError(err).NotNil(r)
+
+	resp, err := http.DefaultClient.Do(r)
+	t.a.NotError(err).NotNil(resp)
+
+	t.a.Equal(resp.StatusCode, 200).
+		Equal(resp.Header.Get("Allow"), allow)
+}
+
 func TestRouter(t *testing.T) {
 	test := newTester(t, true)
 
@@ -68,6 +83,7 @@ func TestRouter(t *testing.T) {
 	test.matchTrue(http.MethodGet, "/", 201)
 	test.matchTrue(http.MethodHead, "/", http.StatusMethodNotAllowed) // 未启用 autoHead
 	test.matchTrue(http.MethodGet, "/abc", http.StatusNotFound)
+	test.optionsAsteriskTrue("GET, OPTIONS")
 
 	test.router.Get("/h/1", buildHandler(201))
 	test.matchTrue(http.MethodGet, "/h/1", 201)
@@ -202,13 +218,13 @@ func TestRouter_Routes(t *testing.T) {
 	a.NotNil(def)
 	def.Get("/m", buildHandler(1))
 	def.Post("/m", buildHandler(1))
-	a.Equal(def.Routes(), map[string][]string{"/m": {"GET", "HEAD", "OPTIONS", "POST"}})
+	a.Equal(def.Routes(), map[string][]string{"*": {"OPTIONS"}, "/m": {"GET", "HEAD", "OPTIONS", "POST"}})
 
 	def = NewRouter("", true, nil)
 	a.NotNil(def)
 	def.Get("/m", buildHandler(1))
 	def.Post("/m", buildHandler(1))
-	a.Equal(def.Routes(), map[string][]string{"/m": {"GET", "OPTIONS", "POST"}})
+	a.Equal(def.Routes(), map[string][]string{"*": {"OPTIONS"}, "/m": {"GET", "OPTIONS", "POST"}})
 }
 
 func TestRouter_Params(t *testing.T) {

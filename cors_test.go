@@ -61,7 +61,7 @@ func TestCORS_sanitize(t *testing.T) {
 
 func TestCORS_handle(t *testing.T) {
 	a := assert.New(t)
-	tree2 := tree.New(true)
+	tree2 := tree.New(true, true)
 	a.NotError(tree2.Add("/path", nil, http.MethodGet, http.MethodDelete))
 	hs, ps := tree2.Route("/path")
 	a.NotNil(hs).Empty(ps)
