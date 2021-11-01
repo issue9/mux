@@ -13,7 +13,7 @@ import (
 	"github.com/issue9/mux/v5/params"
 )
 
-var _ http.Handler = &Groups{}
+var _ http.Handler = &Group{}
 
 func buildHandler(code int) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -47,7 +47,7 @@ func TestGroups_PrependMiddleware(t *testing.T) {
 	g := Default()
 	a.NotNil(g)
 	def := newRouter(a, "def")
-	g.AddRouter(MatcherFunc(Any), def)
+	g.Add(MatcherFunc(Any), def)
 
 	def.Get("/get", buildHandler(201))
 	g.Middlewares().Prepend(buildMiddleware(a, "1")).
@@ -74,7 +74,7 @@ func TestGroups_AppendMiddleware(t *testing.T) {
 	g := Default()
 	a.NotNil(g)
 	def := newRouter(a, "def")
-	g.AddRouter(MatcherFunc(Any), def)
+	g.Add(MatcherFunc(Any), def)
 
 	def.Get("/get", buildHandler(201))
 	g.Middlewares().Append(buildMiddleware(a, "1")).
@@ -101,7 +101,7 @@ func TestGroups_AddMiddleware(t *testing.T) {
 	g := Default()
 	a.NotNil(g)
 	def := newRouter(a, "def")
-	g.AddRouter(MatcherFunc(Any), def)
+	g.Add(MatcherFunc(Any), def)
 
 	def.Get("/get", buildHandler(201))
 	g.Middlewares().Append(buildMiddleware(a, "p1")).
@@ -135,7 +135,7 @@ func TestRouter_AddMiddleware(t *testing.T) {
 		Prepend(buildMiddleware(a, "a2"))
 
 	def := newRouter(a, "def")
-	g.AddRouter(MatcherFunc(Any), def)
+	g.Add(MatcherFunc(Any), def)
 	def.Get("/get", buildHandler(201))
 	def.Middlewares().Append(buildMiddleware(a, "rp1")).
 		Prepend(buildMiddleware(a, "ra1")).
@@ -165,7 +165,7 @@ func TestRouter_AddMiddleware(t *testing.T) {
 		Empty(w.Body.String())
 }
 
-func TestGroups_AddRouter(t *testing.T) {
+func TestGroups_Add(t *testing.T) {
 	a := assert.New(t)
 
 	g := Default()
@@ -173,50 +173,50 @@ func TestGroups_AddRouter(t *testing.T) {
 	// name 为空
 	a.PanicString(func() {
 		def := newRouter(a, "")
-		g.AddRouter(&HeaderVersion{}, def)
+		g.Add(&HeaderVersion{}, def)
 	}, "r.Name() 不能为空")
 
 	a.PanicString(func() {
 		def := newRouter(a, "def")
-		g.AddRouter(nil, def)
+		g.Add(nil, def)
 	}, "matcher")
 
 	def := newRouter(a, "host")
-	g.AddRouter(&PathVersion{}, def)
+	g.Add(&PathVersion{}, def)
 	r := g.Router("host")
 	a.Equal(r.Name(), "host")
 
 	// 同名添加不成功
 	def = newRouter(a, "host")
 	a.PanicString(func() {
-		g.AddRouter(&PathVersion{}, def)
+		g.Add(&PathVersion{}, def)
 	}, "已经存在名为 host 的路由")
 	a.PanicString(func() {
-		g.NewRouter("host", &PathVersion{})
+		g.New("host", &PathVersion{})
 	}, "已经存在名为 host 的路由")
 
 	a.Nil(g.Router("not-exists"))
 }
 
-func TestGroups_RemoveRouter(t *testing.T) {
+func TestGroups_Remove(t *testing.T) {
 	a := assert.New(t)
 	g := Default()
 	a.NotNil(g)
 
 	def := newRouter(a, "host")
-	g.AddRouter(&PathVersion{}, def)
+	g.Add(&PathVersion{}, def)
 	def = newRouter(a, "host-2")
-	g.AddRouter(&PathVersion{}, def)
+	g.Add(&PathVersion{}, def)
 
-	g.RemoveRouter("host")
-	g.RemoveRouter("host") // 已经删除，不存在了
+	g.Remove("host")
+	g.Remove("host") // 已经删除，不存在了
 	a.Equal(1, len(g.Routers()))
 	def = newRouter(a, "host")
-	g.AddRouter(&PathVersion{}, def)
+	g.Add(&PathVersion{}, def)
 	a.Equal(2, len(g.Routers()))
 
 	// 删除空名，不出错。
-	g.RemoveRouter("")
+	g.Remove("")
 	a.Equal(2, len(g.Routers()))
 }
 
@@ -239,7 +239,7 @@ func TestGroup(t *testing.T) {
 	h := NewHosts("{sub}.example.com")
 	a.NotNil(h)
 
-	def := g.NewRouter("host", h)
+	def := g.New("host", h)
 	a.NotNil(def)
 
 	def.GetFunc("/posts/{id:digit}.html", func(w http.ResponseWriter, r *http.Request) {
@@ -265,7 +265,7 @@ func TestGroups_routers(t *testing.T) {
 	a.NotNil(g)
 
 	def := newRouter(a, "host")
-	g.AddRouter(h, def)
+	g.Add(h, def)
 	w := httptest.NewRecorder()
 	def.Get("/t1", buildHandler(201))
 	r := httptest.NewRequest(http.MethodGet, "/t1", nil)
@@ -291,7 +291,7 @@ func TestGroups_routers(t *testing.T) {
 	g = Default()
 	a.NotNil(g)
 	def = newRouter(a, "def")
-	g.AddRouter(h, def)
+	g.Add(h, def)
 	res := def.Resource("/r1")
 	res.Get(buildHandler(202))
 	w = httptest.NewRecorder()
@@ -308,7 +308,7 @@ func TestGroups_routers(t *testing.T) {
 	g = Default()
 	a.NotNil(g)
 	def = newRouter(a, "def")
-	g.AddRouter(h, def)
+	g.Add(h, def)
 	p := def.Prefix("/prefix1")
 	p.Get("/p1", buildHandler(203))
 	w = httptest.NewRecorder()
@@ -325,7 +325,7 @@ func TestGroups_routers(t *testing.T) {
 	g = Default()
 	a.NotNil(g)
 	def = newRouter(a, "def")
-	g.AddRouter(h, def)
+	g.Add(h, def)
 	p1 := def.Prefix("/prefix1")
 	p2 := p1.Prefix("/prefix2")
 	p2.GetFunc("/p2", buildHandlerFunc(204))
@@ -342,7 +342,7 @@ func TestGroups_routers(t *testing.T) {
 	// 第二个 Prefix 为域名
 	g = Default()
 	def = newRouter(a, "def")
-	g.AddRouter(MatcherFunc(Any), def)
+	g.Add(MatcherFunc(Any), def)
 	p1 = def.Prefix("/prefix1")
 	p2 = p1.Prefix("example.com")
 	p2.GetFunc("/p2", buildHandlerFunc(205))
@@ -359,16 +359,16 @@ func TestGroups_routers_multiple(t *testing.T) {
 	a.NotNil(g)
 
 	v1 := newRouter(a, "v1")
-	g.AddRouter(NewPathVersion("", "v1"), v1)
+	g.Add(NewPathVersion("", "v1"), v1)
 	v1.Get("/path", buildHandler(202))
 
 	v2 := newRouter(a, "v2")
-	g.AddRouter(NewPathVersion("", "v1", "v2"), v2)
+	g.Add(NewPathVersion("", "v1", "v2"), v2)
 	v2.Get("/path", buildHandler(203))
 
 	// def 匹配任意内容，放在最后。
 	def := newRouter(a, "default")
-	g.AddRouter(MatcherFunc(Any), def)
+	g.Add(MatcherFunc(Any), def)
 	def.Get("/t1", buildHandler(201))
 
 	// 指向 def

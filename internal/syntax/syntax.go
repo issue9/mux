@@ -11,7 +11,7 @@ import (
 	"github.com/issue9/errwrap"
 )
 
-// Type 路由项的类型
+// Type 路由项节点的类型
 type Type int8
 
 const (

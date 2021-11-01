@@ -19,7 +19,7 @@ func buildMiddleware(a *assert.Assertion, text string) MiddlewareFunc {
 	}
 }
 
-func TestRouter_AddMiddleware(t *testing.T) {
+func TestRouter_Middleware(t *testing.T) {
 	a := assert.New(t)
 
 	def := DefaultRouter()
