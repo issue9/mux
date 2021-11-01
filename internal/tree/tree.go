@@ -30,9 +30,16 @@ import (
 //               |
 //               +---- /emails
 type Tree struct {
-	node        *Node
 	disableHead bool
-	methods     map[string]int // methods 保存着每个请求方法在所有子节点上的数量。
+
+	// 保存全局的请求方法，node.methodIndex 保存自身的请求方法
+	// CORS 的预检机制用到 node.methodIndex
+	methodIndex int
+
+	// methods 保存着每个请求方法在所有子节点上的数量。
+	methods map[string]int
+
+	node *Node
 }
 
 // New 声明一个 Tree 实例
@@ -43,14 +50,18 @@ func New(disableHead bool) *Tree {
 	}
 
 	t := &Tree{
-		node:        &Node{segment: s},
 		disableHead: disableHead,
 		methods:     make(map[string]int, len(Methods)),
+		node:        &Node{segment: s, methodIndex: methodIndexMap[http.MethodOptions]},
 	}
 	t.node.root = t
-	t.node.handlers = map[string]http.Handler{http.MethodOptions: http.HandlerFunc(t.node.optionsServeHTTP)}
+	t.node.handlers = map[string]http.Handler{http.MethodOptions: http.HandlerFunc(t.optionsServeHTTP)}
 
 	return t
+}
+
+func (tree *Tree) optionsServeHTTP(w http.ResponseWriter, req *http.Request) {
+	optionsHandle(w, methodIndexes[tree.methodIndex].options)
 }
 
 // Add 添加路由项
