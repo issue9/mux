@@ -4,6 +4,7 @@ package mux
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/issue9/mux/v5/internal/syntax"
 	"github.com/issue9/mux/v5/internal/tree"
@@ -21,23 +22,25 @@ import (
 //
 // 如果需要同时对多个 Router 实例进行路由，可以采用  groups.Groups 对象管理多个 Router 实例。
 type Router struct {
-	name string
-	tree *tree.Tree
-	ms   *Middlewares
-	cors *CORS
+	caseInsensitive bool
+	name            string
+	tree            *tree.Tree
+	ms              *Middlewares
+	cors            *CORS
 }
 
 // DefaultRouter 返回默认参数的 NewRouter
 //
-// 相当于调用 NewRouter("", false, DeniedCORS())
-func DefaultRouter() *Router { return NewRouter("", false, DeniedCORS()) }
+// 相当于调用 NewRouter("", false, false, DeniedCORS())
+func DefaultRouter() *Router { return NewRouter("", false, false, DeniedCORS()) }
 
 // NewRouter 声明路由
 //
 // name string 路由名称，可以为空；
 // disableHead 是否禁用根据 Get 请求自动生成 HEAD 请求；
+// caseInsensitive 是否忽略大小写，如果为 true，所有请求地址都将被转为小写；
 // cors 跨域请求的相关设置项，运行过程中不应该修改 cors 中的值，否则结束是未知的；
-func NewRouter(name string, disableHead bool, cors *CORS) *Router {
+func NewRouter(name string, disableHead, caseInsensitive bool, cors *CORS) *Router {
 	if cors == nil {
 		cors = DeniedCORS()
 	}
@@ -47,9 +50,10 @@ func NewRouter(name string, disableHead bool, cors *CORS) *Router {
 	}
 
 	r := &Router{
-		name: name,
-		tree: tree.New(disableHead),
-		cors: cors,
+		caseInsensitive: caseInsensitive,
+		name:            name,
+		tree:            tree.New(disableHead),
+		cors:            cors,
 	}
 	r.ms = NewMiddlewares(http.HandlerFunc(r.serveHTTP))
 
@@ -163,9 +167,14 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 func (r *Router) serveHTTP(w http.ResponseWriter, req *http.Request) {
-	node, ps := r.tree.Route(req.URL.Path)
+	path := req.URL.Path
+	if r.caseInsensitive {
+		path = strings.ToLower(req.URL.Path)
+	}
+
+	node, ps := r.tree.Route(path)
 	if node == nil {
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		http.NotFound(w, req)
 		return
 	}
 
