@@ -11,7 +11,7 @@ import (
 
 func BenchmarkTree_Handler(b *testing.B) {
 	a := assert.New(b)
-	tree := New(false, false)
+	tree := New(false)
 
 	// 添加路由项
 	a.NotError(tree.Add("/", buildHandler(http.StatusAccepted), http.MethodGet))

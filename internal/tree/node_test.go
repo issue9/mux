@@ -27,7 +27,7 @@ func (n *Node) len() int {
 
 func TestNode_find(t *testing.T) {
 	a := assert.New(t)
-	tree := New(true, false)
+	tree := New(true)
 	node := &Node{root: tree}
 
 	addNode := func(p string, code int, methods ...string) {

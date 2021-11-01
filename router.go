@@ -48,7 +48,7 @@ func NewRouter(name string, disableHead bool, cors *CORS) *Router {
 
 	r := &Router{
 		name: name,
-		tree: tree.New(disableHead, true),
+		tree: tree.New(disableHead),
 		cors: cors,
 	}
 	r.ms = NewMiddlewares(http.HandlerFunc(r.serveHTTP))

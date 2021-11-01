@@ -16,7 +16,7 @@ type Hosts struct {
 
 // NewHosts 声明新的 Hosts 实例
 func NewHosts(domain ...string) *Hosts {
-	h := &Hosts{tree: tree.New(false, false)}
+	h := &Hosts{tree: tree.New(false)}
 	h.Add(domain...)
 	return h
 }
@@ -24,7 +24,7 @@ func NewHosts(domain ...string) *Hosts {
 func (hs *Hosts) Match(r *http.Request) (*http.Request, bool) {
 	hostname := r.URL.Hostname()
 	h, ps := hs.tree.Route(hostname)
-	if h == nil {
+	if h == nil || h.Handler(http.MethodGet) == nil {
 		return nil, false
 	}
 

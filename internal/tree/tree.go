@@ -30,51 +30,27 @@ import (
 //               |
 //               +---- /emails
 type Tree struct {
-	disableHead bool
 	node        *Node
-
-	// methods 保存着每个请求方法在所有子节点上的数量。
-	// 在每次添加和删除请求方法之后，更新 methodIndex 的值。
-	methods         map[string]int
-	methodIndex     int
-	optionsAsterisk bool
+	disableHead bool
+	methods     map[string]int // methods 保存着每个请求方法在所有子节点上的数量。
 }
 
 // New 声明一个 Tree 实例
-//
-// optionsAsterisk 表示是否支持 options * 操作，如果为 true，同时还将空路径重定向到 *。
-func New(disableHead, optionsAsterisk bool) *Tree {
+func New(disableHead bool) *Tree {
 	s, err := syntax.NewSegment("")
 	if err != nil {
 		panic("发生了不该发生的错误，应该是 syntax.NewSegment 逻辑发生变化" + err.Error())
 	}
 
 	t := &Tree{
+		node:        &Node{segment: s},
 		disableHead: disableHead,
-		node:        &Node{segment: s, handlers: make(map[string]http.Handler, 1)},
-
-		methods:         make(map[string]int, len(Methods)),
-		methodIndex:     methodIndexMap[http.MethodOptions],
-		optionsAsterisk: optionsAsterisk,
+		methods:     make(map[string]int, len(Methods)),
 	}
 	t.node.root = t
-
-	if optionsAsterisk {
-		n, err := t.getNode("*")
-		if err != nil {
-			panic(err)
-		}
-		n.handlers = map[string]http.Handler{
-			http.MethodOptions: http.HandlerFunc(t.optionsServeHTTP),
-		}
-		n.buildMethods()
-	}
+	t.node.handlers = map[string]http.Handler{http.MethodOptions: http.HandlerFunc(t.node.optionsServeHTTP)}
 
 	return t
-}
-
-func (tree *Tree) optionsServeHTTP(w http.ResponseWriter, req *http.Request) {
-	optionsHandler(w, methodIndexes[tree.methodIndex].options)
 }
 
 // Add 添加路由项
@@ -159,8 +135,8 @@ func (tree *Tree) getNode(pattern string) (*Node, error) {
 
 // Route 找到与当前内容匹配的 Node 实例
 func (tree *Tree) Route(path string) (*Node, params.Params) {
-	if path == "" && tree.optionsAsterisk {
-		path = "*"
+	if path == "*" || path == "" {
+		return tree.node, nil
 	}
 
 	ps := make(params.Params, 3)
@@ -172,9 +148,14 @@ func (tree *Tree) Route(path string) (*Node, params.Params) {
 	return node, ps
 }
 
-// Routes 获取当前的所有路由项
+// Routes 获取当前的所有路由项以及对应的请求方法
 func (tree *Tree) Routes() map[string][]string {
 	routes := make(map[string][]string, 100)
-	tree.node.routes("", routes)
+	routes["*"] = []string{http.MethodOptions}
+
+	for _, v := range tree.node.children {
+		v.routes("", routes)
+	}
+
 	return routes
 }

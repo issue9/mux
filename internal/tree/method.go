@@ -77,10 +77,8 @@ func (n *Node) buildMethods() {
 }
 
 func (n *Node) optionsServeHTTP(w http.ResponseWriter, req *http.Request) {
-	optionsHandler(w, n.Options())
+	w.Header().Set("Allow", n.Options())
 }
-
-func optionsHandler(w http.ResponseWriter, opt string) { w.Header().Set("Allow", opt) }
 
 // Options 获取当前支持的请求方法列表字符串
 func (n *Node) Options() string { return methodIndexes[n.methodIndex].options }
@@ -130,17 +128,17 @@ func (tree *Tree) buildMethods(v int, methods ...string) {
 		tree.methods[m] += v
 	}
 
-	tree.methodIndex = methodIndexMap[http.MethodOptions]
+	tree.node.methodIndex = methodIndexMap[http.MethodOptions]
 	for m, num := range tree.methods {
 		if num > 0 {
-			tree.methodIndex += methodIndexMap[m]
+			tree.node.methodIndex += methodIndexMap[m]
 			if m == http.MethodGet && !tree.disableHead {
-				tree.methodIndex += methodIndexMap[http.MethodHead]
+				tree.node.methodIndex += methodIndexMap[http.MethodHead]
 			}
 		}
 	}
 
-	buildMethodIndexes(tree.methodIndex)
+	buildMethodIndexes(tree.node.methodIndex)
 }
 
 func (resp *headResponse) Write([]byte) (int, error) { return 0, nil }

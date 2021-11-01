@@ -66,7 +66,7 @@ func (t *tester) optionsAsteriskTrue(allow string) {
 	t.a.NotError(err).NotNil(r)
 
 	w := httptest.NewRecorder()
-	t.router.ServeHTTP(w, r) // Client.Do 无法传递 * 或是空的路径请求。改用 serveHTTP
+	t.router.ServeHTTP(w, r) // Client.Do 无法传递 * 或是空的路径请求。改用 ServeHTTP
 	t.a.Equal(w.Code, 200).
 		Equal(w.Header().Get("Allow"), allow)
 }

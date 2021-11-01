@@ -283,7 +283,7 @@ func splitNode(n *Node, pos int) (*Node, error) {
 func (n *Node) routes(parent string, routes map[string][]string) {
 	path := parent + n.segment.Value
 
-	if len(n.handlers) > 0 {
+	if n.methodIndex > 0 {
 		routes[path] = n.Methods()
 	}
 
