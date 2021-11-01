@@ -34,7 +34,7 @@ router.Get("/users/1", h).
     Get("/posts/{path}.html", h).    // 匹配 /posts/2020/11/11/title.html 等格式，path = 2020/11/11/title
 
 // 统一前缀路径的路由
-p := m.Prefix("/api")
+p := router.Prefix("/api")
 p.Get("/logout", h) // 相当于 m.Get("/api/logout", h)
 p.Post("/login", h) // 相当于 m.Get("/api/login", h)
 
@@ -44,7 +44,7 @@ res.Get(h)   // 相当于 m.Get("/api/users/{id:\\d+}", h)
 res.Post(h)  // 相当于 m.Post("/api/users/{id:\\d+}", h)
 res.URL(map[string]string{"id": "5"}) // 构建一条基于此路由项的路径：/users/5
 
-http.ListenAndServe(":8080", m)
+http.ListenAndServe(":8080", router)
 ```
 
 ## 语法
