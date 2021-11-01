@@ -74,13 +74,16 @@ func (t *tester) optionsAsteriskTrue(allow string) {
 func TestRouter(t *testing.T) {
 	test := newTester(t, true)
 
-	// 测试 / 和 "" 是否访问同一地址
 	test.router.Get("/", buildHandler(201))
-	test.matchTrue(http.MethodGet, "", 201)
 	test.matchTrue(http.MethodGet, "/", 201)
 	test.matchTrue(http.MethodHead, "/", http.StatusMethodNotAllowed) // 启用 disableHead
 	test.matchTrue(http.MethodGet, "/abc", http.StatusNotFound)
 	test.optionsAsteriskTrue("GET, OPTIONS")
+
+	// 测试 /// 是否正常访问
+	test.router.Get("///", buildHandler(201))
+	test.matchTrue(http.MethodGet, "///", 201)
+	test.matchTrue(http.MethodGet, "//", 404)
 
 	test.router.Get("/h/1", buildHandler(201))
 	test.matchTrue(http.MethodGet, "/h/1", 201)
