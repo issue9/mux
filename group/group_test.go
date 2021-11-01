@@ -37,14 +37,14 @@ func buildMiddleware(a *assert.Assertion, text string) mux.MiddlewareFunc {
 }
 
 func newRouter(a *assert.Assertion, name string) *mux.Router {
-	r := mux.NewRouter(name, false, nil)
+	r := mux.NewRouter(name)
 	a.NotNil(r)
 	return r
 }
 
 func TestGroups_PrependMiddleware(t *testing.T) {
 	a := assert.New(t)
-	g := Default()
+	g := New()
 	a.NotNil(g)
 	def := newRouter(a, "def")
 	g.Add(MatcherFunc(Any), def)
@@ -71,7 +71,7 @@ func TestGroups_PrependMiddleware(t *testing.T) {
 
 func TestGroups_AppendMiddleware(t *testing.T) {
 	a := assert.New(t)
-	g := Default()
+	g := New()
 	a.NotNil(g)
 	def := newRouter(a, "def")
 	g.Add(MatcherFunc(Any), def)
@@ -98,7 +98,7 @@ func TestGroups_AppendMiddleware(t *testing.T) {
 
 func TestGroups_AddMiddleware(t *testing.T) {
 	a := assert.New(t)
-	g := Default()
+	g := New()
 	a.NotNil(g)
 	def := newRouter(a, "def")
 	g.Add(MatcherFunc(Any), def)
@@ -127,7 +127,7 @@ func TestGroups_AddMiddleware(t *testing.T) {
 
 func TestRouter_AddMiddleware(t *testing.T) {
 	a := assert.New(t)
-	g := Default()
+	g := New()
 
 	g.Middlewares().Append(buildMiddleware(a, "p1")).
 		Prepend(buildMiddleware(a, "a1")).
@@ -168,7 +168,7 @@ func TestRouter_AddMiddleware(t *testing.T) {
 func TestGroups_Add(t *testing.T) {
 	a := assert.New(t)
 
-	g := Default()
+	g := New()
 
 	// name 为空
 	a.PanicString(func() {
@@ -200,7 +200,7 @@ func TestGroups_Add(t *testing.T) {
 
 func TestGroups_Remove(t *testing.T) {
 	a := assert.New(t)
-	g := Default()
+	g := New()
 	a.NotNil(g)
 
 	def := newRouter(a, "host")
@@ -222,7 +222,7 @@ func TestGroups_Remove(t *testing.T) {
 
 func TestGroups_empty(t *testing.T) {
 	a := assert.New(t)
-	g := Default()
+	g := New()
 	a.NotNil(g)
 
 	w := httptest.NewRecorder()
@@ -233,7 +233,7 @@ func TestGroups_empty(t *testing.T) {
 
 func TestGroup(t *testing.T) {
 	a := assert.New(t)
-	g := Default()
+	g := New()
 	exit := make(chan bool, 1)
 
 	h := NewHosts("{sub}.example.com")
@@ -261,7 +261,7 @@ func TestGroups_routers(t *testing.T) {
 	h := NewHosts("localhost")
 	a.NotNil(h)
 
-	g := Default()
+	g := New()
 	a.NotNil(g)
 
 	def := newRouter(a, "host")
@@ -288,7 +288,7 @@ func TestGroups_routers(t *testing.T) {
 	a.Equal(w.Result().StatusCode, 404)
 
 	// resource
-	g = Default()
+	g = New()
 	a.NotNil(g)
 	def = newRouter(a, "def")
 	g.Add(h, def)
@@ -305,7 +305,7 @@ func TestGroups_routers(t *testing.T) {
 	a.Equal(w.Result().StatusCode, 202)
 
 	// prefix
-	g = Default()
+	g = New()
 	a.NotNil(g)
 	def = newRouter(a, "def")
 	g.Add(h, def)
@@ -322,7 +322,7 @@ func TestGroups_routers(t *testing.T) {
 	a.Equal(w.Result().StatusCode, 203)
 
 	// prefix prefix
-	g = Default()
+	g = New()
 	a.NotNil(g)
 	def = newRouter(a, "def")
 	g.Add(h, def)
@@ -340,7 +340,7 @@ func TestGroups_routers(t *testing.T) {
 	a.Equal(w.Result().StatusCode, 204)
 
 	// 第二个 Prefix 为域名
-	g = Default()
+	g = New()
 	def = newRouter(a, "def")
 	g.Add(MatcherFunc(Any), def)
 	p1 = def.Prefix("/prefix1")
@@ -355,7 +355,7 @@ func TestGroups_routers(t *testing.T) {
 func TestGroups_routers_multiple(t *testing.T) {
 	a := assert.New(t)
 
-	g := Default()
+	g := New()
 	a.NotNil(g)
 
 	v1 := newRouter(a, "v1")

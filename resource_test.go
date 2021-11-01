@@ -16,7 +16,7 @@ func (t *tester) resource(p string) *Resource {
 
 func TestResource(t *testing.T) {
 	a := assert.New(t)
-	test := newTester(t, false)
+	test := newTester(t)
 	h := test.resource("/h/1")
 	a.NotNil(h)
 	f := test.resource("/f/1")
@@ -78,7 +78,7 @@ func TestResource(t *testing.T) {
 
 func TestRouter_Resource(t *testing.T) {
 	a := assert.New(t)
-	def := DefaultRouter()
+	def := NewRouter("")
 	a.NotNil(def)
 
 	r1 := def.Resource("/abc/1")
@@ -100,7 +100,7 @@ func TestRouter_Resource(t *testing.T) {
 func TestPrefix_Resource(t *testing.T) {
 	a := assert.New(t)
 
-	def := DefaultRouter()
+	def := NewRouter("")
 	a.NotNil(def)
 
 	p := def.Prefix("/p1")
@@ -117,7 +117,7 @@ func TestPrefix_Resource(t *testing.T) {
 
 func TestResource_URL(t *testing.T) {
 	a := assert.New(t)
-	def := NewRouter("", false, AllowedCORS())
+	def := NewRouter("", AllowedCORS)
 	a.NotNil(def)
 
 	// 非正则

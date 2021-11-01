@@ -14,47 +14,43 @@ import (
 // Router 路由
 //
 // 可以对路径按正则或是请求方法进行匹配。用法如下：
-//  router := DefaultRouter()
+//  router := NewRouter("")
 //  router.Get("/abc/h1", h1).
 //      Post("/abc/h2", h2).
 //      Handle("/api/{version:\\d+}",h3, http.MethodGet, http.MethodPost) // 只匹配 GET 和 POST
-//  http.ListenAndServe(m)
+//  http.ListenAndServe(router)
 //
 // 如果需要同时对多个 Router 实例进行路由，可以采用  group.Group 对象管理多个 Router 实例。
 type Router struct {
-	caseInsensitive bool
-	name            string
-	tree            *tree.Tree
-	ms              *Middlewares
-	cors            *CORS
-}
+	tree *tree.Tree
+	ms   *Middlewares
+	name string
 
-// DefaultRouter 返回默认参数的 NewRouter
-//
-// 相当于调用 NewRouter("", false, false, DeniedCORS())
-func DefaultRouter() *Router { return NewRouter("", false, DeniedCORS()) }
+	// 配置项
+	caseInsensitive bool
+	cors            *cors
+}
 
 // NewRouter 声明路由
 //
 // name string 路由名称，可以为空；
-// caseInsensitive 是否忽略大小写，如果为 true，所有请求地址都将被转为小写；
-// cors 跨域请求的相关设置项，运行过程中不应该修改 cors 中的值，否则结束是未知的；
-func NewRouter(name string, caseInsensitive bool, cors *CORS) *Router {
-	if cors == nil {
-		cors = DeniedCORS()
-	}
-
-	if err := cors.sanitize(); err != nil {
-		panic(err)
-	}
-
+func NewRouter(name string, o ...Option) *Router {
 	r := &Router{
-		caseInsensitive: caseInsensitive,
-		name:            name,
-		tree:            tree.New(),
-		cors:            cors,
+		tree: tree.New(),
+		name: name,
 	}
 	r.ms = NewMiddlewares(http.HandlerFunc(r.serveHTTP))
+
+	for _, opt := range o {
+		opt(r)
+	}
+
+	if r.cors == nil {
+		r.cors = &cors{} // 默认为禁止
+	}
+	if err := r.cors.sanitize(); err != nil {
+		panic(err)
+	}
 
 	return r
 }

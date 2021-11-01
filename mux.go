@@ -11,6 +11,11 @@ import (
 	"github.com/issue9/mux/v5/params"
 )
 
+// Option 声明了自定义路由参数的函数原型
+type Option func(*Router)
+
+func CaseInsensitive(r *Router) { r.caseInsensitive = true }
+
 // Params 获取路由中的参数集合
 func Params(r *http.Request) params.Params { return params.Get(r) }
 

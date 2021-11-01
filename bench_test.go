@@ -26,7 +26,7 @@ func init() {
 			}
 		}
 
-		issue9Mux = DefaultRouter()
+		issue9Mux = NewRouter("")
 
 		for _, api := range apis {
 			issue9Mux.HandleFunc(api.bracePattern, h, api.method)

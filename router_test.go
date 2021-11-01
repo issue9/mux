@@ -34,8 +34,8 @@ type tester struct {
 	a      *assert.Assertion
 }
 
-func newTester(t testing.TB, caseInsensitive bool) *tester {
-	r := NewRouter("def", caseInsensitive, AllowedCORS())
+func newTester(t testing.TB, o ...Option) *tester {
+	r := NewRouter("def", o...)
 	assert.NotNil(t, r)
 	assert.Equal(t, "def", r.Name())
 
@@ -72,7 +72,7 @@ func (t *tester) optionsAsteriskTrue(allow string) {
 }
 
 func TestRouter(t *testing.T) {
-	test := newTester(t, false)
+	test := newTester(t)
 
 	test.router.Get("/", buildHandler(201))
 	test.matchTrue(http.MethodGet, "/", 201)
@@ -134,7 +134,7 @@ func TestRouter(t *testing.T) {
 func TestRouter_ServeHTTP(t *testing.T) {
 	a := assert.New(t)
 
-	test := newTester(t, false)
+	test := newTester(t)
 
 	a.NotError(test.router.Handle("/posts/{path}.html", buildHandler(201)))
 	test.matchTrue(http.MethodGet, "/posts/2017/1.html", 201)
@@ -167,7 +167,7 @@ func TestRouter_ServeHTTP(t *testing.T) {
 
 	// 忽略大小写测试
 
-	test = newTester(t, true)
+	test = newTester(t, CaseInsensitive)
 
 	a.NotError(test.router.Handle("/posts/{path}.html", buildHandler(201)))
 	test.matchTrue(http.MethodGet, "/posts/2017/1.html", 201)
@@ -176,7 +176,7 @@ func TestRouter_ServeHTTP(t *testing.T) {
 
 func TestRouter_Handle_Remove(t *testing.T) {
 	a := assert.New(t)
-	test := newTester(t, false)
+	test := newTester(t)
 
 	// 添加 GET /api/1
 	// 添加 PUT /api/1
@@ -214,7 +214,7 @@ func TestRouter_Handle_Remove(t *testing.T) {
 func TestRouter_Routes(t *testing.T) {
 	a := assert.New(t)
 
-	def := DefaultRouter()
+	def := NewRouter("")
 	a.NotNil(def)
 	def.Get("/m", buildHandler(1))
 	def.Post("/m", buildHandler(1))
@@ -223,7 +223,7 @@ func TestRouter_Routes(t *testing.T) {
 
 func TestRouter_Params(t *testing.T) {
 	a := assert.New(t)
-	router := DefaultRouter()
+	router := NewRouter("")
 	a.NotNil(router)
 
 	params := map[string]string{}
@@ -279,7 +279,7 @@ func TestRouter_Params(t *testing.T) {
 func TestRouter_Clean(t *testing.T) {
 	a := assert.New(t)
 
-	def := DefaultRouter()
+	def := NewRouter("")
 	a.NotNil(def)
 	def.Get("/m1", buildHandler(200)).
 		Post("/m1", buildHandler(201))
@@ -300,7 +300,7 @@ func TestRouter_Clean(t *testing.T) {
 func TestRouter_ServeHTTP_Order(t *testing.T) {
 	a := assert.New(t)
 
-	test := newTester(t, false)
+	test := newTester(t)
 	a.NotError(test.router.GetFunc("/posts/{id}", buildHandlerFunc(203)))
 	a.NotError(test.router.GetFunc("/posts/{id:\\d+}", buildHandlerFunc(202)))
 	a.NotError(test.router.GetFunc("/posts/1", buildHandlerFunc(201)))
@@ -315,7 +315,7 @@ func TestRouter_ServeHTTP_Order(t *testing.T) {
 	test.matchTrue(http.MethodGet, "/posts-", 205)    // 204 只匹配非空
 
 	// interceptor
-	test = newTester(t, false)
+	test = newTester(t)
 	interceptor.Register(interceptor.MatchDigit, "[0-9]+")
 	a.NotError(test.router.GetFunc("/posts/{id}", buildHandlerFunc(203)))        // f3
 	a.NotError(test.router.GetFunc("/posts/{id:\\d+}", buildHandlerFunc(202)))   // f2 永远匹配不到
@@ -327,19 +327,19 @@ func TestRouter_ServeHTTP_Order(t *testing.T) {
 	test.matchTrue(http.MethodGet, "/posts/", 203)                               // f3
 	interceptor.Deregister("[0-9]+")
 
-	test = newTester(t, false)
+	test = newTester(t)
 	a.NotError(test.router.GetFunc("/p1/{p1}/p2/{p2:\\d+}", buildHandlerFunc(201))) // f1
 	a.NotError(test.router.GetFunc("/p1/{p1}/p2/{p2:\\w+}", buildHandlerFunc(202))) // f2
 	test.matchTrue(http.MethodGet, "/p1/1/p2/1", 201)                               // f1
 	test.matchTrue(http.MethodGet, "/p1/2/p2/s", 202)                               // f2
 
-	test = newTester(t, false)
+	test = newTester(t)
 	a.NotError(test.router.GetFunc("/posts/{id}/{page}", buildHandlerFunc(202))) // f2
 	a.NotError(test.router.GetFunc("/posts/{id}/1", buildHandlerFunc(201)))      // f1
 	test.matchTrue(http.MethodGet, "/posts/1/1", 201)                            // f1 普通路由项完全匹配
 	test.matchTrue(http.MethodGet, "/posts/2/5", 202)                            // f2 命名完全匹配
 
-	test = newTester(t, false)
+	test = newTester(t)
 	a.NotError(test.router.GetFunc("/tags/{id}.html", buildHandlerFunc(201))) // f1
 	a.NotError(test.router.GetFunc("/tags.html", buildHandlerFunc(202)))      // f2
 	a.NotError(test.router.GetFunc("/{path}", buildHandlerFunc(203)))         // f3

@@ -26,7 +26,7 @@ import "github.com/issue9/mux/v5"
 
 c := compress.New()
 
-router := mux.DefaultRouter()
+router := mux.NewRouter("")
 router.Middlewares().Append(c)
 router.Get("/users/1", h).
     Post("/login", h).
@@ -132,7 +132,7 @@ id := params.MustInt("id", 0) // 0 表示在无法获取 id 参数的默认值
 import "github.com/issue9/mux/v5"
 import "github.com/issue9/mux/v5/group"
 
-m := group.Default()
+m := group.New()
 
 def := mux.NewRouter("default", false, nil)
 m.AddRouter(group.NewPathVersion("version-key", "v1"), def)
@@ -217,7 +217,7 @@ import "github.com/issue9/middleware/v4/compress"
 
 c := compress.New(log.Default(), "*")
 
-r := mux.DefaultRouter()
+r := mux.NewRouter("")
 
 // 添加中间件
 r.Middlewares().Append(c.Middleware)

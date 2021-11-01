@@ -22,7 +22,7 @@ func buildMiddleware(a *assert.Assertion, text string) MiddlewareFunc {
 func TestRouter_Middleware(t *testing.T) {
 	a := assert.New(t)
 
-	def := DefaultRouter()
+	def := NewRouter("")
 	a.NotNil(def)
 	def.Get("/get", buildHandler(201))
 	ms := def.Middlewares()

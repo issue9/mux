@@ -13,56 +13,64 @@ import (
 	"github.com/issue9/mux/v5/internal/tree"
 )
 
-// CORS 跨域请求设置项
-//
-// https://developer.mozilla.org/zh-CN/docs/Web/HTTP/CORS
-type CORS struct {
-	// Origins 对应 Origin
-	//
-	// 可以是 *，如果包含了 *，那么其它的设置将不再启作用。
-	// 此字段将被用于与请求头的 Origin 字段作验证，以确定是否放行该请求。
-	//
-	// 如果此值为空，表示不启用跨域的相关设置。
+type cors struct {
 	Origins    []string
 	anyOrigins bool
 	deny       bool
 
-	// AllowHeaders 对应 Access-Control-Allow-Headers
-	//
-	// 可以包含 *，表示可以是任意值，其它值将不再启作用。
 	AllowHeaders       []string
 	allowHeadersString string
 	anyHeaders         bool
 
-	// ExposedHeaders 对应 Access-Control-Expose-Headers
 	ExposedHeaders       []string
 	exposedHeadersString string
 
-	// MaxAge 对应 Access-Control-Max-Age
-	//
-	// 0 不输出该报头；
-	// -1 表示禁用；
-	// 其它 >= -1 的值正常输出数值；
 	MaxAge       int
 	maxAgeString string
 
-	// AllowCredentials  对应 Access-Control-Allow-Credentials
 	AllowCredentials bool
 }
 
+// CORS 跨域请求设置项
+//
+// https://developer.mozilla.org/zh-CN/docs/Web/HTTP/cors
+//
+// origins 对应 Origin 报头。如果包含了 *，那么其它的设置将不再启作用。
+// 如果此值为空，表示不启用跨域的相关设置；
+//
+// allowHeaders 对应 Access-Control-Allow-Headers
+// 可以包含 *，表示可以是任意值，其它值将不再启作用；
+//
+// exposedHeaders 对应 Access-Control-Expose-Headers
+//
+// maxAge 对应 Access-Control-Max-Age 有以下几种取值：
+// 0 不输出该报头；
+// -1 表示禁用；
+// 其它 >= -1 的值正常输出数值；
+//
+// allowCredentials 对应 Access-Control-Allow-Credentials。
+func CORS(origins, allowHeaders, exposedHeaders []string, maxAge int, allowCredentials bool) Option {
+	return func(r *Router) {
+		r.cors = &cors{
+			Origins:          origins,
+			AllowHeaders:     allowHeaders,
+			ExposedHeaders:   exposedHeaders,
+			MaxAge:           maxAge,
+			AllowCredentials: allowCredentials,
+		}
+	}
+}
+
 // AllowedCORS 允许跨域请求
-func AllowedCORS() *CORS {
-	return &CORS{
+func AllowedCORS(r *Router) {
+	r.cors = &cors{
 		Origins:      []string{"*"},
 		AllowHeaders: []string{"*"},
 		MaxAge:       3600,
 	}
 }
 
-// DeniedCORS 禁用跨域请求
-func DeniedCORS() *CORS { return &CORS{} }
-
-func (c *CORS) sanitize() error {
+func (c *cors) sanitize() error {
 	for _, o := range c.Origins {
 		if o == "*" {
 			c.anyOrigins = true
@@ -101,7 +109,7 @@ func (c *CORS) sanitize() error {
 	return nil
 }
 
-func (c *CORS) handle(node *tree.Node, w http.ResponseWriter, r *http.Request) {
+func (c *cors) handle(node *tree.Node, w http.ResponseWriter, r *http.Request) {
 	if c.deny {
 		return
 	}
@@ -162,7 +170,7 @@ func (c *CORS) handle(node *tree.Node, w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (c *CORS) headerIsAllowed(r *http.Request) bool {
+func (c *cors) headerIsAllowed(r *http.Request) bool {
 	if c.anyHeaders {
 		return true
 	}
