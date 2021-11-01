@@ -76,7 +76,7 @@ http.ListenAndServe(":8080", m)
 - digit 限定为数字字符，相当于正则的 `[0-9]`；
 - word 相当于正则的 `[a-zA-Z0-9]`；
 - any 表示匹配任意非空内容；
-- "" 为空表示任意内容，包括非内容；
+- "" 为空表示任意内容，包括没有内容，这是默认项，比如上面的 {path} 可以匹配为空；
 
 用户也可以自行添加新的约束符。具体可参考 <https://pkg.go.dev/github.com/issue9/mux/v5/interceptor>
 

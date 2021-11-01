@@ -16,7 +16,7 @@ func MatchAny(path string) bool { return len(path) > 0 }
 
 // MatchDigit 匹配数值字符
 //
-// 正则表达式中的 [0-9]+ 是相同的。
+// 与正则表达式中的 [0-9]+ 是相同的。
 func MatchDigit(path string) bool {
 	for _, c := range path {
 		if c < '0' || c > '9' {
@@ -28,7 +28,7 @@ func MatchDigit(path string) bool {
 
 // MatchWord 匹配单词
 //
-// 正则表达式中的 [a-zA-Z0-9]+ 是相同的。
+// 与正则表达式中的 [a-zA-Z0-9]+ 是相同的。
 func MatchWord(path string) bool {
 	for _, c := range path {
 		if (c < '0' || c > '9') && (c < 'a' || c > 'z') && (c < 'A' || c > 'Z') {

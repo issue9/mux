@@ -80,11 +80,6 @@ func TestRouter(t *testing.T) {
 	test.matchTrue(http.MethodGet, "/abc", http.StatusNotFound)
 	test.optionsAsteriskTrue("GET, OPTIONS")
 
-	// 测试 /// 是否正常访问
-	test.router.Get("///", buildHandler(201))
-	test.matchTrue(http.MethodGet, "///", 201)
-	test.matchTrue(http.MethodGet, "//", 404)
-
 	test.router.Get("/h/1", buildHandler(201))
 	test.matchTrue(http.MethodGet, "/h/1", 201)
 	test.router.GetFunc("/f/1", buildHandlerFunc(201))
@@ -317,6 +312,25 @@ func TestMux_ServeHTTP(t *testing.T) {
 
 	a.NotError(test.router.Handle("/posts/{id:digit}123", buildHandler(203)))
 	test.matchTrue(http.MethodGet, "/posts/123123", 203)
+
+	test.router.Get("///", buildHandler(201))
+	test.matchTrue(http.MethodGet, "///", 201)
+	test.matchTrue(http.MethodGet, "//", 404)
+
+	// 对 any 和空参数的测试
+
+	test.router.Get("/posts1-{id}-{page}.html", buildHandler(201))
+	test.matchTrue(http.MethodGet, "/posts1--.html", 201)
+	test.matchTrue(http.MethodGet, "/posts1-1-0.html", 201)
+
+	test.router.Get("/posts2-{id:any}-{page:any}.html", buildHandler(201))
+	test.matchTrue(http.MethodGet, "/posts2--.html", 404)
+	test.matchTrue(http.MethodGet, "/posts2-1-0.html", 201)
+
+	test.router.Get("/posts3-{id}-{page:any}.html", buildHandler(201))
+	test.matchTrue(http.MethodGet, "/posts3--.html", 404)
+	test.matchTrue(http.MethodGet, "/posts3-1-0.html", 201)
+	test.matchTrue(http.MethodGet, "/posts3--0.html", 201)
 }
 
 // 测试匹配顺序是否正确
