@@ -30,8 +30,6 @@ import (
 //               |
 //               +---- /emails
 type Tree struct {
-	disableHead bool
-
 	// 保存全局的请求方法，node.methodIndex 保存自身的请求方法
 	// CORS 的预检机制用到 node.methodIndex
 	methodIndex int
@@ -43,16 +41,15 @@ type Tree struct {
 }
 
 // New 声明一个 Tree 实例
-func New(disableHead bool) *Tree {
+func New() *Tree {
 	s, err := syntax.NewSegment("")
 	if err != nil {
 		panic("发生了不该发生的错误，应该是 syntax.NewSegment 逻辑发生变化" + err.Error())
 	}
 
 	t := &Tree{
-		disableHead: disableHead,
-		methods:     make(map[string]int, len(Methods)),
-		node:        &Node{segment: s, methodIndex: methodIndexMap[http.MethodOptions]},
+		methods: make(map[string]int, len(Methods)),
+		node:    &Node{segment: s, methodIndex: methodIndexMap[http.MethodOptions]},
 	}
 	t.node.root = t
 	t.node.handlers = map[string]http.Handler{http.MethodOptions: http.HandlerFunc(t.optionsServeHTTP)}

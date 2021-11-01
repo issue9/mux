@@ -25,9 +25,9 @@ type tester struct {
 	a    *assert.Assertion
 }
 
-func newTester(a *assert.Assertion, disableHead bool) *tester {
+func newTester(a *assert.Assertion) *tester {
 	return &tester{
-		tree: New(disableHead),
+		tree: New(),
 		a:    a,
 	}
 }
@@ -53,11 +53,6 @@ func (t *tester) handler(method, path string, code int) (http.Handler, params.Pa
 	t.a.Equal(w.Code, code)
 
 	return h, ps
-}
-
-func (t *tester) notFound(method, path string) {
-	hs, _ := t.tree.Route(path)
-	t.a.True(hs == nil || hs.Handler(method) == nil)
 }
 
 // 验证指定的路径是否匹配正确的路由项，通过 code 来确定，并返回该节点的实例。
@@ -93,7 +88,7 @@ func (t *tester) optionsTrue(path, options string) {
 
 func TestTree_match(t *testing.T) {
 	a := assert.New(t)
-	test := newTester(a, false)
+	test := newTester(a)
 
 	// 添加路由项
 	test.add(http.MethodGet, "/", 201)
@@ -117,26 +112,26 @@ func TestTree_match(t *testing.T) {
 	test.matchTrue(http.MethodGet, "/posts/2.html/2/author", 208) // 若 {id} 可匹配任意字符，此条也可匹配 3
 
 	// 测试 digit 和 \\d 是否正常
-	test = newTester(a, false)
+	test = newTester(a)
 	test.add(http.MethodGet, "/posts/{id:\\d}/author", 201)
 	test.add(http.MethodGet, "/posts/{id:digit}/author", 202)
 	test.matchTrue(http.MethodGet, "/posts/1/author", 202)
 
 	// 测试 digit 和 named 是否正常
-	test = newTester(a, false)
+	test = newTester(a)
 	test.add(http.MethodGet, "/posts/{id}/author", 201)
 	test.add(http.MethodGet, "/posts/{id:digit}/author", 202)
 	test.matchTrue(http.MethodGet, "/posts/1/author", 202)
 
 	// 测试 digit 和 \\d 和 named 三者顺序是否正常
-	test = newTester(a, false)
+	test = newTester(a)
 	test.add(http.MethodGet, "/posts/{id}/author", 201)
 	test.add(http.MethodGet, "/posts/{id:\\d}/author", 202)
 	test.add(http.MethodGet, "/posts/{id:digit}/author", 203)
 	test.matchTrue(http.MethodGet, "/posts/1/author", 203)
 
 	// 以斜框结尾，是否能正常访问
-	test = newTester(a, false)
+	test = newTester(a)
 	test.add(http.MethodGet, "/posts/{id}/", 201)
 	test.add(http.MethodGet, "/posts/{id}/author", 202)
 	test.matchTrue(http.MethodGet, "/posts/1/", 201)
@@ -144,13 +139,13 @@ func TestTree_match(t *testing.T) {
 	test.matchTrue(http.MethodGet, "/posts/1/author", 202)
 
 	// 以 - 作为路径分隔符
-	test = newTester(a, false)
+	test = newTester(a)
 	test.add(http.MethodGet, "/posts-{id}", 201)
 	test.add(http.MethodGet, "/posts-{id}-author", 202)
 	test.matchTrue(http.MethodGet, "/posts-1.html", 201)
 	test.matchTrue(http.MethodGet, "/posts-1-author", 202)
 
-	test = newTester(a, false)
+	test = newTester(a)
 	test.add(http.MethodGet, "/admin/{path}", 201)
 	test.add(http.MethodGet, "/admin/items/{id:\\d+}", 202)
 	test.add(http.MethodGet, "/admin/items/{id:\\d+}/profile", 203)
@@ -161,7 +156,7 @@ func TestTree_match(t *testing.T) {
 	test.matchTrue(http.MethodGet, "/admin/items/1/profile/1", 204)
 
 	// 测试 indexes 功能
-	test = newTester(a, false)
+	test = newTester(a)
 	test.add(http.MethodGet, "/admin/1", 201)
 	test.add(http.MethodGet, "/admin/2", 202)
 	test.add(http.MethodGet, "/admin/3", 203)
@@ -174,15 +169,7 @@ func TestTree_match(t *testing.T) {
 	// /admin/5index.html 即部分匹配 /admin/5，更匹配 /admin/{id}，测试是否正确匹配
 	test.matchTrue(http.MethodGet, "/admin/5index.html", 220)
 
-	// disableHead=true
-	test = newTester(a, true)
-	test.add(http.MethodGet, "/admin/1", 201)
-	test.matchTrue(http.MethodGet, "/admin/1", 201)
-	test.notFound(http.MethodHead, "/admin/1")
-	test.optionsTrue("", "GET, OPTIONS")
-
-	// disableHead=false
-	test = newTester(a, false)
+	test = newTester(a)
 	test.add(http.MethodGet, "/admin/1", 201)
 	test.matchTrue(http.MethodGet, "/admin/1", 201)
 	test.matchTrue(http.MethodHead, "/admin/1", 201) // 同 GET 的状态码
@@ -196,7 +183,7 @@ func TestTree_match(t *testing.T) {
 
 func TestTree_Params(t *testing.T) {
 	a := assert.New(t)
-	test := newTester(a, false)
+	test := newTester(a)
 
 	// 添加路由项
 	test.add(http.MethodGet, "/posts/{id}", 201)                       // 命名
@@ -215,7 +202,7 @@ func TestTree_Params(t *testing.T) {
 
 func TestTreeCN(t *testing.T) {
 	a := assert.New(t)
-	test := newTester(a, false)
+	test := newTester(a)
 
 	// 添加路由项
 	test.add(http.MethodGet, "/posts/{id}", 201) // 命名
@@ -228,7 +215,7 @@ func TestTreeCN(t *testing.T) {
 
 func TestTree_Clean(t *testing.T) {
 	a := assert.New(t)
-	tree := New(false)
+	tree := New()
 
 	addNode := func(p string, code int, methods ...string) {
 		a.NotError(tree.Add(p, buildHandler(code), methods...))
@@ -252,7 +239,7 @@ func TestTree_Clean(t *testing.T) {
 func TestTree_Add_Remove(t *testing.T) {
 	a := assert.New(t)
 
-	tree := New(false)
+	tree := New()
 	a.NotNil(tree)
 
 	a.NotError(tree.Add("/", buildHandler(http.StatusAccepted), http.MethodGet))
@@ -273,7 +260,7 @@ func TestTree_Add_Remove(t *testing.T) {
 
 	// addAny
 
-	tree = New(false)
+	tree = New()
 	a.NotNil(tree)
 	a.NotError(tree.Add("/path", buildHandler(201)))
 	node := tree.node.find("/path")
@@ -283,7 +270,7 @@ func TestTree_Add_Remove(t *testing.T) {
 
 	// head
 
-	tree = New(false)
+	tree = New()
 	a.NotNil(tree)
 	a.NotError(tree.Add("/path", buildHandler(http.StatusAccepted), http.MethodGet))
 	node = tree.node.find("/path")
@@ -294,20 +281,9 @@ func TestTree_Add_Remove(t *testing.T) {
 	tree.Remove("/path", http.MethodGet)
 	a.Equal(0, len(node.handlers))
 
-	tree = New(true)
-	a.NotNil(tree)
-	a.NotError(tree.Add("/path", buildHandler(http.StatusAccepted), http.MethodGet))
-	node = tree.node.find("/path")
-	a.Equal(2, len(node.handlers)).
-		Nil(node.handlers[http.MethodHead]).
-		NotNil(node.handlers[http.MethodOptions])
-
-	tree.Remove("/path", http.MethodGet)
-	a.Equal(0, len(node.handlers))
-
 	// error
 
-	tree = New(false)
+	tree = New()
 	a.NotNil(tree)
 	a.ErrorString(tree.Add("/path", buildHandler(http.StatusAccepted), http.MethodHead), "无法手动添加 OPTIONS/HEAD 请求方法")
 	a.ErrorString(tree.Add("/path", buildHandler(http.StatusAccepted), "NOT-SUPPORTED"), "NOT-SUPPORTED")
@@ -322,7 +298,7 @@ func TestTree_Add_Remove(t *testing.T) {
 
 func TestTree_Routes(t *testing.T) {
 	a := assert.New(t)
-	tree := New(false)
+	tree := New()
 	a.NotNil(tree)
 
 	a.NotError(tree.Add("/", buildHandler(http.StatusOK), http.MethodGet))

@@ -18,7 +18,7 @@ mux 功能完备的 Go 路由器：
 1. 分组路由，比如按域名，或是版本号等；
 1. CORS 跨域资源的处理；
 1. 支持中间件；
-1. 支持 OPTIONS * 请求；
+1. 自动生成 OPTIONS * 请求；
 
 ```go
 import "github.com/issue9/middleware/v4/compress"
@@ -204,11 +204,6 @@ r.Header.Set("Origin", "http://example.com")
 r.Header.Set("Access-Control-Request-Method", "GET")
 r.Do() // 预检请求，可以正常访问
 ```
-
-### HEAD
-
-用户无须显示地实现 `HEAD` 请求， 系统会为每一个 `GET` 请求自动实现一个对应的 `HEAD` 请求，
-当然也可以通过 `disableHead` 禁有自动生成 `HEAD` 请求。
 
 ### 中间件
 

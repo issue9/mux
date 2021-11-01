@@ -33,7 +33,7 @@ func TestBuildMethodIndexes(t *testing.T) {
 
 func TestNode_serveHTTP(t *testing.T) {
 	a := assert.New(t)
-	tree := New(false)
+	tree := New()
 
 	a.NotError(tree.Add("/path", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("h1", "h1")
@@ -60,7 +60,7 @@ func TestNode_serveHTTP(t *testing.T) {
 
 func TestTree_buildMethods(t *testing.T) {
 	a := assert.New(t)
-	tree := New(false)
+	tree := New()
 	a.NotNil(tree)
 
 	// delete=1
@@ -85,34 +85,5 @@ func TestTree_buildMethods(t *testing.T) {
 	tree.buildMethods(-1, http.MethodDelete)
 	a.Equal(tree.methods, map[string]int{http.MethodGet: 1, http.MethodDelete: 0})
 	a.Equal(tree.methodIndex, methodIndexMap[http.MethodOptions]+methodIndexMap[http.MethodGet]+methodIndexMap[http.MethodHead])
-	a.Equal(tree.node.methodIndex, methodIndexMap[http.MethodOptions])
-
-	// disableHead = true
-
-	tree = New(true)
-	a.NotNil(tree)
-
-	// delete=1
-	tree.buildMethods(1, http.MethodDelete)
-	a.Equal(tree.methods, map[string]int{http.MethodDelete: 1})
-	a.Equal(tree.methodIndex, methodIndexMap[http.MethodDelete]+methodIndexMap[http.MethodOptions])
-	a.Equal(tree.node.methodIndex, methodIndexMap[http.MethodOptions])
-
-	// get=1,delete=2
-	tree.buildMethods(1, http.MethodDelete, http.MethodGet)
-	a.Equal(tree.methods, map[string]int{http.MethodDelete: 2, http.MethodGet: 1})
-	a.Equal(tree.methodIndex, methodIndexMap[http.MethodDelete]+methodIndexMap[http.MethodOptions]+methodIndexMap[http.MethodGet])
-	a.Equal(tree.node.methodIndex, methodIndexMap[http.MethodOptions])
-
-	// get=1,delete=0
-	tree.buildMethods(-2, http.MethodDelete)
-	a.Equal(tree.methods, map[string]int{http.MethodGet: 1, http.MethodDelete: 0})
-	a.Equal(tree.methodIndex, methodIndexMap[http.MethodOptions]+methodIndexMap[http.MethodGet])
-	a.Equal(tree.node.methodIndex, methodIndexMap[http.MethodOptions])
-
-	// get=1,delete=-2
-	tree.buildMethods(-2, http.MethodDelete)
-	a.Equal(tree.methods, map[string]int{http.MethodGet: 1, http.MethodDelete: -2})
-	a.Equal(tree.methodIndex, methodIndexMap[http.MethodOptions]+methodIndexMap[http.MethodGet])
 	a.Equal(tree.node.methodIndex, methodIndexMap[http.MethodOptions])
 }

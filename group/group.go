@@ -24,7 +24,6 @@ type Group struct {
 	ms      *mux.Middlewares
 
 	caseInsensitive bool
-	disableHead     bool
 	cors            *mux.CORS
 }
 
@@ -34,18 +33,16 @@ type router struct {
 }
 
 // Default 返回默认参数的 New
-func Default() *Group { return New(false, false, mux.DeniedCORS()) }
+func Default() *Group { return New(false, mux.DeniedCORS()) }
 
 // New 声明一个新的 Groups
 //
-// disableHead 是否禁用根据 Get 请求自动生成 HEAD 请求；
 // cors 跨域请求的相关设置项；
-func New(disableHead, caseInsensitive bool, cors *mux.CORS) *Group {
+func New(caseInsensitive bool, cors *mux.CORS) *Group {
 	g := &Group{
 		routers: make([]*router, 0, 1),
 
 		caseInsensitive: caseInsensitive,
-		disableHead:     disableHead,
 		cors:            cors,
 	}
 	g.ms = mux.NewMiddlewares(http.HandlerFunc(g.serveHTTP))
@@ -68,7 +65,7 @@ func (g *Group) serveHTTP(w http.ResponseWriter, r *http.Request) {
 //
 // 与 Add 的区别在于：New 参数从 Group 继承，而 Add 的路由，其参数可自定义。
 func (g *Group) New(name string, matcher Matcher) *mux.Router {
-	r := mux.NewRouter(name, g.disableHead, g.caseInsensitive, g.cors)
+	r := mux.NewRouter(name, g.caseInsensitive, g.cors)
 	g.Add(matcher, r)
 	return r
 }

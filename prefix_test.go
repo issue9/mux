@@ -14,7 +14,7 @@ func (t *tester) prefix(p string) *Prefix {
 }
 
 func TestPrefix(t *testing.T) {
-	test := newTester(t, true, false)
+	test := newTester(t, false)
 	p := test.prefix("/p")
 
 	p.Get("/h/1", buildHandler(201))
@@ -73,7 +73,7 @@ func TestPrefix(t *testing.T) {
 
 func TestRouter_Prefix(t *testing.T) {
 	a := assert.New(t)
-	def := NewRouter("", true, false, AllowedCORS())
+	def := NewRouter("", false, AllowedCORS())
 	a.NotNil(def)
 
 	p := def.Prefix("/abc")
@@ -86,7 +86,7 @@ func TestRouter_Prefix(t *testing.T) {
 
 func TestPrefix_Prefix(t *testing.T) {
 	a := assert.New(t)
-	def := NewRouter("", true, false, AllowedCORS())
+	def := NewRouter("", false, AllowedCORS())
 	a.NotNil(def)
 
 	p := def.Prefix("/abc")
@@ -101,7 +101,7 @@ func TestPrefix_Prefix(t *testing.T) {
 
 func TestPrefix_URL(t *testing.T) {
 	a := assert.New(t)
-	def := NewRouter("", true, false, AllowedCORS())
+	def := NewRouter("", false, AllowedCORS())
 	a.NotNil(def)
 
 	// 非正则

@@ -105,7 +105,7 @@ func (n *Node) addMethods(h http.Handler, methods ...string) error {
 		}
 		n.handlers[m] = h
 
-		if m == http.MethodGet && !n.root.disableHead { // 如果是 GET，则顺便添加 HEAD
+		if m == http.MethodGet { // 如果是 GET，则顺便添加 HEAD
 			n.handlers[http.MethodHead] = n.headServeHTTP(h)
 		}
 	}
@@ -135,7 +135,7 @@ func (tree *Tree) buildMethods(v int, methods ...string) {
 	for m, num := range tree.methods {
 		if num > 0 {
 			tree.methodIndex += methodIndexMap[m]
-			if m == http.MethodGet && !tree.disableHead {
+			if m == http.MethodGet {
 				tree.methodIndex += methodIndexMap[http.MethodHead]
 			}
 		}

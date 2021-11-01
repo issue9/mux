@@ -37,7 +37,7 @@ func buildMiddleware(a *assert.Assertion, text string) mux.MiddlewareFunc {
 }
 
 func newRouter(a *assert.Assertion, name string) *mux.Router {
-	r := mux.NewRouter(name, false, false, nil)
+	r := mux.NewRouter(name, false, nil)
 	a.NotNil(r)
 	return r
 }

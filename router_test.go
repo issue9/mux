@@ -34,8 +34,8 @@ type tester struct {
 	a      *assert.Assertion
 }
 
-func newTester(t testing.TB, disableHead, caseInsensitive bool) *tester {
-	r := NewRouter("def", disableHead, caseInsensitive, AllowedCORS())
+func newTester(t testing.TB, caseInsensitive bool) *tester {
+	r := NewRouter("def", caseInsensitive, AllowedCORS())
 	assert.NotNil(t, r)
 	assert.Equal(t, "def", r.Name())
 
@@ -71,14 +71,15 @@ func (t *tester) optionsAsteriskTrue(allow string) {
 		Equal(w.Header().Get("Allow"), allow)
 }
 
-func TestRouter_HEAD(t *testing.T) {
-	test := newTester(t, true, false)
+func TestRouter(t *testing.T) {
+	test := newTester(t, false)
 
 	test.router.Get("/", buildHandler(201))
 	test.matchTrue(http.MethodGet, "/", 201)
-	test.matchTrue(http.MethodHead, "/", http.StatusMethodNotAllowed) // 启用 disableHead
+	test.matchTrue(http.MethodHead, "/", 201)
 	test.matchTrue(http.MethodGet, "/abc", http.StatusNotFound)
-	test.optionsAsteriskTrue("GET, OPTIONS")
+	test.matchContent(http.MethodHead, "/", 201, "")
+	test.optionsAsteriskTrue("GET, HEAD, OPTIONS")
 
 	test.router.Get("/h/1", buildHandler(201))
 	test.matchTrue(http.MethodGet, "/h/1", 201)
@@ -89,7 +90,7 @@ func TestRouter_HEAD(t *testing.T) {
 	test.matchTrue(http.MethodPost, "/h/1", 202)
 	test.router.PostFunc("/f/1", buildHandlerFunc(202))
 	test.matchTrue(http.MethodPost, "/f/1", 202)
-	test.optionsAsteriskTrue("GET, OPTIONS, POST")
+	test.optionsAsteriskTrue("GET, HEAD, OPTIONS, POST")
 
 	test.router.Put("/h/1", buildHandler(203))
 	test.matchTrue(http.MethodPut, "/h/1", 203)
@@ -105,7 +106,7 @@ func TestRouter_HEAD(t *testing.T) {
 	test.matchTrue(http.MethodDelete, "/h/1", 205)
 	test.router.DeleteFunc("/f/1", buildHandlerFunc(205))
 	test.matchTrue(http.MethodDelete, "/f/1", 205)
-	test.optionsAsteriskTrue("DELETE, GET, OPTIONS, PATCH, POST, PUT")
+	test.optionsAsteriskTrue("DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT")
 
 	// Any
 	test.router.Any("/h/any", buildHandler(206))
@@ -118,49 +119,6 @@ func TestRouter_HEAD(t *testing.T) {
 
 	test.router.AnyFunc("/f/any", buildHandlerFunc(206))
 	test.matchTrue(http.MethodGet, "/f/any", 206)
-	test.matchTrue(http.MethodPost, "/f/any", 206)
-	test.matchTrue(http.MethodPut, "/f/any", 206)
-	test.matchTrue(http.MethodPatch, "/f/any", 206)
-	test.matchTrue(http.MethodDelete, "/f/any", 206)
-	test.matchTrue(http.MethodTrace, "/f/any", 206)
-
-	// disableHead=false
-
-	test = newTester(t, false, false)
-
-	test.router.Get("/", buildHandler(201))
-	test.matchTrue(http.MethodGet, "", 201)
-	test.matchTrue(http.MethodGet, "/", 201)
-	test.matchTrue(http.MethodHead, "", 201)
-	test.matchTrue(http.MethodHead, "/", 201)
-	test.matchContent(http.MethodHead, "/", 201, "")
-	test.optionsAsteriskTrue("GET, HEAD, OPTIONS")
-
-	test.router.Get("/h/1", buildHandler(201))
-	test.matchTrue(http.MethodGet, "/h/1", 201)
-	test.matchTrue(http.MethodHead, "/h/1", 201)
-	test.router.GetFunc("/f/1", buildHandlerFunc(201))
-	test.matchTrue(http.MethodGet, "/f/1", 201)
-	test.matchTrue(http.MethodHead, "/f/1", 201)
-
-	test.router.Post("/h/post", buildHandler(202))
-	test.matchTrue(http.MethodPost, "/h/post", 202)
-	test.matchTrue(http.MethodHead, "/h/post", http.StatusMethodNotAllowed)
-	test.optionsAsteriskTrue("GET, HEAD, OPTIONS, POST")
-
-	// Any
-	test.router.Any("/h/any", buildHandler(206))
-	test.matchTrue(http.MethodGet, "/h/any", 206)
-	test.matchTrue(http.MethodHead, "/h/any", 206)
-	test.matchTrue(http.MethodPost, "/h/any", 206)
-	test.matchTrue(http.MethodPut, "/h/any", 206)
-	test.matchTrue(http.MethodPatch, "/h/any", 206)
-	test.matchTrue(http.MethodDelete, "/h/any", 206)
-	test.matchTrue(http.MethodTrace, "/h/any", 206)
-
-	test.router.AnyFunc("/f/any", buildHandlerFunc(206))
-	test.matchTrue(http.MethodGet, "/f/any", 206)
-	test.matchTrue(http.MethodHead, "/f/any", 206)
 	test.matchTrue(http.MethodPost, "/f/any", 206)
 	test.matchTrue(http.MethodPut, "/f/any", 206)
 	test.matchTrue(http.MethodPatch, "/f/any", 206)
@@ -176,7 +134,7 @@ func TestRouter_HEAD(t *testing.T) {
 func TestRouter_ServeHTTP(t *testing.T) {
 	a := assert.New(t)
 
-	test := newTester(t, true, false)
+	test := newTester(t, false)
 
 	a.NotError(test.router.Handle("/posts/{path}.html", buildHandler(201)))
 	test.matchTrue(http.MethodGet, "/posts/2017/1.html", 201)
@@ -209,7 +167,7 @@ func TestRouter_ServeHTTP(t *testing.T) {
 
 	// 忽略大小写测试
 
-	test = newTester(t, true, true)
+	test = newTester(t, true)
 
 	a.NotError(test.router.Handle("/posts/{path}.html", buildHandler(201)))
 	test.matchTrue(http.MethodGet, "/posts/2017/1.html", 201)
@@ -218,7 +176,7 @@ func TestRouter_ServeHTTP(t *testing.T) {
 
 func TestRouter_Handle_Remove(t *testing.T) {
 	a := assert.New(t)
-	test := newTester(t, true, false)
+	test := newTester(t, false)
 
 	// 添加 GET /api/1
 	// 添加 PUT /api/1
@@ -261,12 +219,6 @@ func TestRouter_Routes(t *testing.T) {
 	def.Get("/m", buildHandler(1))
 	def.Post("/m", buildHandler(1))
 	a.Equal(def.Routes(), map[string][]string{"*": {"OPTIONS"}, "/m": {"GET", "HEAD", "OPTIONS", "POST"}})
-
-	def = NewRouter("", true, false, nil)
-	a.NotNil(def)
-	def.Get("/m", buildHandler(1))
-	def.Post("/m", buildHandler(1))
-	a.Equal(def.Routes(), map[string][]string{"*": {"OPTIONS"}, "/m": {"GET", "OPTIONS", "POST"}})
 }
 
 func TestRouter_Params(t *testing.T) {
@@ -348,7 +300,7 @@ func TestRouter_Clean(t *testing.T) {
 func TestRouter_ServeHTTP_Order(t *testing.T) {
 	a := assert.New(t)
 
-	test := newTester(t, true, false)
+	test := newTester(t, false)
 	a.NotError(test.router.GetFunc("/posts/{id}", buildHandlerFunc(203)))
 	a.NotError(test.router.GetFunc("/posts/{id:\\d+}", buildHandlerFunc(202)))
 	a.NotError(test.router.GetFunc("/posts/1", buildHandlerFunc(201)))
@@ -363,7 +315,7 @@ func TestRouter_ServeHTTP_Order(t *testing.T) {
 	test.matchTrue(http.MethodGet, "/posts-", 205)    // 204 只匹配非空
 
 	// interceptor
-	test = newTester(t, true, false)
+	test = newTester(t, false)
 	interceptor.Register(interceptor.MatchDigit, "[0-9]+")
 	a.NotError(test.router.GetFunc("/posts/{id}", buildHandlerFunc(203)))        // f3
 	a.NotError(test.router.GetFunc("/posts/{id:\\d+}", buildHandlerFunc(202)))   // f2 永远匹配不到
@@ -375,19 +327,19 @@ func TestRouter_ServeHTTP_Order(t *testing.T) {
 	test.matchTrue(http.MethodGet, "/posts/", 203)                               // f3
 	interceptor.Deregister("[0-9]+")
 
-	test = newTester(t, true, false)
+	test = newTester(t, false)
 	a.NotError(test.router.GetFunc("/p1/{p1}/p2/{p2:\\d+}", buildHandlerFunc(201))) // f1
 	a.NotError(test.router.GetFunc("/p1/{p1}/p2/{p2:\\w+}", buildHandlerFunc(202))) // f2
 	test.matchTrue(http.MethodGet, "/p1/1/p2/1", 201)                               // f1
 	test.matchTrue(http.MethodGet, "/p1/2/p2/s", 202)                               // f2
 
-	test = newTester(t, true, false)
+	test = newTester(t, false)
 	a.NotError(test.router.GetFunc("/posts/{id}/{page}", buildHandlerFunc(202))) // f2
 	a.NotError(test.router.GetFunc("/posts/{id}/1", buildHandlerFunc(201)))      // f1
 	test.matchTrue(http.MethodGet, "/posts/1/1", 201)                            // f1 普通路由项完全匹配
 	test.matchTrue(http.MethodGet, "/posts/2/5", 202)                            // f2 命名完全匹配
 
-	test = newTester(t, true, false)
+	test = newTester(t, false)
 	a.NotError(test.router.GetFunc("/tags/{id}.html", buildHandlerFunc(201))) // f1
 	a.NotError(test.router.GetFunc("/tags.html", buildHandlerFunc(202)))      // f2
 	a.NotError(test.router.GetFunc("/{path}", buildHandlerFunc(203)))         // f3

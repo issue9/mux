@@ -61,7 +61,7 @@ func TestCORS_sanitize(t *testing.T) {
 
 func TestCORS_handle(t *testing.T) {
 	a := assert.New(t)
-	tree2 := tree.New(true)
+	tree2 := tree.New()
 	a.NotError(tree2.Add("/path", nil, http.MethodGet, http.MethodDelete))
 	hs, ps := tree2.Route("/path")
 	a.NotNil(hs).Empty(ps)
@@ -116,7 +116,7 @@ func TestCORS_handle(t *testing.T) {
 	r.Header.Set("Access-Control-Request-Method", "GET")
 	c.handle(hs, w, r)
 	a.Equal(w.Header().Get("Access-Control-Allow-Origin"), "*")
-	a.Equal(w.Header().Get("Access-Control-Allow-Methods"), "DELETE, GET, OPTIONS")
+	a.Equal(w.Header().Get("Access-Control-Allow-Methods"), "DELETE, GET, HEAD, OPTIONS")
 
 	// preflight，但是方法不被允许
 	w = httptest.NewRecorder()
