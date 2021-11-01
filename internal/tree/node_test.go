@@ -40,7 +40,7 @@ func TestNode_find(t *testing.T) {
 			nn.handlers = make(map[string]http.Handler, handlersSize)
 		}
 
-		a.NotError(nn.addMethods(false, buildHandler(code), methods...))
+		a.NotError(nn.addMethods(buildHandler(code), methods...))
 	}
 
 	addNode("/", 1, http.MethodGet)

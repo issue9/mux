@@ -89,9 +89,9 @@ func (n *Node) Options() string { return methodIndexes[n.methodIndex].options }
 func (n *Node) Methods() []string { return methodIndexes[n.methodIndex].methods }
 
 // 添加一个处理函数
-func (n *Node) addMethods(f bool, h http.Handler, methods ...string) error {
+func (n *Node) addMethods(h http.Handler, methods ...string) error {
 	for _, m := range methods {
-		if !f && (m == http.MethodHead || m == http.MethodOptions) {
+		if m == http.MethodHead || m == http.MethodOptions {
 			return fmt.Errorf("无法手动添加 OPTIONS/HEAD 请求方法")
 		}
 
@@ -126,20 +126,17 @@ func (tree *Tree) buildMethods(v int, methods ...string) {
 		methods = addAny
 	}
 
-	tree.methodIndex = methodIndexMap[http.MethodOptions]
 	for _, m := range methods {
-		if m == http.MethodOptions || m == http.MethodHead {
-			continue
-		}
-
 		tree.methods[m] += v
-		if tree.methods[m] <= 0 {
-			continue
-		}
+	}
 
-		tree.methodIndex += methodIndexMap[m]
-		if m == http.MethodGet && !tree.disableHead { // 通过是否有 GET 判断 HEAD 是否存在
-			tree.methodIndex += methodIndexMap[http.MethodHead]
+	tree.methodIndex = methodIndexMap[http.MethodOptions]
+	for m, num := range tree.methods {
+		if num > 0 {
+			tree.methodIndex += methodIndexMap[m]
+			if m == http.MethodGet && !tree.disableHead {
+				tree.methodIndex += methodIndexMap[http.MethodHead]
+			}
 		}
 	}
 

@@ -187,6 +187,10 @@ func TestTree_match(t *testing.T) {
 	test.matchTrue(http.MethodHead, "/admin/1", 201) // 同 GET 的状态码
 	test.optionsTrue("*", "GET, HEAD, OPTIONS")
 	test.optionsTrue("", "GET, HEAD, OPTIONS")
+
+	// 动态添加其它方法，会改变 OPTIONS 值
+	test.add(http.MethodPost, "/admin/1", 201)
+	test.optionsTrue("", "GET, HEAD, OPTIONS, POST")
 }
 
 func TestTree_Params(t *testing.T) {

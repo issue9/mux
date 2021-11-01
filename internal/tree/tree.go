@@ -49,26 +49,25 @@ func New(disableHead, optionsAsterisk bool) *Tree {
 		panic("发生了不该发生的错误，应该是 syntax.NewSegment 逻辑发生变化" + err.Error())
 	}
 
-	methods := make(map[string]int, len(Methods))
-	for _, m := range Methods {
-		methods[m] = 0
-	}
-
 	t := &Tree{
 		disableHead: disableHead,
 		node:        &Node{segment: s, handlers: make(map[string]http.Handler, 1)},
 
-		methods:         methods,
+		methods:         make(map[string]int, len(Methods)),
 		methodIndex:     methodIndexMap[http.MethodOptions],
 		optionsAsterisk: optionsAsterisk,
 	}
 	t.node.root = t
 
 	if optionsAsterisk {
-		err := t.add(true, "*", http.HandlerFunc(t.optionsServeHTTP), http.MethodOptions)
+		n, err := t.getNode("*")
 		if err != nil {
 			panic(err)
 		}
+		n.handlers = map[string]http.Handler{
+			http.MethodOptions: http.HandlerFunc(t.optionsServeHTTP),
+		}
+		n.buildMethods()
 	}
 
 	return t
@@ -82,10 +81,6 @@ func (tree *Tree) optionsServeHTTP(w http.ResponseWriter, req *http.Request) {
 //
 // methods 可以为空，表示添加除 OPTIONS 和 HEAD 之外所有支持的请求方法。
 func (tree *Tree) Add(pattern string, h http.Handler, methods ...string) error {
-	return tree.add(false, pattern, h, methods...)
-}
-
-func (tree *Tree) add(f bool, pattern string, h http.Handler, methods ...string) error {
 	n, err := tree.getNode(pattern)
 	if err != nil {
 		return err
@@ -98,7 +93,7 @@ func (tree *Tree) add(f bool, pattern string, h http.Handler, methods ...string)
 	if len(methods) == 0 {
 		methods = addAny
 	}
-	return n.addMethods(f, h, methods...)
+	return n.addMethods(h, methods...)
 }
 
 // Clean 清除路由项

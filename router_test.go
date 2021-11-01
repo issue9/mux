@@ -62,16 +62,13 @@ func (t *tester) optionsTrue(path string, code int, allow string) {
 }
 
 func (t *tester) optionsAsteriskTrue(allow string) {
-	s := httptest.NewServer(t.router)
-
-	r, err := http.NewRequest(http.MethodOptions, s.URL, nil)
+	r, err := http.NewRequest(http.MethodOptions, "*", nil)
 	t.a.NotError(err).NotNil(r)
 
-	resp, err := http.DefaultClient.Do(r)
-	t.a.NotError(err).NotNil(resp)
-
-	t.a.Equal(resp.StatusCode, 200).
-		Equal(resp.Header.Get("Allow"), allow)
+	w := httptest.NewRecorder()
+	t.router.ServeHTTP(w, r) // Client.Do 无法传递 * 或是空的路径请求。改用 serveHTTP
+	t.a.Equal(w.Code, 200).
+		Equal(w.Header().Get("Allow"), allow)
 }
 
 func TestRouter(t *testing.T) {
@@ -81,7 +78,7 @@ func TestRouter(t *testing.T) {
 	test.router.Get("/", buildHandler(201))
 	test.matchTrue(http.MethodGet, "", 201)
 	test.matchTrue(http.MethodGet, "/", 201)
-	test.matchTrue(http.MethodHead, "/", http.StatusMethodNotAllowed) // 未启用 autoHead
+	test.matchTrue(http.MethodHead, "/", http.StatusMethodNotAllowed) // 启用 disableHead
 	test.matchTrue(http.MethodGet, "/abc", http.StatusNotFound)
 	test.optionsAsteriskTrue("GET, OPTIONS")
 
@@ -94,6 +91,7 @@ func TestRouter(t *testing.T) {
 	test.matchTrue(http.MethodPost, "/h/1", 202)
 	test.router.PostFunc("/f/1", buildHandlerFunc(202))
 	test.matchTrue(http.MethodPost, "/f/1", 202)
+	test.optionsAsteriskTrue("GET, OPTIONS, POST")
 
 	test.router.Put("/h/1", buildHandler(203))
 	test.matchTrue(http.MethodPut, "/h/1", 203)
@@ -109,6 +107,7 @@ func TestRouter(t *testing.T) {
 	test.matchTrue(http.MethodDelete, "/h/1", 205)
 	test.router.DeleteFunc("/f/1", buildHandlerFunc(205))
 	test.matchTrue(http.MethodDelete, "/f/1", 205)
+	test.optionsAsteriskTrue("DELETE, GET, OPTIONS, PATCH, POST, PUT")
 
 	// Any
 	test.router.Any("/h/any", buildHandler(206))
