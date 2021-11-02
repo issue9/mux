@@ -147,9 +147,7 @@ func (tree *Tree) Route(path string) (*Node, params.Params) {
 		return tree.node, nil
 	}
 
-	ps := make(params.Params, 3)
-	node := tree.node.match(path, ps)
-
+	node, ps := tree.node.match(path, nil)
 	if node == nil || len(node.handlers) == 0 {
 		return nil, nil
 	}

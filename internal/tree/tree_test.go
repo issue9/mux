@@ -42,7 +42,7 @@ func (t *tester) add(method, pattern string, code int) {
 // 若是，则返回该节点以及对应的参数。
 func (t *tester) handler(method, path string, code int) (http.Handler, params.Params) {
 	hs, ps := t.tree.Route(path)
-	t.a.NotNil(ps).NotNil(hs)
+	t.a.NotNil(hs)
 
 	h := hs.Handler(method)
 	t.a.NotNil(h)

@@ -137,178 +137,162 @@ func TestSegment_Match(t *testing.T) {
 
 	// Named:any
 	seg, err := NewSegment("{id:any}/author")
-	ps := params.Params{}
 	a.NotError(err).NotNil(seg)
 	path := "1/author"
-	index := seg.Match(path, ps)
+	index, ps := seg.Match(path, nil)
 	a.Empty(path[index:]).
 		Equal(ps, params.Params{"id": "1"})
 
 	// Named 完全匹配
-	ps = params.Params{}
 	seg, err = NewSegment("{id}/author")
 	a.NotError(err).NotNil(seg)
 	path = "1/author"
-	index = seg.Match(path, ps)
+	index, ps = seg.Match(path, nil)
 	a.Empty(path[index:]).
 		Equal(ps, params.Params{"id": "1"})
 
 	// Named 部分匹配
-	ps = params.Params{}
 	seg, err = NewSegment("{id}/author")
 	a.NotError(err).NotNil(seg)
 	path = "1/author/email"
-	index = seg.Match(path, ps)
-	a.Equal(path[index:], "/email")
+	index, ps = seg.Match(path, nil)
+	a.Equal(path[index:], "/email").Equal(ps, params.Params{"id": "1"})
 
 	// Named 不匹配
-	ps = params.Params{}
 	seg, err = NewSegment("{id}/author")
 	a.NotError(err).NotNil(seg)
 	path = "1/aut"
-	index = seg.Match(path, ps)
-	a.Equal(index, -1)
+	index, ps = seg.Match(path, nil)
+	a.Equal(index, -1).Empty(ps)
 
 	// Named 1/2 匹配 {id}
-	ps = params.Params{}
 	seg, err = NewSegment("{id}/author")
 	a.NotError(err).NotNil(seg)
 	path = "1/2/author"
-	index = seg.Match(path, ps)
+	index, ps = seg.Match(path, nil)
 	a.Equal(path[index:], "").
 		Equal(ps, map[string]string{"id": "1/2"})
 
 	// Interceptor 1/2 匹配 {id}
-	ps = params.Params{}
 	seg, err = NewSegment("{id:any}/author")
 	a.NotError(err).NotNil(seg)
 	path = "1/2/author"
-	index = seg.Match(path, ps)
+	index, ps = seg.Match(path, nil)
 	a.Equal(path[index:], "").
 		Equal(ps, map[string]string{"id": "1/2"})
 
-	ps = params.Params{}
 	seg, err = NewSegment("{any}/123")
 	a.NotError(err).NotNil(seg)
 	path = "123"
-	index = seg.Match(path, ps)
-	a.Equal(index, -1)
+	index, ps = seg.Match(path, nil)
+	a.Equal(index, -1).Empty(ps)
 
-	ps = params.Params{}
 	seg, err = NewSegment("{any:any}/123")
 	a.NotError(err).NotNil(seg)
 	path = "123"
-	index = seg.Match(path, ps)
-	a.Equal(index, -1)
+	index, ps = seg.Match(path, nil)
+	a.Equal(index, -1).Empty(ps)
 
 	// 命名参数
-	ps = params.Params{}
 	seg, err = NewSegment("{any}123")
 	a.NotError(err).NotNil(seg)
 	a.Equal(seg.Type, Named)
 	path = "123123"
-	index = seg.Match(path, ps)
+	index, ps = seg.Match(path, nil)
 	a.Equal(index, 3).Equal(ps, map[string]string{"any": ""})
 
 	// Interceptor
-	ps = params.Params{}
 	seg, err = NewSegment("{any:any}123")
 	a.NotError(err).NotNil(seg)
 	a.Equal(seg.Type, Interceptor)
 	path = "123123"
-	index = seg.Match(path, ps)
+	index, ps = seg.Match(path, nil)
 	a.Equal(index, 6).
 		Equal(ps, map[string]string{"any": "123"})
 
-	ps = params.Params{}
 	seg, err = NewSegment("{any:any}123")
 	a.NotError(err).NotNil(seg)
 	path = "12345123"
-	index = seg.Match(path, ps)
+	index, ps = seg.Match(path, nil)
 	a.Equal(index, 8).
 		Equal(ps, map[string]string{"any": "12345"})
 
-	ps = params.Params{}
 	seg, err = NewSegment("{any:digit}123")
 	a.NotError(err).NotNil(seg)
 	path = "12345123"
-	index = seg.Match(path, ps)
+	index, ps = seg.Match(path, nil)
 	a.Equal(index, 8).
 		Equal(ps, map[string]string{"any": "12345"})
 
 	// Named Endpoint 匹配
-	ps = params.Params{}
 	seg, err = NewSegment("{path}")
 	a.NotError(err).NotNil(seg)
 	path = "/posts/author"
-	index = seg.Match(path, ps)
-	a.Equal(path[index:], "")
+	index, ps = seg.Match(path, nil)
+	a.Equal(path[index:], "").Equal(ps, params.Params{"path": "/posts/author"})
 
 	// Named:digit Endpoint 匹配
-	ps = params.Params{}
 	seg, err = NewSegment("{id:digit}")
 	a.NotError(err).NotNil(seg)
 	path = "123"
-	index = seg.Match(path, ps)
+	index, ps = seg.Match(path, nil)
 	a.Equal(path[index:], "").
 		Equal(ps, map[string]string{"id": "123"})
 
-	// Named:digit Endpoint 不匹配
-	ps = params.Params{}
+	// Named:digit Endpoint 不匹配，不会删除传入的参数
+	ps = params.Params{"p1": "v1"}
 	seg, err = NewSegment("{id:digit}")
 	a.NotError(err).NotNil(seg)
 	path = "one"
-	index = seg.Match(path, ps)
-	a.Equal(index, -1).Empty(ps)
+	index, ps = seg.Match(path, ps)
+	a.Equal(index, -1).Equal(ps, params.Params{"p1": "v1"})
 
 	// Named:digit
 	seg, err = NewSegment("{id:digit}/author")
 	a.NotError(err).NotNil(seg)
 
 	// Named:digit 不匹配
-	ps = params.Params{}
 	path = "1/aut"
-	index = seg.Match(path, ps)
-	a.Equal(index, -1)
+	index, ps = seg.Match(path, nil)
+	a.Equal(index, -1).Empty(ps)
 
 	// Named:digit 类型不匹配
 	ps = params.Params{}
 	path = "xx/author"
-	index = seg.Match(path, ps)
-	a.Equal(index, -1)
+	index, ps = seg.Match(path, ps)
+	a.Equal(index, -1).Empty(ps)
 
 	// String
 	seg, err = NewSegment("/posts/author")
 	a.NotError(err).NotNil(seg)
 
 	// String 匹配
+	ps = params.Params{"p1": "v1"}
 	path = "/posts/author"
-	index = seg.Match(path, nil)
-	a.Equal(path[index:], "")
+	index, ps = seg.Match(path, ps)
+	a.Equal(path[index:], "").Equal(ps, params.Params{"p1": "v1"})
 
 	// String 不匹配
 	path = "/posts/author/email"
-	index = seg.Match(path, nil)
-	a.Equal(path[index:], "/email")
+	index, ps = seg.Match(path, nil)
+	a.Equal(path[index:], "/email").Nil(ps)
 
 	// Regexp
 	seg, err = NewSegment("{id:\\d+}/author")
 	a.NotError(err).NotNil(seg)
 
 	// Regexp 完全匹配
-	ps = params.Params{}
 	path = "1/author"
-	index = seg.Match(path, ps)
-	a.Equal(path[index:], "")
+	index, ps = seg.Match(path, nil)
+	a.Equal(path[index:], "").Equal(ps, params.Params{"id": "1"})
 
 	// Regexp 不匹配
-	ps = params.Params{}
 	path = "xxx/author"
-	index = seg.Match(path, ps)
-	a.Equal(index, -1)
+	index, ps = seg.Match(path, nil)
+	a.Equal(index, -1).Empty(ps)
 
 	// Regexp 部分匹配
 	path = "1/author/email"
-	index = seg.Match(path, ps)
-	a.Equal(path[index:], "/email")
+	index, ps = seg.Match(path, nil)
+	a.Equal(path[index:], "/email").Equal(ps, params.Params{"id": "1"})
 }

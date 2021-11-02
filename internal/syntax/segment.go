@@ -117,42 +117,56 @@ func (seg *Segment) Split(pos int) ([]*Segment, error) {
 
 // Match 路径是否与当前节点匹配
 //
-// 如果正确匹配，则返回 path 剩余部分的起始位置。
-// params 表示匹配完成之后，从地址中获取的参数值。
-func (seg *Segment) Match(path string, params params.Params) int {
+// ps 表示匹配完成之后，从地址中获取的参数值，可以为 nil，将由 Match 初始化。
+// 如果匹配不成功，原样返回 ps，否则将参数填入 ps，并作为返回值返回。
+// 调用者应该始终采用返回值作为其最新的参数列表；
+// 如果正确匹配，则返回 path 剩余部分的起始位置，不匹配则返回 -1。
+func (seg *Segment) Match(path string, ps params.Params) (int, params.Params) {
 	switch seg.Type {
 	case String:
 		if strings.HasPrefix(path, seg.Value) {
-			return len(seg.Value)
+			return len(seg.Value), ps
 		}
 	case Interceptor, Named:
 		if seg.Endpoint {
 			if seg.matcher(path) {
-				params[seg.Name] = path
-				return len(path)
+				if ps == nil {
+					ps = make(params.Params, 3)
+				}
+
+				ps[seg.Name] = path
+				return len(path), ps
 			}
 		} else if index := strings.Index(path, seg.Suffix); index >= 0 {
 			for {
 				if val := path[:index]; seg.matcher(val) {
-					params[seg.Name] = val
-					return index + len(seg.Suffix)
+					if ps == nil {
+						ps = make(params.Params, 3)
+					}
+
+					ps[seg.Name] = val
+					return index + len(seg.Suffix), ps
 				}
 
 				i := strings.Index(path[index+len(seg.Suffix):], seg.Suffix)
 				if i < 0 {
-					return -1
+					return -1, ps
 				}
 				index += i + len(seg.Suffix)
 			}
 		}
 	case Regexp:
 		if loc := seg.expr.FindStringSubmatchIndex(path); loc != nil && loc[0] == 0 {
-			params[seg.Name] = path[:loc[3]]
-			return loc[1]
+			if ps == nil {
+				ps = make(params.Params, 3)
+			}
+
+			ps[seg.Name] = path[:loc[3]]
+			return loc[1], ps
 		}
 	}
 
-	return -1
+	return -1, ps
 }
 
 // 获取两个字符串之间相同的前缀字符串的长度，

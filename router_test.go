@@ -231,7 +231,6 @@ func TestRouter_Params(t *testing.T) {
 	buildParamsHandler := func() http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ps := Params(r)
-			a.NotNil(ps)
 			params = ps
 		})
 	}
@@ -246,7 +245,7 @@ func TestRouter_Params(t *testing.T) {
 		router.ServeHTTP(w, r)
 
 		a.Equal(w.Code, status)
-		if ps != nil { // 由于 params 是公用数据，会保存上一次获取的值，所以只在有值时才比较
+		if len(ps) > 0 { // 由于 params 是公用数据，会保存上一次获取的值，所以只在有值时才比较
 			a.Equal(params, ps)
 		}
 		params = nil // 清空全局的 params
