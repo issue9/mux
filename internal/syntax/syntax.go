@@ -85,7 +85,7 @@ func URL(pattern string, params map[string]string) (string, error) {
 	return buf.String(), buf.Err
 }
 
-// Split 将字符串解析成字符串数组
+// Split 将字符串解析成 Segment 数组
 //
 // 以 { 为分界线进行分割。比如
 //  /posts/{id}/email ==> /posts/, {id}/email

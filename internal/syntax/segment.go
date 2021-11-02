@@ -13,22 +13,22 @@ import (
 
 // Segment 路由项被拆分之后的分段内容
 type Segment struct {
-	Value string
-	Type  Type
+	// 节点实际内容被拆分成以下几个部分，其组成方式如下：
+	//  Value = {Name:Rule}Suffix
+	// 其中 Rule 和 Suffix 可能为空。
+	Value  string // 节点上的原始内容
+	Name   string // 当前节点的参数名称，非字符串节点有用。
+	Rule   string // 节点的规则值，即 : 之后的部分，如果没有则为空，非字符串节点有效。
+	Suffix string // 保存参数名之后的字符串，比如 "{id}/author" 此值为 "/author"，仅对非字符串节点有效果。
+
+	// 节点类型
+	Type Type
 
 	// 是否为最终结点
 	//
 	// 在命名路由项中，如果以 {path} 等结尾，则表示可以匹配任意剩余的字符。
 	// 此值表示当前节点是否为此种类型。该类型的节点在匹配时，优先级可能会比较低。
 	Endpoint bool
-
-	// 当前节点的参数名称，比如 "{id}/author"，
-	// 则此值为 "id"，非字符串节点有用。
-	Name string
-
-	// 保存参数名之后的字符串，比如 "{id}/author" 此值为 "/author"，
-	// 仅对非字符串节点有效果，若 endpoint 为 false，则此值也不空。
-	Suffix string
 
 	// 正则表达式特有参数，用于缓存当前节点的正则编译结果。
 	expr *regexp.Regexp
@@ -82,7 +82,8 @@ func NewSegment(val string) (*Segment, error) {
 		return seg, nil
 	}
 
-	matcher, found := interceptor.Get(val[separator+1 : end])
+	seg.Rule = val[separator+1 : end]
+	matcher, found := interceptor.Get(seg.Rule)
 	if found {
 		seg.Type = Interceptor
 		seg.Name = val[start+1 : separator]
@@ -95,7 +96,7 @@ func NewSegment(val string) (*Segment, error) {
 	seg.Type = Regexp
 	seg.Name = val[start+1 : separator]
 	seg.Suffix = val[end+1:]
-	expr, err := regexp.Compile("(?P<" + seg.Name + ">" + val[separator+1:end] + ")" + seg.Suffix)
+	expr, err := regexp.Compile("(?P<" + seg.Name + ">" + seg.Rule + ")" + seg.Suffix)
 	if err != nil {
 		return nil, err
 	}
