@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-package mux
+package options
 
 import (
 	"net/http"
@@ -8,12 +8,14 @@ import (
 	"testing"
 
 	"github.com/issue9/assert"
+
+	"github.com/issue9/mux/v5/internal/tree"
 )
 
 func TestCORS_sanitize(t *testing.T) {
 	a := assert.New(t)
 
-	c := &cors{}
+	c := &CORS{}
 	a.NotError(c.sanitize())
 	a.True(c.deny).
 		False(c.anyHeaders).
@@ -22,32 +24,32 @@ func TestCORS_sanitize(t *testing.T) {
 		Empty(c.exposedHeadersString).
 		Empty(c.maxAgeString)
 
-	c = &cors{
+	c = &CORS{
 		Origins: []string{"*"},
 		MaxAge:  50,
 	}
 	a.NotError(c.sanitize())
 	a.True(c.anyOrigins).Equal(c.maxAgeString, "50")
 
-	c = &cors{
+	c = &CORS{
 		Origins: []string{"*"},
 		MaxAge:  -1,
 	}
 	a.NotError(c.sanitize())
 	a.True(c.anyOrigins).Equal(c.maxAgeString, "-1")
 
-	c = &cors{
+	c = &CORS{
 		MaxAge: -2,
 	}
-	a.ErrorString(c.sanitize(), "MaxAge 的值只能是 >= -1")
+	a.ErrorString(c.sanitize(), "maxAge 的值只能是 >= -1")
 
-	c = &cors{
+	c = &CORS{
 		Origins:          []string{"*"},
 		AllowCredentials: true,
 	}
 	a.ErrorString(c.sanitize(), "不能同时成立")
 
-	c = &cors{
+	c = &CORS{
 		AllowHeaders:   []string{"*"},
 		ExposedHeaders: []string{"h1", "h2"},
 	}
@@ -59,14 +61,14 @@ func TestCORS_sanitize(t *testing.T) {
 
 func TestCORS_handle(t *testing.T) {
 	a := assert.New(t)
-	router := NewRouter("")
-	a.NotError(router.Handle("/path", nil, http.MethodGet, http.MethodDelete))
-	node, ps := router.tree.Route("/path")
+	tr := tree.New()
+	a.NotError(tr.Add("/path", nil, http.MethodGet, http.MethodDelete))
+	node, ps := tr.Route("/path")
 	a.NotNil(node).Empty(ps)
 
 	// deny
 
-	c := &cors{}
+	c := &CORS{}
 	a.NotError(c.sanitize())
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "/path", nil)
@@ -75,8 +77,7 @@ func TestCORS_handle(t *testing.T) {
 
 	// allowed
 
-	AllowedCORS(router)
-	c = router.cors
+	c = AllowedCORS()
 	a.NotError(c.sanitize())
 
 	w = httptest.NewRecorder()
@@ -127,9 +128,12 @@ func TestCORS_handle(t *testing.T) {
 	a.Equal(w.Header().Get("Access-Control-Allow-Methods"), "")
 
 	// custom cors
-	opt := CORS([]string{"https://example.com/"}, nil, []string{"h1"}, 50, true)
-	opt(router)
-	c = router.cors
+	c = &CORS{
+		Origins:          []string{"https://example.com/"},
+		ExposedHeaders:   []string{"h1"},
+		MaxAge:           50,
+		AllowCredentials: true,
+	}
 	a.NotError(c.sanitize())
 
 	w = httptest.NewRecorder()
@@ -178,11 +182,10 @@ func TestCORS_handle(t *testing.T) {
 
 func TestCORS_headerIsAllowed(t *testing.T) {
 	a := assert.New(t)
-	router := &Router{}
 
 	// Deny
 
-	c := &cors{}
+	c := &CORS{}
 	a.NotNil(c).NotError(c.sanitize())
 
 	r := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -194,8 +197,7 @@ func TestCORS_headerIsAllowed(t *testing.T) {
 
 	// Allowed
 
-	AllowedCORS(router)
-	c = router.cors
+	c = AllowedCORS()
 	a.NotNil(c).NotError(c.sanitize())
 
 	r = httptest.NewRequest(http.MethodGet, "/", nil)
@@ -206,8 +208,7 @@ func TestCORS_headerIsAllowed(t *testing.T) {
 	a.True(c.headerIsAllowed(r))
 
 	// 自定义
-	CORS(nil, []string{"h1", "h2"}, nil, 0, false)(router)
-	c = router.cors
+	c = &CORS{AllowHeaders: []string{"h1", "h2"}}
 	a.NotError(c.sanitize())
 
 	r = httptest.NewRequest(http.MethodGet, "/", nil)

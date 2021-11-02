@@ -10,6 +10,41 @@ import (
 	"github.com/issue9/mux/v5/internal/tree"
 )
 
+func TestOption(t *testing.T) {
+	a := assert.New(t)
+
+	r := NewRouter("")
+	a.NotNil(r).
+		False(r.options.CaseInsensitive).
+		NotNil(r.options.MethodNotAllowed)
+
+	r = NewRouter("", CaseInsensitive)
+	a.NotNil(r).
+		True(r.options.CaseInsensitive).
+		NotNil(r.options.MethodNotAllowed)
+
+	notFound := buildHandler(404)
+	methodNotAllowed := buildHandler(405)
+	r = NewRouter("", NotFound(notFound), MethodNotAllowed(methodNotAllowed))
+	a.NotNil(r).
+		False(r.options.CaseInsensitive).
+		Equal(r.options.MethodNotAllowed, methodNotAllowed).
+		Equal(r.options.NotFound, notFound)
+
+	r = NewRouter("", CORS([]string{"https://example.com"}, nil, nil, 3600, false))
+	a.NotNil(r).
+		Equal(r.options.CORS.Origins, []string{"https://example.com"}).
+		Nil(r.options.CORS.AllowHeaders).
+		Equal(r.options.CORS.MaxAge, 3600)
+
+	r = NewRouter("", CORS([]string{"https://example.com"}, nil, nil, 0, true))
+	a.NotNil(r)
+
+	a.Panic(func() {
+		r = NewRouter("", CORS([]string{"*"}, nil, nil, 0, true))
+	})
+}
+
 func TestMethods(t *testing.T) {
 	a := assert.New(t)
 	a.Equal(Methods(), tree.Methods)

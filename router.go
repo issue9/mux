@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/issue9/mux/v5/internal/options"
 	"github.com/issue9/mux/v5/internal/syntax"
 	"github.com/issue9/mux/v5/internal/tree"
 	"github.com/issue9/mux/v5/params"
@@ -22,35 +23,30 @@ import (
 //
 // 如果需要同时对多个 Router 实例进行路由，可以采用  group.Group 对象管理多个 Router 实例。
 type Router struct {
-	tree *tree.Tree
-	ms   *Middlewares
-	name string
-
-	// 配置项
-	caseInsensitive bool
-	cors            *cors
+	tree    *tree.Tree
+	ms      *Middlewares
+	name    string
+	options *options.Options
 }
 
 // NewRouter 声明路由
 //
 // name string 路由名称，可以为空；
 func NewRouter(name string, o ...Option) *Router {
-	r := &Router{
-		tree: tree.New(),
-		name: name,
+	opt := &options.Options{}
+	for _, option := range o {
+		option(opt)
 	}
-	r.ms = NewMiddlewares(http.HandlerFunc(r.serveHTTP))
-
-	for _, opt := range o {
-		opt(r)
-	}
-
-	if r.cors == nil {
-		r.cors = &cors{} // 默认为禁止
-	}
-	if err := r.cors.sanitize(); err != nil {
+	if err := opt.Sanitize(); err != nil {
 		panic(err)
 	}
+
+	r := &Router{
+		tree:    tree.New(),
+		name:    name,
+		options: opt,
+	}
+	r.ms = NewMiddlewares(http.HandlerFunc(r.serveHTTP))
 
 	return r
 }
@@ -163,25 +159,25 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 func (r *Router) serveHTTP(w http.ResponseWriter, req *http.Request) {
 	path := req.URL.Path
-	if r.caseInsensitive {
+	if r.options.CaseInsensitive {
 		path = strings.ToLower(req.URL.Path)
 	}
 
 	node, ps := r.tree.Route(path)
 	if node == nil {
-		http.NotFound(w, req)
+		r.options.NotFound.ServeHTTP(w, req)
 		return
 	}
 
 	if h := node.Handler(req.Method); h != nil {
-		r.cors.handle(node, w, req) // 处理跨域问题
+		r.options.HandleCORS(node, w, req) // 处理跨域问题
 		h.ServeHTTP(w, params.WithValue(req, ps))
 		return
 	}
 
 	// 存在节点，但是不允许当前请求方法。
 	w.Header().Set("Allow", node.Options())
-	http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+	r.options.MethodNotAllowed.ServeHTTP(w, req)
 }
 
 // Name 路由名称

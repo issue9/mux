@@ -6,15 +6,61 @@ package mux
 import (
 	"net/http"
 
+	"github.com/issue9/mux/v5/internal/options"
 	"github.com/issue9/mux/v5/internal/syntax"
 	"github.com/issue9/mux/v5/internal/tree"
 	"github.com/issue9/mux/v5/params"
 )
 
 // Option 声明了自定义路由参数的函数原型
-type Option func(*Router)
+type Option func(options *options.Options)
 
-func CaseInsensitive(r *Router) { r.caseInsensitive = true }
+// CaseInsensitive 忽略大小写
+//
+// 该操作仅是将客户端的请求路径转换为小之后再次进行匹配，
+// 如果服务端的路由项设置为大写，则依然是不匹配的。
+func CaseInsensitive(o *options.Options) { o.CaseInsensitive = true }
+
+// CORS 跨域请求设置项
+//
+// https://developer.mozilla.org/zh-CN/docs/Web/HTTP/cors
+//
+// origins 对应 Origin 报头。如果包含了 *，那么其它的设置将不再启作用。
+// 如果此值为空，表示不启用跨域的相关设置；
+//
+// allowHeaders 对应 Access-Control-Allow-Headers
+// 可以包含 *，表示可以是任意值，其它值将不再启作用；
+//
+// exposedHeaders 对应 Access-Control-Expose-Headers
+//
+// maxAge 对应 Access-Control-Max-Age 有以下几种取值：
+// 0 不输出该报头；
+// -1 表示禁用；
+// 其它 >= -1 的值正常输出数值；
+//
+// allowCredentials 对应 Access-Control-Allow-Credentials。
+func CORS(origins, allowHeaders, exposedHeaders []string, maxAge int, allowCredentials bool) Option {
+	return func(o *options.Options) {
+		o.CORS = &options.CORS{
+			Origins:          origins,
+			AllowHeaders:     allowHeaders,
+			ExposedHeaders:   exposedHeaders,
+			MaxAge:           maxAge,
+			AllowCredentials: allowCredentials,
+		}
+	}
+}
+
+// AllowedCORS 允许跨域请求
+func AllowedCORS(o *options.Options) { o.CORS = options.AllowedCORS() }
+
+func NotFound(h http.Handler) Option {
+	return func(o *options.Options) { o.NotFound = h }
+}
+
+func MethodNotAllowed(h http.Handler) Option {
+	return func(o *options.Options) { o.MethodNotAllowed = h }
+}
 
 // Params 获取路由中的参数集合
 func Params(r *http.Request) params.Params { return params.Get(r) }

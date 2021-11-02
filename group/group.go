@@ -10,6 +10,7 @@ import (
 	"github.com/issue9/sliceutil"
 
 	"github.com/issue9/mux/v5"
+	"github.com/issue9/mux/v5/internal/options"
 )
 
 // Group 一组路由
@@ -20,9 +21,10 @@ import (
 // 所以在有多条子路由的情况下，第一条子路由不应该永远返回 true，
 // 否则其它子路由永远无法到达。
 type Group struct {
-	routers []*router
-	ms      *mux.Middlewares
-	options []mux.Option
+	routers  []*router
+	ms       *mux.Middlewares
+	options  []mux.Option
+	notFound http.Handler
 }
 
 type router struct {
@@ -34,9 +36,18 @@ type router struct {
 //
 // o 用于设置由 New 添加的路由；
 func New(o ...mux.Option) *Group {
+	opt := &options.Options{}
+	for _, option := range o {
+		option(opt)
+	}
+	if err := opt.Sanitize(); err != nil {
+		panic(err)
+	}
+
 	g := &Group{
-		options: o,
-		routers: make([]*router, 0, 1),
+		options:  o,
+		routers:  make([]*router, 0, 1),
+		notFound: opt.NotFound,
 	}
 	g.ms = mux.NewMiddlewares(http.HandlerFunc(g.serveHTTP))
 	return g
@@ -51,7 +62,7 @@ func (g *Group) serveHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+	g.notFound.ServeHTTP(w, r)
 }
 
 // New 声明新路由
