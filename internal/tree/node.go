@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/issue9/mux/v5/internal/syntax"
-	"github.com/issue9/mux/v5/params"
 )
 
 const (
@@ -186,50 +185,48 @@ func (n *Node) clean(prefix string) {
 }
 
 // 从子节点中查找与当前路径匹配的节点，若找不到，则返回 nil。
-//
-// ps 为路径中的参数，可以为 nil，处理后的参数列表应该从返回值获取。
-// 即使不匹配，也应当将 ps 原样返回。调用者也应该始终终从返回值中获取新的参数列表。
-func (n *Node) match(path string, ps params.Params) (*Node, params.Params) {
-	index := -1
-
-	if len(n.indexes) > 0 && len(path) > 0 { // 普通字符串的匹配
-		node := n.children[n.indexes[path[0]]]
+func (n *Node) matchChildren(p *syntax.MatchParam) *Node {
+	if len(n.indexes) > 0 && len(p.Path) > 0 { // 普通字符串的匹配
+		node := n.children[n.indexes[p.Path[0]]]
 		if node == nil {
 			goto LOOP
 		}
 
-		if index, ps = node.segment.Match(path, ps); index < 0 {
+		path := p.Path
+		if !node.segment.Match(p) {
 			goto LOOP
 		}
 
-		if nn, ps := node.match(path[index:], ps); nn != nil {
-			return nn, ps
+		if nn := node.matchChildren(p); nn != nil {
+			return nn
 		}
+		p.Path = path
 	}
 
 LOOP:
-	// 即使 path 为空，也有可能子节点正好可以匹配空的内容。
-	// 比如 /posts/{path:\\w*} 后面的 path 即为空节点。所以此处不判断 len(path)
+	// 即使 p.Path 为空，也有可能子节点正好可以匹配空的内容。
+	// 比如 /posts/{path:\\w*} 后面的 path 即为空节点。所以此处不判断 len(p.Path)
 	for i := len(n.indexes); i < len(n.children); i++ {
 		node := n.children[i]
 
-		if index, ps = node.segment.Match(path, ps); index < 0 { // 不匹配
+		path := p.Path
+		if !node.segment.Match(p) { // 不匹配
 			continue
 		}
 
-		if nn, ps2 := node.match(path[index:], ps); nn != nil {
-			return nn, ps2
+		if nn := node.matchChildren(p); nn != nil {
+			return nn
 		}
+		p.Path = path
 
-		delete(ps, n.segment.Name) // 不匹配，则删除写入的参数
+		delete(p.Params, n.segment.Name) // 不匹配，则删除写入的参数
 	}
 
-	// 没有子节点匹配，len(path)==0，且子节点不为空，可以判定与当前节点匹配。
-	if len(path) == 0 && len(n.handlers) > 0 {
-		return n, ps
+	// 没有子节点匹配，len(p.Path)==0，且子节点不为空，可以判定与当前节点匹配。
+	if len(p.Path) == 0 && len(n.handlers) > 0 {
+		return n
 	}
-
-	return nil, ps
+	return nil
 }
 
 // 从 nodes 中删除一个 pattern 字段为指定值的元素，

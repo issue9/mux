@@ -37,6 +37,18 @@ type Segment struct {
 	matcher interceptor.MatchFunc
 }
 
+type MatchParam struct {
+	Path   string
+	Params params.Params
+}
+
+func (p *MatchParam) setParams(k, v string) {
+	if p.Params == nil {
+		p.Params = make(params.Params, 3)
+	}
+	p.Params[k] = v
+}
+
 // NewSegment 声明新的 Segment 变量
 //
 // 如果为非字符串类型的内容，应该是以 { 符号开头才是合法的。
@@ -117,56 +129,45 @@ func (seg *Segment) Split(pos int) ([]*Segment, error) {
 
 // Match 路径是否与当前节点匹配
 //
-// ps 表示匹配完成之后，从地址中获取的参数值，可以为 nil，将由 Match 初始化。
-// 如果匹配不成功，原样返回 ps，否则将参数填入 ps，并作为返回值返回。
-// 调用者应该始终采用返回值作为其最新的参数列表；
-// 如果正确匹配，则返回 path 剩余部分的起始位置，不匹配则返回 -1。
-func (seg *Segment) Match(path string, ps params.Params) (int, params.Params) {
+// 如果正确匹配，则返回 p.Path 剩余部分的起始位置，不匹配则返回 -1。
+func (seg *Segment) Match(p *MatchParam) bool {
 	switch seg.Type {
 	case String:
-		if strings.HasPrefix(path, seg.Value) {
-			return len(seg.Value), ps
+		if strings.HasPrefix(p.Path, seg.Value) {
+			p.Path = p.Path[len(seg.Value):]
+			return true
 		}
 	case Interceptor, Named:
 		if seg.Endpoint {
-			if seg.matcher(path) {
-				if ps == nil {
-					ps = make(params.Params, 3)
-				}
-
-				ps[seg.Name] = path
-				return len(path), ps
+			if seg.matcher(p.Path) {
+				p.setParams(seg.Name, p.Path)
+				p.Path = p.Path[:0]
+				return true
 			}
-		} else if index := strings.Index(path, seg.Suffix); index >= 0 {
+		} else if index := strings.Index(p.Path, seg.Suffix); index >= 0 {
 			for {
-				if val := path[:index]; seg.matcher(val) {
-					if ps == nil {
-						ps = make(params.Params, 3)
-					}
-
-					ps[seg.Name] = val
-					return index + len(seg.Suffix), ps
+				if val := p.Path[:index]; seg.matcher(val) {
+					p.setParams(seg.Name, val)
+					p.Path = p.Path[index+len(seg.Suffix):]
+					return true
 				}
 
-				i := strings.Index(path[index+len(seg.Suffix):], seg.Suffix)
+				i := strings.Index(p.Path[index+len(seg.Suffix):], seg.Suffix)
 				if i < 0 {
-					return -1, ps
+					return false
 				}
 				index += i + len(seg.Suffix)
 			}
 		}
 	case Regexp:
-		if loc := seg.expr.FindStringSubmatchIndex(path); loc != nil && loc[0] == 0 {
-			if ps == nil {
-				ps = make(params.Params, 3)
-			}
-
-			ps[seg.Name] = path[:loc[3]]
-			return loc[1], ps
+		if loc := seg.expr.FindStringSubmatchIndex(p.Path); loc != nil && loc[0] == 0 {
+			p.setParams(seg.Name, p.Path[:loc[3]])
+			p.Path = p.Path[loc[1]:]
+			return true
 		}
 	}
 
-	return -1, ps
+	return false
 }
 
 // 获取两个字符串之间相同的前缀字符串的长度，

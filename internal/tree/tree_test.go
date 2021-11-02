@@ -61,6 +61,11 @@ func (t *tester) matchTrue(method, path string, code int) {
 	t.a.NotNil(h)
 }
 
+func (t *tester) notFound(path string) {
+	hs, ps := t.tree.Route(path)
+	t.a.Nil(hs).Nil(ps)
+}
+
 // 验证指定的路径返回的参数是否正确
 func (t *tester) paramsTrue(method, path string, code int, params map[string]string) {
 	_, ps := t.handler(method, path, code)
@@ -86,7 +91,7 @@ func (t *tester) optionsTrue(path, options string) {
 	t.a.Equal(w.Header().Get("Allow"), options)
 }
 
-func TestTree_match(t *testing.T) {
+func TestTree_Route(t *testing.T) {
 	a := assert.New(t)
 	test := newTester(a)
 
@@ -110,6 +115,7 @@ func TestTree_match(t *testing.T) {
 	test.matchTrue(http.MethodGet, "/posts/2.html/author", 203) // 命名参数
 	test.matchTrue(http.MethodGet, "/page/", 207)
 	test.matchTrue(http.MethodGet, "/posts/2.html/2/author", 208) // 若 {id} 可匹配任意字符，此条也可匹配 3
+	test.notFound("/not-exists")
 
 	// 测试 digit 和 \\d 是否正常
 	test = newTester(a)

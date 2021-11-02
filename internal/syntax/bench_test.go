@@ -16,11 +16,13 @@ func BenchmarkSegment_Match_Named(b *testing.B) {
 	seg, err := NewSegment("{id}/author")
 	a.NotError(err).NotNil(seg)
 
-	path := "100000/author"
+	p := &MatchParam{
+		Path: "100000/author",
+	}
 	for i := 0; i < b.N; i++ {
-		index, ps := seg.Match(path, nil)
-		a.Equal(index, len(path)).
-			Equal(ps, map[string]string{"id": "100000"})
+		index := seg.Match(p)
+		a.Equal(index, len(p.Path)).
+			Equal(p.Params, map[string]string{"id": "100000"})
 	}
 }
 
@@ -30,11 +32,13 @@ func BenchmarkSegment_Match_Named_withMatcher(b *testing.B) {
 	seg, err := NewSegment("{id:digit}/author")
 	a.NotError(err).NotNil(seg)
 
-	path := "10000/author"
+	p := &MatchParam{
+		Path: "10000/author",
+	}
 	for i := 0; i < b.N; i++ {
-		index, ps := seg.Match(path, nil)
-		a.Equal(index, len(path)).
-			Equal(ps, params.Params{"id": "10000"})
+		index := seg.Match(p)
+		a.Equal(index, len(p.Path)).
+			Equal(p.Params, params.Params{"id": "10000"})
 	}
 }
 
@@ -44,10 +48,12 @@ func BenchmarkSegment_Match_String(b *testing.B) {
 	seg, err := NewSegment("/posts/author")
 	a.NotError(err).NotNil(seg)
 
-	path := "/posts/author"
+	p := &MatchParam{
+		Path: "/posts/author",
+	}
 	for i := 0; i < b.N; i++ {
-		index, ps := seg.Match(path, nil)
-		a.Equal(index, len(path)).Nil(ps)
+		index := seg.Match(p)
+		a.Equal(index, len(p.Path)).Nil(p.Params)
 	}
 }
 
@@ -57,10 +63,12 @@ func BenchmarkSegment_Match_Regexp(b *testing.B) {
 	seg, err := NewSegment("{id:\\d+}/author")
 	a.NotError(err).NotNil(seg)
 
-	path := "1/author"
+	p := &MatchParam{
+		Path: "1/author",
+	}
 	for i := 0; i < b.N; i++ {
-		index, ps := seg.Match(path, nil)
-		a.Equal(index, len(path)).
-			Equal(ps, params.Params{"id": "1"})
+		index := seg.Match(p)
+		a.Equal(index, len(p.Path)).
+			Equal(p.Params, params.Params{"id": "1"})
 	}
 }

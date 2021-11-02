@@ -6,6 +6,7 @@ package tree
 import (
 	"fmt"
 	"net/http"
+	"sync"
 
 	"github.com/issue9/mux/v5/internal/syntax"
 	"github.com/issue9/mux/v5/params"
@@ -141,16 +142,27 @@ func (tree *Tree) getNode(pattern string) (*Node, error) {
 	return tree.node.getNode(segs)
 }
 
+var matchParamPool = &sync.Pool{
+	New: func() interface{} { return &syntax.MatchParam{} },
+}
+
 // Route 找到与当前内容匹配的 Node 实例
 func (tree *Tree) Route(path string) (*Node, params.Params) {
 	if path == "*" || path == "" {
 		return tree.node, nil
 	}
 
-	node, ps := tree.node.match(path, nil)
+	p := matchParamPool.Get().(*syntax.MatchParam)
+	p.Params = nil
+	p.Path = path
+
+	node := tree.node.matchChildren(p)
 	if node == nil || len(node.handlers) == 0 {
+		matchParamPool.Put(p)
 		return nil, nil
 	}
+	ps := p.Params
+	matchParamPool.Put(p)
 	return node, ps
 }
 
