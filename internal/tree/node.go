@@ -18,13 +18,12 @@ const (
 
 // Node 表示路由中的节点
 type Node struct {
-	root *Tree
-
+	root    *Tree
 	parent  *Node
 	segment *syntax.Segment
 
-	handlers    map[string]http.Handler // 请求方法及其对应的 http.Handler
 	methodIndex int
+	handlers    map[string]http.Handler // 请求方法及其对应的 http.Handler
 
 	// 保存着 *node 实例在 children 中的下标。
 	//

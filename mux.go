@@ -21,7 +21,7 @@ type Option func(options *options.Options)
 // 如果服务端的路由项设置为大写，则依然是不匹配的。
 func CaseInsensitive(o *options.Options) { o.CaseInsensitive = true }
 
-// CORS 跨域请求设置项
+// CORS 自定义跨域请求设置项
 //
 // https://developer.mozilla.org/zh-CN/docs/Web/HTTP/cors
 //
@@ -54,10 +54,14 @@ func CORS(origins, allowHeaders, exposedHeaders []string, maxAge int, allowCrede
 // AllowedCORS 允许跨域请求
 func AllowedCORS(o *options.Options) { o.CORS = options.AllowedCORS() }
 
+// NotFound 自定义 404 状态码下的输出
 func NotFound(h http.Handler) Option {
 	return func(o *options.Options) { o.NotFound = h }
 }
 
+// MethodNotAllowed 自定义 405 状态码下的输出
+//
+// 在 405 状态码下，除了输出用户指定的输出内容之外，系统还会输出 Allow 报头。
 func MethodNotAllowed(h http.Handler) Option {
 	return func(o *options.Options) { o.MethodNotAllowed = h }
 }

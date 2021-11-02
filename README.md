@@ -185,7 +185,7 @@ CORS 不再是以中间件的形式提供，而是通过 NewRouter 直接传递�
 OPTIONS 请求方法由系统自动生成。
 
 ```go
-r, ok := mux.NewRouter("name" ,false, AllowedCORS()) // 任意跨域请求
+r, ok := mux.NewRouter("name" ,AllowedCORS) // 任意跨域请求
 
 r.Get("/posts/{id}", nil)     // 默认情况下， OPTIONS 的报头为 GET, OPTIONS
 

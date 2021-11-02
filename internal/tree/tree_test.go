@@ -165,9 +165,43 @@ func TestTree_match(t *testing.T) {
 	test.add(http.MethodGet, "/admin/6", 206)
 	test.add(http.MethodGet, "/admin/7", 207)
 	test.add(http.MethodGet, "/admin/{id}", 220)
-	a.Equal(len(test.tree.node.children[0].indexes), 7)
+	c0 := test.tree.node.children[0]
+	a.Equal(len(c0.indexes), 7)
+	a.Equal(c0.segment.Value, "/admin/")
 	// /admin/5index.html 即部分匹配 /admin/5，更匹配 /admin/{id}，测试是否正确匹配
 	test.matchTrue(http.MethodGet, "/admin/5index.html", 220)
+
+	// 测试非英文字符 indexes 功能
+	test = newTester(a)
+	test.add(http.MethodGet, "/中文/1", 201)
+	test.add(http.MethodGet, "/中文/2", 202)
+	test.add(http.MethodGet, "/中文/3", 203)
+	test.add(http.MethodGet, "/中文/4", 204)
+	test.add(http.MethodGet, "/中文/5", 205)
+	test.add(http.MethodGet, "/中文/6", 206)
+	test.add(http.MethodGet, "/中文/7", 207)
+	test.add(http.MethodGet, "/中文/{id}", 220)
+	c0 = test.tree.node.children[0]
+	a.Equal(len(c0.indexes), 7)
+	a.Equal(c0.segment.Value, "/中文/")
+	// /中文/5index.html 即部分匹配 /中文/5，更匹配 /中文/{id}，测试是否正确匹配
+	test.matchTrue(http.MethodGet, "/中文/5index.html", 220)
+
+	// 测试非英文字符 indexes 功能，汉字中的相同部分会被提取到上一级。
+	test = newTester(a)
+	test.add(http.MethodGet, "/中文/1", 201)
+	test.add(http.MethodGet, "/中文/2", 202)
+	test.add(http.MethodGet, "/中文/3", 203)
+	test.add(http.MethodGet, "/丽文/4", 204)
+	test.add(http.MethodGet, "/丽文/5", 205)
+	test.add(http.MethodGet, "/丽文/6", 206)
+	test.add(http.MethodGet, "/丽文/7", 207)
+	test.add(http.MethodGet, "/中文/{id}", 220)
+	c0 = test.tree.node.children[0]
+	a.Equal(len(c0.indexes), 0)
+	a.Equal(c0.segment.Value, "/\xe4\xb8")
+	// /中文/5index.html 即部分匹配 /中文/5，更匹配 /中文/{id}，测试是否正确匹配
+	test.matchTrue(http.MethodGet, "/中文/5index.html", 220)
 
 	test = newTester(a)
 	test.add(http.MethodGet, "/admin/1", 201)
