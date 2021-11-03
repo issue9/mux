@@ -18,7 +18,7 @@ type Segment struct {
 	// 其中 Rule 和 Suffix 可能为空。
 	Value  string // 节点上的原始内容
 	Name   string // 当前节点的参数名称，非字符串节点有用。
-	Rule   string // 节点的规则值，即 : 之后的部分，如果没有则为空，非字符串节点有效。
+	Rule   string // 节点的规则值，即 : 之后的部分，非字符串节点有效。
 	Suffix string // 保存参数名之后的字符串，比如 "{id}/author" 此值为 "/author"，仅对非字符串节点有效果。
 
 	// 节点类型
@@ -26,7 +26,7 @@ type Segment struct {
 
 	// 是否为最终结点
 	//
-	// 在命名路由项中，如果以 {path} 等结尾，则表示可以匹配任意剩余的字符。
+	// 在命名和拦截类型的路由项中，如果以 {path} 等结尾，则表示可以匹配任意剩余的字符。
 	// 此值表示当前节点是否为此种类型。该类型的节点在匹配时，优先级可能会比较低。
 	Endpoint bool
 
@@ -69,7 +69,7 @@ func NewSegment(val string) (*Segment, error) {
 	}
 
 	separator := strings.IndexByte(val, separatorByte)
-	if separator == -1 || separator+1 == end || separator > end { // {abc} 或是 {abc:} 或是 {abc}:
+	if separator == -1 || separator+1 == end || separator > end { // {name} 或是 {name:} 或是 {name}:
 		seg.Name = val[start+1 : end]
 		if separator != -1 && separator < end {
 			seg.Name = val[start+1 : separator]
