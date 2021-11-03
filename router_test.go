@@ -132,18 +132,16 @@ func TestRouter(t *testing.T) {
 }
 
 func TestRouter_ServeHTTP(t *testing.T) {
-	a := assert.New(t)
-
 	test := newTester(t)
 
-	a.NotError(test.router.Handle("/posts/{path}.html", buildHandler(201)))
+	test.router.Handle("/posts/{path}.html", buildHandler(201))
 	test.matchTrue(http.MethodGet, "/posts/2017/1.html", 201)
 	test.matchTrue(http.MethodGet, "/Posts/2017/1.html", 404) // 大小写不一样
 
-	a.NotError(test.router.Handle("/posts/{path:.+}.html", buildHandler(202)))
+	test.router.Handle("/posts/{path:.+}.html", buildHandler(202))
 	test.matchTrue(http.MethodGet, "/posts/2017/1.html", 202)
 
-	a.NotError(test.router.Handle("/posts/{id:digit}123", buildHandler(203)))
+	test.router.Handle("/posts/{id:digit}123", buildHandler(203))
 	test.matchTrue(http.MethodGet, "/posts/123123", 203)
 
 	test.router.Get("///", buildHandler(201))
@@ -168,21 +166,20 @@ func TestRouter_ServeHTTP(t *testing.T) {
 	// 忽略大小写测试
 
 	test = newTester(t, CaseInsensitive)
-	a.NotError(test.router.Handle("/posts/{path}.html", buildHandler(201)))
+	test.router.Handle("/posts/{path}.html", buildHandler(201))
 	test.matchTrue(http.MethodGet, "/posts/2017/1.html", 201)
 	test.matchTrue(http.MethodGet, "/Posts/2017/1.html", 201) // 忽略大小写
 }
 
 func TestRouter_Handle_Remove(t *testing.T) {
-	a := assert.New(t)
 	test := newTester(t)
 
 	// 添加 GET /api/1
 	// 添加 PUT /api/1
 	// 添加 GET /api/2
-	a.NotError(test.router.HandleFunc("/api/1", buildHandlerFunc(201), http.MethodGet))
-	a.NotError(test.router.HandleFunc("/api/1", buildHandlerFunc(201), http.MethodPut))
-	a.NotError(test.router.HandleFunc("/api/2", buildHandlerFunc(202), http.MethodGet))
+	test.router.HandleFunc("/api/1", buildHandlerFunc(201), http.MethodGet)
+	test.router.HandleFunc("/api/1", buildHandlerFunc(201), http.MethodPut)
+	test.router.HandleFunc("/api/2", buildHandlerFunc(202), http.MethodGet)
 
 	test.matchTrue(http.MethodGet, "/api/1", 201)
 	test.matchTrue(http.MethodPut, "/api/1", 201)
@@ -202,7 +199,7 @@ func TestRouter_Handle_Remove(t *testing.T) {
 	test.matchTrue(http.MethodGet, "/api/2", http.StatusNotFound) // 整个节点被删除
 
 	// 添加 POST /api/1
-	a.NotError(test.router.Handle("/api/1", buildHandlerFunc(201), http.MethodPost))
+	test.router.Handle("/api/1", buildHandlerFunc(201), http.MethodPost)
 	test.matchTrue(http.MethodPost, "/api/1", 201)
 
 	// 删除 ANY /api/1
@@ -251,32 +248,32 @@ func TestRouter_Params(t *testing.T) {
 	}
 
 	// 添加 patch /api/{version:\\d+}
-	a.NotError(router.Patch("/api/{version:\\d+}", buildParamsHandler()))
+	router.Patch("/api/{version:\\d+}", buildParamsHandler())
 	requestParams(http.MethodPatch, "/api/2", http.StatusOK, map[string]string{"version": "2"})
 	requestParams(http.MethodPatch, "/api/256", http.StatusOK, map[string]string{"version": "256"})
 	requestParams(http.MethodGet, "/api/256", http.StatusMethodNotAllowed, nil) // 不存在的请求方法
 
 	// 添加 patch /api/v2/{version:\\d*}
 	router.Clean()
-	a.NotError(router.Patch("/api/v2/{version:\\d*}", buildParamsHandler()))
+	router.Patch("/api/v2/{version:\\d*}", buildParamsHandler())
 	requestParams(http.MethodPatch, "/api/v2/2", http.StatusOK, map[string]string{"version": "2"})
 	requestParams(http.MethodPatch, "/api/v2/", http.StatusOK, map[string]string{"version": ""})
 
 	// 忽略名称捕获
 	router.Clean()
-	a.NotError(router.Patch("/api/v3/{-version:\\d*}", buildParamsHandler()))
+	router.Patch("/api/v3/{-version:\\d*}", buildParamsHandler())
 	requestParams(http.MethodPatch, "/api/v3/2", http.StatusOK, nil)
 	requestParams(http.MethodPatch, "/api/v3/", http.StatusOK, nil)
 
 	// 添加 patch /api/v2/{version:\\d*}/test
 	router.Clean()
-	a.NotError(router.Patch("/api/v2/{version:\\d*}/test", buildParamsHandler()))
+	router.Patch("/api/v2/{version:\\d*}/test", buildParamsHandler())
 	requestParams(http.MethodPatch, "/api/v2/2/test", http.StatusOK, map[string]string{"version": "2"})
 	requestParams(http.MethodPatch, "/api/v2//test", http.StatusOK, map[string]string{"version": ""})
 
 	// 中文作为值
 	router.Clean()
-	a.NotError(router.Patch("/api/v3/{版本:digit}", buildParamsHandler()))
+	router.Patch("/api/v3/{版本:digit}", buildParamsHandler())
 	requestParams(http.MethodPatch, "/api/v3/2", http.StatusOK, map[string]string{"版本": "2"})
 }
 
@@ -302,15 +299,13 @@ func TestRouter_Clean(t *testing.T) {
 
 // 测试匹配顺序是否正确
 func TestRouter_ServeHTTP_Order(t *testing.T) {
-	a := assert.New(t)
-
 	test := newTester(t)
-	a.NotError(test.router.GetFunc("/posts/{id}", buildHandlerFunc(203)))
-	a.NotError(test.router.GetFunc("/posts/{id:\\d+}", buildHandlerFunc(202)))
-	a.NotError(test.router.GetFunc("/posts/1", buildHandlerFunc(201)))
-	a.NotError(test.router.GetFunc("/posts/{id:[0-9]+}", buildHandlerFunc(199))) //  两个正则，后添加的永远匹配不到
-	a.NotError(test.router.GetFunc("/posts-{id:any}", buildHandlerFunc(204)))
-	a.NotError(test.router.GetFunc("/posts-", buildHandlerFunc(205)))
+	test.router.GetFunc("/posts/{id}", buildHandlerFunc(203))
+	test.router.GetFunc("/posts/{id:\\d+}", buildHandlerFunc(202))
+	test.router.GetFunc("/posts/1", buildHandlerFunc(201))
+	test.router.GetFunc("/posts/{id:[0-9]+}", buildHandlerFunc(199)) //  两个正则，后添加的永远匹配不到
+	test.router.GetFunc("/posts-{id:any}", buildHandlerFunc(204))
+	test.router.GetFunc("/posts-", buildHandlerFunc(205))
 	test.matchTrue(http.MethodGet, "/posts/1", 201)   // 普通路由项完全匹配
 	test.matchTrue(http.MethodGet, "/posts/2", 202)   // 正则路由
 	test.matchTrue(http.MethodGet, "/posts/abc", 203) // 命名路由
@@ -321,33 +316,33 @@ func TestRouter_ServeHTTP_Order(t *testing.T) {
 	// interceptor
 	test = newTester(t)
 	interceptor.Register(interceptor.MatchDigit, "[0-9]+")
-	a.NotError(test.router.GetFunc("/posts/{id}", buildHandlerFunc(203)))        // f3
-	a.NotError(test.router.GetFunc("/posts/{id:\\d+}", buildHandlerFunc(202)))   // f2 永远匹配不到
-	a.NotError(test.router.GetFunc("/posts/1", buildHandlerFunc(201)))           // f1
-	a.NotError(test.router.GetFunc("/posts/{id:[0-9]+}", buildHandlerFunc(210))) // f0 interceptor 权限比正则要高
-	test.matchTrue(http.MethodGet, "/posts/1", 201)                              // f1 普通路由项完全匹配
-	test.matchTrue(http.MethodGet, "/posts/2", 210)                              // f1 interceptor
-	test.matchTrue(http.MethodGet, "/posts/abc", 203)                            // f3 命名路由
-	test.matchTrue(http.MethodGet, "/posts/", 203)                               // f3
+	test.router.GetFunc("/posts/{id}", buildHandlerFunc(203))        // f3
+	test.router.GetFunc("/posts/{id:\\d+}", buildHandlerFunc(202))   // f2 永远匹配不到
+	test.router.GetFunc("/posts/1", buildHandlerFunc(201))           // f1
+	test.router.GetFunc("/posts/{id:[0-9]+}", buildHandlerFunc(210)) // f0 interceptor 权限比正则要高
+	test.matchTrue(http.MethodGet, "/posts/1", 201)                  // f1 普通路由项完全匹配
+	test.matchTrue(http.MethodGet, "/posts/2", 210)                  // f1 interceptor
+	test.matchTrue(http.MethodGet, "/posts/abc", 203)                // f3 命名路由
+	test.matchTrue(http.MethodGet, "/posts/", 203)                   // f3
 	interceptor.Deregister("[0-9]+")
 
 	test = newTester(t)
-	a.NotError(test.router.GetFunc("/p1/{p1}/p2/{p2:\\d+}", buildHandlerFunc(201))) // f1
-	a.NotError(test.router.GetFunc("/p1/{p1}/p2/{p2:\\w+}", buildHandlerFunc(202))) // f2
-	test.matchTrue(http.MethodGet, "/p1/1/p2/1", 201)                               // f1
-	test.matchTrue(http.MethodGet, "/p1/2/p2/s", 202)                               // f2
+	test.router.GetFunc("/p1/{p1}/p2/{p2:\\d+}", buildHandlerFunc(201)) // f1
+	test.router.GetFunc("/p1/{p1}/p2/{p2:\\w+}", buildHandlerFunc(202)) // f2
+	test.matchTrue(http.MethodGet, "/p1/1/p2/1", 201)                   // f1
+	test.matchTrue(http.MethodGet, "/p1/2/p2/s", 202)                   // f2
 
 	test = newTester(t)
-	a.NotError(test.router.GetFunc("/posts/{id}/{page}", buildHandlerFunc(202))) // f2
-	a.NotError(test.router.GetFunc("/posts/{id}/1", buildHandlerFunc(201)))      // f1
-	test.matchTrue(http.MethodGet, "/posts/1/1", 201)                            // f1 普通路由项完全匹配
-	test.matchTrue(http.MethodGet, "/posts/2/5", 202)                            // f2 命名完全匹配
+	test.router.GetFunc("/posts/{id}/{page}", buildHandlerFunc(202)) // f2
+	test.router.GetFunc("/posts/{id}/1", buildHandlerFunc(201))      // f1
+	test.matchTrue(http.MethodGet, "/posts/1/1", 201)                // f1 普通路由项完全匹配
+	test.matchTrue(http.MethodGet, "/posts/2/5", 202)                // f2 命名完全匹配
 
 	test = newTester(t)
-	a.NotError(test.router.GetFunc("/tags/{id}.html", buildHandlerFunc(201))) // f1
-	a.NotError(test.router.GetFunc("/tags.html", buildHandlerFunc(202)))      // f2
-	a.NotError(test.router.GetFunc("/{path}", buildHandlerFunc(203)))         // f3
-	test.matchTrue(http.MethodGet, "/tags", 203)                              // f3 // 正好与 f1 的第一个节点匹配
-	test.matchTrue(http.MethodGet, "/tags/1.html", 201)                       // f1
-	test.matchTrue(http.MethodGet, "/tags.html", 202)                         // f2
+	test.router.GetFunc("/tags/{id}.html", buildHandlerFunc(201)) // f1
+	test.router.GetFunc("/tags.html", buildHandlerFunc(202))      // f2
+	test.router.GetFunc("/{path}", buildHandlerFunc(203))         // f3
+	test.matchTrue(http.MethodGet, "/tags", 203)                  // f3 // 正好与 f1 的第一个节点匹配
+	test.matchTrue(http.MethodGet, "/tags/1.html", 201)           // f1
+	test.matchTrue(http.MethodGet, "/tags.html", 202)             // f2
 }
