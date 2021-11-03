@@ -164,6 +164,11 @@ func TestTree_URL(t *testing.T) {
 			ps:      map[string]string{"id": "100"},
 			output:  "/posts/100",
 		},
+		{ // ignoreName=true
+			pattern: "/posts/{-id:}",
+			ps:      map[string]string{"id": "100"},
+			output:  "/posts/100",
+		},
 		{
 			pattern: "/posts/{id}:",
 			ps:      map[string]string{"id": "100"},
@@ -176,6 +181,11 @@ func TestTree_URL(t *testing.T) {
 		},
 		{
 			pattern: "/posts/{id:\\d+}/author/{page}/",
+			ps:      map[string]string{"id": "100", "page": "200"},
+			output:  "/posts/100/author/200/",
+		},
+		{ // ignoreName=true
+			pattern: "/posts/{-id:\\d+}/author/{page}/",
 			ps:      map[string]string{"id": "100", "page": "200"},
 			output:  "/posts/100/author/200/",
 		},

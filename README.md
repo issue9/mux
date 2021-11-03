@@ -49,18 +49,14 @@ http.ListenAndServe(":8080", router)
 
 ## 语法
 
-路由参数采用大括号包含，内部包含名称和规则两部分：
-
-```text
-path/{name:rule}/path.html
-```
-
+路由参数采用大括号包含，内部包含名称和规则两部分：`{name:rule}`，
 其中的 name 表示参数的名称，rule 表示对参数的约束规则。
 
 name 可以包含 `-` 前缀，表示在实际执行过程中，不捕获该名称的对应的值，
 可以在一定程序上提升性能。
 
-rule 可以为空，表示匹配任意值，或是正则以及由拦截器指定的值，以下是一些常见的示例。
+rule 表示对参数的约束，一般为正则或是空，为空表示匹配任意值，
+拦截器一栏中有关 rule 的高级用法。以下是一些常见的示例。
 
 ```text
 /posts/{id}.html                  // 匹配 /posts/1.html
@@ -137,7 +133,7 @@ r := http.NewRequest(http.MethodGet, "https://other_domain.com/v1/path", nil)
 r.Do()
 ```
 
-### interceptor
+### 拦截器
 
 正常情况下，`/posts/{id:\d+}` 或是 `/posts/{id:[0-9]+}` 会被当作正则表达式处理，
 但是正则表达式的性能并不是很好，这个时候我们可以通过 `interceptor` 包进行拦截，
@@ -159,13 +155,22 @@ func digit(path string) bool {
 interceptor.Register(digit, "\\d+", "[0-9]+")
 ```
 
-目前支持以下作为命名参数的内容约束：
+这样在所有路由项中的 `[0-9]+` 将被 digit 拦截处理，不再会被编译为正则表达式，
+在性能上会有很大的提升。
+通过该功能，也可以自定义一些非正常的正则表达这式，然后进行拦截，比如：
+
+```text
+/posts/{id:digit}/.html
+```
+
+如果不拦截，最终传递给正则表达式，可能会出现编译错误，通过 interceptor 可以将 digit 合法化。
+目前支持以下作为命名参数的拦截器：
 
 - digit 限定为数字字符，相当于正则的 `[0-9]`；
 - word 相当于正则的 `[a-zA-Z0-9]`；
 - any 表示匹配任意非空内容；
 
-用户也可以自行添加新的约束符。具体可参考 <https://pkg.go.dev/github.com/issue9/mux/v5/interceptor>
+用户也可以自行添加新的拦截器。具体可参考 <https://pkg.go.dev/github.com/issue9/mux/v5/interceptor>
 
 ### CORS
 

@@ -31,8 +31,8 @@ import (
 //               |
 //               +---- /emails
 type Tree struct {
-	// 保存全局的请求方法，node.methodIndex 保存自身的请求方法
-	// CORS 的预检机制用到 node.methodIndex
+	// OPTIONS * 用到的请求方法列表
+	// node.methodIndex 保存自身的请求方法 CORS 的预检机制用到 node.methodIndex。
 	methodIndex int
 
 	// methods 保存着每个请求方法在所有子节点上的数量。
