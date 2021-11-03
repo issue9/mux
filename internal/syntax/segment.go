@@ -15,9 +15,9 @@ import (
 type Segment struct {
 	// 节点实际内容被拆分成以下几个部分，其组成方式如下：
 	//  Value = {Name:Rule}Suffix
-	// 其中 Rule 和 Suffix 可能为空。
+	// 其中 Name、Rule 和 Suffix 可能为空，但是 Name 和 Rule 不能同时为空。
 	Value  string // 节点上的原始内容
-	Name   string // 当前节点的参数名称，非字符串节点有用。
+	Name   string // 当前节点的参数名称，适用非字符节点。
 	Rule   string // 节点的规则值，即 : 之后的部分，非字符串节点有效。
 	Suffix string // 保存参数名之后的字符串，比如 "{id}/author" 此值为 "/author"，仅对非字符串节点有效果。
 
@@ -29,6 +29,9 @@ type Segment struct {
 	// 在命名和拦截类型的路由项中，如果以 {path} 等结尾，则表示可以匹配任意剩余的字符。
 	// 此值表示当前节点是否为此种类型。该类型的节点在匹配时，优先级可能会比较低。
 	Endpoint bool
+
+	// 忽略名称
+	ignoreName bool
 
 	// 正则表达式特有参数，用于缓存当前节点的正则编译结果。
 	expr *regexp.Regexp
@@ -42,7 +45,7 @@ type MatchParam struct {
 	Params params.Params
 }
 
-func (p *MatchParam) setParams(k, v string) {
+func (p *MatchParam) setParam(k, v string) {
 	if p.Params == nil {
 		p.Params = make(params.Params, 3)
 	}
@@ -64,11 +67,12 @@ func NewSegment(val string) (*Segment, error) {
 		return seg, nil
 	}
 
-	if start > end || start+1 == end { // }{ 或是  {}
+	separator := strings.IndexByte(val, separatorByte)
+	if start > end || start+1 == end || // }{ 或是  {}
+		(separator > 0 && start+1 == separator) { // {:rule}
 		return nil, fmt.Errorf("无效的语法：%s", val)
 	}
 
-	separator := strings.IndexByte(val, separatorByte)
 	if separator == -1 || separator+1 == end || separator > end { // {name} 或是 {name:} 或是 {name}:
 		seg.Name = val[start+1 : end]
 		if separator != -1 && separator < end {
@@ -79,6 +83,7 @@ func NewSegment(val string) (*Segment, error) {
 		seg.Suffix = val[end+1:]
 		seg.Endpoint = val[len(val)-1] == endByte
 		seg.matcher = func(string) bool { return true }
+		seg.cleanName()
 		return seg, nil
 	}
 
@@ -87,6 +92,7 @@ func NewSegment(val string) (*Segment, error) {
 	if found {
 		seg.Type = Interceptor
 		seg.Name = val[start+1 : separator]
+		seg.cleanName()
 		seg.Suffix = val[end+1:]
 		seg.Endpoint = val[len(val)-1] == endByte
 		seg.matcher = matcher
@@ -95,13 +101,25 @@ func NewSegment(val string) (*Segment, error) {
 
 	seg.Type = Regexp
 	seg.Name = val[start+1 : separator]
+	seg.cleanName()
 	seg.Suffix = val[end+1:]
-	expr, err := regexp.Compile("(?P<" + seg.Name + ">" + seg.Rule + ")" + seg.Suffix)
+	name := ":"
+	if !seg.ignoreName {
+		name = "P<" + seg.Name + ">"
+	}
+	expr, err := regexp.Compile("(?" + name + seg.Rule + ")" + seg.Suffix)
 	if err != nil {
 		return nil, err
 	}
 	seg.expr = expr
 	return seg, nil
+}
+
+func (seg *Segment) cleanName() {
+	if seg.Name[0] == ignoreByte {
+		seg.ignoreName = true
+		seg.Name = seg.Name[1:]
+	}
 }
 
 // Similarity 与 s1 的相似度，-1 表示完全相同，
@@ -141,14 +159,18 @@ func (seg *Segment) Match(p *MatchParam) bool {
 	case Interceptor, Named:
 		if seg.Endpoint {
 			if seg.matcher(p.Path) {
-				p.setParams(seg.Name, p.Path)
+				if !seg.ignoreName {
+					p.setParam(seg.Name, p.Path)
+				}
 				p.Path = p.Path[:0]
 				return true
 			}
 		} else if index := strings.Index(p.Path, seg.Suffix); index >= 0 {
 			for {
 				if val := p.Path[:index]; seg.matcher(val) {
-					p.setParams(seg.Name, val)
+					if !seg.ignoreName {
+						p.setParam(seg.Name, val)
+					}
 					p.Path = p.Path[index+len(seg.Suffix):]
 					return true
 				}
@@ -162,7 +184,9 @@ func (seg *Segment) Match(p *MatchParam) bool {
 		}
 	case Regexp:
 		if loc := seg.expr.FindStringSubmatchIndex(p.Path); loc != nil && loc[0] == 0 {
-			p.setParams(seg.Name, p.Path[:loc[3]])
+			if !seg.ignoreName {
+				p.setParam(seg.Name, p.Path[:loc[3]])
+			}
 			p.Path = p.Path[loc[1]:]
 			return true
 		}

@@ -41,6 +41,7 @@ const (
 	startByte     = '{' // 命名或是正则参数的起始字符
 	endByte       = '}' // 命名或是正则参数的结束字符
 	separatorByte = ':' // 正则参数中名称和正则的分隔符
+	ignoreByte    = '-' // 忽略名称的分隔符
 )
 
 func (t Type) String() string {

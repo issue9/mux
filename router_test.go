@@ -168,7 +168,6 @@ func TestRouter_ServeHTTP(t *testing.T) {
 	// 忽略大小写测试
 
 	test = newTester(t, CaseInsensitive)
-
 	a.NotError(test.router.Handle("/posts/{path}.html", buildHandler(201)))
 	test.matchTrue(http.MethodGet, "/posts/2017/1.html", 201)
 	test.matchTrue(http.MethodGet, "/Posts/2017/1.html", 201) // 忽略大小写
@@ -262,6 +261,12 @@ func TestRouter_Params(t *testing.T) {
 	a.NotError(router.Patch("/api/v2/{version:\\d*}", buildParamsHandler()))
 	requestParams(http.MethodPatch, "/api/v2/2", http.StatusOK, map[string]string{"version": "2"})
 	requestParams(http.MethodPatch, "/api/v2/", http.StatusOK, map[string]string{"version": ""})
+
+	// 忽略名称捕获
+	router.Clean()
+	a.NotError(router.Patch("/api/v3/{-version:\\d*}", buildParamsHandler()))
+	requestParams(http.MethodPatch, "/api/v3/2", http.StatusOK, nil)
+	requestParams(http.MethodPatch, "/api/v3/", http.StatusOK, nil)
 
 	// 添加 patch /api/v2/{version:\\d*}/test
 	router.Clean()

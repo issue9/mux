@@ -153,7 +153,7 @@ func (n *Node) find(pattern string) *Node {
 				return nn
 			}
 		}
-	} // end for
+	}
 
 	return nil
 }

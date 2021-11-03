@@ -81,6 +81,12 @@ func TestSplit(t *testing.T) {
 	// 正则，命名参数
 	test("/posts/{id:\\d+}/page/{page}", false, "/posts/", "{id:\\d+}/page/", "{page}")
 
+	// 正则不捕获参数
+	test("/posts/{-id:\\d+}/page/{page}", false, "/posts/", "{-id:\\d+}/page/", "{page}")
+
+	// 命名参数，不捕获参数值
+	test("/posts/{-id:}/page/{page}", false, "/posts/", "{-id:}/page/", "{page}")
+
 	// 一些错误格式
 	test("/posts/{{id:\\d+}/author", true)
 	test("/posts/{:\\d+}/author", true)

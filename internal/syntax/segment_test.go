@@ -26,14 +26,46 @@ func TestNewSegment(t *testing.T) {
 	a.NotError(err).Equal(seg.Type, Named).
 		Equal(seg.Value, "{id}").
 		Empty(seg.Rule).
+		False(seg.ignoreName).
 		True(seg.Endpoint).
 		Empty(seg.Suffix)
+
+	// ignore 的 regexp
+	seg, err = NewSegment("{-id:\\d+}")
+	a.NotError(err).Equal(seg.Type, Regexp).
+		Equal(seg.Value, "{-id:\\d+}").
+		Equal(seg.Name, "id").
+		True(seg.ignoreName).
+		Equal(seg.Rule, "\\d+").
+		False(seg.Endpoint).
+		Empty(seg.Suffix)
+
+	// ignore 的拦截
+	seg, err = NewSegment("{-id:any}")
+	a.NotError(err).Equal(seg.Type, Interceptor).
+		Equal(seg.Value, "{-id:any}").
+		Equal(seg.Name, "id").
+		True(seg.ignoreName).
+		Equal(seg.Rule, "any").
+		True(seg.Endpoint).
+		Empty(seg.Suffix)
+
+	// 没有名称的命名参数，匹配任意字符
+	seg, err = NewSegment("{-id:}")
+	a.NotError(err).Equal(seg.Type, Named).
+		Equal(seg.Value, "{-id:}").
+		True(seg.Endpoint).
+		Empty(seg.Rule).
+		True(seg.ignoreName).
+		Empty(seg.Suffix).
+		Equal(seg.Name, "id")
 
 	seg, err = NewSegment("{id:}")
 	a.NotError(err).Equal(seg.Type, Named).
 		Equal(seg.Value, "{id:}").
 		True(seg.Endpoint).
 		Empty(seg.Rule).
+		False(seg.ignoreName).
 		Empty(seg.Suffix).
 		Equal(seg.Name, "id")
 

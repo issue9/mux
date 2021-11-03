@@ -237,7 +237,25 @@ func TestTree_Params(t *testing.T) {
 
 	// 命名
 	test.paramsTrue(http.MethodGet, "/posts/1.html", 201, map[string]string{"id": "1.html"})
+	test.paramsTrue(http.MethodGet, "/posts/", 201, map[string]string{"id": ""})
 	test.paramsTrue(http.MethodGet, "/posts/1.html/author/profile/", 202, map[string]string{"id": "1.html", "action": "profile"})
+
+	// 忽略名称捕获
+
+	test = newTester(a)
+	test.add(http.MethodGet, "/posts/{-id}", 201)                       // 命名
+	test.add(http.MethodGet, "/posts/{-id}/author/{action}/", 202)      // 命名
+	test.add(http.MethodGet, "/posts/{-id:\\d+}", 203)                  // 正则
+	test.add(http.MethodGet, "/posts/{-id:\\d+}/author/{action}/", 204) // 正则
+
+	// 正则
+	test.paramsTrue(http.MethodGet, "/posts/1", 203, nil)
+	test.paramsTrue(http.MethodGet, "/posts/1/author/profile/", 204, map[string]string{"action": "profile"})
+
+	// 命名
+	test.paramsTrue(http.MethodGet, "/posts/1.html", 201, nil)
+	test.paramsTrue(http.MethodGet, "/posts/", 201, nil)
+	test.paramsTrue(http.MethodGet, "/posts/1.html/author/profile/", 202, map[string]string{"action": "profile"})
 }
 
 func TestTreeCN(t *testing.T) {
@@ -284,11 +302,13 @@ func TestTree_Add_Remove(t *testing.T) {
 
 	a.NotError(tree.Add("/", buildHandler(http.StatusAccepted), http.MethodGet))
 	a.NotError(tree.Add("/posts/{id}", buildHandler(http.StatusAccepted), http.MethodGet))
+	a.NotError(tree.Add("/posts/{-id}", buildHandler(http.StatusAccepted), http.MethodGet))
 	a.NotError(tree.Add("/posts/{id}/author", buildHandler(http.StatusAccepted), http.MethodGet, http.MethodPut, http.MethodPost))
 	a.NotError(tree.Add("/posts/1/author", buildHandler(http.StatusAccepted), http.MethodGet))
 	a.NotError(tree.Add("/posts/{id}/{author:\\w+}/profile", buildHandler(1), http.MethodGet))
 
 	a.NotEmpty(tree.node.find("/posts/1/author").handlers)
+	a.NotEmpty(tree.node.find("/posts/{-id}").handlers)
 	tree.Remove("/posts/1/author", http.MethodGet)
 	a.Nil(tree.node.find("/posts/1/author"))
 

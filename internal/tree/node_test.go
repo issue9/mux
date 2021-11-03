@@ -46,11 +46,13 @@ func TestNode_find(t *testing.T) {
 	addNode("/", 1, http.MethodGet)
 	addNode("/posts/{id}", 1, http.MethodGet)
 	addNode("/posts/{id}/author", 1, http.MethodGet)
+	addNode("/posts/{-id:\\d+}/authors", 1, http.MethodGet)
 	addNode("/posts/1/author", 1, http.MethodGet)
 	addNode("/posts/{id}/{author:\\w+}/profile", 1, http.MethodGet)
 
 	a.Equal(node.find("/").segment.Value, "/")
 	a.Equal(node.find("/posts/{id}").segment.Value, "{id}")
+	a.Equal(node.find("/posts/{-id:\\d+}/authors").segment.Value, "{-id:\\d+}/authors")
 	a.Equal(node.find("/posts/{id}/author").segment.Value, "author")
 	a.Equal(node.find("/posts/{id}/{author:\\w+}/profile").segment.Value, "{author:\\w+}/profile")
 }

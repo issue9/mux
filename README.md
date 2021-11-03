@@ -49,33 +49,24 @@ http.ListenAndServe(":8080", router)
 
 ## 语法
 
-### 正则表达式
-
-路由中支持以正则表达式的方式进行匹配，表达式以大括号包含，内部以冒号分隔，
-前半部分为变量的名称，后半部分为变量可匹配类型的正则表达式。比如：
+路由参数采用大括号包含，内部包含名称和规则两部分：
 
 ```text
-/posts/{id:\\d+} // 将被转换成 /posts/(?P<id>\\d+)
-/posts/{:\\d+}   // 将被转换成 /posts/\\d+
+path/{name:rule}/path.html
 ```
 
-### 命名参数
+其中的 name 表示参数的名称，rule 表示对参数的约束规则。
 
-若路由字符串中，所有的正则表达式冒号之后无内容，则会被转换成命名参数，
-表示匹配任意内容，直到找到参数后面的尾缀。
+name 可以包含 `-` 前缀，表示在实际执行过程中，不捕获该名称的对应的值，
+可以在一定程序上提升性能。
 
-```text
- /posts/{id}.html                  // 匹配 /posts/1.html
- /posts-{id}-{page}.html           // 匹配 /posts-1-10.html
- /posts/{path}.html                // 匹配 /posts/2020/11/11/title.html
-```
-
-所以在路由字符串中若是以命名参数结尾的，则表示可以匹配之后的任意字符：
+rule 可以为空，表示匹配任意值，或是正则以及由拦截器指定的值，以下是一些常见的示例。
 
 ```text
-/blog/assets/{path}       // 可以匹配 /blog/assets/2020/11/11/file.ext 等格式
-/blog/{tags:\\w+}/{path}
-/blog/assets{path}
+/posts/{id}.html                  // 匹配 /posts/1.html
+/posts-{id}-{page}.html           // 匹配 /posts-1-10.html
+/posts/{path:\\w+}.html           // 匹配 /posts/2020/11/11/title.html
+/tags/{tag:\\w+}/{path}           // 匹配 /tags/abc/title.html
 ```
 
 ### 路径匹配规则
