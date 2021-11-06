@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/issue9/assert"
+	"github.com/issue9/assert/rest"
 )
 
 func (t *tester) prefix(p string) *Prefix {
@@ -17,33 +18,33 @@ func TestPrefix(t *testing.T) {
 	test := newTester(t)
 	p := test.prefix("/p")
 
-	p.Get("/h/1", buildHandler(201))
+	p.Get("/h/1", rest.BuildHandler(test.a, 201, "", nil))
 	test.matchTrue(http.MethodGet, "/p/h/1", 201)
-	p.GetFunc("/f/1", buildHandlerFunc(201))
+	p.GetFunc("/f/1", rest.BuildHandlerFunc(test.a, 201, "", nil))
 	test.matchTrue(http.MethodGet, "/p/f/1", 201)
 
-	p.Post("/h/1", buildHandler(202))
+	p.Post("/h/1", rest.BuildHandler(test.a, 202, "", nil))
 	test.matchTrue(http.MethodPost, "/p/h/1", 202)
-	p.PostFunc("/f/1", buildHandlerFunc(202))
+	p.PostFunc("/f/1", rest.BuildHandlerFunc(test.a, 202, "", nil))
 	test.matchTrue(http.MethodPost, "/p/f/1", 202)
 
-	p.Put("/h/1", buildHandler(203))
+	p.Put("/h/1", rest.BuildHandler(test.a, 203, "", nil))
 	test.matchTrue(http.MethodPut, "/p/h/1", 203)
-	p.PutFunc("/f/1", buildHandlerFunc(203))
+	p.PutFunc("/f/1", rest.BuildHandlerFunc(test.a, 203, "", nil))
 	test.matchTrue(http.MethodPut, "/p/f/1", 203)
 
-	p.Patch("/h/1", buildHandler(204))
+	p.Patch("/h/1", rest.BuildHandler(test.a, 204, "", nil))
 	test.matchTrue(http.MethodPatch, "/p/h/1", 204)
-	p.PatchFunc("/f/1", buildHandlerFunc(204))
+	p.PatchFunc("/f/1", rest.BuildHandlerFunc(test.a, 204, "", nil))
 	test.matchTrue(http.MethodPatch, "/p/f/1", 204)
 
-	p.Delete("/h/1", buildHandler(205))
+	p.Delete("/h/1", rest.BuildHandler(test.a, 205, "", nil))
 	test.matchTrue(http.MethodDelete, "/p/h/1", 205)
-	p.DeleteFunc("/f/1", buildHandlerFunc(205))
+	p.DeleteFunc("/f/1", rest.BuildHandlerFunc(test.a, 205, "", nil))
 	test.matchTrue(http.MethodDelete, "/p/f/1", 205)
 
 	// Any
-	p.Any("/h/any", buildHandler(206))
+	p.Any("/h/any", rest.BuildHandler(test.a, 206, "", nil))
 	test.matchTrue(http.MethodGet, "/p/h/any", 206)
 	test.matchTrue(http.MethodPost, "/p/h/any", 206)
 	test.matchTrue(http.MethodPut, "/p/h/any", 206)
@@ -51,7 +52,7 @@ func TestPrefix(t *testing.T) {
 	test.matchTrue(http.MethodDelete, "/p/h/any", 206)
 	test.matchTrue(http.MethodTrace, "/p/h/any", 206)
 
-	p.AnyFunc("/f/any", buildHandlerFunc(206))
+	p.AnyFunc("/f/any", rest.BuildHandlerFunc(test.a, 206, "", nil))
 	test.matchTrue(http.MethodGet, "/p/f/any", 206)
 	test.matchTrue(http.MethodPost, "/p/f/any", 206)
 	test.matchTrue(http.MethodPut, "/p/f/any", 206)

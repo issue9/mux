@@ -8,24 +8,13 @@ import (
 	"testing"
 
 	"github.com/issue9/assert"
+	"github.com/issue9/assert/rest"
 
 	"github.com/issue9/mux/v5"
 	"github.com/issue9/mux/v5/params"
 )
 
 var _ http.Handler = &Group{}
-
-func buildHandler(code int) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(code)
-	})
-}
-
-func buildHandlerFunc(code int) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(code)
-	}
-}
 
 func buildMiddleware(a *assert.Assertion, text string) mux.MiddlewareFunc {
 	return func(h http.Handler) http.Handler {
@@ -49,7 +38,7 @@ func TestGroups_PrependMiddleware(t *testing.T) {
 	def := newRouter(a, "def")
 	g.Add(MatcherFunc(Any), def)
 
-	def.Get("/get", buildHandler(201))
+	def.Get("/get", rest.BuildHandler(a, 201, "", nil))
 	g.Middlewares().Prepend(buildMiddleware(a, "1")).
 		Prepend(buildMiddleware(a, "2"))
 
@@ -76,7 +65,7 @@ func TestGroups_AppendMiddleware(t *testing.T) {
 	def := newRouter(a, "def")
 	g.Add(MatcherFunc(Any), def)
 
-	def.Get("/get", buildHandler(201))
+	def.Get("/get", rest.BuildHandler(a, 201, "", nil))
 	g.Middlewares().Append(buildMiddleware(a, "1")).
 		Append(buildMiddleware(a, "2"))
 
@@ -103,7 +92,7 @@ func TestGroups_AddMiddleware(t *testing.T) {
 	def := newRouter(a, "def")
 	g.Add(MatcherFunc(Any), def)
 
-	def.Get("/get", buildHandler(201))
+	def.Get("/get", rest.BuildHandler(a, 201, "", nil))
 	g.Middlewares().Append(buildMiddleware(a, "p1")).
 		Prepend(buildMiddleware(a, "a1")).
 		Append(buildMiddleware(a, "p2")).
@@ -136,7 +125,7 @@ func TestRouter_AddMiddleware(t *testing.T) {
 
 	def := newRouter(a, "def")
 	g.Add(MatcherFunc(Any), def)
-	def.Get("/get", buildHandler(201))
+	def.Get("/get", rest.BuildHandler(a, 201, "", nil))
 	def.Middlewares().Append(buildMiddleware(a, "rp1")).
 		Prepend(buildMiddleware(a, "ra1")).
 		Append(buildMiddleware(a, "rp2")).
@@ -267,7 +256,7 @@ func TestGroups_routers(t *testing.T) {
 	def := newRouter(a, "host")
 	g.Add(h, def)
 	w := httptest.NewRecorder()
-	def.Get("/t1", buildHandler(201))
+	def.Get("/t1", rest.BuildHandler(a, 201, "", nil))
 	r := httptest.NewRequest(http.MethodGet, "/t1", nil)
 	g.ServeHTTP(w, r)
 	a.Equal(w.Result().StatusCode, 404)
@@ -293,7 +282,7 @@ func TestGroups_routers(t *testing.T) {
 	def = newRouter(a, "def")
 	g.Add(h, def)
 	res := def.Resource("/r1")
-	res.Get(buildHandler(202))
+	res.Get(rest.BuildHandler(a, 202, "", nil))
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "/r1", nil)
 	g.ServeHTTP(w, r)
@@ -310,7 +299,7 @@ func TestGroups_routers(t *testing.T) {
 	def = newRouter(a, "def")
 	g.Add(h, def)
 	p := def.Prefix("/prefix1")
-	p.Get("/p1", buildHandler(203))
+	p.Get("/p1", rest.BuildHandler(a, 203, "", nil))
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "/prefix1/p1", nil)
 	g.ServeHTTP(w, r)
@@ -328,7 +317,7 @@ func TestGroups_routers(t *testing.T) {
 	g.Add(h, def)
 	p1 := def.Prefix("/prefix1")
 	p2 := p1.Prefix("/prefix2")
-	p2.GetFunc("/p2", buildHandlerFunc(204))
+	p2.GetFunc("/p2", rest.BuildHandlerFunc(a, 204, "", nil))
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "/prefix1/prefix2/p2", nil)
 	g.ServeHTTP(w, r)
@@ -345,7 +334,7 @@ func TestGroups_routers(t *testing.T) {
 	g.Add(MatcherFunc(Any), def)
 	p1 = def.Prefix("/prefix1")
 	p2 = p1.Prefix("example.com")
-	p2.GetFunc("/p2", buildHandlerFunc(205))
+	p2.GetFunc("/p2", rest.BuildHandlerFunc(a, 205, "", nil))
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest(http.MethodGet, "/prefix1example.com/p2", nil)
 	g.ServeHTTP(w, r)
@@ -360,16 +349,16 @@ func TestGroups_routers_multiple(t *testing.T) {
 
 	v1 := newRouter(a, "v1")
 	g.Add(NewPathVersion("", "v1"), v1)
-	v1.Get("/path", buildHandler(202))
+	v1.Get("/path", rest.BuildHandler(a, 202, "", nil))
 
 	v2 := newRouter(a, "v2")
 	g.Add(NewPathVersion("", "v1", "v2"), v2)
-	v2.Get("/path", buildHandler(203))
+	v2.Get("/path", rest.BuildHandler(a, 203, "", nil))
 
 	// def 匹配任意内容，放在最后。
 	def := newRouter(a, "default")
 	g.Add(MatcherFunc(Any), def)
-	def.Get("/t1", buildHandler(201))
+	def.Get("/t1", rest.BuildHandler(a, 201, "", nil))
 
 	// 指向 def
 	w := httptest.NewRecorder()

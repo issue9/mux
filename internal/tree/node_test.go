@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/issue9/assert"
+	"github.com/issue9/assert/rest"
 
 	"github.com/issue9/mux/v5/internal/syntax"
 )
@@ -40,7 +41,7 @@ func TestNode_find(t *testing.T) {
 			nn.handlers = make(map[string]http.Handler, handlersSize)
 		}
 
-		a.NotError(nn.addMethods(buildHandler(code), methods...))
+		a.NotError(nn.addMethods(rest.BuildHandler(a, code, "", nil), methods...))
 	}
 
 	addNode("/", 1, http.MethodGet)

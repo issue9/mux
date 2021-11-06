@@ -77,7 +77,7 @@ func (n *Node) buildMethods() {
 	buildMethodIndexes(n.methodIndex)
 }
 
-func (n *Node) optionsServeHTTP(w http.ResponseWriter, req *http.Request) {
+func (n *Node) optionsServeHTTP(w http.ResponseWriter, _ *http.Request) {
 	optionsHandle(w, n.Options())
 }
 
@@ -117,7 +117,6 @@ func (n *Node) addMethods(h http.Handler, methods ...string) error {
 	}
 
 	n.buildMethods()
-
 	n.root.buildMethods(1, methods...)
 
 	return nil
@@ -147,6 +146,8 @@ func (tree *Tree) buildMethods(v int, methods ...string) {
 
 func (resp *headResponse) Write(bs []byte) (int, error) {
 	l := len(bs)
+	// bug(caixw): 在 WriteHeader 之后，再输出 Header 并无效果，
+	// 所以在大部分时间，此代码都用不上，除非用户不主动调用 WriteHeader。
 	resp.Header().Set("Content-Length", strconv.Itoa(l))
 	return l, nil
 }

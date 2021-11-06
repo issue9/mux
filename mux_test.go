@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/issue9/assert"
+	"github.com/issue9/assert/rest"
 
 	"github.com/issue9/mux/v5/internal/tree"
 )
@@ -23,8 +24,8 @@ func TestOption(t *testing.T) {
 		True(r.options.CaseInsensitive).
 		NotNil(r.options.MethodNotAllowed)
 
-	notFound := buildHandler(404)
-	methodNotAllowed := buildHandler(405)
+	notFound := rest.BuildHandler(a, 404, "", nil)
+	methodNotAllowed := rest.BuildHandler(a, 405, "", nil)
 	r = NewRouter("", NotFound(notFound), MethodNotAllowed(methodNotAllowed))
 	a.NotNil(r).
 		False(r.options.CaseInsensitive).

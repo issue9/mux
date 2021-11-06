@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/issue9/assert"
+	"github.com/issue9/assert/rest"
 )
 
 func buildMiddleware(a *assert.Assertion, text string) MiddlewareFunc {
@@ -24,7 +25,7 @@ func TestRouter_Middleware(t *testing.T) {
 
 	def := NewRouter("")
 	a.NotNil(def)
-	def.Get("/get", buildHandler(201))
+	def.Get("/get", rest.BuildHandler(a, 201, "", nil))
 	ms := def.Middlewares()
 	ms.Append(buildMiddleware(a, "rp1")).
 		Prepend(buildMiddleware(a, "ra1")).

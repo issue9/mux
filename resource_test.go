@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/issue9/assert"
+	"github.com/issue9/assert/rest"
 )
 
 func (t *tester) resource(p string) *Resource {
@@ -22,34 +23,34 @@ func TestResource(t *testing.T) {
 	f := test.resource("/f/1")
 	a.NotNil(f)
 
-	h.Get(buildHandler(201))
+	h.Get(rest.BuildHandler(a, 201, "", nil))
 	test.matchTrue(http.MethodGet, "/h/1", 201)
-	f.GetFunc(buildHandlerFunc(201))
+	f.GetFunc(rest.BuildHandlerFunc(a, 201, "", nil))
 	test.matchTrue(http.MethodGet, "/f/1", 201)
 
-	h.Post(buildHandler(202))
+	h.Post(rest.BuildHandler(a, 202, "", nil))
 	test.matchTrue(http.MethodPost, "/h/1", 202)
-	f.PostFunc(buildHandlerFunc(202))
+	f.PostFunc(rest.BuildHandlerFunc(a, 202, "", nil))
 	test.matchTrue(http.MethodPost, "/f/1", 202)
 
-	h.Put(buildHandler(203))
+	h.Put(rest.BuildHandler(a, 203, "", nil))
 	test.matchTrue(http.MethodPut, "/h/1", 203)
-	f.PutFunc(buildHandlerFunc(203))
+	f.PutFunc(rest.BuildHandlerFunc(a, 203, "", nil))
 	test.matchTrue(http.MethodPut, "/f/1", 203)
 
-	h.Patch(buildHandler(204))
+	h.Patch(rest.BuildHandler(a, 204, "", nil))
 	test.matchTrue(http.MethodPatch, "/h/1", 204)
-	f.PatchFunc(buildHandlerFunc(204))
+	f.PatchFunc(rest.BuildHandlerFunc(a, 204, "", nil))
 	test.matchTrue(http.MethodPatch, "/f/1", 204)
 
-	h.Delete(buildHandler(205))
+	h.Delete(rest.BuildHandler(a, 205, "", nil))
 	test.matchTrue(http.MethodDelete, "/h/1", 205)
-	f.DeleteFunc(buildHandlerFunc(205))
+	f.DeleteFunc(rest.BuildHandlerFunc(a, 205, "", nil))
 	test.matchTrue(http.MethodDelete, "/f/1", 205)
 
 	// Any
 	h = test.resource("/h/any")
-	h.Any(buildHandler(206))
+	h.Any(rest.BuildHandler(a, 206, "", nil))
 	test.matchTrue(http.MethodGet, "/h/any", 206)
 	test.matchTrue(http.MethodPost, "/h/any", 206)
 	test.matchTrue(http.MethodPut, "/h/any", 206)
@@ -58,7 +59,7 @@ func TestResource(t *testing.T) {
 	test.matchTrue(http.MethodTrace, "/h/any", 206)
 
 	f = test.resource("/f/any")
-	f.AnyFunc(buildHandlerFunc(206))
+	f.AnyFunc(rest.BuildHandlerFunc(a, 206, "", nil))
 	test.matchTrue(http.MethodGet, "/f/any", 206)
 	test.matchTrue(http.MethodPost, "/f/any", 206)
 	test.matchTrue(http.MethodPut, "/f/any", 206)
@@ -90,7 +91,7 @@ func TestRouter_Resource(t *testing.T) {
 	a.NotNil(r2)
 	a.False(r1 == r2) // 不是同一个 *Resource
 
-	r2.Delete(buildHandler(201))
+	r2.Delete(rest.BuildHandler(a, 201, "", nil))
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodDelete, "/abc/1", nil)
 	def.ServeHTTP(w, r)
@@ -108,7 +109,7 @@ func TestPrefix_Resource(t *testing.T) {
 	r1 := p.Resource("/abc/1")
 	a.NotNil(r1)
 
-	r1.Delete(buildHandler(201))
+	r1.Delete(rest.BuildHandler(a, 201, "", nil))
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodDelete, "/p1/abc/1", nil)
 	def.ServeHTTP(w, r)
