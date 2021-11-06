@@ -98,7 +98,9 @@ func TestTree_Route(t *testing.T) {
 	// 添加路由项
 	test.add(http.MethodGet, "/", 201)
 	test.add(http.MethodGet, "/posts/{id}", 202)
+	test.matchTrue(http.MethodGet, "/posts/2.html/2/author", 202)
 	test.add(http.MethodGet, "/posts/{id}/author", 203)
+	test.matchTrue(http.MethodGet, "/posts/2.html/2/author", 203) // 203 比 202 更加匹配
 	test.add(http.MethodGet, "/posts/1/author", 204)
 	test.add(http.MethodGet, "/posts/{id:\\d+}", 205)
 	test.add(http.MethodGet, "/posts/{id:\\d+}/author", 206)
@@ -114,7 +116,7 @@ func TestTree_Route(t *testing.T) {
 	test.matchTrue(http.MethodGet, "/posts/1.html/page", 202)   // 命名参数
 	test.matchTrue(http.MethodGet, "/posts/2.html/author", 203) // 命名参数
 	test.matchTrue(http.MethodGet, "/page/", 207)
-	test.matchTrue(http.MethodGet, "/posts/2.html/2/author", 208) // 若 {id} 可匹配任意字符，此条也可匹配 3
+	test.matchTrue(http.MethodGet, "/posts/2.html/2/author", 208) // 208 比 203 更加匹配
 	test.notFound("/not-exists")
 
 	// 测试 digit 和 \\d 是否正常

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/issue9/sliceutil"
@@ -144,7 +145,11 @@ func (tree *Tree) buildMethods(v int, methods ...string) {
 	buildMethodIndexes(tree.methodIndex)
 }
 
-func (resp *headResponse) Write([]byte) (int, error) { return 0, nil }
+func (resp *headResponse) Write(bs []byte) (int, error) {
+	l := len(bs)
+	resp.Header().Set("Content-Length", strconv.Itoa(l))
+	return l, nil
+}
 
 func (n *Node) headServeHTTP(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
