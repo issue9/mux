@@ -81,6 +81,8 @@ func (r *Router) Handle(pattern string, h http.Handler, methods ...string) *Rout
 }
 
 // Get 相当于 Router.Handle(pattern, h, http.MethodGet) 的简易写法
+//
+// h 不应该主动调用 WriteHeader，否则会导致 HEAD 请求获取不到 Content-Length 报头。
 func (r *Router) Get(pattern string, h http.Handler) *Router {
 	return r.Handle(pattern, h, http.MethodGet)
 }
