@@ -58,7 +58,7 @@ func New() *Tree {
 	return t
 }
 
-func (tree *Tree) optionsServeHTTP(w http.ResponseWriter, req *http.Request) {
+func (tree *Tree) optionsServeHTTP(w http.ResponseWriter, _ *http.Request) {
 	optionsHandle(w, methodIndexes[tree.methodIndex].options)
 }
 

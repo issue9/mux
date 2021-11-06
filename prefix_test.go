@@ -19,57 +19,57 @@ func TestPrefix(t *testing.T) {
 	p := test.prefix("/p")
 
 	p.Get("/h/1", rest.BuildHandler(test.a, 201, "", nil))
-	test.matchTrue(http.MethodGet, "/p/h/1", 201)
+	test.matchCode(http.MethodGet, "/p/h/1", 201)
 	p.GetFunc("/f/1", rest.BuildHandlerFunc(test.a, 201, "", nil))
-	test.matchTrue(http.MethodGet, "/p/f/1", 201)
+	test.matchCode(http.MethodGet, "/p/f/1", 201)
 
 	p.Post("/h/1", rest.BuildHandler(test.a, 202, "", nil))
-	test.matchTrue(http.MethodPost, "/p/h/1", 202)
+	test.matchCode(http.MethodPost, "/p/h/1", 202)
 	p.PostFunc("/f/1", rest.BuildHandlerFunc(test.a, 202, "", nil))
-	test.matchTrue(http.MethodPost, "/p/f/1", 202)
+	test.matchCode(http.MethodPost, "/p/f/1", 202)
 
 	p.Put("/h/1", rest.BuildHandler(test.a, 203, "", nil))
-	test.matchTrue(http.MethodPut, "/p/h/1", 203)
+	test.matchCode(http.MethodPut, "/p/h/1", 203)
 	p.PutFunc("/f/1", rest.BuildHandlerFunc(test.a, 203, "", nil))
-	test.matchTrue(http.MethodPut, "/p/f/1", 203)
+	test.matchCode(http.MethodPut, "/p/f/1", 203)
 
 	p.Patch("/h/1", rest.BuildHandler(test.a, 204, "", nil))
-	test.matchTrue(http.MethodPatch, "/p/h/1", 204)
+	test.matchCode(http.MethodPatch, "/p/h/1", 204)
 	p.PatchFunc("/f/1", rest.BuildHandlerFunc(test.a, 204, "", nil))
-	test.matchTrue(http.MethodPatch, "/p/f/1", 204)
+	test.matchCode(http.MethodPatch, "/p/f/1", 204)
 
 	p.Delete("/h/1", rest.BuildHandler(test.a, 205, "", nil))
-	test.matchTrue(http.MethodDelete, "/p/h/1", 205)
+	test.matchCode(http.MethodDelete, "/p/h/1", 205)
 	p.DeleteFunc("/f/1", rest.BuildHandlerFunc(test.a, 205, "", nil))
-	test.matchTrue(http.MethodDelete, "/p/f/1", 205)
+	test.matchCode(http.MethodDelete, "/p/f/1", 205)
 
 	// Any
 	p.Any("/h/any", rest.BuildHandler(test.a, 206, "", nil))
-	test.matchTrue(http.MethodGet, "/p/h/any", 206)
-	test.matchTrue(http.MethodPost, "/p/h/any", 206)
-	test.matchTrue(http.MethodPut, "/p/h/any", 206)
-	test.matchTrue(http.MethodPatch, "/p/h/any", 206)
-	test.matchTrue(http.MethodDelete, "/p/h/any", 206)
-	test.matchTrue(http.MethodTrace, "/p/h/any", 206)
+	test.matchCode(http.MethodGet, "/p/h/any", 206)
+	test.matchCode(http.MethodPost, "/p/h/any", 206)
+	test.matchCode(http.MethodPut, "/p/h/any", 206)
+	test.matchCode(http.MethodPatch, "/p/h/any", 206)
+	test.matchCode(http.MethodDelete, "/p/h/any", 206)
+	test.matchCode(http.MethodTrace, "/p/h/any", 206)
 
 	p.AnyFunc("/f/any", rest.BuildHandlerFunc(test.a, 206, "", nil))
-	test.matchTrue(http.MethodGet, "/p/f/any", 206)
-	test.matchTrue(http.MethodPost, "/p/f/any", 206)
-	test.matchTrue(http.MethodPut, "/p/f/any", 206)
-	test.matchTrue(http.MethodPatch, "/p/f/any", 206)
-	test.matchTrue(http.MethodDelete, "/p/f/any", 206)
-	test.matchTrue(http.MethodTrace, "/p/f/any", 206)
+	test.matchCode(http.MethodGet, "/p/f/any", 206)
+	test.matchCode(http.MethodPost, "/p/f/any", 206)
+	test.matchCode(http.MethodPut, "/p/f/any", 206)
+	test.matchCode(http.MethodPatch, "/p/f/any", 206)
+	test.matchCode(http.MethodDelete, "/p/f/any", 206)
+	test.matchCode(http.MethodTrace, "/p/f/any", 206)
 
 	// remove
 	p.Remove("/f/any", http.MethodDelete, http.MethodGet)
-	test.matchTrue(http.MethodGet, "/p/f/any", 405)   // 已经删除
-	test.matchTrue(http.MethodTrace, "/p/f/any", 206) // 未删除
+	test.matchCode(http.MethodGet, "/p/f/any", 405)   // 已经删除
+	test.matchCode(http.MethodTrace, "/p/f/any", 206) // 未删除
 
 	// clean
 	p.Clean()
-	test.matchTrue(http.MethodTrace, "/p/f/any", 404)
-	test.optionsTrue("/p/h/1", 404, "")
-	test.matchTrue(http.MethodDelete, "/p/f/1", 404)
+	test.matchCode(http.MethodTrace, "/p/f/any", 404)
+	test.matchOptions("/p/h/1", 404, "")
+	test.matchCode(http.MethodDelete, "/p/f/1", 404)
 }
 
 func TestRouter_Prefix(t *testing.T) {
