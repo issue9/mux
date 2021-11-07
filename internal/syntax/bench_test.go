@@ -27,6 +27,7 @@ func BenchmarkSegment_Match_Named(b *testing.B) {
 func BenchmarkSegment_Match_Named_withMatcher(b *testing.B) {
 	a := assert.New(b)
 	i := NewInterceptors()
+	i.Add(MatchDigit, "digit")
 	a.NotNil(i)
 
 	seg, err := i.NewSegment("{id:digit}/author")
