@@ -4,6 +4,7 @@ package group
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/issue9/mux/v5"
 	"github.com/issue9/mux/v5/internal/syntax"
@@ -33,7 +34,7 @@ func (hs *Hosts) RegisterInterceptor(f mux.InterceptorFunc, name ...string) {
 }
 
 func (hs *Hosts) Match(r *http.Request) (*http.Request, bool) {
-	hostname := r.URL.Hostname()
+	hostname := strings.ToLower(r.URL.Hostname())
 	h, ps := hs.tree.Route(hostname)
 	if h == nil || h.Handler(http.MethodGet) == nil {
 		return nil, false

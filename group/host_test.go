@@ -49,6 +49,10 @@ func TestHosts_Match(t *testing.T) {
 	rr, ok = h.Match(r)
 	a.True(ok).Equal(rr, r)
 
+	r = httptest.NewRequest(http.MethodGet, "https://CAIXW.io/test", nil)
+	rr, ok = h.Match(r)
+	a.True(ok).Equal(rr, r)
+
 	// 泛域名
 	r = httptest.NewRequest(http.MethodGet, "https://xx.example.com/test", nil)
 	rr, ok = h.Match(r)
