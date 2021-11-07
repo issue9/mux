@@ -26,6 +26,8 @@ func NewHosts(lock bool, domain ...string) *Hosts {
 }
 
 // RegisterInterceptor 注册拦截器
+//
+// NOTE: 拦截器只有在注册之后添加的域名才有效果。
 func (hs *Hosts) RegisterInterceptor(f mux.InterceptorFunc, name ...string) {
 	hs.i.Add(f, name...)
 }

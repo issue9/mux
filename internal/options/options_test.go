@@ -34,7 +34,8 @@ func TestBuild(t *testing.T) {
 		NotNil(o).
 		False(o.CaseInsensitive).
 		NotNil(o.CORS).
-		NotNil(o.NotFound)
+		NotNil(o.NotFound).
+		NotNil(o.Interceptors)
 
 	o, err = Build(func(o *Options) { o.CaseInsensitive = true })
 	a.NotError(err).
