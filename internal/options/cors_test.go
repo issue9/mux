@@ -9,6 +9,7 @@ import (
 
 	"github.com/issue9/assert"
 
+	"github.com/issue9/mux/v5/internal/syntax"
 	"github.com/issue9/mux/v5/internal/tree"
 )
 
@@ -61,7 +62,7 @@ func TestCORS_sanitize(t *testing.T) {
 
 func TestCORS_handle(t *testing.T) {
 	a := assert.New(t)
-	tr := tree.New(false)
+	tr := tree.New(false, syntax.NewInterceptors())
 	a.NotError(tr.Add("/path", nil, http.MethodGet, http.MethodDelete))
 	node, ps := tr.Route("/path")
 	a.NotNil(node).Empty(ps)

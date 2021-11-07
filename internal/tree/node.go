@@ -114,7 +114,7 @@ func (n *Node) addSegment(seg *syntax.Segment) (*Node, error) {
 	}
 
 	// seg.Value[:l] 与 child.segment.Value[:l] 暨 parent.Value 是相同的
-	s, err := syntax.NewSegment(seg.Value[l:])
+	s, err := n.root.interceptors.NewSegment(seg.Value[l:])
 	if err != nil {
 		return nil, err
 	}
@@ -261,7 +261,7 @@ func splitNode(n *Node, pos int) (*Node, error) {
 	p.children = removeNodes(p.children, n.segment.Value)
 	p.buildIndexes()
 
-	segs, err := n.segment.Split(pos)
+	segs, err := n.segment.Split(n.root.interceptors, pos)
 	if err != nil {
 		return nil, err
 	}

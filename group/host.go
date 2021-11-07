@@ -4,25 +4,37 @@ package group
 
 import (
 	"net/http"
+	"strings"
 
+	"github.com/issue9/mux/v5"
+	"github.com/issue9/mux/v5/internal/syntax"
 	"github.com/issue9/mux/v5/internal/tree"
 	"github.com/issue9/mux/v5/params"
 )
 
 // Hosts 限定域名的匹配工具
 type Hosts struct {
+	i    *syntax.Interceptors
 	tree *tree.Tree
 }
 
 // NewHosts 声明新的 Hosts 实例
 func NewHosts(lock bool, domain ...string) *Hosts {
-	h := &Hosts{tree: tree.New(lock)}
+	i := syntax.NewInterceptors()
+	h := &Hosts{tree: tree.New(lock, i), i: i}
 	h.Add(domain...)
 	return h
 }
 
+// RegisterInterceptor 注册拦截器
+//
+// NOTE: 拦截器只有在注册之后添加的域名才有效果。
+func (hs *Hosts) RegisterInterceptor(f mux.InterceptorFunc, name ...string) {
+	hs.i.Add(f, name...)
+}
+
 func (hs *Hosts) Match(r *http.Request) (*http.Request, bool) {
-	hostname := r.URL.Hostname()
+	hostname := strings.ToLower(r.URL.Hostname())
 	h, ps := hs.tree.Route(hostname)
 	if h == nil || h.Handler(http.MethodGet) == nil {
 		return nil, false

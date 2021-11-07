@@ -15,6 +15,42 @@ import (
 // Option 自定义路由参数的函数原型
 type Option = options.Option
 
+// InterceptorFunc 拦截器的函数原型
+type InterceptorFunc = syntax.InterceptorFunc
+
+// Interceptor 针对带参数类型路由的拦截处理
+//
+// 在解析诸如 /authors/{id:\\d+} 带参数的路由项时，
+// 用户可以通过拦截并自定义对参数部分 {id:\\d+} 的解析，
+// 从而不需要走正则表达式的那一套解析流程，可以在一定程度上增强性能。
+//
+// 一旦正则表达式被拦截，则节点类型也将不再是正则表达式，
+// 其处理优先级会比正则表达式类型高。 在某些情况下，可能会造成处理结果不相同。比如：
+//  /authors/{id:\\d+}     // 1
+//  /authors/{id:[0-9]+}   // 2
+// 以上两条记录是相同的，但因为表达式不同，也能正常添加，
+// 处理流程，会按添加顺序优先比对第一条，所以第二条是永远无法匹配的。
+// 但是如果你此时添加了 Register(MatchDigit, "[0-9]+")，
+// 将第二个记录的优先级作为提升，以后的匹配都是优先第二条，
+// 造成第一条永远无法匹配到数据。
+func Interceptor(f InterceptorFunc, name ...string) Option {
+	return func(o *options.Options) {
+		if o.Interceptors == nil {
+			o.Interceptors = syntax.NewInterceptors()
+		}
+		o.Interceptors.Add(f, name...)
+	}
+}
+
+// InterceptorAny 任意非空字符的拦截器
+func InterceptorAny(path string) bool { return syntax.MatchAny(path) }
+
+// InterceptorDigit 任意数字字符的拦截器
+func InterceptorDigit(path string) bool { return syntax.MatchDigit(path) }
+
+// InterceptorWord 任意英文单词的拦截器
+func InterceptorWord(path string) bool { return syntax.MatchWord(path) }
+
 // CaseInsensitive 忽略大小写
 //
 // 该操作仅是将客户端的请求路径转换为小之后再次进行匹配，
@@ -75,13 +111,15 @@ func MethodNotAllowed(h http.Handler) Option {
 // Params 获取路由中的参数集合
 func Params(r *http.Request) params.Params { return params.Get(r) }
 
+var syntaxCheckerInterceptors = syntax.NewInterceptors()
+
 // CheckSyntax 检测路由项的语法格式
 //
 // 路由中可通过 {} 指定参数名称，如果参数名中带 :，则 : 之后的为参数的约束条件，
 // 比如 /posts/{id}.html 表示匹配任意任意字符的参数 id。/posts/{id:\d+}.html，
 // 表示匹配正则表达式 \d+ 的参数 id。；
 func CheckSyntax(pattern string) error {
-	_, err := syntax.Split(pattern)
+	_, err := syntaxCheckerInterceptors.Split(pattern)
 	return err
 }
 

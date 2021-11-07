@@ -7,7 +7,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/issue9/mux/v5/interceptor"
 	"github.com/issue9/mux/v5/params"
 )
 
@@ -37,7 +36,7 @@ type Segment struct {
 	expr *regexp.Regexp
 
 	// 拦截器的处理函数
-	matcher interceptor.MatchFunc
+	matcher InterceptorFunc
 }
 
 type MatchParam struct {
@@ -55,7 +54,7 @@ func (p *MatchParam) setParam(k, v string) {
 // NewSegment 声明新的 Segment 变量
 //
 // 如果为非字符串类型的内容，应该是以 { 符号开头才是合法的。
-func NewSegment(val string) (*Segment, error) {
+func (i *Interceptors) NewSegment(val string) (*Segment, error) {
 	seg := &Segment{
 		Value: val,
 		Type:  String,
@@ -88,8 +87,7 @@ func NewSegment(val string) (*Segment, error) {
 	}
 
 	seg.Rule = val[separator+1 : end]
-	matcher, found := interceptor.Get(seg.Rule)
-	if found {
+	if matcher, found := i.funcs[seg.Rule]; found {
 		seg.Type = Interceptor
 		seg.Name = val[start+1 : separator]
 		seg.cleanName()
@@ -134,12 +132,12 @@ func (seg *Segment) Similarity(s1 *Segment) int {
 // Split 从 pos 位置拆分为两个
 //
 // pos 位置的字符归属于后一个元素。
-func (seg *Segment) Split(pos int) ([]*Segment, error) {
-	s1, err := NewSegment(seg.Value[:pos])
+func (seg *Segment) Split(i *Interceptors, pos int) ([]*Segment, error) {
+	s1, err := i.NewSegment(seg.Value[:pos])
 	if err != nil {
 		return nil, err
 	}
-	s2, err := NewSegment(seg.Value[pos:])
+	s2, err := i.NewSegment(seg.Value[pos:])
 	if err != nil {
 		return nil, err
 	}

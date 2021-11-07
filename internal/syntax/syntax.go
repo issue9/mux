@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/issue9/errwrap"
+	"github.com/issue9/mux/v5/params"
 )
 
 // Type 路由项节点的类型
@@ -63,8 +64,8 @@ func (t Type) String() string {
 //
 // 如果 pattern 中存在，但是不存在于 params，将出错，
 // 但是如果只存在于 params，但是不存在于 pattern 是可以的。
-func URL(pattern string, params map[string]string) (string, error) {
-	segs, err := Split(pattern)
+func (i *Interceptors) URL(pattern string, ps params.Params) (string, error) {
+	segs, err := i.Split(pattern)
 	if err != nil {
 		return "", err
 	}
@@ -76,7 +77,7 @@ func URL(pattern string, params map[string]string) (string, error) {
 			continue
 		}
 
-		val, found := params[seg.Name]
+		val, found := ps[seg.Name]
 		if !found {
 			return "", fmt.Errorf("未找到参数 %s 的值", seg.Name)
 		}
@@ -92,7 +93,7 @@ func URL(pattern string, params map[string]string) (string, error) {
 //  /posts/{id}/email ==> /posts/, {id}/email
 //  /posts/\{{id}/email ==> /posts/{, {id}/email
 //  /posts/{year}/{id}.html ==> /posts/, {year}/, {id}.html
-func Split(str string) ([]*Segment, error) {
+func (i *Interceptors) Split(str string) ([]*Segment, error) {
 	if str == "" {
 		return nil, errors.New("参数 str 不能为空")
 	}
@@ -106,7 +107,7 @@ func Split(str string) ([]*Segment, error) {
 		}
 		lastFlag = s[len(s)-1] == endByte
 
-		seg, err := NewSegment(s)
+		seg, err := i.NewSegment(s)
 		if err != nil {
 			return nil, err
 		}

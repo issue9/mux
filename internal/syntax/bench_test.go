@@ -12,8 +12,10 @@ import (
 
 func BenchmarkSegment_Match_Named(b *testing.B) {
 	a := assert.New(b)
+	i := NewInterceptors()
+	a.NotNil(i)
 
-	seg, err := NewSegment("{id}/author")
+	seg, err := i.NewSegment("{id}/author")
 	a.NotError(err).NotNil(seg)
 
 	for i := 0; i < b.N; i++ {
@@ -24,8 +26,11 @@ func BenchmarkSegment_Match_Named(b *testing.B) {
 
 func BenchmarkSegment_Match_Named_withMatcher(b *testing.B) {
 	a := assert.New(b)
+	i := NewInterceptors()
+	i.Add(MatchDigit, "digit")
+	a.NotNil(i)
 
-	seg, err := NewSegment("{id:digit}/author")
+	seg, err := i.NewSegment("{id:digit}/author")
 	a.NotError(err).NotNil(seg)
 
 	for i := 0; i < b.N; i++ {
@@ -36,8 +41,10 @@ func BenchmarkSegment_Match_Named_withMatcher(b *testing.B) {
 
 func BenchmarkSegment_Match_String(b *testing.B) {
 	a := assert.New(b)
+	i := NewInterceptors()
+	a.NotNil(i)
 
-	seg, err := NewSegment("/posts/author")
+	seg, err := i.NewSegment("/posts/author")
 	a.NotError(err).NotNil(seg)
 
 	for i := 0; i < b.N; i++ {
@@ -48,8 +55,10 @@ func BenchmarkSegment_Match_String(b *testing.B) {
 
 func BenchmarkSegment_Match_Regexp(b *testing.B) {
 	a := assert.New(b)
+	i := NewInterceptors()
+	a.NotNil(i)
 
-	seg, err := NewSegment("{id:\\d+}/author")
+	seg, err := i.NewSegment("{id:\\d+}/author")
 	a.NotError(err).NotNil(seg)
 
 	for i := 0; i < b.N; i++ {

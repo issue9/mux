@@ -3,7 +3,11 @@
 // Package options 提供了初始化路由的参数对象
 package options
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/issue9/mux/v5/internal/syntax"
+)
 
 type Option func(*Options)
 
@@ -11,6 +15,7 @@ type Options struct {
 	CaseInsensitive bool
 	Lock            bool
 	CORS            *CORS
+	Interceptors    *syntax.Interceptors
 
 	NotFound,
 	MethodNotAllowed http.Handler
@@ -22,6 +27,10 @@ func (o *Options) sanitize() error {
 	}
 	if err := o.CORS.sanitize(); err != nil {
 		return err
+	}
+
+	if o.Interceptors == nil {
+		o.Interceptors = syntax.NewInterceptors()
 	}
 
 	if o.NotFound == nil {

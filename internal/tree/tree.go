@@ -41,18 +41,21 @@ type Tree struct {
 	node *Node
 
 	locker *sync.RWMutex
+
+	interceptors *syntax.Interceptors
 }
 
 // New 声明一个 Tree 实例
-func New(lock bool) *Tree {
-	s, err := syntax.NewSegment("")
+func New(lock bool, i *syntax.Interceptors) *Tree {
+	s, err := i.NewSegment("")
 	if err != nil {
 		panic("发生了不该发生的错误，应该是 syntax.NewSegment 逻辑发生变化" + err.Error())
 	}
 
 	t := &Tree{
-		methods: make(map[string]int, len(Methods)),
-		node:    &Node{segment: s, methodIndex: methodIndexMap[http.MethodOptions]},
+		methods:      make(map[string]int, len(Methods)),
+		node:         &Node{segment: s, methodIndex: methodIndexMap[http.MethodOptions]},
+		interceptors: i,
 	}
 	t.node.root = t
 	t.node.handlers = map[string]http.Handler{http.MethodOptions: http.HandlerFunc(t.optionsServeHTTP)}
@@ -146,7 +149,7 @@ func (tree *Tree) Remove(pattern string, methods ...string) {
 
 // 获取指定的节点，若节点不存在，则在该位置生成一个新节点。
 func (tree *Tree) getNode(pattern string) (*Node, error) {
-	segs, err := syntax.Split(pattern)
+	segs, err := tree.interceptors.Split(pattern)
 	if err != nil {
 		return nil, err
 	}
@@ -209,4 +212,8 @@ func (tree *Tree) Routes() map[string][]string {
 	}
 
 	return routes
+}
+
+func (tree *Tree) URL(pattern string, ps params.Params) (string, error) {
+	return tree.interceptors.URL(pattern, ps)
 }

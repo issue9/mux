@@ -9,10 +9,31 @@ import (
 
 	"github.com/issue9/assert"
 
+	"github.com/issue9/mux/v5"
 	"github.com/issue9/mux/v5/params"
 )
 
 var _ Matcher = &Hosts{}
+
+func TestHost_RegisterInterceptor(t *testing.T) {
+	a := assert.New(t)
+
+	h := NewHosts(true)
+	a.NotNil(h)
+	h.RegisterInterceptor(mux.InterceptorWord, "\\d+")
+	h.Add("{sub:\\d+}.example.com")
+
+	r := httptest.NewRequest(http.MethodGet, "http://sub--1.example.com/test", nil)
+	rr, ok := h.Match(r)
+	a.False(ok).Nil(rr)
+
+	// 将 \\d+ 注册为任意非空字符
+	r = httptest.NewRequest(http.MethodGet, "http://sub.example.com/test", nil)
+	rr, ok = h.Match(r)
+	a.True(ok).NotNil(rr) // rr 包含了参数信息
+	ps := params.Get(rr)
+	a.Equal(ps, params.Params{"sub": "sub"})
+}
 
 func TestHosts_Match(t *testing.T) {
 	a := assert.New(t)
@@ -25,6 +46,10 @@ func TestHosts_Match(t *testing.T) {
 	a.True(ok).Equal(rr, r)
 
 	r = httptest.NewRequest(http.MethodGet, "https://caixw.io/test", nil)
+	rr, ok = h.Match(r)
+	a.True(ok).Equal(rr, r)
+
+	r = httptest.NewRequest(http.MethodGet, "https://CAIXW.io/test", nil)
 	rr, ok = h.Match(r)
 	a.True(ok).Equal(rr, r)
 

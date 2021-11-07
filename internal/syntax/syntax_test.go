@@ -22,8 +22,11 @@ func TestType_String(t *testing.T) {
 
 func TestSplit(t *testing.T) {
 	a := assert.New(t)
+	i := NewInterceptors()
+	a.NotNil(i)
+
 	test := func(str string, isError bool, ss ...string) {
-		s, err := Split(str)
+		s, err := i.Split(str)
 
 		if isError {
 			a.Error(err)
@@ -32,7 +35,7 @@ func TestSplit(t *testing.T) {
 
 		a.NotError(err).Equal(len(s), len(ss))
 		for index, str := range ss {
-			seg, err := NewSegment(str)
+			seg, err := i.NewSegment(str)
 			a.NotError(err).NotNil(seg)
 
 			item := s[index]
@@ -143,6 +146,9 @@ func TestSplitString(t *testing.T) {
 
 func TestTree_URL(t *testing.T) {
 	a := assert.New(t)
+	i := NewInterceptors()
+	a.NotNil(i)
+
 	data := []*struct {
 		pattern string
 		ps      map[string]string
@@ -202,7 +208,7 @@ func TestTree_URL(t *testing.T) {
 	}
 
 	for _, item := range data {
-		output, err := URL(item.pattern, item.ps)
+		output, err := i.URL(item.pattern, item.ps)
 		if item.err {
 			a.Error(err, "解析 %s 未出现预期的错误", item.pattern).
 				Empty(item.output)
