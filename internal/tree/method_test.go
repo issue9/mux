@@ -33,7 +33,7 @@ func TestBuildMethodIndexes(t *testing.T) {
 
 func TestNode_serveHTTP(t *testing.T) {
 	a := assert.New(t)
-	tree := New()
+	tree := New(false)
 
 	a.NotError(tree.Add("/path", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("h1", "h1")
@@ -61,7 +61,7 @@ func TestNode_serveHTTP(t *testing.T) {
 
 func TestTree_buildMethods(t *testing.T) {
 	a := assert.New(t)
-	tree := New()
+	tree := New(false)
 	a.NotNil(tree)
 
 	// delete=1

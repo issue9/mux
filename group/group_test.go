@@ -225,7 +225,7 @@ func TestGroup(t *testing.T) {
 	g := New()
 	exit := make(chan bool, 1)
 
-	h := NewHosts("{sub}.example.com")
+	h := NewHosts(true, "{sub}.example.com")
 	a.NotNil(h)
 
 	def := g.New("host", h)
@@ -247,7 +247,7 @@ func TestGroup(t *testing.T) {
 
 func TestGroups_routers(t *testing.T) {
 	a := assert.New(t)
-	h := NewHosts("localhost")
+	h := NewHosts(false, "localhost")
 	a.NotNil(h)
 
 	g := New()

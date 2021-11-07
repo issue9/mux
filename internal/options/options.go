@@ -7,6 +7,7 @@ import "net/http"
 
 type Options struct {
 	CaseInsensitive bool
+	Lock            bool
 	CORS            *CORS
 
 	NotFound,

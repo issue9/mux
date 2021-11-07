@@ -39,10 +39,12 @@ type Tree struct {
 	methods map[string]int
 
 	node *Node
+
+	locker *sync.RWMutex
 }
 
 // New 声明一个 Tree 实例
-func New() *Tree {
+func New(lock bool) *Tree {
 	s, err := syntax.NewSegment("")
 	if err != nil {
 		panic("发生了不该发生的错误，应该是 syntax.NewSegment 逻辑发生变化" + err.Error())
@@ -55,6 +57,10 @@ func New() *Tree {
 	t.node.root = t
 	t.node.handlers = map[string]http.Handler{http.MethodOptions: http.HandlerFunc(t.optionsServeHTTP)}
 
+	if lock {
+		t.locker = &sync.RWMutex{}
+	}
+
 	return t
 }
 
@@ -66,6 +72,11 @@ func (tree *Tree) optionsServeHTTP(w http.ResponseWriter, _ *http.Request) {
 //
 // methods 可以为空，表示添加除 OPTIONS 和 HEAD 之外所有支持的请求方法。
 func (tree *Tree) Add(pattern string, h http.Handler, methods ...string) error {
+	if tree.locker != nil {
+		tree.locker.Lock()
+		defer tree.locker.Unlock()
+	}
+
 	n, err := tree.getNode(pattern)
 	if err != nil {
 		return err
@@ -82,12 +93,24 @@ func (tree *Tree) Add(pattern string, h http.Handler, methods ...string) error {
 }
 
 // Clean 清除路由项
-func (tree *Tree) Clean(prefix string) { tree.node.clean(prefix) }
+func (tree *Tree) Clean(prefix string) {
+	if tree.locker != nil {
+		tree.locker.Lock()
+		defer tree.locker.Unlock()
+	}
+
+	tree.node.clean(prefix)
+}
 
 // Remove 移除路由项
 //
 // methods 可以为空，表示删除所有内容。单独删除 OPTIONS，将不会发生任何事情。
 func (tree *Tree) Remove(pattern string, methods ...string) {
+	if tree.locker != nil {
+		tree.locker.Lock()
+		defer tree.locker.Unlock()
+	}
+
 	child := tree.node.find(pattern)
 	if child == nil || len(child.handlers) == 0 {
 		return
@@ -148,6 +171,11 @@ var matchParamPool = &sync.Pool{
 
 // Route 找到与当前内容匹配的 Node 实例
 func (tree *Tree) Route(path string) (*Node, params.Params) {
+	if tree.locker != nil {
+		tree.locker.RLock()
+		defer tree.locker.RUnlock()
+	}
+
 	if path == "*" || path == "" {
 		return tree.node, nil
 	}
@@ -168,6 +196,11 @@ func (tree *Tree) Route(path string) (*Node, params.Params) {
 
 // Routes 获取当前的所有路由项以及对应的请求方法
 func (tree *Tree) Routes() map[string][]string {
+	if tree.locker != nil {
+		tree.locker.RLock()
+		defer tree.locker.RUnlock()
+	}
+
 	routes := make(map[string][]string, 100)
 	routes["*"] = []string{http.MethodOptions}
 

@@ -17,7 +17,7 @@ var _ Matcher = &Hosts{}
 func TestHosts_Match(t *testing.T) {
 	a := assert.New(t)
 
-	h := NewHosts("caixw.io", "caixw.oi", "{sub}.example.com")
+	h := NewHosts(true, "caixw.io", "caixw.oi", "{sub}.example.com")
 	a.NotNil(h)
 
 	r := httptest.NewRequest(http.MethodGet, "http://caixw.io/test", nil)
@@ -61,22 +61,22 @@ func TestHosts_Match(t *testing.T) {
 func TestNewHosts(t *testing.T) {
 	a := assert.New(t)
 
-	h := NewHosts()
+	h := NewHosts(false)
 	a.NotNil(h)
 
-	h = NewHosts("{sub}.example.com")
+	h = NewHosts(true, "{sub}.example.com")
 	a.NotNil(h)
 
 	// 相同的值
 	a.Panic(func() {
-		NewHosts("{sub}.example.com", "{sub}.example.com")
+		NewHosts(true, "{sub}.example.com", "{sub}.example.com")
 	})
 }
 
 func TestHosts_Add_Delete(t *testing.T) {
 	a := assert.New(t)
 
-	h := NewHosts()
+	h := NewHosts(true)
 	a.NotNil(h)
 
 	h.Add("xx.example.com")

@@ -42,7 +42,7 @@ func NewRouter(name string, o ...Option) *Router {
 	}
 
 	r := &Router{
-		tree:    tree.New(),
+		tree:    tree.New(opt.Lock),
 		name:    name,
 		options: opt,
 	}

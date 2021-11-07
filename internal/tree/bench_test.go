@@ -13,7 +13,7 @@ import (
 
 func BenchmarkTree_Route(b *testing.B) {
 	a := assert.New(b)
-	tree := New()
+	tree := New(true)
 
 	// 添加路由项
 	a.NotError(tree.Add("/", rest.BuildHandler(a, 201, "", nil), http.MethodGet))
@@ -46,7 +46,7 @@ func BenchmarkTree_Route(b *testing.B) {
 
 func BenchmarkTree_ServeHTTP(b *testing.B) {
 	a := assert.New(b)
-	tree := New()
+	tree := New(true)
 
 	// 添加路由项
 	a.NotError(tree.Add("/", rest.BuildHandler(a, 201, "", nil), http.MethodGet))

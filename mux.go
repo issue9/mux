@@ -21,6 +21,12 @@ type Option func(options *options.Options)
 // 如果服务端的路由项设置为大写，则依然是不匹配的。
 func CaseInsensitive(o *options.Options) { o.CaseInsensitive = true }
 
+// Lock 是否加锁
+//
+// 在调用 Router.Add 添加路由时，有可能会改变整个路由树的结构，
+// 如果需要频繁在运行时添加和删除路由项，那么应当添加此选项。
+func Lock(o *options.Options) { o.Lock = true }
+
 // CORS 自定义跨域请求设置项
 //
 // https://developer.mozilla.org/zh-CN/docs/Web/HTTP/cors
