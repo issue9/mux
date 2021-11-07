@@ -5,6 +5,8 @@ package options
 
 import "net/http"
 
+type Option func(*Options)
+
 type Options struct {
 	CaseInsensitive bool
 	Lock            bool
@@ -14,7 +16,7 @@ type Options struct {
 	MethodNotAllowed http.Handler
 }
 
-func (o *Options) Sanitize() error {
+func (o *Options) sanitize() error {
 	if o.CORS == nil {
 		o.CORS = &CORS{}
 	}
@@ -33,4 +35,17 @@ func (o *Options) Sanitize() error {
 	}
 
 	return nil
+}
+
+// Build 根据 o 生成 *Options 对象
+func Build(o ...Option) (*Options, error) {
+	opt := &Options{}
+	for _, option := range o {
+		option(opt)
+	}
+
+	if err := opt.sanitize(); err != nil {
+		return nil, err
+	}
+	return opt, nil
 }

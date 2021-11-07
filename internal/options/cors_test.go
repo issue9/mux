@@ -178,6 +178,15 @@ func TestCORS_handle(t *testing.T) {
 	a.Equal(w.Header().Get("Access-Control-Allow-Origin"), "")
 	a.Equal(w.Header().Get("Access-Control-Allow-Headers"), "")
 	a.Equal(w.Header().Get("Access-Control-Allow-Credentials"), "")
+
+	// deny
+
+	o, err := Build()
+	a.NotError(err).NotNil(o)
+	w = httptest.NewRecorder()
+	r = httptest.NewRequest(http.MethodGet, "/path", nil)
+	o.HandleCORS(node, w, r)
+	a.Empty(w.Header().Get("Access-Control-Allow-Origin"))
 }
 
 func TestCORS_headerIsAllowed(t *testing.T) {

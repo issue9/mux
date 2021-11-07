@@ -36,11 +36,8 @@ type router struct {
 //
 // o 用于设置由 New 添加的路由；
 func New(o ...mux.Option) *Group {
-	opt := &options.Options{}
-	for _, option := range o {
-		option(opt)
-	}
-	if err := opt.Sanitize(); err != nil {
+	opt, err := options.Build(o...)
+	if err != nil {
 		panic(err)
 	}
 

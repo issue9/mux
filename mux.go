@@ -12,8 +12,8 @@ import (
 	"github.com/issue9/mux/v5/params"
 )
 
-// Option 声明了自定义路由参数的函数原型
-type Option func(options *options.Options)
+// Option 自定义路由参数的函数原型
+type Option = options.Option
 
 // CaseInsensitive 忽略大小写
 //

@@ -33,11 +33,8 @@ type Router struct {
 //
 // name string 路由名称，可以为空；
 func NewRouter(name string, o ...Option) *Router {
-	opt := &options.Options{}
-	for _, option := range o {
-		option(opt)
-	}
-	if err := opt.Sanitize(); err != nil {
+	opt, err := options.Build(o...)
+	if err != nil {
 		panic(err)
 	}
 
