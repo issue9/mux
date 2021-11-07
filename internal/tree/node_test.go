@@ -28,11 +28,11 @@ func (n *Node) len() int {
 
 func TestNode_find(t *testing.T) {
 	a := assert.New(t)
-	tree := New(false)
+	tree := New(false, syntax.NewInterceptors())
 	node := &Node{root: tree}
 
 	addNode := func(p string, code int, methods ...string) {
-		segs, err := syntax.Split(p)
+		segs, err := tree.interceptors.Split(p)
 		a.NotError(err).NotNil(segs)
 		nn, err := node.getNode(segs)
 		a.NotError(err).NotNil(nn)
@@ -60,10 +60,13 @@ func TestNode_find(t *testing.T) {
 
 func TestRemoveNodes(t *testing.T) {
 	a := assert.New(t)
+	tree := New(false, syntax.NewInterceptors())
+	a.NotNil(tree)
+
 	newNode := func(str string) *Node {
-		s, err := syntax.NewSegment(str)
+		s, err := tree.interceptors.NewSegment(str)
 		a.NotError(err).NotNil(s)
-		return &Node{segment: s}
+		return &Node{segment: s, root: tree}
 	}
 
 	n1 := newNode("/1")
@@ -105,10 +108,13 @@ func TestRemoveNodes(t *testing.T) {
 
 func TestSplitNode(t *testing.T) {
 	a := assert.New(t)
+	tree := New(false, syntax.NewInterceptors())
+	a.NotNil(tree)
+
 	newNode := func(str string) *Node {
-		s, err := syntax.NewSegment(str)
+		s, err := tree.interceptors.NewSegment(str)
 		a.NotError(err).NotNil(s)
-		return &Node{segment: s}
+		return &Node{segment: s, root: tree}
 	}
 	p := newNode("/blog")
 
@@ -118,10 +124,11 @@ func TestSplitNode(t *testing.T) {
 		a.Nil(nn)
 	})
 
-	s, err := syntax.NewSegment("/posts/{id}/author")
+	s, err := tree.interceptors.NewSegment("/posts/{id}/author")
 	a.NotError(err).NotNil(s)
 	node := p.newChild(s)
-	a.NotNil(node)
+	a.NotNil(node).
+		NotNil(node.root)
 
 	nn, err := splitNode(node, 7) // 从 { 开始拆分
 	a.NotError(err).NotNil(nn)

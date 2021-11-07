@@ -12,6 +12,7 @@ import (
 	"github.com/issue9/assert"
 	"github.com/issue9/assert/rest"
 
+	"github.com/issue9/mux/v5/internal/syntax"
 	"github.com/issue9/mux/v5/params"
 )
 
@@ -21,8 +22,13 @@ type tester struct {
 }
 
 func newTester(a *assert.Assertion, lock bool) *tester {
+	i := syntax.NewInterceptors()
+	a.NotNil(i)
+
+	i.Add(syntax.MatchDigit, "digit")
+
 	return &tester{
-		tree: New(lock),
+		tree: New(lock, i),
 		a:    a,
 	}
 }
@@ -270,7 +276,7 @@ func TestTreeCN(t *testing.T) {
 
 func TestTree_Clean(t *testing.T) {
 	a := assert.New(t)
-	tree := New(true)
+	tree := New(true, syntax.NewInterceptors())
 
 	addNode := func(p string, code int, methods ...string) {
 		a.NotError(tree.Add(p, rest.BuildHandler(a, code, "", nil), methods...))
@@ -294,7 +300,7 @@ func TestTree_Clean(t *testing.T) {
 func TestTree_Add_Remove(t *testing.T) {
 	a := assert.New(t)
 
-	tree := New(false)
+	tree := New(false, syntax.NewInterceptors())
 	a.NotNil(tree)
 
 	a.NotError(tree.Add("/", rest.BuildHandler(a, http.StatusAccepted, "", nil), http.MethodGet))
@@ -317,7 +323,7 @@ func TestTree_Add_Remove(t *testing.T) {
 
 	// addAny
 
-	tree = New(false)
+	tree = New(false, syntax.NewInterceptors())
 	a.NotNil(tree)
 	a.NotError(tree.Add("/path", rest.BuildHandler(a, 201, "", nil)))
 	node := tree.node.find("/path")
@@ -327,7 +333,7 @@ func TestTree_Add_Remove(t *testing.T) {
 
 	// head
 
-	tree = New(false)
+	tree = New(false, syntax.NewInterceptors())
 	a.NotNil(tree)
 	a.NotError(tree.Add("/path", rest.BuildHandler(a, http.StatusAccepted, "", nil), http.MethodGet))
 	node = tree.node.find("/path")
@@ -340,7 +346,7 @@ func TestTree_Add_Remove(t *testing.T) {
 
 	// error
 
-	tree = New(false)
+	tree = New(false, syntax.NewInterceptors())
 	a.NotNil(tree)
 	a.ErrorString(tree.Add("/path", rest.BuildHandler(a, http.StatusAccepted, "", nil), http.MethodHead), "无法手动添加 OPTIONS/HEAD 请求方法")
 	a.ErrorString(tree.Add("/path", rest.BuildHandler(a, http.StatusAccepted, "", nil), "NOT-SUPPORTED"), "NOT-SUPPORTED")
@@ -355,7 +361,7 @@ func TestTree_Add_Remove(t *testing.T) {
 
 func TestTree_Routes(t *testing.T) {
 	a := assert.New(t)
-	tree := New(false)
+	tree := New(false, syntax.NewInterceptors())
 	a.NotNil(tree)
 
 	a.NotError(tree.Add("/", rest.BuildHandler(a, http.StatusOK, "", nil), http.MethodGet))

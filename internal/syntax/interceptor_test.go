@@ -1,12 +1,41 @@
 // SPDX-License-Identifier: MIT
 
-package interceptor
+package syntax
 
 import (
 	"testing"
 
 	"github.com/issue9/assert"
 )
+
+func newInterceptors(a *assert.Assertion) *Interceptors {
+	i := NewInterceptors()
+	a.NotNil(i)
+
+	i.Add(MatchDigit, "digit")
+	i.Add(MatchWord, "word")
+	i.Add(MatchAny, "any")
+
+	return i
+}
+
+func TestInterceptors_Add(t *testing.T) {
+	a := assert.New(t)
+	i := NewInterceptors()
+
+	a.Panic(func() {
+		i.Add(MatchAny)
+	})
+
+	i.Add(MatchWord, "[a-zA-Z0-9]+", "word1", "word2")
+	a.PanicString(func() {
+		i.Add(MatchWord, "[a-zA-Z0-9]+")
+	}, "已经存在")
+	_, found := i.funcs["word1"]
+	a.True(found)
+	_, found = i.funcs["[a-zA-Z0-9]+"]
+	a.True(found)
+}
 
 func TestMatchAny(t *testing.T) {
 	a := assert.New(t)

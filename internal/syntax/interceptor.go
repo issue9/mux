@@ -1,14 +1,33 @@
 // SPDX-License-Identifier: MIT
 
-package interceptor
+package syntax
 
-// MatchFunc 每个拦截器的实际处理函数
-type MatchFunc func(string) bool
+import "fmt"
 
-func init() {
-	Register(MatchDigit, "digit")
-	Register(MatchWord, "word")
-	Register(MatchAny, "any")
+// InterceptorFunc 拦截器的处理函数
+type InterceptorFunc func(string) bool
+
+type Interceptors struct {
+	funcs map[string]InterceptorFunc
+}
+
+func NewInterceptors() *Interceptors {
+	return &Interceptors{
+		funcs: map[string]InterceptorFunc{},
+	}
+}
+
+func (i *Interceptors) Add(f InterceptorFunc, name ...string) {
+	if len(name) == 0 {
+		panic("参数 name 不能为空")
+	}
+
+	for _, n := range name {
+		if _, found := i.funcs[n]; found {
+			panic(fmt.Errorf("%s 已经存在", n))
+		}
+		i.funcs[n] = f
+	}
 }
 
 // MatchAny 匹配任意非空内容

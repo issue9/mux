@@ -222,7 +222,7 @@ func TestGroups_empty(t *testing.T) {
 
 func TestGroup(t *testing.T) {
 	a := assert.New(t)
-	g := New()
+	g := New(mux.Interceptor(mux.InterceptorDigit, "digit"))
 	exit := make(chan bool, 1)
 
 	h := NewHosts(true, "{sub}.example.com")

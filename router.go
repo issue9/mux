@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/issue9/mux/v5/internal/options"
-	"github.com/issue9/mux/v5/internal/syntax"
 	"github.com/issue9/mux/v5/internal/tree"
 	"github.com/issue9/mux/v5/params"
 )
@@ -39,7 +38,7 @@ func NewRouter(name string, o ...Option) *Router {
 	}
 
 	r := &Router{
-		tree:    tree.New(opt.Lock),
+		tree:    tree.New(opt.Lock, opt.Interceptors),
 		name:    name,
 		options: opt,
 	}
@@ -149,7 +148,7 @@ func (r *Router) AnyFunc(pattern string, f http.HandlerFunc) *Router {
 // pattern 为路由项的定义内容；
 // params 为路由项中的参数，键名为参数名，键值为参数值。
 func (r *Router) URL(pattern string, params map[string]string) (string, error) {
-	return syntax.URL(pattern, params)
+	return r.tree.URL(pattern, params)
 }
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {

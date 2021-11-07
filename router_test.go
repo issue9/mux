@@ -9,8 +9,6 @@ import (
 
 	"github.com/issue9/assert"
 	"github.com/issue9/assert/rest"
-
-	"github.com/issue9/mux/v5/interceptor"
 )
 
 var _ http.Handler = &Router{}
@@ -130,7 +128,7 @@ func TestRouter(t *testing.T) {
 }
 
 func TestRouter_ServeHTTP(t *testing.T) {
-	test := newTester(t)
+	test := newTester(t, Interceptor(InterceptorDigit, "digit"), Interceptor(InterceptorAny, "any"))
 
 	test.router.Handle("/posts/{path}.html", rest.BuildHandler(test.a, 201, "", nil))
 	test.matchCode(http.MethodGet, "/posts/2017/1.html", 201)
@@ -217,7 +215,7 @@ func TestRouter_Routes(t *testing.T) {
 
 func TestRouter_Params(t *testing.T) {
 	a := assert.New(t)
-	router := NewRouter("")
+	router := NewRouter("", Interceptor(InterceptorDigit, "digit"))
 	a.NotNil(router)
 
 	params := map[string]string{}
@@ -297,7 +295,7 @@ func TestRouter_Clean(t *testing.T) {
 
 // 测试匹配顺序是否正确
 func TestRouter_ServeHTTP_Order(t *testing.T) {
-	test := newTester(t)
+	test := newTester(t, Interceptor(InterceptorAny, "any"))
 
 	test.router.GetFunc("/posts/{id}", rest.BuildHandlerFunc(test.a, 203, "", nil))
 	test.router.GetFunc("/posts/{id:\\d+}", rest.BuildHandlerFunc(test.a, 202, "", nil))
@@ -313,17 +311,15 @@ func TestRouter_ServeHTTP_Order(t *testing.T) {
 	test.matchCode(http.MethodGet, "/posts-", 205)    // 204 只匹配非空
 
 	// interceptor
-	test = newTester(t)
-	interceptor.Register(interceptor.MatchDigit, "[0-9]+")
+	test = newTester(t, Interceptor(InterceptorDigit, "[0-9]+"))
 	test.router.GetFunc("/posts/{id}", rest.BuildHandlerFunc(test.a, 203, "", nil))        // f3
 	test.router.GetFunc("/posts/{id:\\d+}", rest.BuildHandlerFunc(test.a, 202, "", nil))   // f2 永远匹配不到
 	test.router.GetFunc("/posts/1", rest.BuildHandlerFunc(test.a, 201, "", nil))           // f1
 	test.router.GetFunc("/posts/{id:[0-9]+}", rest.BuildHandlerFunc(test.a, 210, "", nil)) // f0 interceptor 权限比正则要高
 	test.matchCode(http.MethodGet, "/posts/1", 201)                                        // f1 普通路由项完全匹配
-	test.matchCode(http.MethodGet, "/posts/2", 210)                                        // f1 interceptor
+	test.matchCode(http.MethodGet, "/posts/2", 210)                                        // f0 interceptor
 	test.matchCode(http.MethodGet, "/posts/abc", 203)                                      // f3 命名路由
 	test.matchCode(http.MethodGet, "/posts/", 203)                                         // f3
-	interceptor.Deregister("[0-9]+")
 
 	test = newTester(t)
 	test.router.GetFunc("/p1/{p1}/p2/{p2:\\d+}", rest.BuildHandlerFunc(test.a, 201, "", nil)) // f1
