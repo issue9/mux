@@ -31,6 +31,9 @@ type Router struct {
 // NewRouter 声明路由
 //
 // name string 路由名称，可以为空；
+//
+// o 修改路由的默认形为。比如 CaseInsensitive 会让路由忽略大小写，
+// 相同类型的函数会相互覆盖，比如 CORS 和 AllowedCORS，后传递会覆盖前传递的值。
 func NewRouter(name string, o ...Option) *Router {
 	opt, err := options.Build(o...)
 	if err != nil {

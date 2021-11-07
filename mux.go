@@ -81,6 +81,8 @@ func Lock(o *options.Options) { o.Lock = true }
 // 其它 >= -1 的值正常输出数值；
 //
 // allowCredentials 对应 Access-Control-Allow-Credentials。
+//
+// NOTE: AllowedCORS 与 CORS 属于相同功能的修改，会相互覆盖。
 func CORS(origins, allowHeaders, exposedHeaders []string, maxAge int, allowCredentials bool) Option {
 	return func(o *options.Options) {
 		o.CORS = &options.CORS{
@@ -94,6 +96,8 @@ func CORS(origins, allowHeaders, exposedHeaders []string, maxAge int, allowCrede
 }
 
 // AllowedCORS 允许跨域请求
+//
+// NOTE: AllowedCORS 与 CORS 属于相同功能的修改，会相互覆盖。
 func AllowedCORS(o *options.Options) { o.CORS = options.AllowedCORS() }
 
 // NotFound 自定义 404 状态码下的输出

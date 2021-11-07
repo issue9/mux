@@ -137,11 +137,10 @@ r.Do()
 ### 拦截器
 
 正常情况下，`/posts/{id:\d+}` 或是 `/posts/{id:[0-9]+}` 会被当作正则表达式处理，
-但是正则表达式的性能并不是很好，这个时候我们可以通过 `interceptor` 包进行拦截，
-采用自己的特定方法进行处理：
+但是正则表达式的性能并不是很好，这个时候我们可以通过 `Interceptor` 进行拦截：
 
 ```go
-import "github.com/issue9/mux/v5/interceptor"
+import "github.com/issue9/mux/v5"
 
 func digit(path string) bool {
     for _, c := range path {
@@ -153,25 +152,25 @@ func digit(path string) bool {
 }
 
 // 路由中的 \d+ 和 [0-9]+ 均采用 digit 函数进行处理，不再是正则表达式。
-interceptor.Register(digit, "\\d+", "[0-9]+")
+r := mux.NewRouter("", mux.Interceptor(digit, "\\d+", "[0-9]+"))
 ```
 
-这样在所有路由项中的 `[0-9]+` 将被 digit 拦截处理，不再会被编译为正则表达式，
-在性能上会有很大的提升。
+这样在所有路由项中的 `[0-9]+` 和 `\\d+` 将被 `digit` 函灵敏拦截处理，
+不再会被编译为正则表达式，在性能上会有很大的提升。
 通过该功能，也可以自定义一些非正常的正则表达这式，然后进行拦截，比如：
 
 ```text
 /posts/{id:digit}/.html
 ```
 
-如果不拦截，最终传递给正则表达式，可能会出现编译错误，通过 interceptor 可以将 digit 合法化。
-目前支持以下作为命名参数的拦截器：
+如果不拦截，最终传递给正则表达式，可能会出现编译错误，通过拦截器可以将 digit 合法化。
+目前提供了以下几个拦截器：
 
-- digit 限定为数字字符，相当于正则的 `[0-9]`；
-- word 相当于正则的 `[a-zA-Z0-9]`；
-- any 表示匹配任意非空内容；
+- InterceptorDigit 限定为数字字符，相当于正则的 `[0-9]`；
+- InterceptorWord 相当于正则的 `[a-zA-Z0-9]`；
+- InterceptorAny 表示匹配任意非空内容；
 
-用户也可以自行添加新的拦截器。具体可参考 <https://pkg.go.dev/github.com/issue9/mux/v5/interceptor>
+用户也可以自行实现 `InterceptorFunc` 作为拦截器。具体可参考 <https://pkg.go.dev/github.com/issue9/mux/v5#Interceptor>
 
 ### CORS
 
