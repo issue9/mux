@@ -148,7 +148,7 @@ func (seg *Segment) Split(pos int) ([]*Segment, error) {
 
 // Match 路径是否与当前节点匹配
 //
-// 如果正确匹配，则返回 p.Path 剩余部分的起始位置，不匹配则返回 -1。
+// 如果正确匹配，则将剩余的未匹配字符串写入到 p.Path 并返回 true。
 func (seg *Segment) Match(p *MatchParam) bool {
 	switch seg.Type {
 	case String:
