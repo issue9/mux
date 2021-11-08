@@ -10,7 +10,7 @@ import (
 	"github.com/issue9/assert"
 
 	"github.com/issue9/mux/v5"
-	"github.com/issue9/mux/v5/params"
+	"github.com/issue9/mux/v5/internal/syntax"
 )
 
 var _ Matcher = &Hosts{}
@@ -31,8 +31,8 @@ func TestHost_RegisterInterceptor(t *testing.T) {
 	r = httptest.NewRequest(http.MethodGet, "http://sub.example.com/test", nil)
 	rr, ok = h.Match(r)
 	a.True(ok).NotNil(rr) // rr 包含了参数信息
-	ps := params.Get(rr)
-	a.Equal(ps, params.Params{"sub": "sub"})
+	ps := syntax.GetParams(rr)
+	a.Equal(ps, &syntax.Params{Params: []syntax.Param{{K: "sub", V: "sub"}}})
 }
 
 func TestHosts_Match(t *testing.T) {
@@ -57,14 +57,14 @@ func TestHosts_Match(t *testing.T) {
 	r = httptest.NewRequest(http.MethodGet, "https://xx.example.com/test", nil)
 	rr, ok = h.Match(r)
 	a.True(ok).NotEqual(rr, r) // 通过 context.WithValue 修改了 rr
-	sub := params.Get(rr).MustString("sub", "yy")
+	sub := syntax.GetParams(rr).MustString("sub", "yy")
 	a.Equal(sub, "xx")
 
 	// 泛域名
 	r = httptest.NewRequest(http.MethodGet, "https://xx.yy.example.com/test", nil)
 	rr, ok = h.Match(r)
 	a.True(ok).NotEqual(rr, r) // 通过 context.WithValue 修改了 rr
-	sub = params.Get(rr).MustString("sub", "yy")
+	sub = syntax.GetParams(rr).MustString("sub", "yy")
 	a.Equal(sub, "xx.yy")
 
 	// 带端口

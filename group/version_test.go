@@ -9,7 +9,7 @@ import (
 
 	"github.com/issue9/assert"
 
-	"github.com/issue9/mux/v5/params"
+	"github.com/issue9/mux/v5/internal/syntax"
 )
 
 var (
@@ -30,7 +30,7 @@ func TestHeaderVersion_Match(t *testing.T) {
 	r.Header.Set("Accept", "application/json; version=1.0")
 	a.NotNil(r)
 	rr, ok := h.Match(r)
-	a.True(ok).NotNil(rr).Equal(params.Get(rr).MustString("version", "not-exists"), "1.0")
+	a.True(ok).NotNil(rr).Equal(syntax.GetParams(rr).MustString("version", "not-exists"), "1.0")
 
 	// 相同版本号，未指定 Key
 	h = &HeaderVersion{
@@ -40,7 +40,7 @@ func TestHeaderVersion_Match(t *testing.T) {
 	r.Header.Set("Accept", "application/json; version=1.0")
 	a.NotNil(r)
 	rr, ok = h.Match(r)
-	a.True(ok).NotNil(rr).Equal(params.Get(rr).MustString("version", "not-exists"), "not-exists")
+	a.True(ok).NotNil(rr).Nil(syntax.GetParams(rr))
 
 	// 空版本
 	r = httptest.NewRequest(http.MethodGet, "http://not.exsits/test", nil)
@@ -102,7 +102,7 @@ func TestPathVersion_Match(t *testing.T) {
 	a.True(ok).NotNil(rr)
 	a.Equal(rr.URL.Path, "/test").
 		Equal(r.URL.Path, "/v1/test").
-		Equal(params.Get(rr).MustString("version", "not-found"), "/v1")
+		Equal(syntax.GetParams(rr).MustString("version", "not-found"), "/v1")
 
 		// 相同版本号，未指定 key
 	h = NewPathVersion("", "v3", "/v2", "/v1")
@@ -112,7 +112,7 @@ func TestPathVersion_Match(t *testing.T) {
 	a.True(ok).NotNil(rr)
 	a.Equal(rr.URL.Path, "/test").
 		Equal(r.URL.Path, "/v1/test").
-		Equal(params.Get(rr).MustString("version", "not-found"), "not-found")
+		Equal(syntax.GetParams(rr).MustString("version", "not-found"), "not-found")
 
 	// 空版本
 	r = httptest.NewRequest(http.MethodGet, "http://caixw.io/test", nil)

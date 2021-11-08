@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/issue9/mux/v5/internal/options"
+	"github.com/issue9/mux/v5/internal/syntax"
 	"github.com/issue9/mux/v5/internal/tree"
-	"github.com/issue9/mux/v5/params"
 )
 
 // Router 路由
@@ -172,7 +172,8 @@ func (r *Router) serveHTTP(w http.ResponseWriter, req *http.Request) {
 
 	if h := node.Handler(req.Method); h != nil {
 		r.options.HandleCORS(node, w, req) // 处理跨域问题
-		h.ServeHTTP(w, params.WithValue(req, ps))
+		h.ServeHTTP(w, syntax.WithValue(req, ps))
+		ps.Destroy()
 		return
 	}
 

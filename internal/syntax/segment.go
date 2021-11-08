@@ -6,12 +6,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
-
-	"github.com/issue9/mux/v5/params"
 )
-
-// 每次申请 params.Params 分配的大小
-const defaultParamsCap = 5
 
 // Segment 路由项被拆分之后的分段内容
 type Segment struct {
@@ -40,18 +35,6 @@ type Segment struct {
 
 	// 拦截器的处理函数
 	matcher InterceptorFunc
-}
-
-type MatchParam struct {
-	Path   string
-	Params params.Params
-}
-
-func (p *MatchParam) setParam(k, v string) {
-	if p.Params == nil {
-		p.Params = make(params.Params, defaultParamsCap)
-	}
-	p.Params[k] = v
 }
 
 // NewSegment 声明新的 Segment 变量
@@ -150,7 +133,7 @@ func (seg *Segment) Split(i *Interceptors, pos int) ([]*Segment, error) {
 // Match 路径是否与当前节点匹配
 //
 // 如果正确匹配，则将剩余的未匹配字符串写入到 p.Path 并返回 true。
-func (seg *Segment) Match(p *MatchParam) bool {
+func (seg *Segment) Match(p *Params) bool {
 	switch seg.Type {
 	case String:
 		if strings.HasPrefix(p.Path, seg.Value) {
@@ -161,7 +144,7 @@ func (seg *Segment) Match(p *MatchParam) bool {
 		if seg.Endpoint {
 			if seg.matcher(p.Path) {
 				if !seg.ignoreName {
-					p.setParam(seg.Name, p.Path)
+					p.Set(seg.Name, p.Path)
 				}
 				p.Path = p.Path[:0]
 				return true
@@ -170,7 +153,7 @@ func (seg *Segment) Match(p *MatchParam) bool {
 			for {
 				if val := p.Path[:index]; seg.matcher(val) {
 					if !seg.ignoreName {
-						p.setParam(seg.Name, val)
+						p.Set(seg.Name, val)
 					}
 					p.Path = p.Path[index+len(seg.Suffix):]
 					return true
@@ -186,7 +169,7 @@ func (seg *Segment) Match(p *MatchParam) bool {
 	case Regexp:
 		if loc := seg.expr.FindStringSubmatchIndex(p.Path); loc != nil && loc[0] == 0 {
 			if !seg.ignoreName {
-				p.setParam(seg.Name, p.Path[:loc[3]])
+				p.Set(seg.Name, p.Path[:loc[3]])
 			}
 			p.Path = p.Path[loc[1]:]
 			return true

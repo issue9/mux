@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-package params
+package syntax
 
 import (
 	"context"
@@ -11,45 +11,44 @@ import (
 	"github.com/issue9/assert"
 )
 
-func getParams(params map[string]string, a *assert.Assertion) Params {
+func getParams(params *Params, a *assert.Assertion) *Params {
 	r := httptest.NewRequest(http.MethodGet, "/to/path", nil)
 	r = WithValue(r, params)
-	return Get(r)
+	a.NotNil(r)
+	return GetParams(r)
 }
 
 func TestWithValue(t *testing.T) {
 	a := assert.New(t)
 
 	r := httptest.NewRequest(http.MethodGet, "/to/path", nil)
-	a.Equal(WithValue(r, Params{}), r)
+	a.Equal(WithValue(r, &Params{}), r)
 
 	r = httptest.NewRequest(http.MethodGet, "/to/path", nil)
-	r = WithValue(r, Params{"k1": "v1"})
-	r = WithValue(r, map[string]string{"k2": "v2"})
-	a.Equal(Get(r), map[string]string{"k1": "v1", "k2": "v2"})
+	r = WithValue(r, &Params{Params: []Param{{K: "k1", V: "v1"}}})
+	r = WithValue(r, &Params{Params: []Param{{K: "k2", V: "v2"}}})
+	a.Equal(GetParams(r), &Params{Params: []Param{{K: "k2", V: "v2"}, {K: "k1", V: "v1"}}})
 }
 
-func TestGet(t *testing.T) {
+func TestGetParams(t *testing.T) {
 	a := assert.New(t)
 
 	r := httptest.NewRequest(http.MethodGet, "/to/path", nil)
-	ps := Get(r)
+	ps := GetParams(r)
 	a.Nil(ps)
 
-	maps := map[string]string{"key1": "1"}
+	kvs := []Param{{K: "key1", V: "1"}}
 	r = httptest.NewRequest(http.MethodGet, "/to/path", nil)
-	ctx := context.WithValue(r.Context(), contextKeyParams, Params(maps))
+	ctx := context.WithValue(r.Context(), contextKeyParams, &Params{Params: kvs})
 	r = r.WithContext(ctx)
-	ps = Get(r)
-	a.Equal(ps, maps)
+	ps = GetParams(r)
+	a.Equal(ps.Params, kvs)
 }
 
 func TestParams_String(t *testing.T) {
 	a := assert.New(t)
 
-	ps := getParams(map[string]string{
-		"key1": "1",
-	}, a)
+	ps := getParams(&Params{Params: []Param{{K: "key1", V: "1"}}}, a)
 
 	val, err := ps.String("key1")
 	a.NotError(err).Equal(val, "1")
@@ -66,10 +65,10 @@ func TestParams_String(t *testing.T) {
 func TestParams_Int(t *testing.T) {
 	a := assert.New(t)
 
-	ps := getParams(map[string]string{
-		"key1": "1",
-		"key2": "a2",
-	}, a)
+	ps := getParams(&Params{Params: []Param{
+		{K: "key1", V: "1"},
+		{K: "key2", V: "a2"},
+	}}, a)
 
 	val, err := ps.Int("key1")
 	a.NotError(err).Equal(val, 1)
@@ -89,11 +88,11 @@ func TestParams_Int(t *testing.T) {
 func TestParams_Uint(t *testing.T) {
 	a := assert.New(t)
 
-	ps := getParams(map[string]string{
-		"key1": "1",
-		"key2": "a2",
-		"key3": "-1",
-	}, a)
+	ps := getParams(&Params{Params: []Param{
+		{K: "key1", V: "1"},
+		{K: "key2", V: "a2"},
+		{K: "key3", V: "-1"},
+	}}, a)
 
 	val, err := ps.Uint("key1")
 	a.NotError(err).Equal(val, 1)
@@ -118,11 +117,11 @@ func TestParams_Uint(t *testing.T) {
 func TestParams_Bool(t *testing.T) {
 	a := assert.New(t)
 
-	ps := getParams(map[string]string{
-		"key1": "true",
-		"key2": "0",
-		"key3": "a3",
-	}, a)
+	ps := getParams(&Params{Params: []Param{
+		{K: "key1", V: "true"},
+		{K: "key2", V: "0"},
+		{K: "key3", V: "a3"},
+	}}, a)
 
 	val, err := ps.Bool("key1")
 	a.NotError(err).True(val)
@@ -146,11 +145,11 @@ func TestParams_Bool(t *testing.T) {
 func TestParams_Float(t *testing.T) {
 	a := assert.New(t)
 
-	ps := getParams(map[string]string{
-		"key1": "1",
-		"key2": "a2",
-		"key3": "1.1",
-	}, a)
+	ps := getParams(&Params{Params: []Param{
+		{K: "key1", V: "1"},
+		{K: "key2", V: "a2"},
+		{K: "key3", V: "1.1"},
+	}}, a)
 
 	val, err := ps.Float("key1")
 	a.NotError(err).Equal(val, 1.0)
@@ -169,4 +168,16 @@ func TestParams_Float(t *testing.T) {
 	val, err = ps.Float("k5")
 	a.ErrorType(err, ErrParamNotExists).Equal(val, 0.0)
 	a.Equal(ps.MustFloat("k5", -10.0), -10.0)
+}
+
+func TestParams_Set(t *testing.T) {
+	a := assert.New(t)
+
+	ps := &Params{Params: []Param{{K: "k1", V: "v1"}}}
+
+	ps.Set("k1", "v2")
+	a.Equal(ps, &Params{Params: []Param{{K: "k1", V: "v2"}}})
+
+	ps.Set("k2", "v2")
+	a.Equal(ps, &Params{Params: []Param{{K: "k1", V: "v2"}, {K: "k2", V: "v2"}}})
 }

@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/issue9/assert"
+
 	"github.com/issue9/mux/v5/internal/syntax"
 )
 
@@ -43,7 +44,7 @@ func TestNode_serveHTTP(t *testing.T) {
 	}), http.MethodGet))
 
 	node, ps := tree.Route("/path")
-	a.Empty(ps).NotNil(node)
+	a.Empty(ps.Params).NotNil(node)
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodHead, "/path", nil)

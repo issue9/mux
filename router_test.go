@@ -9,6 +9,8 @@ import (
 
 	"github.com/issue9/assert"
 	"github.com/issue9/assert/rest"
+
+	"github.com/issue9/mux/v5/internal/syntax"
 )
 
 var _ http.Handler = &Router{}
@@ -218,12 +220,14 @@ func TestRouter_Params(t *testing.T) {
 	router := NewRouter("", Interceptor(InterceptorDigit, "digit"))
 	a.NotNil(router)
 
-	params := map[string]string{}
+	globalParams := []syntax.Param{}
 
 	buildParamsHandler := func() http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ps := Params(r)
-			params = ps
+			if ps != nil {
+				globalParams = ps.Params
+			}
 		})
 	}
 
@@ -237,10 +241,13 @@ func TestRouter_Params(t *testing.T) {
 		router.ServeHTTP(w, r)
 
 		a.Equal(w.Code, status)
-		if len(ps) > 0 { // 由于 params 是公用数据，会保存上一次获取的值，所以只在有值时才比较
-			a.Equal(params, ps)
+		if len(ps) > 0 { // 由于 globalParams 是公用数据，会保存上一次获取的值，所以只在有值时才比较
+			a.Equal(len(ps), len(globalParams))
+			for _, p := range globalParams {
+				a.Equal(p.V, ps[p.K])
+			}
 		}
-		params = nil // 清空全局的 params
+		globalParams = globalParams[:0] // 清空全局的 globalParams
 	}
 
 	// 添加 patch /api/{version:\\d+}

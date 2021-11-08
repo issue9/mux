@@ -9,7 +9,6 @@ import (
 	"github.com/issue9/mux/v5/internal/options"
 	"github.com/issue9/mux/v5/internal/syntax"
 	"github.com/issue9/mux/v5/internal/tree"
-	"github.com/issue9/mux/v5/params"
 )
 
 // Option 自定义路由参数的函数原型
@@ -112,7 +111,7 @@ func MethodNotAllowed(h http.Handler) Option {
 }
 
 // Params 获取路由中的参数集合
-func Params(r *http.Request) params.Params { return params.Get(r) }
+func Params(r *http.Request) *syntax.Params { return syntax.GetParams(r) }
 
 var syntaxCheckerInterceptors = syntax.NewInterceptors()
 

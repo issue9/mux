@@ -13,7 +13,6 @@ import (
 	"github.com/issue9/assert/rest"
 
 	"github.com/issue9/mux/v5/internal/syntax"
-	"github.com/issue9/mux/v5/params"
 )
 
 type tester struct {
@@ -41,7 +40,7 @@ func (t *tester) add(method, pattern string, code int) {
 
 // 验证按照指定的 method 和 path 访问，是否会返回相同的 code 值，
 // 若是，则返回该节点以及对应的参数。
-func (t *tester) handler(method, path string, code int) (http.Handler, params.Params) {
+func (t *tester) handler(method, path string, code int) (http.Handler, *syntax.Params) {
 	hs, ps := t.tree.Route(path)
 	t.a.NotNil(hs)
 
@@ -70,7 +69,14 @@ func (t *tester) notFound(path string) {
 // 验证指定的路径返回的参数是否正确
 func (t *tester) paramsTrue(method, path string, code int, params map[string]string) {
 	_, ps := t.handler(method, path, code)
-	t.a.Equal(ps, params)
+
+	if len(params) > 0 {
+		t.a.Equal(len(params), len(ps.Params))
+		for k, v := range params {
+			vv, found := ps.Get(k)
+			t.a.True(found).Equal(vv, v)
+		}
+	}
 }
 
 // 测试 tree.methodIndex 是否正确
@@ -384,7 +390,7 @@ func TestTree_URL(t *testing.T) {
 	tree := New(true, syntax.NewInterceptors())
 	a.NotNil(tree)
 
-	tree.Add("/posts/{id:\\d+}/author/{page}/", rest.BuildHandler(a, 200, "", nil))
-	output, err := tree.URL("/posts/{id:\\d+}/author/{page}/", params.Params{"id": "100", "page": "200"})
+	a.NotError(tree.Add("/posts/{id:\\d+}/author/{page}/", rest.BuildHandler(a, 200, "", nil)))
+	output, err := tree.URL("/posts/{id:\\d+}/author/{page}/", map[string]string{"id": "100", "page": "200"})
 	a.NotError(err).Equal(output, "/posts/100/author/200/")
 }

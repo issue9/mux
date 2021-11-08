@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/issue9/mux/v5/params"
+	"github.com/issue9/mux/v5/internal/syntax"
 )
 
 const versionString = "version="
@@ -61,7 +61,7 @@ func (v *HeaderVersion) Match(r *http.Request) (*http.Request, bool) {
 	for _, vv := range v.Versions {
 		if vv == ver {
 			if v.Key != "" {
-				r = params.WithValue(r, params.Params{v.Key: vv})
+				r = syntax.WithValue(r, &syntax.Params{Params: []syntax.Param{{K: v.Key, V: vv}}})
 			}
 			return r, true
 		}
@@ -74,15 +74,15 @@ func (v *PathVersion) Match(r *http.Request) (*http.Request, bool) {
 	for _, ver := range v.versions {
 		if strings.HasPrefix(p, ver) {
 			vv := ver[:len(ver)-1]
-			ps := params.Params{}
+			ps := &syntax.Params{}
 			if v.key != "" {
-				ps[v.key] = vv
+				ps.Set(v.key, vv)
 			}
 
-			if len(ps) == 0 {
+			if len(ps.Params) == 0 {
 				r = r.Clone(r.Context())
 			} else {
-				r = params.WithValue(r, ps)
+				r = syntax.WithValue(r, ps)
 			}
 			r.URL.Path = strings.TrimPrefix(p, vv)
 			return r, true
