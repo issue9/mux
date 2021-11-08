@@ -40,9 +40,9 @@ type Tree struct {
 
 	node *Node
 
-	locker *sync.RWMutex
-
 	interceptors *syntax.Interceptors
+
+	locker *sync.RWMutex
 }
 
 // New 声明一个 Tree 实例

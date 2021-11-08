@@ -205,6 +205,10 @@ func TestTree_URL(t *testing.T) {
 			pattern: "/posts/{id:\\d+}",
 			err:     true,
 		},
+		{ // pattern 格式错误
+			pattern: "/posts/{{id:\\d+}",
+			err:     true,
+		},
 	}
 
 	for _, item := range data {

@@ -10,6 +10,9 @@ import (
 	"github.com/issue9/mux/v5/params"
 )
 
+// 每次申请 params.Params 分配的大小
+const defaultParamsCap = 5
+
 // Segment 路由项被拆分之后的分段内容
 type Segment struct {
 	// 节点实际内容被拆分成以下几个部分，其组成方式如下：
@@ -46,7 +49,7 @@ type MatchParam struct {
 
 func (p *MatchParam) setParam(k, v string) {
 	if p.Params == nil {
-		p.Params = make(params.Params, 3)
+		p.Params = make(params.Params, defaultParamsCap)
 	}
 	p.Params[k] = v
 }

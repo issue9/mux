@@ -63,7 +63,7 @@ func (t *tester) matchOptionsAsterisk(allow string) {
 }
 
 func TestRouter(t *testing.T) {
-	test := newTester(t)
+	test := newTester(t, Lock)
 
 	test.router.Get("/", rest.BuildHandler(test.a, 201, "201", nil))
 	test.router.Get("/200", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

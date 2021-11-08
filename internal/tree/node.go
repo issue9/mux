@@ -187,19 +187,20 @@ func (n *Node) clean(prefix string) {
 // 从子节点中查找与当前路径匹配的节点，若找不到，则返回 nil。
 func (n *Node) matchChildren(p *syntax.MatchParam) *Node {
 	if len(n.indexes) > 0 && len(p.Path) > 0 { // 普通字符串的匹配
-		node := n.children[n.indexes[p.Path[0]]]
-		if node == nil {
+		child := n.children[n.indexes[p.Path[0]]]
+		if child == nil {
 			goto LOOP
 		}
 
 		path := p.Path
-		if !node.segment.Match(p) {
+
+		if !child.segment.Match(p) {
 			goto LOOP
 		}
-
-		if nn := node.matchChildren(p); nn != nil {
+		if nn := child.matchChildren(p); nn != nil {
 			return nn
 		}
+
 		p.Path = path
 	}
 
@@ -207,19 +208,19 @@ LOOP:
 	// 即使 p.Path 为空，也有可能子节点正好可以匹配空的内容。
 	// 比如 /posts/{path:\\w*} 后面的 path 即为空节点。所以此处不判断 len(p.Path)
 	for i := len(n.indexes); i < len(n.children); i++ {
-		node := n.children[i]
-
+		child := n.children[i]
 		path := p.Path
-		if !node.segment.Match(p) { // 不匹配
+
+		if !child.segment.Match(p) { // 不匹配
 			continue
 		}
-
-		if nn := node.matchChildren(p); nn != nil {
+		if nn := child.matchChildren(p); nn != nil {
 			return nn
 		}
-		p.Path = path
 
-		delete(p.Params, n.segment.Name) // 不匹配，则删除写入的参数
+		// 不匹配子元素，则恢复原有数据
+		p.Path = path
+		delete(p.Params, n.segment.Name)
 	}
 
 	// 没有子节点匹配，len(p.Path)==0，且子节点不为空，可以判定与当前节点匹配。

@@ -30,9 +30,8 @@ type InterceptorFunc = syntax.InterceptorFunc
 //  /authors/{id:[0-9]+}   // 2
 // 以上两条记录是相同的，但因为表达式不同，也能正常添加，
 // 处理流程，会按添加顺序优先比对第一条，所以第二条是永远无法匹配的。
-// 但是如果你此时添加了 Register(MatchDigit, "[0-9]+")，
-// 将第二个记录的优先级作为提升，以后的匹配都是优先第二条，
-// 造成第一条永远无法匹配到数据。
+// 但是如果你此时添加了 Interceptor(InterceptorDigit, "[0-9]+")，
+// 使第二个记录的优先级提升，会使第一条永远无法匹配到数据。
 func Interceptor(f InterceptorFunc, name ...string) Option {
 	return func(o *options.Options) {
 		if o.Interceptors == nil {
