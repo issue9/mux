@@ -169,7 +169,7 @@ func (seg *Segment) Match(p *Params) bool {
 	case Regexp:
 		if loc := seg.expr.FindStringSubmatchIndex(p.Path); loc != nil && loc[0] == 0 {
 			if !seg.ignoreName {
-				p.Set(seg.Name, p.Path[:loc[3]])
+				p.Set(seg.Name, p.Path[:loc[3]]) // 只有 ignoreName=true，才会有捕获的值
 			}
 			p.Path = p.Path[loc[1]:]
 			return true

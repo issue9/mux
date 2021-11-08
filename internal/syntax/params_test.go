@@ -247,5 +247,11 @@ func TestParams_Delete(t *testing.T) {
 
 	ps.Delete("k2")
 	a.Equal(0, ps.Count()).
-		Equal(2, ps2.Count())
+		Equal(2, ps2.Count()).
+		Equal(2, len(ps.Params))
+
+	ps.Set("k3", "v3")
+	a.Equal(1, ps.Count()).
+		Equal(2, ps2.Count()).
+		Equal(2, len(ps.Params))
 }

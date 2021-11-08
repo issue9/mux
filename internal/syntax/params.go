@@ -31,7 +31,7 @@ type Params struct {
 }
 
 type Param struct {
-	K, V string
+	K, V string // 如果 k 为空，则表示该参数已经被删除。
 }
 
 func NewParams(path string) *Params {
@@ -194,17 +194,24 @@ func (p *Params) Count() (cnt int) {
 }
 
 func (p *Params) Set(k, v string) {
+	deletedIndex := -1
+
 	for i, param := range p.Params {
 		if param.K == k {
 			p.Params[i] = Param{K: k, V: v}
 			return
 		}
+		if param.K == "" && deletedIndex == -1 {
+			deletedIndex = i
+		}
 	}
 
-	p.Params = append(p.Params, Param{
-		K: k,
-		V: v,
-	})
+	if deletedIndex != -1 {
+		p.Params[deletedIndex] = Param{K: k, V: v}
+	} else {
+		p.Params = append(p.Params, Param{K: k, V: v})
+	}
+
 }
 
 func (p *Params) Delete(k string) {

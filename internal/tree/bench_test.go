@@ -9,6 +9,7 @@ import (
 
 	"github.com/issue9/assert"
 	"github.com/issue9/assert/rest"
+
 	"github.com/issue9/mux/v5/internal/syntax"
 )
 
