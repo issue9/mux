@@ -123,7 +123,7 @@ var syntaxCheckerInterceptors = syntax.NewInterceptors()
 //
 // 路由中可通过 {} 指定参数名称，如果参数名中带 :，则 : 之后的为参数的约束条件，
 // 比如 /posts/{id}.html 表示匹配任意任意字符的参数 id。/posts/{id:\d+}.html，
-// 表示匹配正则表达式 \d+ 的参数 id。；
+// 表示匹配正则表达式 \d+ 的参数 id。
 func CheckSyntax(pattern string) error {
 	_, err := syntaxCheckerInterceptors.Split(pattern)
 	return err

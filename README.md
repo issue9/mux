@@ -92,7 +92,9 @@ rule 表示对参数的约束，一般为正则或是空，为空表示匹配任
 通过正则表达式匹配的路由，其中带命名的参数可通过 `Params()` 获取：
 
 ```go
-params := Params(r)
+import "github.com/issue9/mux/v5"
+
+params := mux.GetParams(r)
 
 id, err := params.Int("id")
  // 或是
@@ -180,7 +182,9 @@ CORS 不再是以中间件的形式提供，而是通过 NewRouter 直接传递�
 OPTIONS 请求方法由系统自动生成。
 
 ```go
-r, ok := mux.NewRouter("name" ,AllowedCORS) // 任意跨域请求
+import "github.com/issue9/mux/v5"
+
+r := mux.NewRouter("name" ,AllowedCORS) // 任意跨域请求
 
 r.Get("/posts/{id}", nil)     // 默认情况下， OPTIONS 的报头为 GET, OPTIONS
 
@@ -190,12 +194,12 @@ http.ListenAndServe(":8080", m)
 
 // 访问 h2 的内容
 r := http.NewRequest(http.MethodGet, "https://localhost:8080/posts/1", nil)
-r.Header.Set("Origin", "http://example.com")
+r.Header.Set("Origin", "https://example.com")
 r.Do() // 跨域，可以正常访问
 
 
 r = http.NewRequest(http.MethodOptions, "https://localhost:8080/posts/1", nil)
-r.Header.Set("Origin", "http://example.com")
+r.Header.Set("Origin", "https://example.com")
 r.Header.Set("Access-Control-Request-Method", "GET")
 r.Do() // 预检请求，可以正常访问
 ```
