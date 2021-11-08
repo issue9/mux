@@ -9,7 +9,6 @@ import (
 	"sync"
 
 	"github.com/issue9/mux/v5/internal/syntax"
-	"github.com/issue9/mux/v5/params"
 )
 
 // Tree 以树节点的形式保存的路由
@@ -168,12 +167,8 @@ func (tree *Tree) getNode(pattern string) (*Node, error) {
 	return tree.node.getNode(segs)
 }
 
-var matchParamPool = &sync.Pool{
-	New: func() interface{} { return &syntax.MatchParam{} },
-}
-
 // Route 找到与当前内容匹配的 Node 实例
-func (tree *Tree) Route(path string) (*Node, params.Params) {
+func (tree *Tree) Route(path string) (*Node, *syntax.Params) {
 	if tree.locker != nil {
 		tree.locker.RLock()
 		defer tree.locker.RUnlock()
@@ -183,18 +178,13 @@ func (tree *Tree) Route(path string) (*Node, params.Params) {
 		return tree.node, nil
 	}
 
-	p := matchParamPool.Get().(*syntax.MatchParam)
-	p.Params = nil
-	p.Path = path
-
+	p := syntax.NewParams(path)
 	node := tree.node.matchChildren(p)
 	if node == nil || len(node.handlers) == 0 {
-		matchParamPool.Put(p)
+		p.Destroy()
 		return nil, nil
 	}
-	ps := p.Params
-	matchParamPool.Put(p)
-	return node, ps
+	return node, p
 }
 
 // Routes 获取当前的所有路由项以及对应的请求方法
@@ -214,6 +204,6 @@ func (tree *Tree) Routes() map[string][]string {
 	return routes
 }
 
-func (tree *Tree) URL(pattern string, ps params.Params) (string, error) {
+func (tree *Tree) URL(pattern string, ps map[string]string) (string, error) {
 	return tree.interceptors.URL(pattern, ps)
 }

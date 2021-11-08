@@ -9,7 +9,6 @@ import (
 	"github.com/issue9/mux/v5"
 	"github.com/issue9/mux/v5/internal/syntax"
 	"github.com/issue9/mux/v5/internal/tree"
-	"github.com/issue9/mux/v5/params"
 )
 
 // Hosts 限定域名的匹配工具
@@ -34,13 +33,11 @@ func (hs *Hosts) RegisterInterceptor(f mux.InterceptorFunc, name ...string) {
 }
 
 func (hs *Hosts) Match(r *http.Request) (*http.Request, bool) {
-	hostname := strings.ToLower(r.URL.Hostname())
-	h, ps := hs.tree.Route(hostname)
+	h, ps := hs.tree.Route(strings.ToLower(r.URL.Hostname()))
 	if h == nil || h.Handler(http.MethodGet) == nil {
 		return nil, false
 	}
-
-	return params.WithValue(r, ps), true
+	return syntax.WithValue(r, ps), true
 }
 
 // Add 添加新的域名
@@ -48,7 +45,7 @@ func (hs *Hosts) Match(r *http.Request) (*http.Request, bool) {
 // 域名的格式和路由的语法格式是一样的，比如：
 //  api.example.com
 //  {sub:[a-z]+}.example.com
-// 如果存在命名参数，也可以通过 params.Get 获取。
+// 如果存在命名参数，也可以通过 syntax.GetParams 获取。
 // 当语法错误时，会触发 panic，可通过 CheckSyntax 检测语法的正确性。
 func (hs *Hosts) Add(domain ...string) {
 	for _, d := range domain {

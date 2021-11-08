@@ -218,12 +218,14 @@ func TestRouter_Params(t *testing.T) {
 	router := NewRouter("", Interceptor(InterceptorDigit, "digit"))
 	a.NotNil(router)
 
-	params := map[string]string{}
+	var globalParams Params
 
 	buildParamsHandler := func() http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ps := Params(r)
-			params = ps
+			ps := GetParams(r)
+			if ps != nil {
+				globalParams = ps
+			}
 		})
 	}
 
@@ -237,10 +239,14 @@ func TestRouter_Params(t *testing.T) {
 		router.ServeHTTP(w, r)
 
 		a.Equal(w.Code, status)
-		if len(ps) > 0 { // 由于 params 是公用数据，会保存上一次获取的值，所以只在有值时才比较
-			a.Equal(params, ps)
+		if len(ps) > 0 { // 由于 globalParams 是公用数据，会保存上一次获取的值，所以只在有值时才比较
+			a.Equal(len(ps), globalParams.Count())
+			for k, v := range ps {
+				vv, found := globalParams.Get(k)
+				a.True(found).Equal(vv, v)
+			}
 		}
-		params = nil // 清空全局的 params
+		globalParams = nil // 清空全局的 globalParams
 	}
 
 	// 添加 patch /api/{version:\\d+}
