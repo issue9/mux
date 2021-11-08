@@ -38,6 +38,10 @@ func (t *tester) add(method, pattern string, code int) {
 	t.a.NotError(t.tree.Add(pattern, rest.BuildHandler(t.a, code, "", nil), method))
 }
 
+func (t *tester) addSameRoute(pattern string) {
+	t.a.Error(t.tree.Add(pattern, rest.BuildHandler(t.a, http.StatusOK, "", nil), http.MethodGet))
+}
+
 // 验证按照指定的 method 和 path 访问，是否会返回相同的 code 值，
 // 若是，则返回该节点以及对应的参数。
 func (t *tester) handler(method, path string, code int) (http.Handler, *syntax.Params) {
@@ -96,6 +100,24 @@ func (t *tester) optionsTrue(path, options string) {
 	t.a.Equal(w.Code, http.StatusOK)
 
 	t.a.Equal(w.Header().Get("Allow"), options)
+}
+
+func TestTree_sameRoute(t *testing.T) {
+	a := assert.New(t)
+
+	test := newTester(a, false)
+	test.add(http.MethodGet, "/", 201)
+	test.add(http.MethodGet, "/posts/{id}", 202)
+	test.addSameRoute("/posts/{same-id}")
+
+	test.add(http.MethodGet, "/posts/{id}/author", 203)
+	test.addSameRoute("/posts/{same-id}/author")
+
+	test.add(http.MethodGet, "/posts-{id}-{pages}.html", 204)
+	test.addSameRoute("/posts-{id}-{same-pages}.html")
+	test.addSameRoute("/posts-{-id}-{pages}.html")
+	test.addSameRoute("/posts-{-id}-{same-pages}.html")
+	test.addSameRoute("/posts-{same-id}-{pages}.html")
 }
 
 func TestTree_Route(t *testing.T) {
