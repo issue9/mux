@@ -9,6 +9,7 @@ import (
 	"github.com/issue9/mux/v5/internal/options"
 	"github.com/issue9/mux/v5/internal/syntax"
 	"github.com/issue9/mux/v5/internal/tree"
+	"github.com/issue9/mux/v5/params"
 )
 
 // Option 自定义路由参数的函数原型
@@ -16,6 +17,9 @@ type Option = options.Option
 
 // InterceptorFunc 拦截器的函数原型
 type InterceptorFunc = syntax.InterceptorFunc
+
+// Params 路由参数
+type Params = params.Params
 
 // Interceptor 针对带参数类型路由的拦截处理
 //
@@ -110,8 +114,8 @@ func MethodNotAllowed(h http.Handler) Option {
 	return func(o *options.Options) { o.MethodNotAllowed = h }
 }
 
-// Params 获取路由中的参数集合
-func Params(r *http.Request) *syntax.Params { return syntax.GetParams(r) }
+// GetParams 获取路由中的参数集合
+func GetParams(r *http.Request) Params { return syntax.GetParams(r) }
 
 var syntaxCheckerInterceptors = syntax.NewInterceptors()
 

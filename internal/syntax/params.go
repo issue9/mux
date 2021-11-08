@@ -4,34 +4,35 @@ package syntax
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"strconv"
 	"sync"
 
-	"github.com/issue9/sliceutil"
+	"github.com/issue9/mux/v5/params"
 )
 
-// 每次申请 params.Params 分配的大小
+// 每次申请 Params.Params 分配的大小
 const defaultParamsCap = 5
 
 var paramsPool = &sync.Pool{
 	New: func() interface{} { return &Params{Params: make([]Param, 0, defaultParamsCap)} },
 }
 
-// ErrParamNotExists 表示地址参数中并不存在该名称的值
-var ErrParamNotExists = errors.New("不存在该参数")
-
 const contextKeyParams contextKey = 0
 
 type contextKey int
 
+// Params 路由参数
+//
+// 实现了 mux.Params 接口
 type Params struct {
-	Path   string
-	Params []Param
+	Path   string  // 这是在 Segment.Match 中用到的路径信息。
+	Params []Param // 实际需要传递的参数
 }
 
-type Param struct{ K, V string }
+type Param struct {
+	K, V string
+}
 
 func NewParams(path string) *Params {
 	ps := paramsPool.Get().(*Params)
@@ -71,27 +72,18 @@ func WithValue(r *http.Request, ps *Params) *http.Request {
 	return r.WithContext(context.WithValue(r.Context(), contextKeyParams, ps))
 }
 
-// Exists 查找指定名称的参数是否存在
-//
-// NOTE: 如果是可选参数，可能会不存在。
 func (p *Params) Exists(key string) bool {
 	_, found := p.Get(key)
 	return found
 }
 
-// String 获取地址参数中的名为 key 的变量并将其转换成 string
-//
-// 当参数不存在时，返回 ErrParamNotExists 错误。
 func (p *Params) String(key string) (string, error) {
 	if v, found := p.Get(key); found {
 		return v, nil
 	}
-	return "", ErrParamNotExists
+	return "", params.ErrParamNotExists
 }
 
-// MustString 获取地址参数中的名为 key 的变量并将其转换成 string
-//
-// 若不存在或是无法转换则返回 def。
 func (p *Params) MustString(key, def string) string {
 	if v, found := p.Get(key); found {
 		return v
@@ -99,19 +91,13 @@ func (p *Params) MustString(key, def string) string {
 	return def
 }
 
-// Int 获取地址参数中的名为 key 的变量并将其转换成 int64
-//
-// 当参数不存在时，返回 ErrParamNotExists 错误。
 func (p *Params) Int(key string) (int64, error) {
 	if str, found := p.Get(key); found {
 		return strconv.ParseInt(str, 10, 64)
 	}
-	return 0, ErrParamNotExists
+	return 0, params.ErrParamNotExists
 }
 
-// MustInt 获取地址参数中的名为 key 的变量并将其转换成 int64
-//
-// 若不存在或是无法转换则返回 def。
 func (p *Params) MustInt(key string, def int64) int64 {
 	if str, found := p.Get(key); found {
 		if val, err := strconv.ParseInt(str, 10, 64); err == nil {
@@ -121,19 +107,13 @@ func (p *Params) MustInt(key string, def int64) int64 {
 	return def
 }
 
-// Uint 获取地址参数中的名为 key 的变量并将其转换成 uint64
-//
-// 当参数不存在时，返回 ErrParamNotExists 错误。
 func (p *Params) Uint(key string) (uint64, error) {
 	if str, found := p.Get(key); found {
 		return strconv.ParseUint(str, 10, 64)
 	}
-	return 0, ErrParamNotExists
+	return 0, params.ErrParamNotExists
 }
 
-// MustUint 获取地址参数中的名为 key 的变量并将其转换成 uint64
-//
-// 若不存在或是无法转换则返回 def。
 func (p *Params) MustUint(key string, def uint64) uint64 {
 	if str, found := p.Get(key); found {
 		if val, err := strconv.ParseUint(str, 10, 64); err == nil {
@@ -143,20 +123,14 @@ func (p *Params) MustUint(key string, def uint64) uint64 {
 	return def
 }
 
-// Bool 获取地址参数中的名为 key 的变量并将其转换成 bool
-//
-// 当参数不存在时，返回 ErrParamNotExists 错误。
 func (p *Params) Bool(key string) (bool, error) {
 	if str, found := p.Get(key); found {
 		return strconv.ParseBool(str)
 	}
-	return false, ErrParamNotExists
+	return false, params.ErrParamNotExists
 }
 
-// MustBool 获取地址参数中的名为 key 的变量并将其转换成 bool
-//
-// 若不存在或是无法转换则返回 def。
-func (p Params) MustBool(key string, def bool) bool {
+func (p *Params) MustBool(key string, def bool) bool {
 	if str, found := p.Get(key); found {
 		if val, err := strconv.ParseBool(str); err == nil {
 			return val
@@ -165,19 +139,13 @@ func (p Params) MustBool(key string, def bool) bool {
 	return def
 }
 
-// Float 获取地址参数中的名为 key 的变量并将其转换成 Float64
-//
-// 当参数不存在时，返回 ErrParamNotExists 错误。
-func (p Params) Float(key string) (float64, error) {
+func (p *Params) Float(key string) (float64, error) {
 	if str, found := p.Get(key); found {
 		return strconv.ParseFloat(str, 64)
 	}
-	return 0, ErrParamNotExists
+	return 0, params.ErrParamNotExists
 }
 
-// MustFloat 获取地址参数中的名为 key 的变量并将其转换成 float64
-//
-// 若不存在或是无法转换则返回 def。
 func (p *Params) MustFloat(key string, def float64) float64 {
 	if str, found := p.Get(key); found {
 		if val, err := strconv.ParseFloat(str, 64); err == nil {
@@ -200,6 +168,31 @@ func (p *Params) Get(key string) (string, bool) {
 	return "", false
 }
 
+func (p *Params) Clone() params.Params {
+	if p == nil {
+		return nil
+	}
+	pp := &Params{
+		Path:   p.Path,
+		Params: make([]Param, len(p.Params)),
+	}
+	copy(pp.Params, p.Params)
+	return pp
+}
+
+func (p *Params) Count() (cnt int) {
+	if p == nil {
+		return 0
+	}
+
+	for _, param := range p.Params {
+		if param.K != "" {
+			cnt++
+		}
+	}
+	return cnt
+}
+
 func (p *Params) Set(k, v string) {
 	for i, param := range p.Params {
 		if param.K == k {
@@ -215,8 +208,14 @@ func (p *Params) Set(k, v string) {
 }
 
 func (p *Params) Delete(k string) {
-	index := sliceutil.QuickDelete(p.Params, func(i int) bool {
-		return p.Params[i].K == k
-	})
-	p.Params = p.Params[:index]
+	if p == nil {
+		return
+	}
+
+	for i, pp := range p.Params {
+		if pp.K == k {
+			p.Params[i] = Param{}
+			return
+		}
+	}
 }
