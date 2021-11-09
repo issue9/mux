@@ -11,14 +11,14 @@ import (
 // Segment 路由项被拆分之后的分段内容
 type Segment struct {
 	// 节点实际内容被拆分成以下几个部分，其组成方式如下：
-	//  Value = {Name:Rule}Suffix
-	// 其中 Name、Rule 和 Suffix 可能为空，但是 Name 和 Rule 不能同时为空。
+	//  Value = {Name:rule}Suffix
+	// 其中 Name、rule 和 Suffix 可能为空，但是 Name 和 rule 不能同时为空。
 	Value  string // 节点上的原始内容
 	Name   string // 当前节点的参数名称，适用非字符节点。
-	Rule   string // 节点的规则值，即 : 之后的部分，非字符串节点有效。
+	rule   string // 节点的规则值，即 : 之后的部分，非字符串节点有效。
 	Suffix string // 保存参数名之后的字符串，比如 "{id}/author" 此值为 "/author"，仅对非字符串节点有效果。
 
-	// TODO: Type、Endpoint 和 ignoreName 采用一个 int 字段代替
+	// TODO: Type、ambiguousLength、Endpoint 和 ignoreName 采用一个 int 字段代替
 
 	// 节点类型
 	Type Type
@@ -79,8 +79,8 @@ func (i *Interceptors) NewSegment(val string) (*Segment, error) {
 		return seg, nil
 	}
 
-	seg.Rule = val[separator+1 : end]
-	if matcher, found := i.funcs[seg.Rule]; found {
+	seg.rule = val[separator+1 : end]
+	if matcher, found := i.funcs[seg.rule]; found {
 		seg.Type = Interceptor
 		seg.Name = val[start+1 : separator]
 		seg.cleanName()
@@ -99,7 +99,7 @@ func (i *Interceptors) NewSegment(val string) (*Segment, error) {
 	if !seg.ignoreName {
 		name = "P<" + seg.Name + ">"
 	}
-	expr, err := regexp.Compile("(?" + name + seg.Rule + ")" + seg.Suffix)
+	expr, err := regexp.Compile("(?" + name + seg.rule + ")" + seg.Suffix)
 	if err != nil {
 		return nil, err
 	}
@@ -122,8 +122,8 @@ func (seg *Segment) calcAmbiguousLength() {
 		seg.ambiguousLength++
 	}
 
-	if seg.Rule != "" {
-		seg.ambiguousLength += int16(len(seg.Rule))
+	if seg.rule != "" {
+		seg.ambiguousLength += int16(len(seg.rule))
 		seg.ambiguousLength++ // 表示 :
 	}
 
@@ -138,11 +138,11 @@ func (seg *Segment) calcAmbiguousLength() {
 // 在相同路径下是无法判断到底要选哪一条路径的，应该避免此类节节点出现在同一路径上。
 func (seg *Segment) IsAmbiguous(s2 *Segment) bool {
 	if seg.ignoreName != s2.ignoreName {
-		return seg.Endpoint == s2.Endpoint && seg.Type == s2.Type && seg.Rule == s2.Rule && seg.Suffix == s2.Suffix
+		return seg.Endpoint == s2.Endpoint && seg.Type == s2.Type && seg.rule == s2.rule && seg.Suffix == s2.Suffix
 	}
 	return seg.Name != s2.Name &&
 		seg.ambiguousLength == s2.ambiguousLength &&
-		(seg.Endpoint == s2.Endpoint && seg.Type == s2.Type && seg.Rule == s2.Rule && seg.Suffix == s2.Suffix)
+		(seg.Endpoint == s2.Endpoint && seg.Type == s2.Type && seg.rule == s2.rule && seg.Suffix == s2.Suffix)
 }
 
 func (seg *Segment) AmbiguousLen() int16 {

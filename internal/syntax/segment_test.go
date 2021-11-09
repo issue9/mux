@@ -19,7 +19,7 @@ func TestNewSegment(t *testing.T) {
 	seg, err = i.NewSegment("{id}/1")
 	a.NotError(err).Equal(seg.Type, Named).
 		Equal(seg.Value, "{id}/1").
-		Empty(seg.Rule).
+		Empty(seg.rule).
 		False(seg.Endpoint).
 		Equal(seg.ambiguousLength, 4).
 		Equal(seg.AmbiguousLen(), 6).
@@ -28,7 +28,7 @@ func TestNewSegment(t *testing.T) {
 	seg, err = i.NewSegment("{id}")
 	a.NotError(err).Equal(seg.Type, Named).
 		Equal(seg.Value, "{id}").
-		Empty(seg.Rule).
+		Empty(seg.rule).
 		False(seg.ignoreName).
 		True(seg.Endpoint).
 		Equal(seg.ambiguousLength, 2).
@@ -40,7 +40,7 @@ func TestNewSegment(t *testing.T) {
 		Equal(seg.Value, "{-id:\\d+}").
 		Equal(seg.Name, "id").
 		True(seg.ignoreName).
-		Equal(seg.Rule, "\\d+").
+		Equal(seg.rule, "\\d+").
 		False(seg.Endpoint).
 		Equal(seg.ambiguousLength, 7).
 		Empty(seg.Suffix)
@@ -51,7 +51,7 @@ func TestNewSegment(t *testing.T) {
 		Equal(seg.Value, "{-id:any}").
 		Equal(seg.Name, "id").
 		True(seg.ignoreName).
-		Equal(seg.Rule, "any").
+		Equal(seg.rule, "any").
 		True(seg.Endpoint).
 		Equal(seg.ambiguousLength, 7).
 		Empty(seg.Suffix)
@@ -61,7 +61,7 @@ func TestNewSegment(t *testing.T) {
 	a.NotError(err).Equal(seg.Type, Named).
 		Equal(seg.Value, "{-id:}").
 		True(seg.Endpoint).
-		Empty(seg.Rule).
+		Empty(seg.rule).
 		True(seg.ignoreName).
 		Empty(seg.Suffix).
 		Equal(seg.ambiguousLength, 3).
@@ -71,7 +71,7 @@ func TestNewSegment(t *testing.T) {
 	a.NotError(err).Equal(seg.Type, Named).
 		Equal(seg.Value, "{id:}").
 		True(seg.Endpoint).
-		Empty(seg.Rule).
+		Empty(seg.rule).
 		False(seg.ignoreName).
 		Empty(seg.Suffix).
 		Equal(seg.Name, "id")
@@ -80,7 +80,7 @@ func TestNewSegment(t *testing.T) {
 	a.NotError(err).Equal(seg.Type, Named).
 		Equal(seg.Value, "{id}:").
 		False(seg.Endpoint).
-		Empty(seg.Rule).
+		Empty(seg.rule).
 		Equal(seg.Suffix, ":").
 		Equal(seg.Name, "id")
 
@@ -88,7 +88,7 @@ func TestNewSegment(t *testing.T) {
 	a.NotError(err).Equal(seg.Type, Interceptor).
 		Equal(seg.Value, "{id:any}").
 		True(seg.Endpoint).
-		Equal(seg.Rule, "any").
+		Equal(seg.rule, "any").
 		Equal(seg.ambiguousLength, 6).
 		Empty(seg.Suffix)
 
@@ -96,7 +96,7 @@ func TestNewSegment(t *testing.T) {
 	a.NotError(err).Equal(seg.Type, Interceptor).
 		Equal(seg.Value, "{id:digit}/1").
 		False(seg.Endpoint).
-		Equal(seg.Rule, "digit").
+		Equal(seg.rule, "digit").
 		Equal(seg.ambiguousLength, 10).
 		Equal(seg.Suffix, "/1")
 
@@ -104,7 +104,7 @@ func TestNewSegment(t *testing.T) {
 	a.NotError(err).Equal(seg.Type, Regexp).
 		Equal(seg.Value, "{id:\\d+}/1").
 		False(seg.Endpoint).
-		Equal(seg.Rule, "\\d+").
+		Equal(seg.rule, "\\d+").
 		Equal(seg.ambiguousLength, 8).
 		Equal(seg.Suffix, "/1")
 
@@ -117,7 +117,7 @@ func TestNewSegment(t *testing.T) {
 	seg, err = i.NewSegment("{path")
 	a.NotError(err).NotNil(seg).
 		Equal(seg.Type, String).
-		Empty(seg.Rule).
+		Empty(seg.rule).
 		Equal(seg.Value, "{path")
 
 	seg, err = i.NewSegment("{:path")
