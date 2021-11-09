@@ -21,6 +21,8 @@ func TestNewSegment(t *testing.T) {
 		Equal(seg.Value, "{id}/1").
 		Empty(seg.Rule).
 		False(seg.Endpoint).
+		Equal(seg.ambiguousLength, 4).
+		Equal(seg.AmbiguousLen(2), 6).
 		Equal(seg.Suffix, "/1")
 
 	seg, err = i.NewSegment("{id}")
@@ -29,6 +31,7 @@ func TestNewSegment(t *testing.T) {
 		Empty(seg.Rule).
 		False(seg.ignoreName).
 		True(seg.Endpoint).
+		Equal(seg.ambiguousLength, 2).
 		Empty(seg.Suffix)
 
 	// ignore 的 regexp
@@ -39,6 +42,7 @@ func TestNewSegment(t *testing.T) {
 		True(seg.ignoreName).
 		Equal(seg.Rule, "\\d+").
 		False(seg.Endpoint).
+		Equal(seg.ambiguousLength, 7).
 		Empty(seg.Suffix)
 
 	// ignore 的拦截
@@ -49,6 +53,7 @@ func TestNewSegment(t *testing.T) {
 		True(seg.ignoreName).
 		Equal(seg.Rule, "any").
 		True(seg.Endpoint).
+		Equal(seg.ambiguousLength, 7).
 		Empty(seg.Suffix)
 
 	// 没有名称的命名参数，匹配任意字符
@@ -59,6 +64,7 @@ func TestNewSegment(t *testing.T) {
 		Empty(seg.Rule).
 		True(seg.ignoreName).
 		Empty(seg.Suffix).
+		Equal(seg.ambiguousLength, 3).
 		Equal(seg.Name, "id")
 
 	seg, err = i.NewSegment("{id:}")
@@ -83,6 +89,7 @@ func TestNewSegment(t *testing.T) {
 		Equal(seg.Value, "{id:any}").
 		True(seg.Endpoint).
 		Equal(seg.Rule, "any").
+		Equal(seg.ambiguousLength, 6).
 		Empty(seg.Suffix)
 
 	seg, err = i.NewSegment("{id:digit}/1")
@@ -90,6 +97,7 @@ func TestNewSegment(t *testing.T) {
 		Equal(seg.Value, "{id:digit}/1").
 		False(seg.Endpoint).
 		Equal(seg.Rule, "digit").
+		Equal(seg.ambiguousLength, 10).
 		Equal(seg.Suffix, "/1")
 
 	seg, err = i.NewSegment("{id:\\d+}/1")
@@ -97,6 +105,7 @@ func TestNewSegment(t *testing.T) {
 		Equal(seg.Value, "{id:\\d+}/1").
 		False(seg.Endpoint).
 		Equal(seg.Rule, "\\d+").
+		Equal(seg.ambiguousLength, 8).
 		Equal(seg.Suffix, "/1")
 
 	seg, err = i.NewSegment("id:}{")
@@ -115,6 +124,81 @@ func TestNewSegment(t *testing.T) {
 	a.NotError(err).NotNil(seg).
 		Equal(seg.Type, String).
 		Equal(seg.Value, "{:path")
+}
+
+func TestSegment_IsAmbiguous(t *testing.T) {
+	a := assert.New(t)
+	i := newInterceptors(a)
+
+	data := []struct {
+		s1, s2 string
+		eq     bool
+	}{
+		{
+			s1: "/{id}/1",
+			s2: "/{id}/1",
+		},
+		{
+			s1: "/{-id}/1",
+			s2: "/{id}/1",
+			eq: true,
+		},
+		{
+			s1: "/{-id:any}",
+			s2: "/{id:any}",
+			eq: true,
+		},
+		{
+			s1: "/{-id:}",
+			s2: "/{id:any}",
+		},
+		{
+			s1: "/{id:}",
+			s2: "/{id:any}",
+		},
+		{
+			s1: "/{id:digit}",
+			s2: "/{id:any}",
+		},
+		{
+			s1: "/{-id:digit}",
+			s2: "/{-id:any}",
+		},
+		{
+			s1: "/{-id:digit}",
+			s2: "/{-id:digit}",
+		},
+		{
+			s1: "/{-id:}",
+			s2: "/{-id:}",
+		},
+		{
+			s1: "/{id:}",
+			s2: "/{-id:}",
+			eq: true,
+		},
+		{
+			s1: "/{id:\\d+}",
+			s2: "/{-id:\\d+}",
+			eq: true,
+		},
+	}
+
+	for _, item := range data {
+		ss1, err := i.NewSegment(item.s1)
+		a.NotError(err).NotNil(ss1)
+
+		ss2, err := i.NewSegment(item.s2)
+		a.NotError(err).NotNil(ss2)
+
+		if item.eq {
+			a.True(ss1.IsAmbiguous(ss2), "false at %s", item.s1).
+				True(ss2.IsAmbiguous(ss1), "false at %s", item.s1)
+		} else {
+			a.False(ss1.IsAmbiguous(ss2), "false at %s", item.s1).
+				False(ss2.IsAmbiguous(ss1), "false at %s", item.s1)
+		}
+	}
 }
 
 func TestLongestPrefix(t *testing.T) {
