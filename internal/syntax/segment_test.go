@@ -22,7 +22,7 @@ func TestNewSegment(t *testing.T) {
 		Empty(seg.Rule).
 		False(seg.Endpoint).
 		Equal(seg.ambiguousLength, 4).
-		Equal(seg.AmbiguousLen(2), 6).
+		Equal(seg.AmbiguousLen(), 6).
 		Equal(seg.Suffix, "/1")
 
 	seg, err = i.NewSegment("{id}")

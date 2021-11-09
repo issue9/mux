@@ -120,6 +120,18 @@ func TestTree_AmbiguousRoute(t *testing.T) {
 	test.addAmbiguous("/posts-{-id}-{pages}.html")
 	test.addAmbiguous("/posts-{-id}-{ambiguous-pages}.html")
 	test.addAmbiguous("/posts-{ambiguous-id}-{pages}.html")
+
+	// 删除之后可以正常添加
+	test.tree.Remove("/posts-{id}-{pages}.html", http.MethodGet)
+	test.add(http.MethodGet, "/posts-{id}-{ambiguous-pages}.html", 203)
+	test.add(http.MethodPost, "/posts-{id}-{ambiguous-pages}.html", 203)
+	test.addAmbiguous("/posts-{-id}-{pages}.html")
+
+	// 删除了 GET，依然存在 POST
+	test.tree.Remove("/posts-{id}-{ambiguous-pages}.html", http.MethodGet)
+	test.addAmbiguous("/posts-{-id}-{pages}.html")
+	test.tree.Remove("/posts-{id}-{ambiguous-pages}.html", http.MethodPost) // POST 也删除
+	test.add(http.MethodPatch, "/posts-{-id}-{pages}.html", 203)
 }
 
 func TestTree_Route(t *testing.T) {

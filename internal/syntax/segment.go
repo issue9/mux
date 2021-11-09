@@ -145,8 +145,8 @@ func (seg *Segment) IsAmbiguous(s2 *Segment) bool {
 		(seg.Endpoint == s2.Endpoint && seg.Type == s2.Type && seg.Rule == s2.Rule && seg.Suffix == s2.Suffix)
 }
 
-func (seg *Segment) AmbiguousLen(nameLen int) int16 {
-	return seg.ambiguousLength + int16(nameLen)
+func (seg *Segment) AmbiguousLen() int16 {
+	return seg.ambiguousLength + int16(len(seg.Name))
 }
 
 // Similarity 与 s1 的相似度，-1 表示完全相同，

@@ -297,7 +297,10 @@ func (n *Node) Handler(method string) http.Handler { return n.handlers[method] }
 
 func (n *Node) checkAmbiguous(pattern string, hasNonString bool) (*Node, bool, error) {
 	if pattern == "" {
-		return n, hasNonString, nil
+		if len(n.handlers) > 0 {
+			return n, hasNonString, nil
+		}
+		return nil, false, nil
 	}
 
 	for _, c := range n.children {
@@ -322,7 +325,7 @@ func (n *Node) checkAmbiguous(pattern string, hasNonString bool) (*Node, bool, e
 		s0 := segs[0]
 
 		if seg.IsAmbiguous(s0) {
-			node, hashasNonString, err := c.checkAmbiguous(pattern[s0.AmbiguousLen(len(s0.Name)):], true)
+			node, hashasNonString, err := c.checkAmbiguous(pattern[s0.AmbiguousLen():], true)
 			if err != nil {
 				return nil, false, err
 			}
