@@ -49,6 +49,20 @@ func TestGetParams(t *testing.T) {
 	a.Equal(ps.Params, kvs)
 }
 
+func TestNewParams(t *testing.T) {
+	a := assert.New(t)
+
+	var p *Params
+	p.Destroy()
+
+	p = NewParams("/abc")
+	a.Equal(p.Path, "/abc")
+	p.Destroy()
+
+	p = NewParams("/def")
+	a.Equal(p.Path, "/def")
+}
+
 func TestParams_String(t *testing.T) {
 	a := assert.New(t)
 
@@ -254,4 +268,20 @@ func TestParams_Delete(t *testing.T) {
 	a.Equal(1, ps.Count()).
 		Equal(2, ps2.Count()).
 		Equal(2, len(ps.Params))
+}
+
+func TestParams_Map(t *testing.T) {
+	a := assert.New(t)
+
+	var ps *Params
+	a.Nil(ps.Map())
+
+	ps = NewParams("/path")
+	a.Nil(ps.Map())
+
+	ps.Set("k1", "v1")
+	a.Equal(ps.Map(), map[string]string{"k1": "v1"})
+
+	ps.Delete("k1")
+	a.Empty(ps.Map())
 }

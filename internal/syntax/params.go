@@ -193,6 +193,20 @@ func (p *Params) Count() (cnt int) {
 	return cnt
 }
 
+func (p *Params) Map() map[string]string {
+	if p == nil || len(p.Params) == 0 {
+		return nil
+	}
+
+	m := make(map[string]string, len(p.Params))
+	for _, pp := range p.Params {
+		if pp.K != "" {
+			m[pp.K] = pp.V
+		}
+	}
+	return m
+}
+
 func (p *Params) Set(k, v string) {
 	deletedIndex := -1
 

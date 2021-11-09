@@ -74,4 +74,7 @@ type Params interface {
 
 	// Clone 复制当前参数对象
 	Clone() Params
+
+	// Map 转换成 map[string]string
+	Map() map[string]string
 }
