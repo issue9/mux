@@ -18,6 +18,8 @@ type Segment struct {
 	Rule   string // 节点的规则值，即 : 之后的部分，非字符串节点有效。
 	Suffix string // 保存参数名之后的字符串，比如 "{id}/author" 此值为 "/author"，仅对非字符串节点有效果。
 
+	// TODO: Type、Endpoint 和 ignoreName 采用一个 int 字段代替
+
 	// 节点类型
 	Type Type
 
