@@ -43,7 +43,6 @@ func calcMemStats(load func()) {
 
 	load()
 
-	runtime.GC()
 	runtime.ReadMemStats(stats)
 	after := stats.HeapAlloc
 	fmt.Printf("%d Bytes\n", after-before)
