@@ -23,6 +23,10 @@ type Segment struct {
 	// 节点类型
 	Type Type
 
+	// 保存着当前节点 Value 中除去名称之外的节点长度。
+	// 当判断两个节点是否存在歧义时，会用到此值。
+	ambiguousLength int16
+
 	// 是否为最终结点
 	//
 	// 在命名和拦截类型的路由项中，如果以 {path} 等结尾，则表示可以匹配任意剩余的字符。
@@ -71,6 +75,7 @@ func (i *Interceptors) NewSegment(val string) (*Segment, error) {
 		seg.Endpoint = val[len(val)-1] == endByte
 		seg.matcher = func(string) bool { return true }
 		seg.cleanName()
+		seg.calcAmbiguousLength()
 		return seg, nil
 	}
 
@@ -82,6 +87,7 @@ func (i *Interceptors) NewSegment(val string) (*Segment, error) {
 		seg.Suffix = val[end+1:]
 		seg.Endpoint = val[len(val)-1] == endByte
 		seg.matcher = matcher
+		seg.calcAmbiguousLength()
 		return seg, nil
 	}
 
@@ -98,6 +104,7 @@ func (i *Interceptors) NewSegment(val string) (*Segment, error) {
 		return nil, err
 	}
 	seg.expr = expr
+	seg.calcAmbiguousLength()
 	return seg, nil
 }
 
@@ -106,6 +113,40 @@ func (seg *Segment) cleanName() {
 		seg.ignoreName = true
 		seg.Name = seg.Name[1:]
 	}
+}
+
+func (seg *Segment) calcAmbiguousLength() {
+	seg.ambiguousLength = 2 // {}
+
+	if seg.ignoreName { // -
+		seg.ambiguousLength++
+	}
+
+	if seg.Rule != "" {
+		seg.ambiguousLength += int16(len(seg.Rule))
+		seg.ambiguousLength++ // 表示 :
+	}
+
+	if seg.Suffix != "" {
+		seg.ambiguousLength += int16(len(seg.Suffix))
+	}
+}
+
+// IsAmbiguous 判断两个节点是否存在歧义
+//
+// 即除了名称，其它都相同，如果两个节点符合此条件，
+// 在相同路径下是无法判断到底要选哪一条路径的，应该避免此类节节点出现在同一路径上。
+func (seg *Segment) IsAmbiguous(s2 *Segment) bool {
+	if seg.ignoreName != s2.ignoreName {
+		return seg.Endpoint == s2.Endpoint && seg.Type == s2.Type && seg.Rule == s2.Rule && seg.Suffix == s2.Suffix
+	}
+	return seg.Name != s2.Name &&
+		seg.ambiguousLength == s2.ambiguousLength &&
+		(seg.Endpoint == s2.Endpoint && seg.Type == s2.Type && seg.Rule == s2.Rule && seg.Suffix == s2.Suffix)
+}
+
+func (seg *Segment) AmbiguousLen() int16 {
+	return seg.ambiguousLength + int16(len(seg.Name))
 }
 
 // Similarity 与 s1 的相似度，-1 表示完全相同，

@@ -294,3 +294,46 @@ func (n *Node) routes(parent string, routes map[string][]string) {
 
 // Handler 获取指定方法对应的处理函数
 func (n *Node) Handler(method string) http.Handler { return n.handlers[method] }
+
+func (n *Node) checkAmbiguous(pattern string, hasNonString bool) (*Node, bool, error) {
+	if pattern == "" {
+		if len(n.handlers) > 0 {
+			return n, hasNonString, nil
+		}
+		return nil, false, nil
+	}
+
+	for _, c := range n.children {
+		seg := c.segment
+
+		if strings.HasPrefix(pattern, seg.Value) {
+			node, hasNonString, err := c.checkAmbiguous(pattern[len(seg.Value):], hasNonString)
+			if err != nil {
+				return nil, false, err
+			}
+
+			if node != nil {
+				return node, hasNonString, nil
+			}
+			continue
+		}
+
+		segs, err := n.root.interceptors.Split(pattern)
+		if err != nil {
+			return nil, false, err
+		}
+		s0 := segs[0]
+
+		if seg.IsAmbiguous(s0) {
+			node, hashasNonString, err := c.checkAmbiguous(pattern[s0.AmbiguousLen():], true)
+			if err != nil {
+				return nil, false, err
+			}
+			if node != nil {
+				return node, hashasNonString, nil
+			}
+		}
+	}
+
+	return nil, false, nil
+}

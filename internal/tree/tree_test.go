@@ -38,6 +38,11 @@ func (t *tester) add(method, pattern string, code int) {
 	t.a.NotError(t.tree.Add(pattern, rest.BuildHandler(t.a, code, "", nil), method))
 }
 
+func (t *tester) addAmbiguous(pattern string) {
+	b := rest.BuildHandler(t.a, http.StatusOK, "", nil)
+	t.a.ErrorString(t.tree.Add(pattern, b, http.MethodGet), "存在有歧义的节点")
+}
+
 // 验证按照指定的 method 和 path 访问，是否会返回相同的 code 值，
 // 若是，则返回该节点以及对应的参数。
 func (t *tester) handler(method, path string, code int) (http.Handler, *syntax.Params) {
@@ -96,6 +101,37 @@ func (t *tester) optionsTrue(path, options string) {
 	t.a.Equal(w.Code, http.StatusOK)
 
 	t.a.Equal(w.Header().Get("Allow"), options)
+}
+
+func TestTree_AmbiguousRoute(t *testing.T) {
+	a := assert.New(t)
+
+	test := newTester(a, false)
+	test.add(http.MethodGet, "/", 201)
+	test.add(http.MethodGet, "/posts/{id}", 202)
+	test.addAmbiguous("/posts/{ambiguous-id}")
+
+	test.add(http.MethodGet, "/posts/{id}/author", 203)
+	test.addAmbiguous("/posts/{-id}/author")
+	test.addAmbiguous("/posts/{ambiguous-id}/author")
+
+	test.add(http.MethodGet, "/posts-{id}-{pages}.html", 204)
+	test.addAmbiguous("/posts-{id}-{ambiguous-pages}.html")
+	test.addAmbiguous("/posts-{-id}-{pages}.html")
+	test.addAmbiguous("/posts-{-id}-{ambiguous-pages}.html")
+	test.addAmbiguous("/posts-{ambiguous-id}-{pages}.html")
+
+	// 删除之后可以正常添加
+	test.tree.Remove("/posts-{id}-{pages}.html", http.MethodGet)
+	test.add(http.MethodGet, "/posts-{id}-{ambiguous-pages}.html", 203)
+	test.add(http.MethodPost, "/posts-{id}-{ambiguous-pages}.html", 203)
+	test.addAmbiguous("/posts-{-id}-{pages}.html")
+
+	// 删除了 GET，依然存在 POST
+	test.tree.Remove("/posts-{id}-{ambiguous-pages}.html", http.MethodGet)
+	test.addAmbiguous("/posts-{-id}-{pages}.html")
+	test.tree.Remove("/posts-{id}-{ambiguous-pages}.html", http.MethodPost) // POST 也删除
+	test.add(http.MethodPatch, "/posts-{-id}-{pages}.html", 203)
 }
 
 func TestTree_Route(t *testing.T) {
@@ -311,13 +347,13 @@ func TestTree_Add_Remove(t *testing.T) {
 
 	a.NotError(tree.Add("/", rest.BuildHandler(a, http.StatusAccepted, "", nil), http.MethodGet))
 	a.NotError(tree.Add("/posts/{id}", rest.BuildHandler(a, http.StatusAccepted, "", nil), http.MethodGet))
-	a.NotError(tree.Add("/posts/{-id}", rest.BuildHandler(a, http.StatusAccepted, "", nil), http.MethodGet))
+	a.NotError(tree.Add("/posts/{-id}/ignore-name", rest.BuildHandler(a, http.StatusAccepted, "", nil), http.MethodGet))
 	a.NotError(tree.Add("/posts/{id}/author", rest.BuildHandler(a, http.StatusAccepted, "", nil), http.MethodGet, http.MethodPut, http.MethodPost))
 	a.NotError(tree.Add("/posts/1/author", rest.BuildHandler(a, http.StatusAccepted, "", nil), http.MethodGet))
 	a.NotError(tree.Add("/posts/{id}/{author:\\w+}/profile", rest.BuildHandler(a, 1, "", nil), http.MethodGet))
 
 	a.NotEmpty(tree.node.find("/posts/1/author").handlers)
-	a.NotEmpty(tree.node.find("/posts/{-id}").handlers)
+	a.NotEmpty(tree.node.find("/posts/{-id}/ignore-name").handlers)
 	tree.Remove("/posts/1/author", http.MethodGet)
 	a.Nil(tree.node.find("/posts/1/author"))
 

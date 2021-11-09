@@ -80,6 +80,10 @@ func (tree *Tree) Add(pattern string, h http.Handler, methods ...string) error {
 		return errors.New("太长了")
 	}
 
+	if err := tree.checkAmbiguous(pattern); err != nil {
+		return err
+	}
+
 	if tree.locker != nil {
 		tree.locker.Lock()
 		defer tree.locker.Unlock()
@@ -98,6 +102,25 @@ func (tree *Tree) Add(pattern string, h http.Handler, methods ...string) error {
 		methods = addAny
 	}
 	return n.addMethods(h, methods...)
+}
+
+func (tree *Tree) checkAmbiguous(pattern string) error {
+	n, has, err := tree.node.checkAmbiguous(pattern, false)
+	if err != nil {
+		return err
+	}
+
+	if n == nil || !has {
+		return nil
+	}
+
+	var s string
+	for n != nil {
+		s = n.segment.Value + s
+		n = n.parent
+	}
+
+	return fmt.Errorf("存在有歧义的节点：%s", s)
 }
 
 // Clean 清除路由项
