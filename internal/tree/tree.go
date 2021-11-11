@@ -4,9 +4,7 @@
 package tree
 
 import (
-	"errors"
 	"fmt"
-	"math"
 	"net/http"
 	"sync"
 
@@ -76,10 +74,6 @@ func (tree *Tree) optionsServeHTTP(w http.ResponseWriter, _ *http.Request) {
 //
 // methods 可以为空，表示添加除 OPTIONS 和 HEAD 之外所有支持的请求方法。
 func (tree *Tree) Add(pattern string, h http.Handler, methods ...string) error {
-	if len(pattern) > math.MaxInt16 {
-		return errors.New("太长了")
-	}
-
 	if err := tree.checkAmbiguous(pattern); err != nil {
 		return err
 	}

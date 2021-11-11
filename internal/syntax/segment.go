@@ -4,6 +4,7 @@ package syntax
 
 import (
 	"fmt"
+	"math"
 	"regexp"
 	"strings"
 )
@@ -47,6 +48,10 @@ type Segment struct {
 //
 // 如果为非字符串类型的内容，应该是以 { 符号开头才是合法的。
 func (i *Interceptors) NewSegment(val string) (*Segment, error) {
+	if len(val) > math.MaxInt16 {
+		return nil, fmt.Errorf("单个节点的长度不能超过 %d", math.MaxInt16)
+	}
+
 	seg := &Segment{
 		Value: val,
 		Type:  String,
