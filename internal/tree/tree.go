@@ -167,9 +167,10 @@ func (tree *Tree) Remove(pattern string, methods ...string) {
 	}
 	child.buildMethods()
 
-	if len(child.handlers) == 0 && len(child.children) == 0 {
+	for len(child.handlers) == 0 && len(child.children) == 0 {
 		child.parent.children = removeNodes(child.parent.children, child.segment.Value)
 		child.parent.buildIndexes()
+		child = child.parent
 	}
 
 	tree.buildMethods(-1, methods...)

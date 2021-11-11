@@ -399,6 +399,28 @@ func TestTree_Add_Remove(t *testing.T) {
 
 	a.ErrorString(tree.Add("/path/{id}/path/{id:\\d+}", rest.BuildHandler(a, 1, "", nil), http.MethodHead), "存在相同名称的路由参数")
 	a.ErrorString(tree.Add("/path/{id}{id2:\\d+}", rest.BuildHandler(a, 1, "", nil), http.MethodHead), "两个命名参数不能连续出现")
+
+	// 多层节点的删除
+
+	tree = New(true, syntax.NewInterceptors())
+	a.NotError(tree.Add("/posts", rest.BuildHandler(a, 201, "", nil), http.MethodGet, http.MethodPut))
+	a.NotError(tree.Add("/posts/{id}", rest.BuildHandler(a, 202, "", nil), http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}/author", rest.BuildHandler(a, 203, "", nil), http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}/author/email", rest.BuildHandler(a, 204, "", nil), http.MethodGet))
+
+	tree.Remove("/posts/{id}") // 删除 202
+	nn := tree.node.find("/posts/{id}")
+	a.True(nn == nil || len(nn.handlers) == 0)
+
+	tree.Remove("/posts/{id}/author") // 删除 203
+	nn = tree.node.find("/posts/{id}/author")
+	a.True(nn == nil || len(nn.handlers) == 0)
+
+	tree.Remove("/posts/{id}/author/email") // 删除 204
+	nn = tree.node.find("/posts/{id}/author/email")
+	a.True(nn == nil || len(nn.handlers) == 0)
+	nn = tree.node.find("/posts") // /posts 之下已经完全没有内容，所有子节点都可以删除
+	a.NotEmpty(nn.handlers).Empty(nn.children)
 }
 
 func TestTree_Routes(t *testing.T) {
