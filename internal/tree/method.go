@@ -81,7 +81,6 @@ func (n *Node) optionsServeHTTP(w http.ResponseWriter, _ *http.Request) {
 	optionsHandle(w, n.Options())
 }
 
-//
 func optionsHandle(w http.ResponseWriter, opt string) { w.Header().Set("Allow", opt) }
 
 // Options 获取当前支持的请求方法列表字符串

@@ -24,14 +24,14 @@ type contextKey int
 
 // Params 路由参数
 //
-// 实现了 mux.Params 接口
+// 实现了 params.Params 接口
 type Params struct {
 	Path   string  // 这是在 Segment.Match 中用到的路径信息。
 	Params []Param // 实际需要传递的参数
 }
 
 type Param struct {
-	K, V string // 如果 k 为空，则表示该参数已经被删除。
+	K, V string // 如果 K 为空，则表示该参数已经被删除。
 }
 
 func NewParams(path string) *Params {
@@ -212,7 +212,7 @@ func (p *Params) Set(k, v string) {
 
 	for i, param := range p.Params {
 		if param.K == k {
-			p.Params[i] = Param{K: k, V: v}
+			p.Params[i].V = v
 			return
 		}
 		if param.K == "" && deletedIndex == -1 {
@@ -221,7 +221,8 @@ func (p *Params) Set(k, v string) {
 	}
 
 	if deletedIndex != -1 {
-		p.Params[deletedIndex] = Param{K: k, V: v}
+		p.Params[deletedIndex].K = k
+		p.Params[deletedIndex].V = v
 	} else {
 		p.Params = append(p.Params, Param{K: k, V: v})
 	}
@@ -235,7 +236,7 @@ func (p *Params) Delete(k string) {
 
 	for i, pp := range p.Params {
 		if pp.K == k {
-			p.Params[i] = Param{}
+			p.Params[i].K = ""
 			return
 		}
 	}
