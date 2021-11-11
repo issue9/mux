@@ -165,7 +165,7 @@ func (r *Router) serveHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	node, ps := r.tree.Route(path)
-	if node == nil {
+	if node == nil { // 由 tree.Route 保证在 node == nil 时，ps 也为 nil。
 		r.options.NotFound.ServeHTTP(w, req)
 		return
 	}
@@ -180,6 +180,7 @@ func (r *Router) serveHTTP(w http.ResponseWriter, req *http.Request) {
 	// 存在节点，但是不允许当前请求方法。
 	w.Header().Set("Allow", node.Options())
 	r.options.MethodNotAllowed.ServeHTTP(w, req)
+	ps.Destroy()
 }
 
 // Name 路由名称

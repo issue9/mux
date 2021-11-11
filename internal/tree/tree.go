@@ -192,6 +192,8 @@ func (tree *Tree) getNode(pattern string) (*Node, error) {
 }
 
 // Route 找到与当前内容匹配的 Node 实例
+//
+// NOTE: 调用方需要调用 syntax.Params.Destroy 销毁对象
 func (tree *Tree) Route(path string) (*Node, *syntax.Params) {
 	if tree.locker != nil {
 		tree.locker.RLock()

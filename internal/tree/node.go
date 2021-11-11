@@ -12,7 +12,7 @@ import (
 
 const (
 	indexesSize  = 5 // node.children 的数量只有达到此值时，才会为其建立 indexes 索引表。
-	handlersSize = 4 // Node.handlers 的初始容量
+	handlersSize = 7 // Node.handlers 的初始容量
 )
 
 // Node 表示路由中的节点
@@ -325,12 +325,12 @@ func (n *Node) checkAmbiguous(pattern string, hasNonString bool) (*Node, bool, e
 		s0 := segs[0]
 
 		if seg.IsAmbiguous(s0) {
-			node, hashasNonString, err := c.checkAmbiguous(pattern[s0.AmbiguousLen():], true)
+			node, hasNonString, err := c.checkAmbiguous(pattern[s0.AmbiguousLen():], true)
 			if err != nil {
 				return nil, false, err
 			}
 			if node != nil {
-				return node, hashasNonString, nil
+				return node, hasNonString, nil
 			}
 		}
 	}
