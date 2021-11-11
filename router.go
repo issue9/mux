@@ -24,8 +24,8 @@ import (
 type Router struct {
 	tree    *tree.Tree
 	ms      *Middlewares
-	name    string
 	options *options.Options
+	name    string
 }
 
 // NewRouter 声明路由
@@ -42,8 +42,8 @@ func NewRouter(name string, o ...Option) *Router {
 
 	r := &Router{
 		tree:    tree.New(opt.Lock, opt.Interceptors),
-		name:    name,
 		options: opt,
+		name:    name,
 	}
 	r.ms = NewMiddlewares(http.HandlerFunc(r.serveHTTP))
 
