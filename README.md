@@ -91,7 +91,7 @@ rule 表示对参数的约束，一般为正则或是空，为空表示匹配任
 
 ### 路由参数
 
-通过正则表达式匹配的路由，其中带命名的参数可通过 `Params()` 获取：
+通过正则表达式匹配的路由，其中带命名的参数可通过 `GetParams()` 获取：
 
 ```go
 import "github.com/issue9/mux/v5"
@@ -100,7 +100,7 @@ params := mux.GetParams(r)
 
 id, err := params.Int("id")
  // 或是
-id := params.MustInt("id", 0) // 0 表示在无法获取 id 参数的默认值
+id := params.MustInt("id", 0) // 在无法获取 id 参数时采用 0 作为默认值返回
 ```
 
 ## 高级用法
@@ -141,7 +141,7 @@ r.Do()
 ### 拦截器
 
 正常情况下，`/posts/{id:\d+}` 或是 `/posts/{id:[0-9]+}` 会被当作正则表达式处理，
-但是正则表达式的性能并不是很好，这个时候我们可以通过 `Interceptor` 进行拦截：
+但是正则表达式的性能并不是很好，这个时候我们可以通过在 `NewRouter` 传递 `Interceptor` 进行拦截：
 
 ```go
 import "github.com/issue9/mux/v5"
@@ -159,7 +159,7 @@ func digit(path string) bool {
 r := mux.NewRouter("", mux.Interceptor(digit, "\\d+", "[0-9]+"))
 ```
 
-这样在所有路由项中的 `[0-9]+` 和 `\\d+` 将被 `digit` 函灵敏拦截处理，
+这样在所有路由项中的 `[0-9]+` 和 `\\d+` 将由 `digit` 函数处理，
 不再会被编译为正则表达式，在性能上会有很大的提升。
 通过该功能，也可以自定义一些非正常的正则表达这式，然后进行拦截，比如：
 
