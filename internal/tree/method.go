@@ -8,8 +8,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-
-	"github.com/issue9/sliceutil"
 )
 
 var (
@@ -96,7 +94,7 @@ func (n *Node) addMethods(h http.Handler, methods ...string) error {
 			return fmt.Errorf("无法手动添加 OPTIONS/HEAD 请求方法")
 		}
 
-		if sliceutil.Index(Methods, func(i int) bool { return Methods[i] == m }) == -1 {
+		if _, found := methodIndexMap[m]; !found {
 			return fmt.Errorf("该请求方法 %s 不被支持", m)
 		}
 
