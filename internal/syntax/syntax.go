@@ -100,6 +100,8 @@ func (i *Interceptors) Split(str string) ([]*Segment, error) {
 	ss := splitString(str)
 	segs := make([]*Segment, 0, len(ss))
 	var lastFlag bool
+	names := make(map[string]int, len(ss))
+
 	for _, s := range ss {
 		if lastFlag && s[0] == startByte {
 			return nil, fmt.Errorf("两个命名参数不能连续出现：%s", str)
@@ -110,6 +112,14 @@ func (i *Interceptors) Split(str string) ([]*Segment, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		if seg.Type != String {
+			if names[seg.Name] > 0 {
+				return nil, fmt.Errorf("存在相同名称的路由参数：%s", seg.Name)
+			}
+			names[seg.Name]++
+		}
+
 		segs = append(segs, seg)
 	}
 

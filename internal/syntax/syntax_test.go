@@ -20,7 +20,7 @@ func TestType_String(t *testing.T) {
 	})
 }
 
-func TestSplit(t *testing.T) {
+func TestInterceptor_Split(t *testing.T) {
 	a := assert.New(t)
 	i := NewInterceptors()
 	a.NotNil(i)
@@ -94,7 +94,8 @@ func TestSplit(t *testing.T) {
 	test("/posts/{{id:\\d+}/author", true)
 	test("/posts/{:\\d+}/author", true)
 	test("/posts/{}/author", true)
-	test("/posts/{id}{page}/", true)
+	test("/posts/{id}{page}/", true) // 连续的参数
+	test("/posts/{id}-{id}/", true)  // 同名
 	test("", true)
 }
 
