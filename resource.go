@@ -6,7 +6,7 @@ import "net/http"
 
 // Resource 以资源地址为对象的路由
 //
-//  srv := DefaultRouter()
+//  srv := NewRouter("")
 //  r, _ := srv.Resource("/api/users/{id}")
 //  r.Get(h)  // 相当于 srv.Get("/api/users/{id}")
 //  r.Post(h) // 相当于 srv.Post("/api/users/{id}")
@@ -48,9 +48,7 @@ func (r *Resource) Patch(h http.Handler) *Resource {
 }
 
 // Any 相当于 Router.Any(pattern, h) 的简易写法
-func (r *Resource) Any(h http.Handler) *Resource {
-	return r.Handle(h)
-}
+func (r *Resource) Any(h http.Handler) *Resource { return r.Handle(h) }
 
 // HandleFunc 功能同 Router.HandleFunc(pattern, fun, ...)
 func (r *Resource) HandleFunc(f http.HandlerFunc, methods ...string) *Resource {
@@ -83,9 +81,7 @@ func (r *Resource) PatchFunc(f http.HandlerFunc) *Resource {
 }
 
 // AnyFunc 相当于 Router.AnyFunc(pattern, func) 的简易写法
-func (r *Resource) AnyFunc(f http.HandlerFunc) *Resource {
-	return r.HandleFunc(f)
-}
+func (r *Resource) AnyFunc(f http.HandlerFunc) *Resource { return r.HandleFunc(f) }
 
 // Remove 删除指定匹配模式的路由项
 func (r *Resource) Remove(methods ...string) { r.router.Remove(r.pattern, methods...) }
@@ -108,18 +104,12 @@ func (r *Resource) URL(params map[string]string) (string, error) {
 
 // Resource 创建一个资源路由项
 func (r *Router) Resource(pattern string) *Resource {
-	return &Resource{
-		router:  r,
-		pattern: pattern,
-	}
+	return &Resource{router: r, pattern: pattern}
 }
 
 // Resource 创建一个资源路由项
 func (p *Prefix) Resource(pattern string) *Resource {
-	return &Resource{
-		router:  p.router,
-		pattern: p.prefix + pattern,
-	}
+	return p.router.Resource(p.prefix + pattern)
 }
 
 // Router 返回与当前资源关联的 *Router 实例

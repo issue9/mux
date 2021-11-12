@@ -7,7 +7,7 @@ import "net/http"
 // Prefix 操纵统一前缀的路由
 //
 // example:
-// r := DefaultRouter()
+// r := NewRouter("")
 //  p := r.Prefix("/api")
 //  p.Get("/users")  // 相当于 r.Get("/api/users")
 //  p.Get("/user/1") // 相当于 r.Get("/api/user/1")
@@ -118,18 +118,12 @@ func (p *Prefix) URL(pattern string, params map[string]string) (string, error) {
 //  v.Get("/users/1") // 相当于 g.Get("/api/v2/users/1")
 //  v.Get("example.com/users/1") // 相当于 g.Get("/api/v2/example.com/users/1")
 func (p *Prefix) Prefix(prefix string) *Prefix {
-	return &Prefix{
-		router: p.router,
-		prefix: p.prefix + prefix,
-	}
+	return p.router.Prefix(p.prefix + prefix)
 }
 
 // Prefix 声明一个 Prefix 实例
 func (r *Router) Prefix(prefix string) *Prefix {
-	return &Prefix{
-		router: r,
-		prefix: prefix,
-	}
+	return &Prefix{router: r, prefix: prefix}
 }
 
 // Router 返回与当前关联的 *Router 实例
