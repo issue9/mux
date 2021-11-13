@@ -151,7 +151,7 @@ func (r *Router) AnyFunc(pattern string, f http.HandlerFunc) *Router {
 // pattern 为路由项的定义内容；
 // params 为路由项中的参数，键名为参数名，键值为参数值。
 func (r *Router) URL(pattern string, params map[string]string) (string, error) {
-	return r.tree.URL(pattern, params)
+	return URL(pattern, params)
 }
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
