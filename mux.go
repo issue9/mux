@@ -4,6 +4,7 @@
 package mux
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/issue9/mux/v5/internal/options"
@@ -12,14 +13,24 @@ import (
 	"github.com/issue9/mux/v5/params"
 )
 
-// Option 自定义路由参数的函数原型
-type Option = options.Option
+type (
+	// Option 自定义路由参数的函数原型
+	Option = options.Option
 
-// InterceptorFunc 拦截器的函数原型
-type InterceptorFunc = syntax.InterceptorFunc
+	// InterceptorFunc 拦截器的函数原型
+	InterceptorFunc = syntax.InterceptorFunc
 
-// Params 路由参数
-type Params = params.Params
+	// Params 路由参数
+	Params = params.Params
+)
+
+var ErrPatternNotFound = errors.New("未找到路由项")
+
+func URL(strict bool, domain string) Option {
+	return func(o *options.Options) {
+		o.URL = &options.URL{Domain: domain, Strict: strict}
+	}
+}
 
 // Interceptor 针对带参数类型路由的拦截处理
 //
@@ -84,7 +95,7 @@ func Lock(o *options.Options) { o.Lock = true }
 //
 // allowCredentials 对应 Access-Control-Allow-Credentials。
 //
-// NOTE: AllowedCORS 与 CORS 属于相同功能的修改，会相互覆盖。
+// NOTE: AllowedCORS 与 CORS 会相互覆盖。
 func CORS(origins, allowHeaders, exposedHeaders []string, maxAge int, allowCredentials bool) Option {
 	return func(o *options.Options) {
 		o.CORS = &options.CORS{
@@ -99,7 +110,7 @@ func CORS(origins, allowHeaders, exposedHeaders []string, maxAge int, allowCrede
 
 // AllowedCORS 允许跨域请求
 //
-// NOTE: AllowedCORS 与 CORS 属于相同功能的修改，会相互覆盖。
+// NOTE: AllowedCORS 与 CORS 会相互覆盖。
 func AllowedCORS(o *options.Options) { o.CORS = options.AllowedCORS() }
 
 // NotFound 自定义 404 状态码下的输出
@@ -129,13 +140,13 @@ func CheckSyntax(pattern string) error {
 	return err
 }
 
-// URL 根据参数生成地址
+// BuildURL 根据参数生成地址
 //
 // pattern 为路由项的定义内容；
 // params 为路由项中的参数，键名为参数名，键值为参数值。
 //
 // NOTE: 仅仅是将 params 填入到 pattern 中， 不会判断参数格式是否正确。
-func URL(pattern string, params map[string]string) (string, error) {
+func BuildURL(pattern string, params map[string]string) (string, error) {
 	return emptyInterceptors.URL(pattern, params)
 }
 

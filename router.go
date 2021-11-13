@@ -151,7 +151,22 @@ func (r *Router) AnyFunc(pattern string, f http.HandlerFunc) *Router {
 // pattern 为路由项的定义内容；
 // params 为路由项中的参数，键名为参数名，键值为参数值。
 func (r *Router) URL(pattern string, params map[string]string) (string, error) {
-	return URL(pattern, params)
+	o := r.options.URL
+
+	if o.Strict {
+		if n := r.tree.Find(pattern); n == nil || n.Size() == 0 {
+			return "", ErrPatternNotFound
+		}
+	}
+
+	url, err := BuildURL(pattern, params)
+	if err != nil {
+		return "", err
+	}
+	if o.Domain != "" {
+		return o.Domain + url, nil
+	}
+	return url, nil
 }
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {

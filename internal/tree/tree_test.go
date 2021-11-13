@@ -442,3 +442,25 @@ func TestTree_Routes(t *testing.T) {
 		"/posts/{id}/author": {http.MethodGet, http.MethodHead, http.MethodOptions},
 	})
 }
+
+func TestTree_Find(t *testing.T) {
+	a := assert.New(t)
+	h := rest.BuildHandler(a, http.StatusCreated, "", nil)
+	tree := New(false, syntax.NewInterceptors())
+
+	a.NotError(tree.Add("/", h, http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}", h, http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}/author", h, http.MethodGet))
+	a.NotError(tree.Add("/posts/{-id:\\d+}/authors", h, http.MethodGet))
+	a.NotError(tree.Add("/posts/1/author", h, http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}/{author:\\w+}/profile", h, http.MethodGet))
+
+	a.Equal(tree.Find("/").segment.Value, "/")
+	a.Equal(tree.Find("/posts/{id}").segment.Value, "{id}")
+	a.Equal(tree.Find("/posts/{-id:\\d+}/authors").segment.Value, "{-id:\\d+}/authors")
+	a.Equal(tree.Find("/posts/{id}/author").segment.Value, "author")
+	a.Equal(tree.Find("/posts/{id}/{author:\\w+}/profile").segment.Value, "{author:\\w+}/profile")
+
+	a.Nil(tree.Find("/not-exists"))
+	a.Nil(tree.Find("/posts/").handlers) // 空的节点，但是有子元素。
+}

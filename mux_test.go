@@ -59,12 +59,12 @@ func TestCheckSyntax(t *testing.T) {
 	a.Error(CheckSyntax(""))
 }
 
-func TestURL(t *testing.T) {
+func TestBuildURL(t *testing.T) {
 	a := assert.New(t)
 
-	url, err := URL("/posts/{id:}", map[string]string{"id": "100"})
+	url, err := BuildURL("/posts/{id:}", map[string]string{"id": "100"})
 	a.NotError(err).Equal(url, "/posts/100")
 
-	url, err = URL("/posts/{id:\\\\d+}/author/{page}/", map[string]string{"id": "100", "page": "200"})
+	url, err = BuildURL("/posts/{id:\\\\d+}/author/{page}/", map[string]string{"id": "100", "page": "200"})
 	a.NotError(err).Equal(url, "/posts/100/author/200/")
 }
