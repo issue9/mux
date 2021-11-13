@@ -85,7 +85,7 @@ func TestRemoveNodes(t *testing.T) {
 	nodes = removeNodes(nodes, "/4")
 	a.Equal(len(nodes), 4)
 
-	// 删除中间无素
+	// 删除中间元素
 	nodes = removeNodes(nodes, "/2")
 	a.Equal(len(nodes), 3)
 

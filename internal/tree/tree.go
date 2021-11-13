@@ -137,12 +137,12 @@ func (tree *Tree) Remove(pattern string, methods ...string) {
 	}
 
 	child := tree.node.find(pattern)
-	if child == nil || len(child.handlers) == 0 {
+	if child == nil {
 		return
 	}
 
 	if len(methods) == 0 {
-		child.handlers = make(map[string]http.Handler, handlersSize)
+		child.handlers = nil
 	} else {
 		for _, m := range methods {
 			switch m {
@@ -159,6 +159,7 @@ func (tree *Tree) Remove(pattern string, methods ...string) {
 			delete(child.handlers, http.MethodOptions)
 		}
 	}
+
 	child.buildMethods()
 
 	for len(child.handlers) == 0 && len(child.children) == 0 {

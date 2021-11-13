@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	indexesSize  = 5 // node.children 的数量只有达到此值时，才会为其建立 indexes 索引表。
+	indexesSize  = 5 // Node.children 的数量只有达到此值时，才会为其建立 indexes 索引表。
 	handlersSize = 7 // Node.handlers 的初始容量
 )
 
@@ -57,8 +57,8 @@ func (n *Node) buildIndexes() {
 // parent.children 根据此值进行排序。
 // 不同的节点类型拥有不同的优先级，相同类型的，则有子节点的优先级低。
 func (n *Node) priority() int {
-	// 目前节点类型只有 4 种，10
-	// 可以保证在当前类型的节点进行加权时，不会超过其它节点。
+	// 目前节点类型只有 4 种，
+	// 10 可以保证在当前类型的节点进行加权时，不会超过其它节点。
 	ret := int(n.segment.Type) * 10
 
 	// 有 children 的，endpoint 必然为 false，两者不可能同时为 true
