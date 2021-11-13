@@ -220,7 +220,7 @@ func TestGroups_empty(t *testing.T) {
 	a.Equal(w.Code, http.StatusNotFound)
 }
 
-func TestGroup11(t *testing.T) {
+func TestGroup(t *testing.T) {
 	a := assert.New(t)
 	g := New(mux.Interceptor(mux.InterceptorDigit, "digit"))
 	exit := make(chan bool, 1)

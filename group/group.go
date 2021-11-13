@@ -64,9 +64,9 @@ func (g *Group) serveHTTP(w http.ResponseWriter, r *http.Request) {
 
 // New 声明新路由
 //
-// 与 Add 的区别在于：New 参数从 Group 继承，而 Add 的路由，其参数可自定义。
-func (g *Group) New(name string, matcher Matcher) *mux.Router {
-	r := mux.NewRouter(name, g.options...)
+// 初始化参数从 g.options 中获取，但是可以通过 o 作修改。
+func (g *Group) New(name string, matcher Matcher, o ...mux.Option) *mux.Router {
+	r := mux.NewRouter(name, append(g.options, o...)...)
 	g.Add(matcher, r)
 	return r
 }

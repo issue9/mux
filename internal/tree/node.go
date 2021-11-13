@@ -148,8 +148,7 @@ func (n *Node) find(pattern string) *Node {
 		}
 
 		if strings.HasPrefix(pattern, child.segment.Value) {
-			nn := child.find(pattern[len(child.segment.Value):])
-			if nn != nil {
+			if nn := child.find(pattern[len(child.segment.Value):]); nn != nil {
 				return nn
 			}
 		}
