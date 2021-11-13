@@ -218,7 +218,3 @@ func (tree *Tree) Routes() map[string][]string {
 
 	return routes
 }
-
-func (tree *Tree) URL(pattern string, ps map[string]string) (string, error) {
-	return tree.interceptors.URL(pattern, ps)
-}

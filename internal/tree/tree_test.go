@@ -442,13 +442,3 @@ func TestTree_Routes(t *testing.T) {
 		"/posts/{id}/author": {http.MethodGet, http.MethodHead, http.MethodOptions},
 	})
 }
-
-func TestTree_URL(t *testing.T) {
-	a := assert.New(t)
-	tree := New(true, syntax.NewInterceptors())
-	a.NotNil(tree)
-
-	a.NotError(tree.Add("/posts/{id:\\d+}/author/{page}/", rest.BuildHandler(a, 200, "", nil)))
-	output, err := tree.URL("/posts/{id:\\d+}/author/{page}/", map[string]string{"id": "100", "page": "200"})
-	a.NotError(err).Equal(output, "/posts/100/author/200/")
-}
