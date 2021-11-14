@@ -104,9 +104,8 @@ func (p *Prefix) Clean() { p.router.tree.Clean(p.prefix) }
 //
 // name 为路由的名称，或是直接为路由项的定义内容，
 // 若 name 作为路由项定义，会加上 Prefix.prefix 作为前缀；
-// params 为路由项中的参数，键名为参数名，键值为参数值。
-func (p *Prefix) URL(pattern string, params map[string]string) (string, error) {
-	return p.router.URL(p.prefix+pattern, params)
+func (p *Prefix) URL(strict bool, pattern string, params map[string]string) (string, error) {
+	return p.router.URL(strict, p.prefix+pattern, params)
 }
 
 // Prefix 在现有 Prefix 的基础上声明一个新的 Prefix 实例

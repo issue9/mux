@@ -59,7 +59,7 @@ func TestCheckSyntax(t *testing.T) {
 	a.Error(CheckSyntax(""))
 }
 
-func TestURL(t *testing.T) {
+func TestBuildURL(t *testing.T) {
 	a := assert.New(t)
 
 	url, err := URL("/posts/{id:}", map[string]string{"id": "100"})

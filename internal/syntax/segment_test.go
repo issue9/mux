@@ -432,3 +432,44 @@ func TestSegment_Match(t *testing.T) {
 		Equal(p.Path, "/email").
 		Equal(p.Params, []Param{{K: "id", V: "1"}})
 }
+
+func TestSegment_Valid(t *testing.T) {
+	a := assert.New(t)
+	i := NewInterceptors()
+	i.Add(MatchDigit, "digit")
+
+	s, err := i.NewSegment("{id}")
+	a.NotError(err).NotNil(s)
+	a.True(s.Valid("5"))
+	a.True(s.Valid("55xf"))
+
+	s, err = i.NewSegment("{id:digit}")
+	a.NotError(err).NotNil(s)
+	a.True(s.Valid("5"))
+	a.False(s.Valid("55xf"))
+
+	s, err = i.NewSegment("{id:digit}/5xx")
+	a.NotError(err).NotNil(s)
+	a.True(s.Valid("5"))
+	a.False(s.Valid("55xf"))
+
+	s, err = i.NewSegment("{-id:digit}/5xx")
+	a.NotError(err).NotNil(s)
+	a.True(s.Valid("5"))
+	a.False(s.Valid("55xf"))
+
+	s, err = i.NewSegment("{id:\\d+}")
+	a.NotError(err).NotNil(s)
+	a.True(s.Valid("5"))
+	a.False(s.Valid("55xfg"))
+
+	s, err = i.NewSegment("{id:\\d+}/5xx")
+	a.NotError(err).NotNil(s)
+	a.True(s.Valid("5"))
+	a.False(s.Valid("55xf"))
+
+	s, err = i.NewSegment("{-id:\\d+}/5xx")
+	a.NotError(err).NotNil(s)
+	a.True(s.Valid("5"))
+	a.False(s.Valid("55xf"))
+}

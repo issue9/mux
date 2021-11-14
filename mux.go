@@ -12,14 +12,21 @@ import (
 	"github.com/issue9/mux/v5/params"
 )
 
-// Option 自定义路由参数的函数原型
-type Option = options.Option
+type (
+	// Option 自定义路由参数的函数原型
+	Option = options.Option
 
-// InterceptorFunc 拦截器的函数原型
-type InterceptorFunc = syntax.InterceptorFunc
+	// InterceptorFunc 拦截器的函数原型
+	InterceptorFunc = syntax.InterceptorFunc
 
-// Params 路由参数
-type Params = params.Params
+	// Params 路由参数
+	Params = params.Params
+)
+
+// URLDomain 为 Router.URL 生成的地址带上域名
+func URLDomain(domain string) Option {
+	return func(o *options.Options) { o.URLDomain = domain }
+}
 
 // Interceptor 针对带参数类型路由的拦截处理
 //
@@ -84,7 +91,7 @@ func Lock(o *options.Options) { o.Lock = true }
 //
 // allowCredentials 对应 Access-Control-Allow-Credentials。
 //
-// NOTE: AllowedCORS 与 CORS 属于相同功能的修改，会相互覆盖。
+// NOTE: AllowedCORS 与 CORS 会相互覆盖。
 func CORS(origins, allowHeaders, exposedHeaders []string, maxAge int, allowCredentials bool) Option {
 	return func(o *options.Options) {
 		o.CORS = &options.CORS{
@@ -99,7 +106,7 @@ func CORS(origins, allowHeaders, exposedHeaders []string, maxAge int, allowCrede
 
 // AllowedCORS 允许跨域请求
 //
-// NOTE: AllowedCORS 与 CORS 属于相同功能的修改，会相互覆盖。
+// NOTE: AllowedCORS 与 CORS 会相互覆盖。
 func AllowedCORS(o *options.Options) { o.CORS = options.AllowedCORS() }
 
 // NotFound 自定义 404 状态码下的输出

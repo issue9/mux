@@ -98,8 +98,8 @@ func (r *Resource) Clean() { r.router.Remove(r.pattern) }
 //
 //  res, := m.Resource("/posts/{id}/{path}")
 //  res.URL(map[string]string{"id": "1","path":"author/profile"}) // /posts/1/author/profile
-func (r *Resource) URL(params map[string]string) (string, error) {
-	return r.router.URL(r.pattern, params)
+func (r *Resource) URL(strict bool, params map[string]string) (string, error) {
+	return r.router.URL(strict, r.pattern, params)
 }
 
 // Resource 创建一个资源路由项

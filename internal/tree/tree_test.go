@@ -84,6 +84,17 @@ func (t *tester) paramsTrue(method, path string, code int, params map[string]str
 	}
 }
 
+func (t *tester) urlTrue(pattern string, params map[string]string, url string) {
+	u, err := t.tree.URL(pattern, params)
+	t.a.NotError(err)
+	t.a.Equal(u, url)
+}
+
+func (t *tester) urlFalse(pattern string, params map[string]string, msg string) {
+	u, err := t.tree.URL(pattern, params)
+	t.a.ErrorString(err, msg).Empty(u)
+}
+
 // 测试 tree.methodIndex 是否正确
 func (t *tester) optionsTrue(path, options string) {
 	hs, ps := t.tree.Route(path)
@@ -441,4 +452,46 @@ func TestTree_Routes(t *testing.T) {
 		"/posts/{id}":        {http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodPut},
 		"/posts/{id}/author": {http.MethodGet, http.MethodHead, http.MethodOptions},
 	})
+}
+
+func TestTree_find(t *testing.T) {
+	a := assert.New(t)
+	h := rest.BuildHandler(a, http.StatusCreated, "", nil)
+	tree := New(false, syntax.NewInterceptors())
+
+	a.NotError(tree.Add("/", h, http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}", h, http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}/author", h, http.MethodGet))
+	a.NotError(tree.Add("/posts/{-id:\\d+}/authors", h, http.MethodGet))
+	a.NotError(tree.Add("/posts/1/author", h, http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}/{author:\\w+}/profile", h, http.MethodGet))
+
+	a.Equal(tree.find("/").segment.Value, "/")
+	a.Equal(tree.find("/posts/{id}").segment.Value, "{id}")
+	a.Equal(tree.find("/posts/{-id:\\d+}/authors").segment.Value, "{-id:\\d+}/authors")
+	a.Equal(tree.find("/posts/{id}/author").segment.Value, "author")
+	a.Equal(tree.find("/posts/{id}/{author:\\w+}/profile").segment.Value, "{author:\\w+}/profile")
+
+	a.Nil(tree.find("/not-exists"))
+	a.Nil(tree.find("/posts/").handlers) // 空的节点，但是有子元素。
+}
+
+func TestTree_URL(t *testing.T) {
+	a := assert.New(t)
+	test := newTester(a, true)
+
+	// 添加路由项
+	test.add(http.MethodGet, "/posts/{id}", 1)                       // 命名
+	test.add(http.MethodGet, "/posts/{id}/author/{action}/", 2)      // 命名
+	test.add(http.MethodGet, "/posts/{id:\\d+}", 3)                  // 正则
+	test.add(http.MethodGet, "/posts/{id:\\d+}/author/{action}/", 4) // 正则
+
+	test.urlTrue("/posts/{id:\\d+}", map[string]string{"id": "100"}, "/posts/100")
+	test.urlTrue("/posts/{id:\\d+}/author/{action}/", map[string]string{"id": "100", "action": "p"}, "/posts/100/author/p/")
+	test.urlTrue("/posts/{id}", map[string]string{"id": "100.htm"}, "/posts/100.htm")
+	test.urlTrue("/posts/{id}/author/{action}/", map[string]string{"id": "100.htm", "action": "p"}, "/posts/100.htm/author/p/")
+
+	test.urlFalse("/not-exists", nil, "并不是一条有效的注册路由项")
+	test.urlFalse("/posts/{id}", nil, "未找到参数")
+	test.urlFalse("/posts/{id:\\d+}", map[string]string{"id": "xyz"}, "格式不匹配")
 }

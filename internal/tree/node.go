@@ -34,6 +34,8 @@ type Node struct {
 	children []*Node
 }
 
+func (n *Node) Size() int { return len(n.handlers) }
+
 // 构建当前节点的索引表
 func (n *Node) buildIndexes() {
 	if len(n.children) < indexesSize {
@@ -223,7 +225,7 @@ LOOP:
 	}
 
 	// 没有子节点匹配，len(p.Path)==0，且子节点不为空，可以判定与当前节点匹配。
-	if len(p.Path) == 0 && len(n.handlers) > 0 {
+	if len(p.Path) == 0 && n.Size() > 0 {
 		return n
 	}
 	return nil
@@ -296,7 +298,7 @@ func (n *Node) Handler(method string) http.Handler { return n.handlers[method] }
 
 func (n *Node) checkAmbiguous(pattern string, hasNonString bool) (*Node, bool, error) {
 	if pattern == "" {
-		if len(n.handlers) > 0 {
+		if n.Size() > 0 {
 			return n, hasNonString, nil
 		}
 		return nil, false, nil

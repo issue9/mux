@@ -124,39 +124,41 @@ func TestResource_URL(t *testing.T) {
 	// 非正则
 	res := def.Resource("/api/v1")
 	a.NotNil(res)
-	url, err := res.URL(map[string]string{"id": "1"})
+	url, err := res.URL(false, map[string]string{"id": "1"})
 	a.NotError(err).Equal(url, "/api/v1")
 
 	res = def.Resource("/api//v1")
 	a.NotNil(res)
-	url, err = res.URL(map[string]string{"id": "1"})
+	url, err = res.URL(false, map[string]string{"id": "1"})
 	a.NotError(err).Equal(url, "/api//v1")
 
 	// 正常的单个参数
 	res = def.Resource("/api/{id:\\d+}/{path}")
 	a.NotNil(res)
-	url, err = res.URL(map[string]string{"id": "1", "path": "p1"})
+	url, err = res.URL(false, map[string]string{"id": "1", "path": "p1"})
 	a.NotError(err).Equal(url, "/api/1/p1")
 
-	// 不对正则参数做类型校验
-	url, err = res.URL(map[string]string{"id": "xxx", "path": "p1"})
+	// 类型不正确
+	url, err = res.URL(false, map[string]string{"id": "xxx", "path": "p1"})
 	a.NotError(err).Equal(url, "/api/xxx/p1")
+	url, err = res.URL(true, map[string]string{"id": "xxx", "path": "p1"})
+	a.Error(err).Empty(url)
 
 	res = def.Resource("/api/{id:\\d+}//{path}")
 	a.NotNil(res)
-	url, err = res.URL(map[string]string{"id": "1", "path": "p1"})
+	url, err = res.URL(false, map[string]string{"id": "1", "path": "p1"})
 	a.NotError(err).Equal(url, "/api/1//p1")
 
 	// 多个参数
 	res = def.Resource("/api/{action}/{id:\\d+}")
 	a.NotNil(res)
-	url, err = res.URL(map[string]string{"id": "1", "action": "blog"})
+	url, err = res.URL(false, map[string]string{"id": "1", "action": "blog"})
 	a.NotError(err).Equal(url, "/api/blog/1")
 
 	// 缺少参数
-	url, err = res.URL(map[string]string{"id": "1"})
+	url, err = res.URL(false, map[string]string{"id": "1"})
 	a.Error(err).Equal(url, "")
 
-	url, err = res.URL(map[string]string{"id": "1", "action": "blog"})
+	url, err = res.URL(false, map[string]string{"id": "1", "action": "blog"})
 	a.NotError(err).Equal(url, "/api/blog/1")
 }

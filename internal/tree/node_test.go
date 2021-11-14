@@ -3,11 +3,9 @@
 package tree
 
 import (
-	"net/http"
 	"testing"
 
 	"github.com/issue9/assert"
-	"github.com/issue9/assert/rest"
 
 	"github.com/issue9/mux/v5/internal/syntax"
 )
@@ -24,38 +22,6 @@ func (n *Node) len() int {
 	}
 
 	return cnt
-}
-
-func TestNode_find(t *testing.T) {
-	a := assert.New(t)
-	tree := New(false, syntax.NewInterceptors())
-	node := &Node{root: tree}
-
-	addNode := func(p string, code int, methods ...string) {
-		segs, err := tree.interceptors.Split(p)
-		a.NotError(err).NotNil(segs)
-		nn, err := node.getNode(segs)
-		a.NotError(err).NotNil(nn)
-
-		if nn.handlers == nil {
-			nn.handlers = make(map[string]http.Handler, handlersSize)
-		}
-
-		a.NotError(nn.addMethods(rest.BuildHandler(a, code, "", nil), methods...))
-	}
-
-	addNode("/", 1, http.MethodGet)
-	addNode("/posts/{id}", 1, http.MethodGet)
-	addNode("/posts/{id}/author", 1, http.MethodGet)
-	addNode("/posts/{-id:\\d+}/authors", 1, http.MethodGet)
-	addNode("/posts/1/author", 1, http.MethodGet)
-	addNode("/posts/{id}/{author:\\w+}/profile", 1, http.MethodGet)
-
-	a.Equal(node.find("/").segment.Value, "/")
-	a.Equal(node.find("/posts/{id}").segment.Value, "{id}")
-	a.Equal(node.find("/posts/{-id:\\d+}/authors").segment.Value, "{-id:\\d+}/authors")
-	a.Equal(node.find("/posts/{id}/author").segment.Value, "author")
-	a.Equal(node.find("/posts/{id}/{author:\\w+}/profile").segment.Value, "{author:\\w+}/profile")
 }
 
 func TestRemoveNodes(t *testing.T) {
