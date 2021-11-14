@@ -178,6 +178,19 @@ func (seg *Segment) Split(i *Interceptors, pos int) ([]*Segment, error) {
 	return []*Segment{s1, s2}, nil
 }
 
+// Valid 验证 pattern 是否与当前节点匹配
+func (seg *Segment) Valid(pattern string) bool {
+	switch seg.Type {
+	case Interceptor:
+		return seg.matcher(pattern)
+	case Regexp:
+		pattern += seg.Suffix
+		locs := seg.expr.FindStringIndex(pattern)
+		return locs != nil && locs[1] == len(pattern)
+	}
+	return true
+}
+
 // Match 路径是否与当前节点匹配
 //
 // 如果正确匹配，则将剩余的未匹配字符串写入到 p.Path 并返回 true。

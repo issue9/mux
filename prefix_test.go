@@ -102,39 +102,39 @@ func TestPrefix_Prefix(t *testing.T) {
 
 func TestPrefix_URL(t *testing.T) {
 	a := assert.New(t)
-	def := NewRouter("", AllowedCORS)
+	def := NewRouter("", AllowedCORS, URL(false, "https://example.com"))
 	a.NotNil(def)
 
 	// 非正则
 	p := def.Prefix("/api")
 	a.NotNil(p)
-	url, err := p.URL("/v1", map[string]string{"id": "1"})
-	a.NotError(err).Equal(url, "/api/v1")
+	url, err := p.URL(false, "/v1", map[string]string{"id": "1"})
+	a.NotError(err).Equal(url, "https://example.com/api/v1")
 
 	p = def.Prefix("//api")
 	a.NotNil(p)
-	url, err = p.URL("/v1", map[string]string{"id": "1"})
-	a.NotError(err).Equal(url, "//api/v1")
+	url, err = p.URL(false, "/v1", map[string]string{"id": "1"})
+	a.NotError(err).Equal(url, "https://example.com//api/v1")
 
 	// 正常的单个参数
 	p = def.Prefix("/api")
 	a.NotNil(p)
-	url, err = p.URL("/{id:\\d+}/{path}", map[string]string{"id": "1", "path": "p1"})
-	a.NotError(err).Equal(url, "/api/1/p1")
+	url, err = p.URL(false, "/{id:\\d+}/{path}", map[string]string{"id": "1", "path": "p1"})
+	a.NotError(err).Equal(url, "https://example.com/api/1/p1")
 
-	url, err = p.URL("/{id:\\d+}///{path}", map[string]string{"id": "1", "path": "p1"})
-	a.NotError(err).Equal(url, "/api/1///p1")
+	url, err = p.URL(false, "/{id:\\d+}///{path}", map[string]string{"id": "1", "path": "p1"})
+	a.NotError(err).Equal(url, "https://example.com/api/1///p1")
 
 	// 多个参数
 	p = def.Prefix("/api")
 	a.NotNil(p)
-	url, err = p.URL("/{action}/{id:\\d+}", map[string]string{"id": "1", "action": "blog"})
-	a.NotError(err).Equal(url, "/api/blog/1")
+	url, err = p.URL(false, "/{action}/{id:\\d+}", map[string]string{"id": "1", "action": "blog"})
+	a.NotError(err).Equal(url, "https://example.com/api/blog/1")
 
 	// 缺少参数
-	url, err = p.URL("/{action}/{id:\\d+}", map[string]string{"id": "1"})
+	url, err = p.URL(false, "/{action}/{id:\\d+}", map[string]string{"id": "1"})
 	a.Error(err).Equal(url, "")
 
-	url, err = p.URL("/{action}/{id:\\d+}", map[string]string{"id": "1", "action": "blog"})
-	a.NotError(err).Equal(url, "/api/blog/1")
+	url, err = p.URL(false, "/{action}/{id:\\d+}", map[string]string{"id": "1", "action": "blog"})
+	a.NotError(err).Equal(url, "https://example.com/api/blog/1")
 }

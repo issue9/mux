@@ -24,6 +24,10 @@ type (
 	Params = params.Params
 )
 
+// ErrPatternNotFound 路由项未找到
+//
+// 在 Router.URL 中如果 strict 为 true，那么会检查路由项是否真实存在，
+// 在未存在的情况下返回此错误。
 var ErrPatternNotFound = errors.New("未找到路由项")
 
 func URL(strict bool, domain string) Option {

@@ -8,6 +8,9 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/issue9/errwrap"
+	"github.com/issue9/sliceutil"
+
 	"github.com/issue9/mux/v5/internal/syntax"
 )
 
@@ -136,7 +139,7 @@ func (tree *Tree) Remove(pattern string, methods ...string) {
 		defer tree.locker.Unlock()
 	}
 
-	child := tree.Find(pattern)
+	child := tree.find(pattern)
 	if child == nil {
 		return
 	}
@@ -219,4 +222,41 @@ func (tree *Tree) Routes() map[string][]string {
 	return routes
 }
 
-func (tree *Tree) Find(pattern string) *Node { return tree.node.find(pattern) }
+func (tree *Tree) find(pattern string) *Node { return tree.node.find(pattern) }
+
+// URL 将 ps 填入 pattern 生成 URL
+//
+// NOTE: 会检测 pattern 是否存在于 tree 中。
+func (tree *Tree) URL(pattern string, ps map[string]string) (string, error) {
+	n := tree.find(pattern)
+	if n == nil {
+		return "", fmt.Errorf("%s 并不是一条有效的注册路由项", pattern)
+	}
+
+	nodes := make([]*Node, 0, 5)
+	for curr := n; curr.parent != nil; curr = curr.parent { // 从尾部向上开始获取节点
+		nodes = append(nodes, curr)
+	}
+	sliceutil.Reverse(nodes)
+
+	var buf errwrap.StringBuilder
+	for _, node := range nodes {
+		s := node.segment
+		switch s.Type {
+		case syntax.String:
+			buf.WString(s.Value)
+		case syntax.Named, syntax.Regexp:
+			param, exists := ps[s.Name]
+			if !exists {
+				return "", fmt.Errorf("未找到参数 %s 的值", s.Name)
+			}
+			if !s.Valid(param) {
+				return "", fmt.Errorf("参数 %s 格式不匹配", s.Name)
+			}
+
+			buf.WString(param).WString(s.Suffix)
+		}
+	}
+
+	return buf.String(), buf.Err
+}

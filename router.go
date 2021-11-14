@@ -148,23 +148,21 @@ func (r *Router) AnyFunc(pattern string, f http.HandlerFunc) *Router {
 
 // URL 根据参数生成地址
 //
+// strict 是否检查路由是否真实存在以及参数是否符合要求；
 // pattern 为路由项的定义内容；
 // params 为路由项中的参数，键名为参数名，键值为参数值。
-func (r *Router) URL(pattern string, params map[string]string) (string, error) {
-	o := r.options.URL
-
-	if o.Strict {
-		if n := r.tree.Find(pattern); n == nil || n.Size() == 0 {
-			return "", ErrPatternNotFound
-		}
+func (r *Router) URL(strict bool, pattern string, params map[string]string) (url string, err error) {
+	if strict {
+		url, err = r.tree.URL(pattern, params)
+	} else {
+		url, err = BuildURL(pattern, params)
 	}
-
-	url, err := BuildURL(pattern, params)
 	if err != nil {
 		return "", err
 	}
-	if o.Domain != "" {
-		return o.Domain + url, nil
+
+	if r.options.URL.Domain != "" {
+		return r.options.URL.Domain + url, nil
 	}
 	return url, nil
 }
