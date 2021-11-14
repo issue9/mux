@@ -4,7 +4,6 @@
 package mux
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/issue9/mux/v5/internal/options"
@@ -24,16 +23,9 @@ type (
 	Params = params.Params
 )
 
-// ErrPatternNotFound 路由项未找到
-//
-// 在 Router.URL 中如果 strict 为 true，那么会检查路由项是否真实存在，
-// 在未存在的情况下返回此错误。
-var ErrPatternNotFound = errors.New("未找到路由项")
-
-func URL(strict bool, domain string) Option {
-	return func(o *options.Options) {
-		o.URL = &options.URL{Domain: domain, Strict: strict}
-	}
+// URLDomain 为 Router.URL 生成的地址带上域名
+func URLDomain(domain string) Option {
+	return func(o *options.Options) { o.URLDomain = domain }
 }
 
 // Interceptor 针对带参数类型路由的拦截处理
@@ -144,13 +136,13 @@ func CheckSyntax(pattern string) error {
 	return err
 }
 
-// BuildURL 根据参数生成地址
+// URL 根据参数生成地址
 //
 // pattern 为路由项的定义内容；
 // params 为路由项中的参数，键名为参数名，键值为参数值。
 //
 // NOTE: 仅仅是将 params 填入到 pattern 中， 不会判断参数格式是否正确。
-func BuildURL(pattern string, params map[string]string) (string, error) {
+func URL(pattern string, params map[string]string) (string, error) {
 	return emptyInterceptors.URL(pattern, params)
 }
 

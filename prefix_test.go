@@ -102,7 +102,7 @@ func TestPrefix_Prefix(t *testing.T) {
 
 func TestPrefix_URL(t *testing.T) {
 	a := assert.New(t)
-	def := NewRouter("", AllowedCORS, URL(false, "https://example.com"))
+	def := NewRouter("", AllowedCORS, URLDomain("https://example.com"))
 	a.NotNil(def)
 
 	// 非正则

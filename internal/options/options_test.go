@@ -24,6 +24,15 @@ func TestOptions_sanitize(t *testing.T) {
 	o.MethodNotAllowed.ServeHTTP(w, r)
 	a.Equal(w.Result().StatusCode, 405).
 		Equal(w.Body.String(), http.StatusText(http.StatusMethodNotAllowed)+"\n")
+
+	// URLDomain
+
+	o = &Options{URLDomain: "https://example.com"}
+	a.NotError(o.sanitize())
+	a.Equal(o.URLDomain, "https://example.com")
+	o = &Options{URLDomain: "https://example.com/"}
+	a.NotError(o.sanitize())
+	a.Equal(o.URLDomain, "https://example.com")
 }
 
 func TestBuild(t *testing.T) {
@@ -35,8 +44,7 @@ func TestBuild(t *testing.T) {
 		False(o.CaseInsensitive).
 		NotNil(o.CORS).
 		NotNil(o.NotFound).
-		NotNil(o.Interceptors).
-		NotNil(o.URL)
+		NotNil(o.Interceptors)
 
 	o, err = Build(func(o *Options) { o.CaseInsensitive = true })
 	a.NotError(err).

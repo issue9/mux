@@ -155,14 +155,14 @@ func (r *Router) URL(strict bool, pattern string, params map[string]string) (url
 	if strict {
 		url, err = r.tree.URL(pattern, params)
 	} else {
-		url, err = BuildURL(pattern, params)
+		url, err = URL(pattern, params)
 	}
 	if err != nil {
 		return "", err
 	}
 
-	if r.options.URL.Domain != "" {
-		return r.options.URL.Domain + url, nil
+	if r.options.URLDomain != "" {
+		url = r.options.URLDomain + url
 	}
 	return url, nil
 }

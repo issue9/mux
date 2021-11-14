@@ -16,7 +16,7 @@ type Options struct {
 	Lock            bool
 	CORS            *CORS
 	Interceptors    *syntax.Interceptors
-	URL             *URL
+	URLDomain       string
 
 	NotFound,
 	MethodNotAllowed http.Handler
@@ -34,10 +34,10 @@ func (o *Options) sanitize() error {
 		o.Interceptors = syntax.NewInterceptors()
 	}
 
-	if o.URL == nil {
-		o.URL = &URL{}
+	l := len(o.URLDomain)
+	if l != 0 && o.URLDomain[l-1] == '/' {
+		o.URLDomain = o.URLDomain[:l-1]
 	}
-	o.URL.sanitize()
 
 	if o.NotFound == nil {
 		o.NotFound = http.NotFoundHandler()
