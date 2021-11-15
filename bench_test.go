@@ -157,9 +157,9 @@ func BenchmarkRouter_ServeHTTP(b *testing.B) {
 
 type api struct {
 	method  string
-	pattern string // {xx} 风格的路由项
-	test    string // 测试地址
-	ps      map[string]string
+	pattern string            // 路由项
+	test    string            // 测试地址
+	ps      map[string]string // 参数
 }
 
 // 数据来源 github.com 的接口定义

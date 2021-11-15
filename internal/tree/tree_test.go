@@ -493,6 +493,7 @@ func TestTree_URL(t *testing.T) {
 	test.urlTrue("/posts/{id}", map[string]string{"id": "100.htm"}, "/posts/100.htm")
 	test.urlTrue("/posts/{id}/author/{action}/", map[string]string{"id": "100.htm", "action": "p"}, "/posts/100.htm/author/p/")
 
+	test.urlFalse("", nil, "并不是一条有效的注册路由项")
 	test.urlFalse("/not-exists", nil, "并不是一条有效的注册路由项")
 	test.urlFalse("/posts/{id}", map[string]string{"other": "other"}, "未找到参数")
 	test.urlFalse("/posts/{id:\\d+}", map[string]string{"id": "xyz"}, "格式不匹配")

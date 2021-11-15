@@ -157,6 +157,10 @@ func TestTree_URL(t *testing.T) {
 		err     bool
 	}{
 		{
+			pattern: "",
+			output:  "",
+		},
+		{
 			pattern: "/static",
 			output:  "/static",
 		},

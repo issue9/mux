@@ -66,7 +66,7 @@ func (t Type) String() string {
 //
 // 不能将 URL 作为判断 pattern 是否合规的方法，在 ps 为空时， 将直接返回 pattern。
 func (i *Interceptors) URL(pattern string, ps map[string]string) (string, error) {
-	if len(ps) == 0 {
+	if len(ps) == 0 || pattern == "" {
 		return pattern, nil
 	}
 
