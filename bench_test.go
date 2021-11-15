@@ -9,12 +9,35 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/issue9/assert"
 )
 
 func init() {
 	for _, api := range apis {
+		ps := make(map[string]string, 5)
+		p := api.pattern
+		for {
+			start := strings.IndexByte(p, '{')
+			end := strings.IndexByte(p, '}')
+			if start == -1 {
+				break
+			}
+			if end <= start {
+				panic("无效的路由项" + api.pattern)
+			}
+			k := p[start+1 : end]
+			ps[k] = k
+
+			if end+1 == len(p) {
+				break
+			}
+			p = p[end+1:]
+		}
+
 		path := strings.Replace(api.pattern, "}", "", -1)
 		api.test = strings.Replace(path, "{", "", -1)
+		api.ps = ps
 	}
 
 	var srv *Router
@@ -47,12 +70,52 @@ func calcMemStats(load func()) {
 	fmt.Printf("%d Bytes\n", after-before)
 }
 
-// 动态添加和删除路由
-func BenchmarkAdd_Serve(b *testing.B) {
+func BenchmarkURL(b *testing.B) {
+	a := assert.New(b)
+
+	router := NewRouter("", Lock)
+	for _, api := range apis {
+		router.HandleFunc(api.pattern, benchHandler, api.method)
+	}
+
 	b.ReportAllocs()
 	b.ResetTimer()
 
+	for i := 0; i < b.N; i++ {
+		api := apis[i%len(apis)]
+
+		url, err := URL(api.pattern, api.ps)
+		a.NotError(err).Equal(url, api.test)
+	}
+}
+
+func BenchmarkRouter_URL(b *testing.B) {
+	a := assert.New(b)
+	domain := "https://github.com"
+
+	router := NewRouter("", Lock, URLDomain(domain))
+	for _, api := range apis {
+		router.HandleFunc(api.pattern, benchHandler, api.method)
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		api := apis[i%len(apis)]
+
+		url, err := router.URL(true, api.pattern, api.ps)
+		a.NotError(err).Equal(url, domain+api.test)
+	}
+}
+
+// 动态添加和删除路由
+func BenchmarkRouter_AddAndServeHTTP(b *testing.B) {
 	router := NewRouter("", Lock)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		api := apis[i%len(apis)]
 
@@ -70,7 +133,7 @@ func BenchmarkAdd_Serve(b *testing.B) {
 }
 
 // 对一组添加完成的路由进行路由操作
-func BenchmarkServe(b *testing.B) {
+func BenchmarkRouter_ServeHTTP(b *testing.B) {
 	router := NewRouter("")
 	for _, api := range apis {
 		router.HandleFunc(api.pattern, benchHandler, api.method)
@@ -96,6 +159,7 @@ type api struct {
 	method  string
 	pattern string // {xx} 风格的路由项
 	test    string // 测试地址
+	ps      map[string]string
 }
 
 // 数据来源 github.com 的接口定义
