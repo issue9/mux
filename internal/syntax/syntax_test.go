@@ -157,6 +157,10 @@ func TestTree_URL(t *testing.T) {
 		err     bool
 	}{
 		{
+			pattern: "/static",
+			output:  "/static",
+		},
+		{
 			pattern: "/posts/{id}",
 			ps:      map[string]string{"id": "100"},
 			output:  "/posts/100",
@@ -201,13 +205,14 @@ func TestTree_URL(t *testing.T) {
 			ps:      map[string]string{"编号": "100", "page": "200"},
 			output:  "/posts/100/作者/200/",
 		},
-
-		{ // 参数未指定
+		{ // 参数未指定，直接判断全部节点为 String
 			pattern: "/posts/{id:\\d+}",
-			err:     true,
+			output:  "/posts/{id:\\d+}",
 		},
+
 		{ // pattern 格式错误
 			pattern: "/posts/{{id:\\d+}",
+			ps:      map[string]string{"id": "1"},
 			err:     true,
 		},
 	}

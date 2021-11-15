@@ -233,6 +233,10 @@ func (tree *Tree) URL(pattern string, ps map[string]string) (string, error) {
 		return "", fmt.Errorf("%s 并不是一条有效的注册路由项", pattern)
 	}
 
+	if len(ps) == 0 {
+		return pattern, nil
+	}
+
 	nodes := make([]*Node, 0, 5)
 	for curr := n; curr.parent != nil; curr = curr.parent { // 从尾部向上开始获取节点
 		nodes = append(nodes, curr)

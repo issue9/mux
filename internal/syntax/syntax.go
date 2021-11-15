@@ -59,11 +59,17 @@ func (t Type) String() string {
 	}
 }
 
-// URL 将 params 中的参数填入 pattern
+// URL 将 ps 中的参数填入 pattern
 //
-// 如果 pattern 中存在，但是不存在于 params，将出错，
-// 但是如果只存在于 params，但是不存在于 pattern 是可以的。
+// 如果 pattern 中存在，但是不存在于 ps，将出错，
+// 但是如果只存在于 ps，但是不存在于 pattern 是可以的。
+//
+// 不能将 URL 作为判断 pattern 是否合规的方法，在 ps 为空时， 将直接返回 pattern。
 func (i *Interceptors) URL(pattern string, ps map[string]string) (string, error) {
+	if len(ps) == 0 {
+		return pattern, nil
+	}
+
 	segs, err := i.Split(pattern)
 	if err != nil {
 		return "", err

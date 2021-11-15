@@ -481,17 +481,19 @@ func TestTree_URL(t *testing.T) {
 	test := newTester(a, true)
 
 	// 添加路由项
+	test.add(http.MethodGet, "/static", 0)                           // 静态
 	test.add(http.MethodGet, "/posts/{id}", 1)                       // 命名
 	test.add(http.MethodGet, "/posts/{id}/author/{action}/", 2)      // 命名
 	test.add(http.MethodGet, "/posts/{id:\\d+}", 3)                  // 正则
 	test.add(http.MethodGet, "/posts/{id:\\d+}/author/{action}/", 4) // 正则
 
+	test.urlTrue("/static", nil, "/static")
 	test.urlTrue("/posts/{id:\\d+}", map[string]string{"id": "100"}, "/posts/100")
 	test.urlTrue("/posts/{id:\\d+}/author/{action}/", map[string]string{"id": "100", "action": "p"}, "/posts/100/author/p/")
 	test.urlTrue("/posts/{id}", map[string]string{"id": "100.htm"}, "/posts/100.htm")
 	test.urlTrue("/posts/{id}/author/{action}/", map[string]string{"id": "100.htm", "action": "p"}, "/posts/100.htm/author/p/")
 
 	test.urlFalse("/not-exists", nil, "并不是一条有效的注册路由项")
-	test.urlFalse("/posts/{id}", nil, "未找到参数")
+	test.urlFalse("/posts/{id}", map[string]string{"other": "other"}, "未找到参数")
 	test.urlFalse("/posts/{id:\\d+}", map[string]string{"id": "xyz"}, "格式不匹配")
 }
