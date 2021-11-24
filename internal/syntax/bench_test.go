@@ -5,11 +5,11 @@ package syntax
 import (
 	"testing"
 
-	"github.com/issue9/assert"
+	"github.com/issue9/assert/v2"
 )
 
 func BenchmarkSegment_Match_Named(b *testing.B) {
-	a := assert.New(b)
+	a := assert.New(b, false)
 	i := NewInterceptors()
 	a.NotNil(i)
 
@@ -23,7 +23,7 @@ func BenchmarkSegment_Match_Named(b *testing.B) {
 }
 
 func BenchmarkSegment_Match_Named_withMatcher(b *testing.B) {
-	a := assert.New(b)
+	a := assert.New(b, false)
 	i := NewInterceptors()
 	i.Add(MatchDigit, "digit")
 	a.NotNil(i)
@@ -38,7 +38,7 @@ func BenchmarkSegment_Match_Named_withMatcher(b *testing.B) {
 }
 
 func BenchmarkSegment_Match_String(b *testing.B) {
-	a := assert.New(b)
+	a := assert.New(b, false)
 	i := NewInterceptors()
 	a.NotNil(i)
 
@@ -52,7 +52,7 @@ func BenchmarkSegment_Match_String(b *testing.B) {
 }
 
 func BenchmarkSegment_Match_Regexp(b *testing.B) {
-	a := assert.New(b)
+	a := assert.New(b, false)
 	i := NewInterceptors()
 	a.NotNil(i)
 

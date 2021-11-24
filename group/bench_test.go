@@ -7,11 +7,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/issue9/assert"
+	"github.com/issue9/assert/v2"
 )
 
 func BenchmarkHost_Match(b *testing.B) {
-	a := assert.New(b)
+	a := assert.New(b, false)
 	h := NewHosts(true, "caixw.io", "caixw.oi", "*.example.com")
 	a.NotNil(h)
 	r := httptest.NewRequest(http.MethodGet, "https://caixw.io/test", nil)
@@ -23,7 +23,7 @@ func BenchmarkHost_Match(b *testing.B) {
 }
 
 func BenchmarkHeaderVersionWithoutKey_Match(b *testing.B) {
-	a := assert.New(b)
+	a := assert.New(b, false)
 	h := &HeaderVersion{Versions: []string{"3.0", "4.0", "1.0", "2.0"}}
 	r := httptest.NewRequest(http.MethodGet, "https://caixw.io/test", nil)
 	r.Header.Set("Accept", "application/json; version=1.0")
@@ -35,7 +35,7 @@ func BenchmarkHeaderVersionWithoutKey_Match(b *testing.B) {
 }
 
 func BenchmarkHeaderVersionWithKey_Match(b *testing.B) {
-	a := assert.New(b)
+	a := assert.New(b, false)
 	h := &HeaderVersion{Key: "version", Versions: []string{"3.0", "4.0", "1.0", "2.0"}}
 	r := httptest.NewRequest(http.MethodGet, "https://caixw.io/test", nil)
 	r.Header.Set("Accept", "application/json; version=1.0")
@@ -47,7 +47,7 @@ func BenchmarkHeaderVersionWithKey_Match(b *testing.B) {
 }
 
 func BenchmarkPathVersionWithoutKey_Match(b *testing.B) {
-	a := assert.New(b)
+	a := assert.New(b, false)
 	r := httptest.NewRequest(http.MethodGet, "https://caixw.io/v1/test", nil)
 	h := NewPathVersion("", "v4", "v3", "v1/", "/v2")
 
@@ -58,7 +58,7 @@ func BenchmarkPathVersionWithoutKey_Match(b *testing.B) {
 }
 
 func BenchmarkPathVersionWithKey_Match(b *testing.B) {
-	a := assert.New(b)
+	a := assert.New(b, false)
 	r := httptest.NewRequest(http.MethodGet, "https://caixw.io/v1/test", nil)
 	h := NewPathVersion("version", "v4", "v3", "v1/", "/v2")
 

@@ -7,14 +7,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/issue9/assert"
+	"github.com/issue9/assert/v2"
 
 	"github.com/issue9/mux/v5/internal/syntax"
 	"github.com/issue9/mux/v5/internal/tree"
 )
 
 func TestCORS_sanitize(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	c := &CORS{}
 	a.NotError(c.sanitize())
@@ -61,7 +61,7 @@ func TestCORS_sanitize(t *testing.T) {
 }
 
 func TestCORS_handle(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 	tr := tree.New(false, syntax.NewInterceptors())
 	a.NotError(tr.Add("/path", nil, http.MethodGet, http.MethodDelete))
 	node, ps := tr.Route("/path")
@@ -191,7 +191,7 @@ func TestCORS_handle(t *testing.T) {
 }
 
 func TestCORS_headerIsAllowed(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	// Deny
 

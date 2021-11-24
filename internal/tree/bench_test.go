@@ -7,14 +7,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/issue9/assert"
-	"github.com/issue9/assert/rest"
+	"github.com/issue9/assert/v2"
+	"github.com/issue9/assert/v2/rest"
 
 	"github.com/issue9/mux/v5/internal/syntax"
 )
 
 func BenchmarkTree_Route(b *testing.B) {
-	a := assert.New(b)
+	a := assert.New(b, false)
 	tree := New(true, syntax.NewInterceptors())
 
 	// 添加路由项
@@ -47,7 +47,7 @@ func BenchmarkTree_Route(b *testing.B) {
 }
 
 func BenchmarkTree_ServeHTTP(b *testing.B) {
-	a := assert.New(b)
+	a := assert.New(b, false)
 	tree := New(true, syntax.NewInterceptors())
 
 	// 添加路由项

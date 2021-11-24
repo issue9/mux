@@ -5,7 +5,7 @@ package tree
 import (
 	"testing"
 
-	"github.com/issue9/assert"
+	"github.com/issue9/assert/v2"
 
 	"github.com/issue9/mux/v5/internal/syntax"
 )
@@ -25,7 +25,7 @@ func (n *Node) len() int {
 }
 
 func TestRemoveNodes(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 	tree := New(false, syntax.NewInterceptors())
 	a.NotNil(tree)
 
@@ -73,7 +73,7 @@ func TestRemoveNodes(t *testing.T) {
 }
 
 func TestSplitNode(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 	tree := New(false, syntax.NewInterceptors())
 	a.NotNil(tree)
 

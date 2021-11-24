@@ -7,8 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/issue9/assert"
-	"github.com/issue9/assert/rest"
+	"github.com/issue9/assert/v2"
+	"github.com/issue9/assert/v2/rest"
 )
 
 func (t *tester) resource(p string) *Resource {
@@ -16,7 +16,7 @@ func (t *tester) resource(p string) *Resource {
 }
 
 func TestResource(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 	test := newTester(t)
 	h := test.resource("/h/1")
 	a.NotNil(h)
@@ -78,7 +78,7 @@ func TestResource(t *testing.T) {
 }
 
 func TestRouter_Resource(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 	def := NewRouter("")
 	a.NotNil(def)
 
@@ -99,7 +99,7 @@ func TestRouter_Resource(t *testing.T) {
 }
 
 func TestPrefix_Resource(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	def := NewRouter("")
 	a.NotNil(def)
@@ -117,7 +117,7 @@ func TestPrefix_Resource(t *testing.T) {
 }
 
 func TestResource_URL(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 	def := NewRouter("", AllowedCORS)
 	a.NotNil(def)
 

@@ -7,21 +7,22 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/issue9/assert"
-	"github.com/issue9/assert/rest"
+	"github.com/issue9/assert/v2"
+	"github.com/issue9/assert/v2/rest"
 )
 
 func buildMiddleware(a *assert.Assertion, text string) MiddlewareFunc {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			h.ServeHTTP(w, r) // 先输出被包含的内容
-			a.NotError(w.Write([]byte(text)))
+			_, err := w.Write([]byte(text))
+			a.NotError(err)
 		})
 	}
 }
 
 func TestRouter_Middleware(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	def := NewRouter("")
 	a.NotNil(def)

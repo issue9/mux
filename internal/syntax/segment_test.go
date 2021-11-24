@@ -5,11 +5,11 @@ package syntax
 import (
 	"testing"
 
-	"github.com/issue9/assert"
+	"github.com/issue9/assert/v2"
 )
 
 func TestNewSegment(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 	i := newInterceptors(a)
 	a.NotNil(i)
 
@@ -127,7 +127,7 @@ func TestNewSegment(t *testing.T) {
 }
 
 func TestSegment_IsAmbiguous(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 	i := newInterceptors(a)
 
 	data := []struct {
@@ -202,7 +202,7 @@ func TestSegment_IsAmbiguous(t *testing.T) {
 }
 
 func TestLongestPrefix(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	test := func(s1, s2 string, len int) {
 		a.Equal(longestPrefix(s1, s2), len)
@@ -223,7 +223,7 @@ func TestLongestPrefix(t *testing.T) {
 }
 
 func TestSegment_Similarity(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 	i := newInterceptors(a)
 	a.NotNil(i)
 
@@ -238,7 +238,7 @@ func TestSegment_Similarity(t *testing.T) {
 }
 
 func TestSegment_Split(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 	i := newInterceptors(a)
 	a.NotNil(i)
 
@@ -261,7 +261,7 @@ func TestSegment_Split(t *testing.T) {
 }
 
 func TestSegment_Match(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 	i := newInterceptors(a)
 	a.NotNil(i)
 
@@ -434,7 +434,7 @@ func TestSegment_Match(t *testing.T) {
 }
 
 func TestSegment_Valid(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 	i := NewInterceptors()
 	i.Add(MatchDigit, "digit")
 

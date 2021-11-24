@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/issue9/assert"
+	"github.com/issue9/assert/v2"
 
 	"github.com/issue9/mux/v5/internal/syntax"
 )
@@ -18,7 +18,7 @@ var (
 )
 
 func TestHeaderVersion_Match(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	h := &HeaderVersion{
 		Key:      "version",
@@ -87,7 +87,7 @@ func TestHeaderVersion_Match(t *testing.T) {
 }
 
 func TestPathVersion_Match(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	h := NewPathVersion("version", "v3", "/v2", "/v1")
 
@@ -139,7 +139,7 @@ func TestPathVersion_Match(t *testing.T) {
 }
 
 func TestFindVersionNumberInHeader(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	a.Equal(findVersionNumberInHeader(""), "")
 	a.Equal(findVersionNumberInHeader("version="), "")

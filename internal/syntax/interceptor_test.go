@@ -5,7 +5,7 @@ package syntax
 import (
 	"testing"
 
-	"github.com/issue9/assert"
+	"github.com/issue9/assert/v2"
 )
 
 func newInterceptors(a *assert.Assertion) *Interceptors {
@@ -20,7 +20,7 @@ func newInterceptors(a *assert.Assertion) *Interceptors {
 }
 
 func TestInterceptors_Add(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 	i := NewInterceptors()
 
 	a.Panic(func() {
@@ -38,7 +38,7 @@ func TestInterceptors_Add(t *testing.T) {
 }
 
 func TestMatchAny(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	a.True(MatchAny("1"))
 	a.True(MatchAny("_"))
@@ -50,7 +50,7 @@ func TestMatchAny(t *testing.T) {
 }
 
 func TestMatchDigit(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	a.True(MatchDigit("123"))
 	a.True(MatchDigit("0123"))
@@ -61,7 +61,7 @@ func TestMatchDigit(t *testing.T) {
 }
 
 func TestMatchWord(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	a.True(MatchWord("123"))
 	a.True(MatchWord("a123"))

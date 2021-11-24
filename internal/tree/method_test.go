@@ -7,13 +7,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/issue9/assert"
+	"github.com/issue9/assert/v2"
 
 	"github.com/issue9/mux/v5/internal/syntax"
 )
 
 func TestBuildMethodIndexes(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	a.Empty(methodIndexes)
 
@@ -34,13 +34,14 @@ func TestBuildMethodIndexes(t *testing.T) {
 }
 
 func TestNode_serveHTTP(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 	tree := New(false, syntax.NewInterceptors())
 
 	a.NotError(tree.Add("/path", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("h1", "h1")
 		w.WriteHeader(http.StatusAccepted)
-		w.Write([]byte("get"))
+		_, err := w.Write([]byte("get"))
+		a.NotError(err)
 	}), http.MethodGet))
 
 	node, ps := tree.Route("/path")
@@ -62,7 +63,7 @@ func TestNode_serveHTTP(t *testing.T) {
 }
 
 func TestTree_buildMethods(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 	tree := New(false, syntax.NewInterceptors())
 	a.NotNil(tree)
 

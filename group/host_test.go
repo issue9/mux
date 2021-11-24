@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/issue9/assert"
+	"github.com/issue9/assert/v2"
 
 	"github.com/issue9/mux/v5"
 	"github.com/issue9/mux/v5/internal/syntax"
@@ -16,7 +16,7 @@ import (
 var _ Matcher = &Hosts{}
 
 func TestHost_RegisterInterceptor(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	h := NewHosts(true)
 	a.NotNil(h)
@@ -36,7 +36,7 @@ func TestHost_RegisterInterceptor(t *testing.T) {
 }
 
 func TestHosts_Match(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	h := NewHosts(true, "caixw.io", "caixw.oi", "{sub}.example.com")
 	a.NotNil(h)
@@ -84,7 +84,7 @@ func TestHosts_Match(t *testing.T) {
 }
 
 func TestNewHosts(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	h := NewHosts(false)
 	a.NotNil(h)
@@ -99,7 +99,7 @@ func TestNewHosts(t *testing.T) {
 }
 
 func TestHosts_Add_Delete(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	h := NewHosts(true)
 	a.NotNil(h)

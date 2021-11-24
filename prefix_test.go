@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/issue9/assert"
-	"github.com/issue9/assert/rest"
+	"github.com/issue9/assert/v2"
+	"github.com/issue9/assert/v2/rest"
 )
 
 func (t *tester) prefix(p string) *Prefix {
@@ -73,7 +73,7 @@ func TestPrefix(t *testing.T) {
 }
 
 func TestRouter_Prefix(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 	def := NewRouter("", AllowedCORS)
 	a.NotNil(def)
 
@@ -86,7 +86,7 @@ func TestRouter_Prefix(t *testing.T) {
 }
 
 func TestPrefix_Prefix(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 	def := NewRouter("", AllowedCORS)
 	a.NotNil(def)
 
@@ -101,7 +101,7 @@ func TestPrefix_Prefix(t *testing.T) {
 }
 
 func TestPrefix_URL(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 	def := NewRouter("", AllowedCORS, URLDomain("https://example.com"))
 	a.NotNil(def)
 

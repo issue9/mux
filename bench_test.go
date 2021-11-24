@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/issue9/assert"
+	"github.com/issue9/assert/v2"
 )
 
 func init() {
@@ -71,7 +71,7 @@ func calcMemStats(load func()) {
 }
 
 func BenchmarkURL(b *testing.B) {
-	a := assert.New(b)
+	a := assert.New(b, false)
 
 	router := NewRouter("", Lock)
 	for _, api := range apis {
@@ -90,7 +90,7 @@ func BenchmarkURL(b *testing.B) {
 }
 
 func BenchmarkRouter_URL(b *testing.B) {
-	a := assert.New(b)
+	a := assert.New(b, false)
 	domain := "https://github.com"
 
 	router := NewRouter("", Lock, URLDomain(domain))

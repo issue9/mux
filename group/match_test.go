@@ -7,13 +7,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/issue9/assert"
+	"github.com/issue9/assert/v2"
 )
 
 var _ Matcher = MatcherFunc(Any)
 
 func TestAny(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	r, ok := Any(nil)
 	a.True(ok).Nil(r)
@@ -23,7 +23,7 @@ func TestAny(t *testing.T) {
 }
 
 func TestAndFunc(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	p1 := NewPathVersion("p1", "v1")
 	p2 := NewPathVersion("p2", "v2")
@@ -41,7 +41,7 @@ func TestAndFunc(t *testing.T) {
 }
 
 func TestOrFunc(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	p1 := NewPathVersion("p1", "v1")
 	p2 := NewPathVersion("p2", "v2")

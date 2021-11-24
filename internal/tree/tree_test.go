@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/issue9/assert"
-	"github.com/issue9/assert/rest"
+	"github.com/issue9/assert/v2"
+	"github.com/issue9/assert/v2/rest"
 
 	"github.com/issue9/mux/v5/internal/syntax"
 )
@@ -115,7 +115,7 @@ func (t *tester) optionsTrue(path, options string) {
 }
 
 func TestTree_AmbiguousRoute(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	test := newTester(a, false)
 	test.add(http.MethodGet, "/", 201)
@@ -146,7 +146,7 @@ func TestTree_AmbiguousRoute(t *testing.T) {
 }
 
 func TestTree_Route(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 	test := newTester(a, false)
 
 	// 添加路由项
@@ -278,7 +278,7 @@ func TestTree_Route(t *testing.T) {
 }
 
 func TestTree_Params(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 	test := newTester(a, false)
 
 	// 添加路由项
@@ -315,7 +315,7 @@ func TestTree_Params(t *testing.T) {
 }
 
 func TestTreeCN(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 	test := newTester(a, false)
 
 	// 添加路由项
@@ -328,7 +328,7 @@ func TestTreeCN(t *testing.T) {
 }
 
 func TestTree_Clean(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 	tree := New(true, syntax.NewInterceptors())
 
 	addNode := func(p string, code int, methods ...string) {
@@ -351,7 +351,7 @@ func TestTree_Clean(t *testing.T) {
 }
 
 func TestTree_Add_Remove(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	tree := New(true, syntax.NewInterceptors())
 	a.NotNil(tree)
@@ -435,7 +435,7 @@ func TestTree_Add_Remove(t *testing.T) {
 }
 
 func TestTree_Routes(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 	tree := New(true, syntax.NewInterceptors())
 	a.NotNil(tree)
 
@@ -455,7 +455,7 @@ func TestTree_Routes(t *testing.T) {
 }
 
 func TestTree_find(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 	h := rest.BuildHandler(a, http.StatusCreated, "", nil)
 	tree := New(false, syntax.NewInterceptors())
 
@@ -477,7 +477,7 @@ func TestTree_find(t *testing.T) {
 }
 
 func TestTree_URL(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 	test := newTester(a, true)
 
 	// 添加路由项

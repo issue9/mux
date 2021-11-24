@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/issue9/assert"
+	"github.com/issue9/assert/v2"
 
 	"github.com/issue9/mux/v5/params"
 )
@@ -23,7 +23,7 @@ func getParams(params *Params, a *assert.Assertion) *Params {
 }
 
 func TestWithValue(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	r := httptest.NewRequest(http.MethodGet, "/to/path", nil)
 	a.Equal(WithValue(r, &Params{}), r)
@@ -35,7 +35,7 @@ func TestWithValue(t *testing.T) {
 }
 
 func TestGetParams(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	r := httptest.NewRequest(http.MethodGet, "/to/path", nil)
 	ps := GetParams(r)
@@ -50,7 +50,7 @@ func TestGetParams(t *testing.T) {
 }
 
 func TestNewParams(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	var p *Params
 	p.Destroy()
@@ -64,7 +64,7 @@ func TestNewParams(t *testing.T) {
 }
 
 func TestParams_String(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	ps := getParams(&Params{Params: []Param{{K: "key1", V: "1"}}}, a)
 
@@ -75,13 +75,13 @@ func TestParams_String(t *testing.T) {
 
 	// 不存在
 	val, err = ps.String("k5")
-	a.ErrorType(err, params.ErrParamNotExists).Equal(val, "")
+	a.ErrorIs(err, params.ErrParamNotExists).Equal(val, "")
 	a.False(ps.Exists("k5"))
 	a.Equal(ps.MustString("k5", "-10"), "-10")
 }
 
 func TestParams_Int(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	ps := getParams(&Params{Params: []Param{
 		{K: "key1", V: "1"},
@@ -99,12 +99,12 @@ func TestParams_Int(t *testing.T) {
 
 	// 不存在
 	val, err = ps.Int("k5")
-	a.ErrorType(err, params.ErrParamNotExists).Equal(val, 0)
+	a.ErrorIs(err, params.ErrParamNotExists).Equal(val, 0)
 	a.Equal(ps.MustInt("k5", -10), -10)
 }
 
 func TestParams_Uint(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	ps := getParams(&Params{Params: []Param{
 		{K: "key1", V: "1"},
@@ -128,12 +128,12 @@ func TestParams_Uint(t *testing.T) {
 
 	// 不存在
 	val, err = ps.Uint("k5")
-	a.ErrorType(err, params.ErrParamNotExists).Equal(val, 0)
+	a.ErrorIs(err, params.ErrParamNotExists).Equal(val, 0)
 	a.Equal(ps.MustUint("k5", 10), 10)
 }
 
 func TestParams_Bool(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	ps := getParams(&Params{Params: []Param{
 		{K: "key1", V: "true"},
@@ -156,12 +156,12 @@ func TestParams_Bool(t *testing.T) {
 
 	// 不存在
 	val, err = ps.Bool("k5")
-	a.ErrorType(err, params.ErrParamNotExists).False(val)
+	a.ErrorIs(err, params.ErrParamNotExists).False(val)
 	a.True(ps.MustBool("k5", true))
 }
 
 func TestParams_Float(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	ps := getParams(&Params{Params: []Param{
 		{K: "key1", V: "1"},
@@ -184,7 +184,7 @@ func TestParams_Float(t *testing.T) {
 
 	// 不存在
 	val, err = ps.Float("k5")
-	a.ErrorType(err, params.ErrParamNotExists).Equal(val, 0.0)
+	a.ErrorIs(err, params.ErrParamNotExists).Equal(val, 0.0)
 	a.Equal(ps.MustFloat("k5", -10.0), -10.0)
 
 	var ps2 *Params
@@ -193,7 +193,7 @@ func TestParams_Float(t *testing.T) {
 }
 
 func TestParams_Set(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	ps := &Params{Params: []Param{{K: "k1", V: "v1"}}}
 	a.Equal(ps.Count(), 1)
@@ -208,7 +208,7 @@ func TestParams_Set(t *testing.T) {
 }
 
 func TestParams_Get(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	var ps *Params
 	a.Zero(ps.Count())
@@ -225,7 +225,7 @@ func TestParams_Get(t *testing.T) {
 }
 
 func TestParams_Clone(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	var ps *Params
 	ps2 := ps.Clone()
@@ -240,7 +240,7 @@ func TestParams_Clone(t *testing.T) {
 }
 
 func TestParams_Delete(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	var ps *Params
 	ps.Delete("k1")
@@ -271,7 +271,7 @@ func TestParams_Delete(t *testing.T) {
 }
 
 func TestParams_Map(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	var ps *Params
 	a.Nil(ps.Map())

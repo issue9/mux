@@ -7,8 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/issue9/assert"
-	"github.com/issue9/assert/rest"
+	"github.com/issue9/assert/v2"
+	"github.com/issue9/assert/v2/rest"
 )
 
 var _ http.Handler = &Router{}
@@ -22,30 +22,30 @@ type tester struct {
 
 func newTester(t testing.TB, o ...Option) *tester {
 	r := NewRouter("def", o...)
-	assert.NotNil(t, r)
-	assert.Equal(t, "def", r.Name())
+	a := assert.New(t, false)
+	a.NotNil(r)
+	a.Equal("def", r.Name())
 
 	return &tester{
 		router: r,
-		srv:    rest.NewServer(t, r, nil),
-		a:      assert.New(t),
+		srv:    rest.NewServer(a, r, nil),
+		a:      a,
 	}
 }
 
 func (t *tester) matchCode(method, path string, code int) {
-	t.srv.NewRequest(method, path).Do().Status(code)
+	t.srv.NewRequest(method, path).Do(nil).Status(code)
 }
 
 func (t *tester) matchHeader(method, path string, code int, headers map[string]string) {
-	resp := t.srv.NewRequest(method, path).Do()
-	resp.Status(code)
+	resp := t.srv.NewRequest(method, path).Do(nil).Status(code)
 	for k, v := range headers {
 		resp.Header(k, v)
 	}
 }
 
 func (t *tester) matchContent(method, path string, code int, content string) {
-	t.srv.NewRequest(method, path).Do().Status(code).StringBody(content)
+	t.srv.NewRequest(method, path).Do(nil).Status(code).StringBody(content)
 }
 
 func (t *tester) matchOptions(path string, code int, allow string) {
@@ -67,7 +67,8 @@ func TestRouter(t *testing.T) {
 
 	test.router.Get("/", rest.BuildHandler(test.a, 201, "201", nil))
 	test.router.Get("/200", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("200"))
+		_, err := w.Write([]byte("200"))
+		test.a.NotError(err)
 	}))
 	test.matchCode(http.MethodGet, "/", 201)
 	test.matchCode(http.MethodHead, "/", 201)
@@ -122,7 +123,7 @@ func TestRouter(t *testing.T) {
 	test.matchCode(http.MethodTrace, "/f/any", 206)
 
 	// 不能主动添加 Head
-	assert.PanicString(t, func() {
+	test.a.PanicString(func() {
 		test.router.HandleFunc("/head", rest.BuildHandlerFunc(test.a, 202, "", nil), http.MethodHead)
 	}, "OPTIONS/HEAD")
 }
@@ -204,7 +205,7 @@ func TestRouter_Handle_Remove(t *testing.T) {
 }
 
 func TestRouter_Routes(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	def := NewRouter("")
 	a.NotNil(def)
@@ -214,7 +215,7 @@ func TestRouter_Routes(t *testing.T) {
 }
 
 func TestRouter_Params(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 	router := NewRouter("", Interceptor(InterceptorDigit, "digit"))
 	a.NotNil(router)
 
@@ -280,7 +281,7 @@ func TestRouter_Params(t *testing.T) {
 }
 
 func TestRouter_Clean(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	def := NewRouter("")
 	a.NotNil(def)

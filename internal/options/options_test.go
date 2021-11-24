@@ -7,11 +7,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/issue9/assert"
+	"github.com/issue9/assert/v2"
 )
 
 func TestOptions_sanitize(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	o := &Options{}
 	a.NotError(o.sanitize())
@@ -36,7 +36,7 @@ func TestOptions_sanitize(t *testing.T) {
 }
 
 func TestBuild(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	o, err := Build()
 	a.NotError(err).

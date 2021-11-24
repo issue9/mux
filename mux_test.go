@@ -5,14 +5,14 @@ package mux
 import (
 	"testing"
 
-	"github.com/issue9/assert"
-	"github.com/issue9/assert/rest"
+	"github.com/issue9/assert/v2"
+	"github.com/issue9/assert/v2/rest"
 
 	"github.com/issue9/mux/v5/internal/tree"
 )
 
 func TestOption(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	r := NewRouter("")
 	a.NotNil(r).
@@ -47,12 +47,12 @@ func TestOption(t *testing.T) {
 }
 
 func TestMethods(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 	a.Equal(Methods(), tree.Methods)
 }
 
 func TestCheckSyntax(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	a.NotError(CheckSyntax("/{path"))
 	a.NotError(CheckSyntax("/path}"))
@@ -60,7 +60,7 @@ func TestCheckSyntax(t *testing.T) {
 }
 
 func TestBuildURL(t *testing.T) {
-	a := assert.New(t)
+	a := assert.New(t, false)
 
 	url, err := URL("/posts/{id:}", map[string]string{"id": "100"})
 	a.NotError(err).Equal(url, "/posts/100")
