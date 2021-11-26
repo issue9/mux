@@ -85,7 +85,9 @@ func BenchmarkFileServer(b *testing.B) {
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest(http.MethodGet, "/assets/go.mod", nil)
 		router.ServeHTTP(w, r)
-		a.Equal(w.Code, http.StatusOK)
+		if w.Code != http.StatusOK {
+			b.Errorf("状态码 %d 与期望值 200 不同", w.Code)
+		}
 	}
 }
 
@@ -104,7 +106,10 @@ func BenchmarkURL(b *testing.B) {
 		api := apis[i%len(apis)]
 
 		url, err := URL(api.pattern, api.ps)
-		a.NotError(err).Equal(url, api.test)
+		a.NotError(err)
+		if url != api.test {
+			b.Errorf("URL 出错，位于 %s", api.pattern)
+		}
 	}
 }
 
@@ -124,7 +129,10 @@ func BenchmarkRouter_URL(b *testing.B) {
 		api := apis[i%len(apis)]
 
 		url, err := router.URL(true, api.pattern, api.ps)
-		a.NotError(err).Equal(url, domain+api.test)
+		a.NotError(err)
+		if url != domain+api.test {
+			b.Errorf("URL 出错，位于 %s", api.pattern)
+		}
 	}
 }
 
