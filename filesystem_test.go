@@ -12,9 +12,9 @@ import (
 
 func TestFileServer(t *testing.T) {
 	a := assert.New(t, false)
+
 	r := NewRouter("fs")
 	a.NotNil(r)
-
 	fs := FileServer(http.Dir("./"), "path", "go.mod", nil)
 	a.NotNil(fs)
 	r.Get("/assets/{path}", fs)
@@ -35,4 +35,16 @@ func TestFileServer(t *testing.T) {
 		})
 
 	s.Get("/assets/not-exists").Do(nil).Status(http.StatusNotFound)
+
+	a.Panic(func() {
+		FileServer(nil, "name", "", nil)
+	})
+
+	a.Panic(func() {
+		FileServer(http.Dir("./"), "", "", nil)
+	})
+
+	fs = FileServer(http.Dir("./"), "path", "", nil)
+	fsys, ok := fs.(*fileServer)
+	a.True(ok).Equal(fsys.index, defaultIndex)
 }

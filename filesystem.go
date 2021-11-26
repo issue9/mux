@@ -13,6 +13,8 @@ import (
 	"path/filepath"
 )
 
+const defaultIndex = "index.html"
+
 type fileServer struct {
 	http.FileSystem
 	paramName    string
@@ -27,6 +29,7 @@ type fileServer struct {
 // index 当用户访问的是目录时，将自动读取此目录下的 index 文件，如果为空则为 index.html；
 // errHandler 对各类出错的处理，如果为空会调用 http.Error 进行相应的处理。
 // 如果要自定义，目前 status 可能的值有 403、404 和 500；
+// 返回对象同时实现了 http.FileSystem 接口；
 //
 //  r := NewRouter("")
 //  r.Get("/assets/{path}", FileServer(http.Dir("./assets"), "path", "index.html", nil)
@@ -39,7 +42,7 @@ func FileServer(fsys http.FileSystem, name, index string, errHandler func(w http
 	}
 
 	if index == "" {
-		index = "index.html"
+		index = defaultIndex
 	}
 
 	if errHandler == nil {
@@ -59,7 +62,7 @@ func FileServer(fsys http.FileSystem, name, index string, errHandler func(w http
 func (f *fileServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	name, found := GetParams(r).Get(f.paramName)
 	if !found {
-		panic(fmt.Sprintf("未找到参数 %s 对应的值", name))
+		panic(fmt.Sprintf("未找到参数 %s 对应的值", f.paramName))
 	}
 
 	err := f.serve(name, w, r)
@@ -73,7 +76,7 @@ func (f *fileServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// p 表示文件地址，用户应该保证 p 的正确性；
+// p 表示文件地址；
 // 如果 p 是目录，则会自动读 p 目录下的 f.index 文件，
 func (f *fileServer) serve(p string, w http.ResponseWriter, r *http.Request) error {
 	if p == "" {
