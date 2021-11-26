@@ -70,6 +70,25 @@ func calcMemStats(load func()) {
 	fmt.Printf("%d Bytes\n", after-before)
 }
 
+func BenchmarkFileServer(b *testing.B) {
+	a := assert.New(b, false)
+	router := NewRouter("")
+	a.NotNil(router)
+
+	fs := FileServer(http.Dir("./"), "path", "", nil)
+	router.Get("/assets/{path}", fs)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/assets/go.mod", nil)
+		router.ServeHTTP(w, r)
+		a.Equal(w.Code, http.StatusOK)
+	}
+}
+
 func BenchmarkURL(b *testing.B) {
 	a := assert.New(b, false)
 
