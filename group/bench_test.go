@@ -4,7 +4,6 @@ package group
 
 import (
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/issue9/assert/v2"
@@ -14,7 +13,8 @@ func BenchmarkHost_Match(b *testing.B) {
 	a := assert.New(b, false)
 	h := NewHosts(true, "caixw.io", "caixw.oi", "*.example.com")
 	a.NotNil(h)
-	r := httptest.NewRequest(http.MethodGet, "https://caixw.io/test", nil)
+	r, err := http.NewRequest(http.MethodGet, "https://caixw.io/test", nil)
+	a.NotError(err).NotNil(r)
 
 	for i := 0; i < b.N; i++ {
 		_, ok := h.Match(r)
@@ -25,7 +25,8 @@ func BenchmarkHost_Match(b *testing.B) {
 func BenchmarkHeaderVersionWithoutKey_Match(b *testing.B) {
 	a := assert.New(b, false)
 	h := &HeaderVersion{Versions: []string{"3.0", "4.0", "1.0", "2.0"}}
-	r := httptest.NewRequest(http.MethodGet, "https://caixw.io/test", nil)
+	r, err := http.NewRequest(http.MethodGet, "https://caixw.io/test", nil)
+	a.NotError(err).NotNil(r)
 	r.Header.Set("Accept", "application/json; version=1.0")
 
 	for i := 0; i < b.N; i++ {
@@ -37,7 +38,8 @@ func BenchmarkHeaderVersionWithoutKey_Match(b *testing.B) {
 func BenchmarkHeaderVersionWithKey_Match(b *testing.B) {
 	a := assert.New(b, false)
 	h := &HeaderVersion{Key: "version", Versions: []string{"3.0", "4.0", "1.0", "2.0"}}
-	r := httptest.NewRequest(http.MethodGet, "https://caixw.io/test", nil)
+	r, err := http.NewRequest(http.MethodGet, "https://caixw.io/test", nil)
+	a.NotError(err).NotNil(r)
 	r.Header.Set("Accept", "application/json; version=1.0")
 
 	for i := 0; i < b.N; i++ {
@@ -48,7 +50,8 @@ func BenchmarkHeaderVersionWithKey_Match(b *testing.B) {
 
 func BenchmarkPathVersionWithoutKey_Match(b *testing.B) {
 	a := assert.New(b, false)
-	r := httptest.NewRequest(http.MethodGet, "https://caixw.io/v1/test", nil)
+	r, err := http.NewRequest(http.MethodGet, "https://caixw.io/v1/test", nil)
+	a.NotError(err).NotNil(r)
 	h := NewPathVersion("", "v4", "v3", "v1/", "/v2")
 
 	for i := 0; i < b.N; i++ {
@@ -59,7 +62,8 @@ func BenchmarkPathVersionWithoutKey_Match(b *testing.B) {
 
 func BenchmarkPathVersionWithKey_Match(b *testing.B) {
 	a := assert.New(b, false)
-	r := httptest.NewRequest(http.MethodGet, "https://caixw.io/v1/test", nil)
+	r, err := http.NewRequest(http.MethodGet, "https://caixw.io/v1/test", nil)
+	a.NotError(err).NotNil(r)
 	h := NewPathVersion("version", "v4", "v3", "v1/", "/v2")
 
 	for i := 0; i < b.N; i++ {

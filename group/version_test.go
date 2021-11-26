@@ -4,7 +4,6 @@ package group
 
 import (
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/issue9/assert/v2"
@@ -26,7 +25,8 @@ func TestHeaderVersion_Match(t *testing.T) {
 	}
 
 	// 相同版本号
-	r := httptest.NewRequest(http.MethodGet, "https://caixw.io/test", nil)
+	r, err := http.NewRequest(http.MethodGet, "https://caixw.io/test", nil)
+	a.NotError(err).NotNil(r)
 	r.Header.Set("Accept", "application/json; version=1.0")
 	a.NotNil(r)
 	rr, ok := h.Match(r)
@@ -36,21 +36,24 @@ func TestHeaderVersion_Match(t *testing.T) {
 	h = &HeaderVersion{
 		Versions: []string{"1.0", "2.0", "3.0"},
 	}
-	r = httptest.NewRequest(http.MethodGet, "https://caixw.io/test", nil)
+	r, err = http.NewRequest(http.MethodGet, "https://caixw.io/test", nil)
+	a.NotError(err).NotNil(r)
 	r.Header.Set("Accept", "application/json; version=1.0")
 	a.NotNil(r)
 	rr, ok = h.Match(r)
 	a.True(ok).NotNil(rr).Nil(syntax.GetParams(rr))
 
 	// 空版本
-	r = httptest.NewRequest(http.MethodGet, "http://not.exsits/test", nil)
+	r, err = http.NewRequest(http.MethodGet, "http://not.exsits/test", nil)
+	a.NotError(err).NotNil(r)
 	r.Header.Set("Accept", "application/json; version=")
 	a.NotNil(r)
 	rr, ok = h.Match(r)
 	a.False(ok).Nil(rr)
 
 	// 不同版本
-	r = httptest.NewRequest(http.MethodGet, "http://not.exsits/test", nil)
+	r, err = http.NewRequest(http.MethodGet, "http://not.exsits/test", nil)
+	a.NotError(err).NotNil(r)
 	r.Header.Set("Accept", "application/json; version=2")
 	a.NotNil(r)
 	rr, ok = h.Match(r)
@@ -59,27 +62,31 @@ func TestHeaderVersion_Match(t *testing.T) {
 	// 空值，不匹配任何内容
 
 	h = &HeaderVersion{}
-	r = httptest.NewRequest(http.MethodGet, "https://caixw.io/test", nil)
+	r, err = http.NewRequest(http.MethodGet, "https://caixw.io/test", nil)
+	a.NotError(err).NotNil(r)
 	r.Header.Set("Accept", "application/json; version=1.0")
 	a.NotNil(r)
 	rr, ok = h.Match(r)
 	a.False(ok).Nil(rr)
 
 	// 空版本
-	r = httptest.NewRequest(http.MethodGet, "http://not.exsits/test", nil)
+	r, err = http.NewRequest(http.MethodGet, "http://not.exsits/test", nil)
+	a.NotError(err).NotNil(r)
 	r.Header.Set("Accept", "application/json; version=")
 	a.NotNil(r)
 	rr, ok = h.Match(r)
 	a.False(ok).Nil(rr)
 
 	// 不同版本
-	r = httptest.NewRequest(http.MethodGet, "http://not.exsits/test", nil)
+	r, err = http.NewRequest(http.MethodGet, "http://not.exsits/test", nil)
+	a.NotError(err).NotNil(r)
 	r.Header.Set("Accept", "application/json; version=2")
 	a.NotNil(r)
 	rr, ok = h.Match(r)
 	a.False(ok).Nil(rr)
 
-	r = httptest.NewRequest(http.MethodGet, "https://caixw.io/test", nil)
+	r, err = http.NewRequest(http.MethodGet, "https://caixw.io/test", nil)
+	a.NotError(err).NotNil(r)
 	r.Header.Set("Accept", "application/json; version=1.0")
 	a.NotNil(r)
 	rr, ok = h.Match(r)
@@ -96,7 +103,8 @@ func TestPathVersion_Match(t *testing.T) {
 	})
 
 	// 相同版本号
-	r := httptest.NewRequest(http.MethodGet, "https://caixw.io/v1/test", nil)
+	r, err := http.NewRequest(http.MethodGet, "https://caixw.io/v1/test", nil)
+	a.NotError(err).NotNil(r)
 	a.NotNil(r)
 	rr, ok := h.Match(r)
 	a.True(ok).NotNil(rr)
@@ -106,7 +114,8 @@ func TestPathVersion_Match(t *testing.T) {
 
 		// 相同版本号，未指定 key
 	h = NewPathVersion("", "v3", "/v2", "/v1")
-	r = httptest.NewRequest(http.MethodGet, "https://caixw.io/v1/test", nil)
+	r, err = http.NewRequest(http.MethodGet, "https://caixw.io/v1/test", nil)
+	a.NotError(err).NotNil(r)
 	a.NotNil(r)
 	rr, ok = h.Match(r)
 	a.True(ok).NotNil(rr)
@@ -115,14 +124,16 @@ func TestPathVersion_Match(t *testing.T) {
 		Equal(syntax.GetParams(rr).MustString("version", "not-found"), "not-found")
 
 	// 空版本
-	r = httptest.NewRequest(http.MethodGet, "http://caixw.io/test", nil)
+	r, err = http.NewRequest(http.MethodGet, "http://caixw.io/test", nil)
+	a.NotError(err).NotNil(r)
 	a.NotNil(r)
 	rr, ok = h.Match(r)
 	a.False(ok).Nil(rr)
 	a.Equal(r.URL.Path, "/test")
 
 	// 不同版本
-	r = httptest.NewRequest(http.MethodGet, "http://caixw.io/v111/test", nil)
+	r, err = http.NewRequest(http.MethodGet, "http://caixw.io/v111/test", nil)
+	a.NotError(err).NotNil(r)
 	a.NotNil(r)
 	rr, ok = h.Match(r)
 	a.False(ok).Nil(rr)
@@ -131,7 +142,8 @@ func TestPathVersion_Match(t *testing.T) {
 	// 空值，不匹配任何内容
 
 	h = NewPathVersion("version")
-	r = httptest.NewRequest(http.MethodGet, "https://caixw.io/test", nil)
+	r, err = http.NewRequest(http.MethodGet, "https://caixw.io/test", nil)
+	a.NotError(err).NotNil(r)
 	r.Header.Set("Accept", "application/json; version=1.0")
 	a.NotNil(r)
 	rr, ok = h.Match(r)

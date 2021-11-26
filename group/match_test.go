@@ -4,7 +4,6 @@ package group
 
 import (
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/issue9/assert/v2"
@@ -29,13 +28,15 @@ func TestAndFunc(t *testing.T) {
 	p2 := NewPathVersion("p2", "v2")
 
 	m := AndFunc(p1.Match, p2.Match)
-	r := httptest.NewRequest(http.MethodGet, "/v1/v2/path", nil)
+	r, err := http.NewRequest(http.MethodGet, "/v1/v2/path", nil)
+	a.NotError(err).NotNil(r)
 	rr, ok := m.Match(r)
 	a.True(ok).NotNil(rr).
 		Equal(rr.URL.Path, "/path")
 
 	m = AndFunc(p1.Match, p2.Match)
-	r = httptest.NewRequest(http.MethodGet, "/v2/v1/path", nil)
+	r, err = http.NewRequest(http.MethodGet, "/v2/v1/path", nil)
+	a.NotError(err).NotNil(r)
 	rr, ok = m.Match(r)
 	a.False(ok).Nil(rr)
 }
@@ -47,19 +48,22 @@ func TestOrFunc(t *testing.T) {
 	p2 := NewPathVersion("p2", "v2")
 
 	m := OrFunc(p1.Match, p2.Match)
-	r := httptest.NewRequest(http.MethodGet, "/v1/v2/path", nil)
+	r, err := http.NewRequest(http.MethodGet, "/v1/v2/path", nil)
+	a.NotError(err).NotNil(r)
 	rr, ok := m.Match(r)
 	a.True(ok).NotNil(rr).
 		Equal(rr.URL.Path, "/v2/path")
 
 	m = OrFunc(p1.Match, p2.Match)
-	r = httptest.NewRequest(http.MethodGet, "/v2/v1/path", nil)
+	r, err = http.NewRequest(http.MethodGet, "/v2/v1/path", nil)
+	a.NotError(err).NotNil(r)
 	rr, ok = m.Match(r)
 	a.True(ok).NotNil(rr).
 		Equal(rr.URL.Path, "/v1/path")
 
 	m = OrFunc(p1.Match, p2.Match)
-	r = httptest.NewRequest(http.MethodGet, "/v111/v2/v1/path", nil)
+	r, err = http.NewRequest(http.MethodGet, "/v111/v2/v1/path", nil)
+	a.NotError(err).NotNil(r)
 	rr, ok = m.Match(r)
 	a.False(ok).Nil(rr)
 }

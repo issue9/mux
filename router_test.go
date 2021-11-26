@@ -289,13 +289,15 @@ func TestRouter_Clean(t *testing.T) {
 		Post("/m1", rest.BuildHandler(a, 201, "", nil))
 
 	w := httptest.NewRecorder()
-	r := httptest.NewRequest(http.MethodGet, "http://localhost:88/m1", nil)
+	r, err := http.NewRequest(http.MethodGet, "http://localhost:88/m1", nil)
+	a.NotError(err).NotNil(r)
 	def.ServeHTTP(w, r)
 	a.Equal(w.Result().StatusCode, 200)
 
 	def.Clean()
 	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "/m1", nil)
+	r, err = http.NewRequest(http.MethodGet, "/m1", nil)
+	a.NotError(err).NotNil(r)
 	def.ServeHTTP(w, r)
 	a.Equal(w.Result().StatusCode, 404)
 }

@@ -72,7 +72,8 @@ func TestCORS_handle(t *testing.T) {
 	c := &CORS{}
 	a.NotError(c.sanitize())
 	w := httptest.NewRecorder()
-	r := httptest.NewRequest(http.MethodGet, "/path", nil)
+	r, err := http.NewRequest(http.MethodGet, "/path", nil)
+	a.NotError(err).NotNil(r)
 	c.handle(node, w, r)
 	a.Empty(w.Header().Get("Access-Control-Allow-Origin"))
 
@@ -82,7 +83,8 @@ func TestCORS_handle(t *testing.T) {
 	a.NotError(c.sanitize())
 
 	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "/path", nil)
+	r, err = http.NewRequest(http.MethodGet, "/path", nil)
+	a.NotError(err).NotNil(r)
 	c.handle(node, w, r)
 	a.Equal(w.Header().Get("Access-Control-Allow-Origin"), "*")
 	// 非预检，没有此报头
@@ -91,7 +93,8 @@ func TestCORS_handle(t *testing.T) {
 		Empty(w.Header().Get("Access-Control-Allow-Headers"))
 
 	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "/path", nil)
+	r, err = http.NewRequest(http.MethodGet, "/path", nil)
+	a.NotError(err).NotNil(r)
 	r.Header.Set("Origin", "http://example.com")
 	c.handle(node, w, r)
 	a.Equal(w.Header().Get("Access-Control-Allow-Origin"), "*")
@@ -101,7 +104,8 @@ func TestCORS_handle(t *testing.T) {
 		Empty(w.Header().Get("Access-Control-Allow-Headers"))
 
 	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodOptions, "/path", nil)
+	r, err = http.NewRequest(http.MethodOptions, "/path", nil)
+	a.NotError(err).NotNil(r)
 	r.Header.Set("Origin", "http://example.com")
 	c.handle(node, w, r)
 	a.Equal(w.Header().Get("Access-Control-Allow-Origin"), "*")
@@ -112,7 +116,8 @@ func TestCORS_handle(t *testing.T) {
 
 	// preflight
 	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodOptions, "/path", nil)
+	r, err = http.NewRequest(http.MethodOptions, "/path", nil)
+	a.NotError(err).NotNil(r)
 	r.Header.Set("Origin", "http://example.com")
 	r.Header.Set("Access-Control-Request-Method", "GET")
 	c.handle(node, w, r)
@@ -121,7 +126,8 @@ func TestCORS_handle(t *testing.T) {
 
 	// preflight，但是方法不被允许
 	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodOptions, "/path", nil)
+	r, err = http.NewRequest(http.MethodOptions, "/path", nil)
+	a.NotError(err).NotNil(r)
 	r.Header.Set("Origin", "http://example.com")
 	r.Header.Set("Access-Control-Request-Method", "PATCH")
 	c.handle(node, w, r)
@@ -138,7 +144,8 @@ func TestCORS_handle(t *testing.T) {
 	a.NotError(c.sanitize())
 
 	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "/path", nil)
+	r, err = http.NewRequest(http.MethodGet, "/path", nil)
+	a.NotError(err).NotNil(r)
 	r.Header.Set("Origin", "https://example.com/")
 	c.handle(node, w, r)
 	a.Equal(w.Header().Get("Access-Control-Allow-Origin"), "https://example.com/")
@@ -149,7 +156,8 @@ func TestCORS_handle(t *testing.T) {
 
 	// preflight
 	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodOptions, "/path", nil)
+	r, err = http.NewRequest(http.MethodOptions, "/path", nil)
+	a.NotError(err).NotNil(r)
 	r.Header.Set("Origin", "https://example.com/")
 	r.Header.Set("Access-Control-Request-Headers", "h1")
 	c.handle(node, w, r)
@@ -161,7 +169,8 @@ func TestCORS_handle(t *testing.T) {
 
 	// preflight，但是报头不被允许
 	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodOptions, "/path", nil)
+	r, err = http.NewRequest(http.MethodOptions, "/path", nil)
+	a.NotError(err).NotNil(r)
 	r.Header.Set("Origin", "https://example.com/")
 	r.Header.Set("Access-Control-Request-Method", "GET")
 	r.Header.Set("Access-Control-Request-Headers", "deny")
@@ -172,7 +181,8 @@ func TestCORS_handle(t *testing.T) {
 
 	// preflight，origin 不匹配
 	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodOptions, "/path", nil)
+	r, err = http.NewRequest(http.MethodOptions, "/path", nil)
+	a.NotError(err).NotNil(r)
 	r.Header.Set("Origin", "https://deny.com/")
 	r.Header.Set("Access-Control-Request-Method", "GET")
 	c.handle(node, w, r)
@@ -185,7 +195,8 @@ func TestCORS_handle(t *testing.T) {
 	o, err := Build()
 	a.NotError(err).NotNil(o)
 	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "/path", nil)
+	r, err = http.NewRequest(http.MethodGet, "/path", nil)
+	a.NotError(err).NotNil(r)
 	o.HandleCORS(node, w, r)
 	a.Empty(w.Header().Get("Access-Control-Allow-Origin"))
 }
@@ -198,10 +209,12 @@ func TestCORS_headerIsAllowed(t *testing.T) {
 	c := &CORS{}
 	a.NotNil(c).NotError(c.sanitize())
 
-	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	r, err := http.NewRequest(http.MethodGet, "/", nil)
+	a.NotError(err).NotNil(r)
 	a.True(c.headerIsAllowed(r))
 
-	r = httptest.NewRequest(http.MethodGet, "/", nil)
+	r, err = http.NewRequest(http.MethodGet, "/", nil)
+	a.NotError(err).NotNil(r)
 	r.Header.Set("Access-Control-Request-Headers", "h1")
 	a.False(c.headerIsAllowed(r))
 
@@ -210,10 +223,12 @@ func TestCORS_headerIsAllowed(t *testing.T) {
 	c = AllowedCORS()
 	a.NotNil(c).NotError(c.sanitize())
 
-	r = httptest.NewRequest(http.MethodGet, "/", nil)
+	r, err = http.NewRequest(http.MethodGet, "/", nil)
+	a.NotError(err).NotNil(r)
 	a.True(c.headerIsAllowed(r))
 
-	r = httptest.NewRequest(http.MethodGet, "/", nil)
+	r, err = http.NewRequest(http.MethodGet, "/", nil)
+	a.NotError(err).NotNil(r)
 	r.Header.Set("Access-Control-Request-Headers", "h1")
 	a.True(c.headerIsAllowed(r))
 
@@ -221,18 +236,22 @@ func TestCORS_headerIsAllowed(t *testing.T) {
 	c = &CORS{AllowHeaders: []string{"h1", "h2"}}
 	a.NotError(c.sanitize())
 
-	r = httptest.NewRequest(http.MethodGet, "/", nil)
+	r, err = http.NewRequest(http.MethodGet, "/", nil)
+	a.NotError(err).NotNil(r)
 	a.True(c.headerIsAllowed(r))
 
-	r = httptest.NewRequest(http.MethodGet, "/", nil)
+	r, err = http.NewRequest(http.MethodGet, "/", nil)
+	a.NotError(err).NotNil(r)
 	r.Header.Set("Access-Control-Request-Headers", "h1")
 	a.True(c.headerIsAllowed(r))
 
 	// 不存在的报头
-	r = httptest.NewRequest(http.MethodGet, "/", nil)
+	r, err = http.NewRequest(http.MethodGet, "/", nil)
+	a.NotError(err).NotNil(r)
 	a.True(c.headerIsAllowed(r))
 
-	r = httptest.NewRequest(http.MethodGet, "/", nil)
+	r, err = http.NewRequest(http.MethodGet, "/", nil)
+	a.NotError(err).NotNil(r)
 	r.Header.Set("Access-Control-Request-Headers", "h100")
 	a.False(c.headerIsAllowed(r))
 }

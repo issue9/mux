@@ -5,7 +5,6 @@ package syntax
 import (
 	"context"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/issue9/assert/v2"
@@ -16,7 +15,8 @@ import (
 var _ params.Params = &Params{}
 
 func getParams(params *Params, a *assert.Assertion) *Params {
-	r := httptest.NewRequest(http.MethodGet, "/to/path", nil)
+	r, err := http.NewRequest(http.MethodGet, "/to/path", nil)
+	a.NotError(err).NotNil(r)
 	r = WithValue(r, params)
 	a.NotNil(r)
 	return GetParams(r)
@@ -25,10 +25,12 @@ func getParams(params *Params, a *assert.Assertion) *Params {
 func TestWithValue(t *testing.T) {
 	a := assert.New(t, false)
 
-	r := httptest.NewRequest(http.MethodGet, "/to/path", nil)
+	r, err := http.NewRequest(http.MethodGet, "/to/path", nil)
+	a.NotError(err).NotNil(r)
 	a.Equal(WithValue(r, &Params{}), r)
 
-	r = httptest.NewRequest(http.MethodGet, "/to/path", nil)
+	r, err = http.NewRequest(http.MethodGet, "/to/path", nil)
+	a.NotError(err).NotNil(r)
 	r = WithValue(r, &Params{Params: []Param{{K: "k1", V: "v1"}}})
 	r = WithValue(r, &Params{Params: []Param{{K: "k2", V: "v2"}}})
 	a.Equal(GetParams(r), &Params{Params: []Param{{K: "k2", V: "v2"}, {K: "k1", V: "v1"}}})
@@ -37,12 +39,14 @@ func TestWithValue(t *testing.T) {
 func TestGetParams(t *testing.T) {
 	a := assert.New(t, false)
 
-	r := httptest.NewRequest(http.MethodGet, "/to/path", nil)
+	r, err := http.NewRequest(http.MethodGet, "/to/path", nil)
+	a.NotError(err).NotNil(r)
 	ps := GetParams(r)
 	a.Nil(ps)
 
 	kvs := []Param{{K: "key1", V: "1"}}
-	r = httptest.NewRequest(http.MethodGet, "/to/path", nil)
+	r, err = http.NewRequest(http.MethodGet, "/to/path", nil)
+	a.NotError(err).NotNil(r)
 	ctx := context.WithValue(r.Context(), contextKeyParams, &Params{Params: kvs})
 	r = r.WithContext(ctx)
 	ps = GetParams(r)

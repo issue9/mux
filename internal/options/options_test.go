@@ -19,7 +19,8 @@ func TestOptions_sanitize(t *testing.T) {
 		NotNil(o.NotFound).
 		NotNil(o.MethodNotAllowed)
 
-	r := httptest.NewRequest(http.MethodGet, "/", nil)
+	r, err := http.NewRequest(http.MethodGet, "/", nil)
+	a.NotError(err).NotNil(r)
 	w := httptest.NewRecorder()
 	o.MethodNotAllowed.ServeHTTP(w, r)
 	a.Equal(w.Result().StatusCode, 405).

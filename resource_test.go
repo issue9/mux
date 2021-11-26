@@ -93,7 +93,8 @@ func TestRouter_Resource(t *testing.T) {
 
 	r2.Delete(rest.BuildHandler(a, 201, "", nil))
 	w := httptest.NewRecorder()
-	r := httptest.NewRequest(http.MethodDelete, "/abc/1", nil)
+	r, err := http.NewRequest(http.MethodDelete, "/abc/1", nil)
+	a.NotError(err).NotNil(r)
 	def.ServeHTTP(w, r)
 	a.Equal(w.Result().StatusCode, 201)
 }
@@ -111,7 +112,8 @@ func TestPrefix_Resource(t *testing.T) {
 
 	r1.Delete(rest.BuildHandler(a, 201, "", nil))
 	w := httptest.NewRecorder()
-	r := httptest.NewRequest(http.MethodDelete, "/p1/abc/1", nil)
+	r, err := http.NewRequest(http.MethodDelete, "/p1/abc/1", nil)
+	a.NotError(err).NotNil(r)
 	def.ServeHTTP(w, r)
 	a.Equal(w.Result().StatusCode, 201)
 }

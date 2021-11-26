@@ -48,14 +48,16 @@ func TestNode_serveHTTP(t *testing.T) {
 	a.Empty(ps.Params).NotNil(node)
 
 	w := httptest.NewRecorder()
-	r := httptest.NewRequest(http.MethodHead, "/path", nil)
+	r, err := http.NewRequest(http.MethodHead, "/path", nil)
+	a.NotError(err).NotNil(r)
 	node.Handler(http.MethodHead).ServeHTTP(w, r)
 	a.Equal(w.Header().Get("h1"), "h1").
 		Empty(w.Body.String()).
 		Equal(w.Header().Get("Content-Length"), "3")
 
 	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodOptions, "/path", nil)
+	r, err = http.NewRequest(http.MethodOptions, "/path", nil)
+	a.NotError(err).NotNil(r)
 	node.handlers[http.MethodOptions].ServeHTTP(w, r)
 	a.Empty(w.Header().Get("h1")).
 		Equal(w.Header().Get("Allow"), "GET, HEAD, OPTIONS").

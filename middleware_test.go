@@ -34,7 +34,8 @@ func TestRouter_Middleware(t *testing.T) {
 		Prepend(buildMiddleware(a, "ra2"))
 
 	w := httptest.NewRecorder()
-	r := httptest.NewRequest(http.MethodGet, "/get", nil)
+	r, err := http.NewRequest(http.MethodGet, "/get", nil)
+	a.NotError(err).NotNil(r)
 	def.ServeHTTP(w, r)
 	a.Equal(w.Code, 201).
 		Equal(w.Body.String(), "rp2rp1ra1ra2") // buildHandler 导致顶部的后输出
@@ -43,7 +44,8 @@ func TestRouter_Middleware(t *testing.T) {
 
 	ms.Reset()
 	w = httptest.NewRecorder()
-	r = httptest.NewRequest(http.MethodGet, "/get", nil)
+	r, err = http.NewRequest(http.MethodGet, "/get", nil)
+	a.NotError(err).NotNil(r)
 	def.ServeHTTP(w, r)
 	a.Equal(w.Code, 201).
 		Empty(w.Body.String())

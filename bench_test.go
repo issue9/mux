@@ -83,7 +83,7 @@ func BenchmarkFileServer(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		w := httptest.NewRecorder()
-		r := httptest.NewRequest(http.MethodGet, "/assets/go.mod", nil)
+		r, _ := http.NewRequest(http.MethodGet, "/assets/go.mod", nil)
 		router.ServeHTTP(w, r)
 		if w.Code != http.StatusOK {
 			b.Errorf("状态码 %d 与期望值 200 不同", w.Code)
@@ -147,7 +147,7 @@ func BenchmarkRouter_AddAndServeHTTP(b *testing.B) {
 		api := apis[i%len(apis)]
 
 		w := httptest.NewRecorder()
-		r := httptest.NewRequest(api.method, api.test, nil)
+		r, _ := http.NewRequest(api.method, api.test, nil)
 
 		router.HandleFunc(api.pattern, benchHandler, api.method)
 		router.ServeHTTP(w, r)
@@ -173,7 +173,7 @@ func BenchmarkRouter_ServeHTTP(b *testing.B) {
 		api := apis[i%len(apis)]
 
 		w := httptest.NewRecorder()
-		r := httptest.NewRequest(api.method, api.test, nil)
+		r, _ := http.NewRequest(api.method, api.test, nil)
 		router.ServeHTTP(w, r)
 
 		if w.Body.String() != r.URL.Path {

@@ -53,7 +53,8 @@ func (t *tester) handler(method, path string, code int) (http.Handler, *syntax.P
 	t.a.NotNil(h)
 
 	w := httptest.NewRecorder()
-	r := httptest.NewRequest(method, path, nil)
+	r, err := http.NewRequest(method, path, nil)
+	t.a.NotError(err).NotNil(r)
 	h.ServeHTTP(w, r)
 	t.a.Equal(w.Code, code)
 
@@ -106,7 +107,7 @@ func (t *tester) optionsTrue(path, options string) {
 	w := httptest.NewRecorder()
 	u, err := url.Parse(path)
 	t.a.NotError(err).NotNil(u)
-	r, err := http.NewRequest(http.MethodOptions, path, nil) // httptest.NewRequest 不支持 path=''
+	r, err := http.NewRequest(http.MethodOptions, path, nil)
 	t.a.NotError(err).NotNil(r)
 	h.ServeHTTP(w, r)
 	t.a.Equal(w.Code, http.StatusOK)

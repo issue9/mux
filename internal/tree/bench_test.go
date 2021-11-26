@@ -78,7 +78,8 @@ func BenchmarkTree_ServeHTTP(b *testing.B) {
 		hh := h.handlers[http.MethodGet]
 
 		w := httptest.NewRecorder()
-		r := httptest.NewRequest(http.MethodGet, paths[index], nil)
+		r, err := http.NewRequest(http.MethodGet, paths[index], nil)
+		a.NotError(err).NotNil(r)
 		hh.ServeHTTP(w, r)
 		a.Equal(w.Result().StatusCode, index+201)
 	}
