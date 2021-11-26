@@ -11,6 +11,7 @@ import (
 
 	"github.com/issue9/assert/v2"
 	"github.com/issue9/assert/v2/rest"
+	"github.com/issue9/errwrap"
 
 	"github.com/issue9/mux/v5/internal/syntax"
 )
@@ -86,14 +87,18 @@ func (t *tester) paramsTrue(method, path string, code int, params map[string]str
 }
 
 func (t *tester) urlTrue(pattern string, params map[string]string, url string) {
-	u, err := t.tree.URL(pattern, params)
+	t.a.TB().Helper()
+	buf := errwrap.StringBuilder{}
+	err := t.tree.URL(&buf, pattern, params)
 	t.a.NotError(err)
-	t.a.Equal(u, url)
+	t.a.Equal(buf.String(), url)
 }
 
 func (t *tester) urlFalse(pattern string, params map[string]string, msg string) {
-	u, err := t.tree.URL(pattern, params)
-	t.a.ErrorString(err, msg).Empty(u)
+	t.a.TB().Helper()
+	buf := errwrap.StringBuilder{}
+	err := t.tree.URL(&buf, pattern, params)
+	t.a.ErrorString(err, msg)
 }
 
 // 测试 tree.methodIndex 是否正确

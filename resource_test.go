@@ -129,6 +129,10 @@ func TestResource_URL(t *testing.T) {
 	url, err := res.URL(false, map[string]string{"id": "1"})
 	a.NotError(err).Equal(url, "/api/v1")
 
+	// 没有参数
+	url, err = res.URL(false, nil)
+	a.NotError(err).Equal(url, "/api/v1")
+
 	res = def.Resource("/api//v1")
 	a.NotNil(res)
 	url, err = res.URL(false, map[string]string{"id": "1"})

@@ -65,18 +65,16 @@ func (t Type) String() string {
 // 但是如果只存在于 ps，但是不存在于 pattern 是可以的。
 //
 // 不能将 URL 作为判断 pattern 是否合规的方法，在 ps 为空时， 将直接返回 pattern。
-func (i *Interceptors) URL(pattern string, ps map[string]string) (string, error) {
-	if len(ps) == 0 || pattern == "" {
-		return pattern, nil
+func (i *Interceptors) URL(buf *errwrap.StringBuilder, pattern string, ps map[string]string) error {
+	if pattern == "" {
+		return nil
 	}
 
 	segs, err := i.Split(pattern)
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	buf := errwrap.StringBuilder{}
-	buf.Grow(len(pattern))
 	for _, seg := range segs {
 		if seg.Type == String {
 			buf.WString(seg.Value)
@@ -85,12 +83,12 @@ func (i *Interceptors) URL(pattern string, ps map[string]string) (string, error)
 
 		val, found := ps[seg.Name]
 		if !found {
-			return "", fmt.Errorf("未找到参数 %s 的值", seg.Name)
+			return fmt.Errorf("未找到参数 %s 的值", seg.Name)
 		}
 		buf.WString(val).WString(seg.Suffix)
 	}
 
-	return buf.String(), buf.Err
+	return nil
 }
 
 // Split 将字符串解析成 Segment 数组

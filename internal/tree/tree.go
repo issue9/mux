@@ -226,14 +226,10 @@ func (tree *Tree) find(pattern string) *Node { return tree.node.find(pattern) }
 // URL 将 ps 填入 pattern 生成 URL
 //
 // NOTE: 会检测 pattern 是否存在于 tree 中。
-func (tree *Tree) URL(pattern string, ps map[string]string) (string, error) {
+func (tree *Tree) URL(buf *errwrap.StringBuilder, pattern string, ps map[string]string) error {
 	n := tree.find(pattern)
 	if n == nil {
-		return "", fmt.Errorf("%s 并不是一条有效的注册路由项", pattern)
-	}
-
-	if len(ps) == 0 {
-		return pattern, nil
+		return fmt.Errorf("%s 并不是一条有效的注册路由项", pattern)
 	}
 
 	nodes := make([]*Node, 0, 5)
@@ -245,9 +241,6 @@ func (tree *Tree) URL(pattern string, ps map[string]string) (string, error) {
 		nodes[i], nodes[j] = nodes[j], nodes[i]
 	}
 
-	var buf errwrap.StringBuilder
-	buf.Grow(len(pattern))
-
 	for _, node := range nodes {
 		s := node.segment
 		switch s.Type {
@@ -256,15 +249,15 @@ func (tree *Tree) URL(pattern string, ps map[string]string) (string, error) {
 		case syntax.Named, syntax.Regexp:
 			param, exists := ps[s.Name]
 			if !exists {
-				return "", fmt.Errorf("未找到参数 %s 的值", s.Name)
+				return fmt.Errorf("未找到参数 %s 的值", s.Name)
 			}
 			if !s.Valid(param) {
-				return "", fmt.Errorf("参数 %s 格式不匹配", s.Name)
+				return fmt.Errorf("参数 %s 格式不匹配", s.Name)
 			}
 
 			buf.WString(param).WString(s.Suffix)
 		}
 	}
 
-	return buf.String(), buf.Err
+	return nil
 }

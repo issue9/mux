@@ -6,6 +6,8 @@ package mux
 import (
 	"net/http"
 
+	"github.com/issue9/errwrap"
+
 	"github.com/issue9/mux/v5/internal/options"
 	"github.com/issue9/mux/v5/internal/syntax"
 	"github.com/issue9/mux/v5/internal/tree"
@@ -143,7 +145,16 @@ func CheckSyntax(pattern string) error {
 //
 // NOTE: 仅仅是将 params 填入到 pattern 中， 不会判断参数格式是否正确。
 func URL(pattern string, params map[string]string) (string, error) {
-	return emptyInterceptors.URL(pattern, params)
+	if len(params) == 0 {
+		return pattern, nil
+	}
+
+	buf := errwrap.StringBuilder{}
+	buf.Grow(len(pattern))
+	if err := emptyInterceptors.URL(&buf, pattern, params); err != nil {
+		return "", err
+	}
+	return buf.String(), buf.Err
 }
 
 // Methods 返回所有支持的请求方法

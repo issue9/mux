@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/issue9/errwrap"
+
 	"github.com/issue9/mux/v5/internal/options"
 	"github.com/issue9/mux/v5/internal/syntax"
 	"github.com/issue9/mux/v5/internal/tree"
@@ -152,19 +154,27 @@ func (r *Router) AnyFunc(pattern string, f http.HandlerFunc) *Router {
 // pattern 为路由项的定义内容；
 // params 为路由项中的参数，键名为参数名，键值为参数值。
 func (r *Router) URL(strict bool, pattern string, params map[string]string) (url string, err error) {
-	if strict {
-		url, err = r.tree.URL(pattern, params)
-	} else {
-		url, err = URL(pattern, params)
+	buf := errwrap.StringBuilder{}
+	buf.Grow(len(r.options.URLDomain) + len(pattern))
+
+	if r.options.URLDomain != "" {
+		buf.WString(r.options.URLDomain)
+	}
+
+	switch {
+	case len(pattern) == 0:
+	case len(params) == 0:
+		buf.WString(pattern)
+	case strict:
+		err = r.tree.URL(&buf, pattern, params)
+	default:
+		err = emptyInterceptors.URL(&buf, pattern, params)
 	}
 	if err != nil {
 		return "", err
 	}
 
-	if r.options.URLDomain != "" {
-		url = r.options.URLDomain + url
-	}
-	return url, nil
+	return buf.String(), buf.Err
 }
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {

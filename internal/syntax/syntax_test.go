@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/issue9/assert/v2"
+	"github.com/issue9/errwrap"
 )
 
 func TestType_String(t *testing.T) {
@@ -209,9 +210,9 @@ func TestTree_URL(t *testing.T) {
 			ps:      map[string]string{"编号": "100", "page": "200"},
 			output:  "/posts/100/作者/200/",
 		},
-		{ // 参数未指定，直接判断全部节点为 String
+		{ // 参数未指定
 			pattern: "/posts/{id:\\d+}",
-			output:  "/posts/{id:\\d+}",
+			err:     true,
 		},
 
 		{ // pattern 格式错误
@@ -222,13 +223,14 @@ func TestTree_URL(t *testing.T) {
 	}
 
 	for _, item := range data {
-		output, err := i.URL(item.pattern, item.ps)
+		buf := errwrap.StringBuilder{}
+		err := i.URL(&buf, item.pattern, item.ps)
 		if item.err {
 			a.Error(err, "解析 %s 未出现预期的错误", item.pattern).
 				Empty(item.output)
 		} else {
 			a.NotError(err, "解析 %s 出现错误: %s", item.pattern, err).
-				Equal(output, item.output)
+				Equal(buf.String(), item.output)
 		}
 	}
 }
