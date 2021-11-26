@@ -19,7 +19,7 @@ type fileServer struct {
 	http.FileSystem
 	paramName    string
 	index        string
-	errorHandler func(w http.ResponseWriter, status int, msg interface{})
+	errorHandler func(http.ResponseWriter, int, interface{})
 }
 
 // FileServer 声明静态文件服务
@@ -28,12 +28,16 @@ type fileServer struct {
 // name 路径保存在 context 中的参数名；
 // index 当用户访问的是目录时，将自动读取此目录下的 index 文件，如果为空则为 index.html；
 // errHandler 对各类出错的处理，如果为空会调用 http.Error 进行相应的处理。
-// 如果要自定义，目前 status 可能的值有 403、404 和 500；
+// 如果要自定义，目前 status 可能的值有 403、404 和 500，
+// 其中的 500 用于处理各类出错的情况，错误信息通过 msg 传递；
+// 函数原型为：
+//  func(w http.ResponseWriter, status int, msg interface{})
+// status 表示输出的状态码，msg 表示额外的信息，一般为空或是 error 类型的数据。
 // 返回对象同时实现了 http.FileSystem 接口；
 //
 //  r := NewRouter("")
 //  r.Get("/assets/{path}", FileServer(http.Dir("./assets"), "path", "index.html", nil)
-func FileServer(fsys http.FileSystem, name, index string, errHandler func(w http.ResponseWriter, status int, msg interface{})) http.Handler {
+func FileServer(fsys http.FileSystem, name, index string, errHandler func(http.ResponseWriter, int, interface{})) http.Handler {
 	if fsys == nil {
 		panic("参数 fsys 不能为空")
 	}
@@ -76,8 +80,6 @@ func (f *fileServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// p 表示文件地址；
-// 如果 p 是目录，则会自动读 p 目录下的 f.index 文件，
 func (f *fileServer) serve(p string, w http.ResponseWriter, r *http.Request) error {
 	if p == "" {
 		p = "."

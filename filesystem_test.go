@@ -46,5 +46,8 @@ func TestFileServer(t *testing.T) {
 
 	fs = FileServer(http.Dir("./"), "path", "", nil)
 	fsys, ok := fs.(*fileServer)
-	a.True(ok).Equal(fsys.index, defaultIndex)
+	a.True(ok).
+		Equal(fsys.index, defaultIndex).
+		NotNil(fsys.errorHandler).
+		Equal(fsys.paramName, "path")
 }
