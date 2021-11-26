@@ -20,6 +20,7 @@ mux 功能完备的 Go 路由器：
 - CORS 跨域资源的处理；
 - 支持中间件；
 - 自动生成 OPTIONS * 请求；
+- 静态文件系统；
 
 ```go
 import "github.com/issue9/middleware/v4/compress"
@@ -207,6 +208,15 @@ r = http.NewRequest(http.MethodOptions, "https://localhost:8080/posts/1", nil)
 r.Header.Set("Origin", "https://example.com")
 r.Header.Set("Access-Control-Request-Method", "GET")
 r.Do() // 预检请求，可以正常访问
+```
+
+### 静态文件
+
+可以使用 `FileServer` 与命名参数相结合的方式实现静态文件的访问：
+
+```go
+r := NewRouter("")
+r.Get("/assets/{path}", FileServer(os.DirFS("/static/"), "path", "index.html", nil))
 ```
 
 ### 中间件

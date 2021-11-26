@@ -76,6 +76,7 @@ func (i *Interceptors) URL(pattern string, ps map[string]string) (string, error)
 	}
 
 	buf := errwrap.StringBuilder{}
+	buf.Grow(len(pattern))
 	for _, seg := range segs {
 		if seg.Type == String {
 			buf.WString(seg.Value)

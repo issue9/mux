@@ -9,7 +9,6 @@ import (
 	"sync"
 
 	"github.com/issue9/errwrap"
-	"github.com/issue9/sliceutil"
 
 	"github.com/issue9/mux/v5/internal/syntax"
 )
@@ -241,9 +240,14 @@ func (tree *Tree) URL(pattern string, ps map[string]string) (string, error) {
 	for curr := n; curr.parent != nil; curr = curr.parent { // 从尾部向上开始获取节点
 		nodes = append(nodes, curr)
 	}
-	sliceutil.Reverse(nodes)
+	l := len(nodes)
+	for i, j := 0, l-1; i < j; i, j = i+1, j-1 {
+		nodes[i], nodes[j] = nodes[j], nodes[i]
+	}
 
 	var buf errwrap.StringBuilder
+	buf.Grow(len(pattern))
+
 	for _, node := range nodes {
 		s := node.segment
 		switch s.Type {
