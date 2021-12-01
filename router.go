@@ -178,6 +178,14 @@ func (r *Router) URL(strict bool, pattern string, params map[string]string) (url
 }
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	if r.options.RecoverFunc != nil {
+		defer func() {
+			if err := recover(); err != nil {
+				r.options.RecoverFunc(w, err)
+			}
+		}()
+	}
+
 	r.ms.ServeHTTP(w, req)
 }
 

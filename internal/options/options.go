@@ -11,12 +11,15 @@ import (
 
 type Option func(*Options)
 
+type RecoverFunc func(http.ResponseWriter, interface{})
+
 type Options struct {
 	CaseInsensitive bool
 	Lock            bool
 	CORS            *CORS
 	Interceptors    *syntax.Interceptors
 	URLDomain       string
+	RecoverFunc     RecoverFunc
 
 	NotFound,
 	MethodNotAllowed http.Handler

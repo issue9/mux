@@ -4,6 +4,9 @@
 package mux
 
 import (
+	"fmt"
+	"io"
+	"log"
 	"net/http"
 
 	"github.com/issue9/errwrap"
@@ -18,12 +21,56 @@ type (
 	// Option 自定义路由参数的函数原型
 	Option = options.Option
 
+	// RecoverFunc 路由对 panic 的处理函数原型
+	RecoverFunc = options.RecoverFunc
+
 	// InterceptorFunc 拦截器的函数原型
 	InterceptorFunc = syntax.InterceptorFunc
 
 	// Params 路由参数
 	Params = params.Params
 )
+
+// Recovery 用于指路由 panic 之后的处理方法
+//
+// 除了采用 Option 的方式之外，也可以使用中间件的方式处理 panic，
+// 但是中间件的处理方式需要用户保证其在中间件的最外层，
+// 否则可能会发生其外层的中间件发生 panic 无法捕获的问题。
+// 而 Option 方式没有此问题。
+func Recovery(f RecoverFunc) Option {
+	return func(o *options.Options) { o.RecoverFunc = f }
+}
+
+// HTTPRecovery 仅向客户端输出 status 状态码
+func HTTPRecovery(status int) Option {
+	return Recovery(func(w http.ResponseWriter, msg interface{}) {
+		http.Error(w, http.StatusText(status), status)
+	})
+}
+
+// WriterRecovery 向 io.Writer 输出错误信息
+//
+// status 表示向客户端输出的状态码；
+// out 输出的 io.Writer，比如 os.Stderr 等；
+func WriterRecovery(status int, out io.Writer) Option {
+	return Recovery(func(w http.ResponseWriter, msg interface{}) {
+		http.Error(w, http.StatusText(status), status)
+		if _, err := fmt.Fprint(out, msg); err != nil {
+			panic(err)
+		}
+	})
+}
+
+// LogRecovery 将错误信息输出到日志
+//
+// status 表示向客户端输出的状态码；
+// l 为输出的日志；
+func LogRecovery(status int, l *log.Logger) Option {
+	return Recovery(func(w http.ResponseWriter, msg interface{}) {
+		http.Error(w, http.StatusText(status), status)
+		l.Println(msg)
+	})
+}
 
 // URLDomain 为 Router.URL 生成的地址带上域名
 func URLDomain(domain string) Option {

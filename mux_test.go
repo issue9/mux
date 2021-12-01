@@ -3,6 +3,10 @@
 package mux
 
 import (
+	"bytes"
+	"log"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/issue9/assert/v2"
@@ -46,6 +50,63 @@ func TestOption(t *testing.T) {
 	})
 }
 
+func TestRecovery(t *testing.T) {
+	a := assert.New(t, false)
+
+	p := func(w http.ResponseWriter, r *http.Request) { panic("test") }
+
+	router := NewRouter("")
+	a.NotNil(router).Nil(router.options.RecoverFunc)
+	router.GetFunc("/path", p)
+	a.Panic(func() {
+		w := httptest.NewRecorder()
+		r, err := http.NewRequest(http.MethodGet, "/path", nil)
+		a.NotError(err).NotNil(r)
+		router.ServeHTTP(w, r)
+	})
+
+	// WriterRecovery
+	out := new(bytes.Buffer)
+	router = NewRouter("", WriterRecovery(404, out))
+	a.NotNil(router).NotNil(router.options.RecoverFunc)
+	router.GetFunc("/path", p)
+	a.NotPanic(func() {
+		w := httptest.NewRecorder()
+		r, err := http.NewRequest(http.MethodGet, "/path", nil)
+		a.NotError(err).NotNil(r)
+		router.ServeHTTP(w, r)
+		a.Equal(out.String(), "test").
+			Equal(w.Code, 404)
+	})
+
+	// LogRecovery
+	out = new(bytes.Buffer)
+	l := log.New(out, "test:", 0)
+	router = NewRouter("", LogRecovery(405, l))
+	a.NotNil(router).NotNil(router.options.RecoverFunc)
+	router.GetFunc("/path", p)
+	a.NotPanic(func() {
+		w := httptest.NewRecorder()
+		r, err := http.NewRequest(http.MethodGet, "/path", nil)
+		a.NotError(err).NotNil(r)
+		router.ServeHTTP(w, r)
+		a.Equal(405, w.Code).
+			Contains(out.String(), "test")
+	})
+
+	// HTTPRecovery
+	router = NewRouter("", HTTPRecovery(406))
+	a.NotNil(router).NotNil(router.options.RecoverFunc)
+	router.GetFunc("/path", p)
+	a.NotPanic(func() {
+		w := httptest.NewRecorder()
+		r, err := http.NewRequest(http.MethodGet, "/path", nil)
+		a.NotError(err).NotNil(r)
+		router.ServeHTTP(w, r)
+		a.Equal(w.Code, 406)
+	})
+}
+
 func TestMethods(t *testing.T) {
 	a := assert.New(t, false)
 	a.Equal(Methods(), tree.Methods)
@@ -69,7 +130,7 @@ func TestURL(t *testing.T) {
 	a.NotError(err).Equal(url, "/posts/{id:}")
 
 	url, err = URL("/posts/{id:}", map[string]string{"other-": "id"})
-	a.Error(err)
+	a.Error(err).Empty(url)
 
 	url, err = URL("/posts/{id:\\\\d+}/author/{page}/", map[string]string{"id": "100", "page": "200"})
 	a.NotError(err).Equal(url, "/posts/100/author/200/")

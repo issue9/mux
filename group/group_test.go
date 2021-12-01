@@ -3,7 +3,9 @@
 package group
 
 import (
+	"bytes"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/issue9/assert/v2"
@@ -205,6 +207,59 @@ func TestGroup(t *testing.T) {
 		Do(g).
 		Status(http.StatusAccepted)
 	<-exit
+}
+
+func TestGroup_recovery(t *testing.T) {
+	a := assert.New(t, false)
+
+	out := new(bytes.Buffer)
+	g := New(mux.WriterRecovery(405, out))
+	a.NotNil(g)
+	h := NewPathVersion("v", "v2")
+	a.NotNil(h)
+	def := g.New("version", h)
+	a.NotNil(def)
+	def.GetFunc("/path", func(http.ResponseWriter, *http.Request) { panic("test") })
+
+	w := httptest.NewRecorder()
+	r, err := http.NewRequest(http.MethodGet, "/v2/path", nil)
+	a.NotError(err).NotNil(r)
+	g.ServeHTTP(w, r)
+	a.Equal(w.Code, 405).
+		Equal(out.String(), "test")
+
+	out.Reset()
+	w = httptest.NewRecorder()
+	r, err = http.NewRequest(http.MethodGet, "/v2/path", nil)
+	a.NotError(err).NotNil(r)
+	g.ServeHTTP(w, r)
+	a.Equal(w.Code, 405).
+		Equal(out.String(), "test")
+
+	// no recovery
+
+	g = New()
+	a.NotNil(g)
+	h = NewPathVersion("v", "v2")
+	a.NotNil(h)
+	def = g.New("version", h)
+	a.NotNil(def)
+	def.GetFunc("/path", func(http.ResponseWriter, *http.Request) { panic("test") })
+
+	a.PanicString(func() {
+		w = httptest.NewRecorder()
+		r, err = http.NewRequest(http.MethodGet, "/v2/path", nil)
+		a.NotError(err).NotNil(r)
+		g.ServeHTTP(w, r)
+	}, "test")
+
+	a.PanicString(func() {
+		w = httptest.NewRecorder()
+		r, err = http.NewRequest(http.MethodGet, "/v2/path", nil)
+		a.NotError(err).NotNil(r)
+		g.ServeHTTP(w, r)
+	}, "test")
+
 }
 
 func TestGroups_routers(t *testing.T) {

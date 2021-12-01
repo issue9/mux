@@ -21,10 +21,12 @@ import (
 // 所以在有多条子路由的情况下，第一条子路由不应该永远返回 true，
 // 否则其它子路由永远无法到达。
 type Group struct {
-	routers  []*router
-	ms       *mux.Middlewares
-	options  []mux.Option
+	routers []*router
+	ms      *mux.Middlewares
+	options []mux.Option
+
 	notFound http.Handler
+	recovery mux.RecoverFunc
 }
 
 type router struct {
@@ -34,7 +36,7 @@ type router struct {
 
 // New 声明一个新的 Groups
 //
-// o 用于设置由 New 添加的路由；
+// o 用于设置由 New 添加的路由，有关 NotFound 与 Recovery 的设置同时会作用于 Group。
 func New(o ...mux.Option) *Group {
 	opt, err := options.Build(o...)
 	if err != nil {
@@ -42,15 +44,27 @@ func New(o ...mux.Option) *Group {
 	}
 
 	g := &Group{
-		options:  o,
-		routers:  make([]*router, 0, 1),
+		options: o,
+		routers: make([]*router, 0, 1),
+
 		notFound: opt.NotFound,
+		recovery: opt.RecoverFunc,
 	}
 	g.ms = mux.NewMiddlewares(http.HandlerFunc(g.serveHTTP))
 	return g
 }
 
-func (g *Group) ServeHTTP(w http.ResponseWriter, r *http.Request) { g.ms.ServeHTTP(w, r) }
+func (g *Group) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if g.recovery != nil {
+		defer func() {
+			if err := recover(); err != nil {
+				g.recovery(w, err)
+			}
+		}()
+	}
+
+	g.ms.ServeHTTP(w, r)
+}
 
 func (g *Group) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	for _, router := range g.routers {
