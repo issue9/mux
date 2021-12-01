@@ -101,13 +101,13 @@ func Interceptor(f InterceptorFunc, name ...string) Option {
 }
 
 // InterceptorAny 任意非空字符的拦截器
-func InterceptorAny(path string) bool { return syntax.MatchAny(path) }
+func InterceptorAny(rule string) bool { return syntax.MatchAny(rule) }
 
 // InterceptorDigit 任意数字字符的拦截器
-func InterceptorDigit(path string) bool { return syntax.MatchDigit(path) }
+func InterceptorDigit(rule string) bool { return syntax.MatchDigit(rule) }
 
 // InterceptorWord 任意英文单词的拦截器
-func InterceptorWord(path string) bool { return syntax.MatchWord(path) }
+func InterceptorWord(rule string) bool { return syntax.MatchWord(rule) }
 
 // CaseInsensitive 忽略大小写
 //
