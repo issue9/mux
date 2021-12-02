@@ -8,8 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/issue9/sliceutil"
-
 	"github.com/issue9/mux/v5/internal/tree"
 )
 
@@ -98,7 +96,7 @@ func (c *CORS) handle(node *tree.Node, w http.ResponseWriter, r *http.Request) {
 	if preflight {
 		// Access-Control-Allow-Methods
 		methods := node.Methods()
-		if sliceutil.Index(methods, func(i int) bool { return methods[i] == reqMethod }) == -1 {
+		if !inStrings(methods, reqMethod) {
 			return
 		}
 		wh.Set("Access-Control-Allow-Methods", node.Options())
@@ -123,8 +121,7 @@ func (c *CORS) handle(node *tree.Node, w http.ResponseWriter, r *http.Request) {
 	allowOrigin := "*"
 	if !c.anyOrigins {
 		origin := r.Header.Get("Origin")
-		i := sliceutil.Index(c.Origins, func(i int) bool { return c.Origins[i] == origin })
-		if i == -1 {
+		if !inStrings(c.Origins, origin) {
 			return
 		}
 		allowOrigin = origin
@@ -156,11 +153,19 @@ func (c *CORS) headerIsAllowed(r *http.Request) bool {
 	headers := strings.Split(h, ",")
 	for _, v := range headers {
 		v = strings.TrimSpace(v)
-		i := sliceutil.Index(c.AllowHeaders, func(i int) bool { return c.AllowHeaders[i] == v })
-		if i == -1 {
+		if !inStrings(c.AllowHeaders, v) {
 			return false
 		}
 	}
 
 	return true
+}
+
+func inStrings(strs []string, s string) bool {
+	for _, str := range strs {
+		if str == s {
+			return true
+		}
+	}
+	return false
 }
