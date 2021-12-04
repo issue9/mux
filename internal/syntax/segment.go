@@ -17,7 +17,7 @@ type Segment struct {
 	Value  string // 节点上的原始内容
 	Name   string // 当前节点的参数名称，适用非字符节点。
 	rule   string // 节点的规则值，即 : 之后的部分，非字符串节点有效。
-	Suffix string // 保存参数名之后的字符串，比如 "{id}/author" 此值为 "/author"，仅对非字符串节点有效果。
+	Suffix string // 保存参数名之后的字符串，比如 "{id}/author" 此值为 "/author"，非 endpoint 的拦截器和命名节点不能为空。。
 
 	// TODO: Type、ambiguousLength、Endpoint 和 ignoreName 采用一个 int 字段代替
 
@@ -266,7 +266,7 @@ func longestPrefix(s1, s2 string) int {
 
 		if s1[i] != s2[i] {
 			if state != endByte || // 不从命名参数中间分隔
-				endIndex == i { // 命名参数之后必须要有一个或以上的普通字符
+				endIndex+1 == i { // 命名参数之后必须要有一个或以上的普通字符
 				return startIndex
 			}
 			return i

@@ -219,6 +219,8 @@ func TestLongestPrefix(t *testing.T) {
 	test("/tes{t:\\d+}/a", "/tes{t:\\d+}/", 12)
 	test("{t}/a", "{t}/b", 4)
 	test("{t}/abc", "{t}/bbc", 4)
+	test("{t}bc", "{t}abc", 0)
+	test("aa{t}bc", "aa{t}abc", 2)
 	test("/tes{t:\\d+}", "/tes{t}", 4)
 }
 

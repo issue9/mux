@@ -59,14 +59,16 @@ func (n *Node) buildIndexes() {
 // parent.children 根据此值进行排序。
 // 不同的节点类型拥有不同的优先级，相同类型的，则有子节点的优先级低。
 func (n *Node) priority() int {
-	// 目前节点类型只有 4 种，
 	// 10 可以保证在当前类型的节点进行加权时，不会超过其它节点。
 	ret := int(n.segment.Type) * 10
 
-	// 有 children 的，endpoint 必然为 false，两者不可能同时为 true
-	if len(n.children) > 0 || n.segment.Endpoint {
-		return ret + 1
+	if len(n.children) == 0 {
+		ret++
 	}
+	if n.segment.Endpoint { // 同类型中权重最低
+		ret++
+	}
+
 	return ret
 }
 
@@ -102,7 +104,9 @@ func (n *Node) addSegment(seg *syntax.Segment) (*Node, error) {
 	}
 
 	if l <= 0 { // 没有共同前缀，声明一个新的加入到当前节点
-		return n.newChild(seg), nil
+		nn := n.newChild(seg)
+		n.sort()
+		return nn, nil
 	}
 
 	parent, err := splitNode(child, l)
@@ -134,12 +138,14 @@ func (n *Node) newChild(s *syntax.Segment) *Node {
 	}
 
 	n.children = append(n.children, child)
+	return child
+}
+
+func (n *Node) sort() {
 	sort.SliceStable(n.children, func(i, j int) bool {
 		return n.children[i].priority() < n.children[j].priority()
 	})
 	n.buildIndexes()
-
-	return child
 }
 
 // 查找路由项，不存在返回 nil
@@ -258,10 +264,7 @@ func splitNode(n *Node, pos int) (*Node, error) {
 	if p == nil {
 		panic("节点必须要有一个有效的父节点，才能进行拆分")
 	}
-
-	// 先从父节点中删除老的 n
-	p.children = removeNodes(p.children, n.segment.Value)
-	p.buildIndexes()
+	p.children = removeNodes(p.children, n.segment.Value) // 先从父节点中删除老的 n
 
 	segs, err := n.segment.Split(n.root.interceptors, pos)
 	if err != nil {
@@ -276,6 +279,10 @@ func splitNode(n *Node, pos int) (*Node, error) {
 	for _, item := range c.children {
 		item.parent = c
 	}
+
+	// ret 和 c 的内容在 newChild 之后被修改，所以需要对其子元素重新排序。
+	ret.sort()
+	p.sort()
 
 	return ret, nil
 }

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"strings"
 	"testing"
 
@@ -36,10 +37,12 @@ func newTester(a *assert.Assertion, lock bool) *tester {
 // 添加一条路由项。code 表示该路由项返回的报头，
 // 测试路由项的 code 需要唯一，之后也是通过此值来判断其命中的路由项。
 func (t *tester) add(method, pattern string, code int) {
+	t.a.TB().Helper()
 	t.a.NotError(t.tree.Add(pattern, rest.BuildHandler(t.a, code, "", nil), method))
 }
 
 func (t *tester) addAmbiguous(pattern string) {
+	t.a.TB().Helper()
 	b := rest.BuildHandler(t.a, http.StatusOK, "", nil)
 	t.a.ErrorString(t.tree.Add(pattern, b, http.MethodGet), "存在有歧义的节点")
 }
@@ -47,6 +50,8 @@ func (t *tester) addAmbiguous(pattern string) {
 // 验证按照指定的 method 和 path 访问，是否会返回相同的 code 值，
 // 若是，则返回该节点以及对应的参数。
 func (t *tester) handler(method, path string, code int) (http.Handler, *syntax.Params) {
+	t.a.TB().Helper()
+
 	hs, ps := t.tree.Route(path)
 	t.a.NotNil(hs)
 
@@ -64,19 +69,24 @@ func (t *tester) handler(method, path string, code int) (http.Handler, *syntax.P
 
 // 验证指定的路径是否匹配正确的路由项，通过 code 来确定，并返回该节点的实例。
 func (t *tester) matchTrue(method, path string, code int) {
+	t.a.TB().Helper()
+
 	h, _ := t.handler(method, path, code)
 	t.a.NotNil(h)
 }
 
 func (t *tester) notFound(path string) {
+	t.a.TB().Helper()
+
 	hs, ps := t.tree.Route(path)
 	t.a.Nil(hs).Nil(ps)
 }
 
 // 验证指定的路径返回的参数是否正确
 func (t *tester) paramsTrue(method, path string, code int, params map[string]string) {
-	_, ps := t.handler(method, path, code)
+	t.a.TB().Helper()
 
+	_, ps := t.handler(method, path, code)
 	if len(params) > 0 {
 		t.a.Equal(len(params), len(ps.Params))
 		for k, v := range params {
@@ -88,6 +98,7 @@ func (t *tester) paramsTrue(method, path string, code int, params map[string]str
 
 func (t *tester) urlTrue(pattern string, params map[string]string, url string) {
 	t.a.TB().Helper()
+
 	buf := errwrap.StringBuilder{}
 	err := t.tree.URL(&buf, pattern, params)
 	t.a.NotError(err)
@@ -96,6 +107,7 @@ func (t *tester) urlTrue(pattern string, params map[string]string, url string) {
 
 func (t *tester) urlFalse(pattern string, params map[string]string, msg string) {
 	t.a.TB().Helper()
+
 	buf := errwrap.StringBuilder{}
 	err := t.tree.URL(&buf, pattern, params)
 	t.a.ErrorString(err, msg)
@@ -103,6 +115,8 @@ func (t *tester) urlFalse(pattern string, params map[string]string, msg string) 
 
 // 测试 tree.methodIndex 是否正确
 func (t *tester) optionsTrue(path, options string) {
+	t.a.TB().Helper()
+
 	hs, ps := t.tree.Route(path)
 	t.a.Nil(ps).NotNil(hs)
 
@@ -153,14 +167,11 @@ func TestTree_AmbiguousRoute(t *testing.T) {
 
 func TestTree_Route(t *testing.T) {
 	a := assert.New(t, false)
-	test := newTester(a, false)
 
-	// 添加路由项
+	test := newTester(a, false)
 	test.add(http.MethodGet, "/", 201)
 	test.add(http.MethodGet, "/posts/{id}", 202)
-	test.matchTrue(http.MethodGet, "/posts/2.html/2/author", 202)
 	test.add(http.MethodGet, "/posts/{id}/author", 203)
-	test.matchTrue(http.MethodGet, "/posts/2.html/2/author", 203) // 203 比 202 更加匹配
 	test.add(http.MethodGet, "/posts/1/author", 204)
 	test.add(http.MethodGet, "/posts/{id:\\d+}", 205)
 	test.add(http.MethodGet, "/posts/{id:\\d+}/author", 206)
@@ -178,6 +189,28 @@ func TestTree_Route(t *testing.T) {
 	test.matchTrue(http.MethodGet, "/page/", 207)
 	test.matchTrue(http.MethodGet, "/posts/2.html/2/author", 208) // 208 比 203 更加匹配
 	test.notFound("/not-exists")
+
+	// 仅末尾不同的路由
+
+	test = newTester(a, false)
+	test.add(http.MethodGet, "/posts/{id}", 202)
+	test.matchTrue(http.MethodGet, "/posts/2.html/2/author", 202)
+
+	test.add(http.MethodGet, "/posts/{id}/author", 203)
+	test.matchTrue(http.MethodGet, "/posts/2.html/2/author", 203) // 203 比 202 更加匹配
+
+	test.add(http.MethodGet, "/posts/{id}/{page}/author", 204)
+	test.matchTrue(http.MethodGet, "/posts/2.html/2/author", 204) // 204 比 203 更加匹配
+
+	test.matchTrue(http.MethodGet, "/posts/2.html/2.html", 202)
+	test.add(http.MethodGet, "/posts/{id}/{page}.html", 209)    // 与 204 相结合，会将 {page} 生成一个节点，.html 生成一个节点
+	test.matchTrue(http.MethodGet, "/posts/2.html/2.html", 209) // 209 比 202 更匹配
+
+	test.matchTrue(http.MethodGet, "/posts/2.html/2/2.html", 209)
+	//test.add(http.MethodGet, "/posts/{id}/{page}.html", 209)    // 与 204 相结合，会将 {page} 生成一个节点，.html 生成一个节点
+	test.add(http.MethodGet, "/posts/{id}/{page}/{p2}.html", 210)
+	test.matchTrue(http.MethodGet, "/posts/2.html/2/2.html", 210) // 210 比 209 更匹配
+	test.tree.Print(os.Stdout)
 
 	// 测试 digit 和 \\d 是否正常
 	test = newTester(a, true)

@@ -26,12 +26,12 @@ const (
 	Interceptor
 
 	// Regexp 正则表达式，比如：
-	//  /users/{id:\\d+}
+	//  {id:\\d+}/abc
 	// 可以匹配 /users/1、/users/2 等任意数值。
 	Regexp
 
 	// Named 命名参数，相对于正则，其效率更高，当然也没有正则灵活。比如：
-	//  /users/{id}
+	//  {id}/abc
 	// 可以匹配 /users/1、/users/2 和 /users/username 等非数值类型
 	Named
 )
