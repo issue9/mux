@@ -34,7 +34,7 @@ type Node struct {
 	children []*Node
 }
 
-func (n *Node) Size() int { return len(n.handlers) }
+func (n *Node) size() int { return len(n.handlers) }
 
 // 构建当前节点的索引表
 func (n *Node) buildIndexes() {
@@ -54,13 +54,8 @@ func (n *Node) buildIndexes() {
 	}
 }
 
-// 当前节点的优先级
-//
-// parent.children 根据此值进行排序。
-// 不同的节点类型拥有不同的优先级，相同类型的，则有子节点的优先级低。
 func (n *Node) priority() int {
-	// 10 可以保证在当前类型的节点进行加权时，不会超过其它节点。
-	ret := int(n.segment.Type) * 10
+	ret := int(n.segment.Type) * 10 // 10 可以保证在当前类型的节点进行加权时，不会超过其它节点。
 
 	if len(n.children) == 0 {
 		ret++
@@ -127,16 +122,10 @@ func (n *Node) addSegment(seg *syntax.Segment) (*Node, error) {
 	return parent.addSegment(s)
 }
 
-// 根据 s 内容为当前节点产生一个子节点，并返回该新节点。
+// 根据 s 内容为当前节点产生一个子节点，并返回该节点。
 // 由调用方确保 s 的语法正确性，否则可能 panic。
 func (n *Node) newChild(s *syntax.Segment) *Node {
-	child := &Node{
-		root: n.root,
-
-		parent:  n,
-		segment: s,
-	}
-
+	child := &Node{root: n.root, parent: n, segment: s}
 	n.children = append(n.children, child)
 	return child
 }
@@ -231,7 +220,7 @@ LOOP:
 	}
 
 	// 没有子节点匹配，len(p.Path)==0，且子节点不为空，可以判定与当前节点匹配。
-	if len(p.Path) == 0 && n.Size() > 0 {
+	if len(p.Path) == 0 && n.size() > 0 {
 		return n
 	}
 	return nil
@@ -247,7 +236,6 @@ func removeNodes(nodes []*Node, pattern string) []*Node {
 			return append(nodes[:index], nodes[index+1:]...)
 		}
 	}
-
 	return nodes
 }
 
@@ -305,7 +293,7 @@ func (n *Node) Handler(method string) http.Handler { return n.handlers[method] }
 
 func (n *Node) checkAmbiguous(pattern string, hasNonString bool) (*Node, bool, error) {
 	if pattern == "" {
-		if n.Size() > 0 {
+		if n.size() > 0 {
 			return n, hasNonString, nil
 		}
 		return nil, false, nil

@@ -157,14 +157,14 @@ func (tree *Tree) Remove(pattern string, methods ...string) {
 			}
 		}
 
-		if _, found := child.handlers[http.MethodOptions]; found && child.Size() == 1 { // 只有一个 OPTIONS 了
+		if _, found := child.handlers[http.MethodOptions]; found && child.size() == 1 { // 只有一个 OPTIONS 了
 			delete(child.handlers, http.MethodOptions)
 		}
 	}
 
 	child.buildMethods()
 
-	for child.Size() == 0 && len(child.children) == 0 {
+	for child.size() == 0 && len(child.children) == 0 {
 		child.parent.children = removeNodes(child.parent.children, child.segment.Value)
 		child.parent.buildIndexes()
 		child = child.parent
@@ -197,7 +197,7 @@ func (tree *Tree) Route(path string) (*Node, *syntax.Params) {
 
 	p := syntax.NewParams(path)
 	node := tree.node.matchChildren(p)
-	if node == nil || node.Size() == 0 {
+	if node == nil || node.size() == 0 {
 		p.Destroy()
 		return nil, nil
 	}

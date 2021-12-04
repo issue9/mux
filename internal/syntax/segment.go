@@ -52,10 +52,7 @@ func (i *Interceptors) NewSegment(val string) (*Segment, error) {
 		return nil, fmt.Errorf("单个节点的长度不能超过 %d", math.MaxInt16)
 	}
 
-	seg := &Segment{
-		Value: val,
-		Type:  String,
-	}
+	seg := &Segment{Value: val, Type: String}
 
 	start := strings.IndexByte(val, startByte)
 	end := strings.IndexByte(val, endByte)
