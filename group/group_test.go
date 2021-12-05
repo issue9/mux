@@ -35,7 +35,7 @@ func newRouter(a *assert.Assertion, name string) *mux.Router {
 	return r
 }
 
-func TestGroups_PrependMiddleware(t *testing.T) {
+func TestGroup_PrependMiddleware(t *testing.T) {
 	a := assert.New(t, false)
 	g := New()
 	a.NotNil(g)
@@ -54,7 +54,7 @@ func TestGroups_PrependMiddleware(t *testing.T) {
 	rest.NewRequest(a, http.MethodGet, "/get").Do(g).Status(201).BodyEmpty()
 }
 
-func TestGroups_AppendMiddleware(t *testing.T) {
+func TestGroup_AppendMiddleware(t *testing.T) {
 	a := assert.New(t, false)
 	g := New()
 	a.NotNil(g)
@@ -73,7 +73,7 @@ func TestGroups_AppendMiddleware(t *testing.T) {
 	rest.NewRequest(a, http.MethodGet, "/get").Do(g).Status(201).BodyEmpty()
 }
 
-func TestGroups_AddMiddleware(t *testing.T) {
+func TestGroup_AddMiddleware(t *testing.T) {
 	a := assert.New(t, false)
 	g := New()
 	a.NotNil(g)
@@ -122,7 +122,7 @@ func TestRouter_AddMiddleware(t *testing.T) {
 	rest.NewRequest(a, http.MethodGet, "/get").Do(g).Status(201).BodyEmpty()
 }
 
-func TestGroups_Add(t *testing.T) {
+func TestGroup_Add(t *testing.T) {
 	a := assert.New(t, false)
 
 	g := New()
@@ -155,7 +155,7 @@ func TestGroups_Add(t *testing.T) {
 	a.Nil(g.Router("not-exists"))
 }
 
-func TestGroups_Remove(t *testing.T) {
+func TestGroup_Remove(t *testing.T) {
 	a := assert.New(t, false)
 	g := New()
 	a.NotNil(g)
@@ -177,7 +177,7 @@ func TestGroups_Remove(t *testing.T) {
 	a.Equal(2, len(g.Routers()))
 }
 
-func TestGroups_empty(t *testing.T) {
+func TestGroup_empty(t *testing.T) {
 	a := assert.New(t, false)
 	g := New()
 	a.NotNil(g)
@@ -262,7 +262,7 @@ func TestGroup_recovery(t *testing.T) {
 
 }
 
-func TestGroups_routers(t *testing.T) {
+func TestGroup_routers(t *testing.T) {
 	a := assert.New(t, false)
 	h := NewHosts(false, "localhost")
 	a.NotNil(h)
@@ -325,7 +325,7 @@ func TestGroups_routers(t *testing.T) {
 	rest.NewRequest(a, http.MethodGet, "/prefix1example.com/p2").Do(g).Status(205)
 }
 
-func TestGroups_routers_multiple(t *testing.T) {
+func TestGroup_routers_multiple(t *testing.T) {
 	a := assert.New(t, false)
 
 	g := New()
@@ -343,6 +343,21 @@ func TestGroups_routers_multiple(t *testing.T) {
 	def := newRouter(a, "default")
 	g.Add(MatcherFunc(Any), def)
 	def.Get("/t1", rest.BuildHandler(a, 201, "", nil))
+
+	a.Equal(g.Routes(), map[string]map[string][]string{
+		"v1": {
+			"*":     {http.MethodOptions},
+			"/path": {http.MethodGet, http.MethodHead, http.MethodOptions},
+		},
+		"v2": {
+			"*":     {http.MethodOptions},
+			"/path": {http.MethodGet, http.MethodHead, http.MethodOptions},
+		},
+		"default": {
+			"*":   {http.MethodOptions},
+			"/t1": {http.MethodGet, http.MethodHead, http.MethodOptions},
+		},
+	})
 
 	// 指向 def
 	rest.NewRequest(a, http.MethodGet, "https://localhost/t1").Do(g).Status(201)

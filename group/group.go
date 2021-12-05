@@ -135,3 +135,14 @@ func (g *Group) Remove(name string) {
 
 // Middlewares 返回中间件管理接口
 func (g *Group) Middlewares() *mux.Middlewares { return g.ms }
+
+func (g *Group) Routes() map[string]map[string][]string {
+	routers := g.Routers()
+
+	routes := make(map[string]map[string][]string, len(routers))
+	for _, r := range routers {
+		routes[r.Name()] = r.Routes()
+	}
+
+	return routes
+}
