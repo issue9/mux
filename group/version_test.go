@@ -19,10 +19,7 @@ var (
 func TestHeaderVersion_Match(t *testing.T) {
 	a := assert.New(t, false)
 
-	h := &HeaderVersion{
-		Key:      "version",
-		Versions: []string{"1.0", "2.0", "3.0"},
-	}
+	h := NewHeaderVersion("version", "", nil, "1.0", "2.0", "3.0")
 
 	// 相同版本号
 	r, err := http.NewRequest(http.MethodGet, "https://caixw.io/test", nil)
@@ -32,10 +29,8 @@ func TestHeaderVersion_Match(t *testing.T) {
 	rr, ok := h.Match(r)
 	a.True(ok).NotNil(rr).Equal(syntax.GetParams(rr).MustString("version", "not-exists"), "1.0")
 
-	// 相同版本号，未指定 Key
-	h = &HeaderVersion{
-		Versions: []string{"1.0", "2.0", "3.0"},
-	}
+	// 相同版本号，未指定 paramName
+	h = NewHeaderVersion("", "", nil, "1.0", "2.0", "3.0")
 	r, err = http.NewRequest(http.MethodGet, "https://caixw.io/test", nil)
 	a.NotError(err).NotNil(r)
 	r.Header.Set("Accept", "application/json; version=1.0")
@@ -61,7 +56,7 @@ func TestHeaderVersion_Match(t *testing.T) {
 
 	// 空值，不匹配任何内容
 
-	h = &HeaderVersion{}
+	h = NewHeaderVersion("", "", nil)
 	r, err = http.NewRequest(http.MethodGet, "https://caixw.io/test", nil)
 	a.NotError(err).NotNil(r)
 	r.Header.Set("Accept", "application/json; version=1.0")
@@ -124,7 +119,7 @@ func TestPathVersion_Match(t *testing.T) {
 		Equal(syntax.GetParams(rr).MustString("version", "not-found"), "not-found")
 
 	// 空版本
-	r, err = http.NewRequest(http.MethodGet, "http://caixw.io/test", nil)
+	r, err = http.NewRequest(http.MethodGet, "https://caixw.io/test", nil)
 	a.NotError(err).NotNil(r)
 	a.NotNil(r)
 	rr, ok = h.Match(r)
@@ -132,7 +127,7 @@ func TestPathVersion_Match(t *testing.T) {
 	a.Equal(r.URL.Path, "/test")
 
 	// 不同版本
-	r, err = http.NewRequest(http.MethodGet, "http://caixw.io/v111/test", nil)
+	r, err = http.NewRequest(http.MethodGet, "https://caixw.io/v111/test", nil)
 	a.NotError(err).NotNil(r)
 	a.NotNil(r)
 	rr, ok = h.Match(r)
