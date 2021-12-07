@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"os"
 	"strings"
 	"testing"
 
@@ -207,10 +206,8 @@ func TestTree_Route(t *testing.T) {
 	test.matchTrue(http.MethodGet, "/posts/2.html/2.html", 209) // 209 比 202 更匹配
 
 	test.matchTrue(http.MethodGet, "/posts/2.html/2/2.html", 209)
-	//test.add(http.MethodGet, "/posts/{id}/{page}.html", 209)    // 与 204 相结合，会将 {page} 生成一个节点，.html 生成一个节点
 	test.add(http.MethodGet, "/posts/{id}/{page}/{p2}.html", 210)
 	test.matchTrue(http.MethodGet, "/posts/2.html/2/2.html", 210) // 210 比 209 更匹配
-	test.tree.Print(os.Stdout)
 
 	// 测试 digit 和 \\d 是否正常
 	test = newTester(a, true)
