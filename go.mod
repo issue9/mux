@@ -6,4 +6,4 @@ require (
 	github.com/issue9/sliceutil v0.7.1
 )
 
-go 1.14
+go 1.16
