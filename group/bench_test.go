@@ -71,9 +71,3 @@ func BenchmarkPathVersionWithKey_Match(b *testing.B) {
 		a.True(ok)
 	}
 }
-
-func BenchmarkFindVersionNumberInHeader(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		_ = findVersionNumberInHeader("application/json;version=1.0;application/json")
-	}
-}

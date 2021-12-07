@@ -3,13 +3,15 @@
 package group
 
 import (
+	"log"
+	"mime"
 	"net/http"
 	"strings"
 
 	"github.com/issue9/mux/v5/internal/syntax"
 )
 
-const versionString = "version="
+const versionKey = "version"
 
 // PathVersion 匹配路径中的版本号
 //
@@ -18,7 +20,7 @@ const versionString = "version="
 // 如果匹配 v1 版本，会修改为：
 //  /path.html
 type PathVersion struct {
-	key string
+	paramName string
 
 	// 需要匹配的版本号列表，需要以 / 作分隔，比如 /v3/  /v4/  /v11/
 	versions []string
@@ -28,17 +30,26 @@ type PathVersion struct {
 //
 // 匹配报头 Accept 中的报头信息。
 type HeaderVersion struct {
-	// 将版本号作为参数保存到上下文中是的名称，如果不需要，可以设置为空值。
+	// 将版本号作为参数保存到上下文中是的名称
+	//
+	// 如果不需要，可以设置为空值。
 	Key string
 
-	// 支持的版本号列表。
+	// 支持的版本号列表
+	//
+	// 比如 accept=application/json;version=1.0，version= 之后的内容。
 	Versions []string
+
+	// 错误日志输出通道
+	//
+	// 如果为空，则不输出任何内容。
+	ErrLog *log.Logger
 }
 
 // NewPathVersion 声明 PathVersion 实例
 //
-// key 将版本号作为参数保存到上下文中是的名称，如果不需要，可以设置为空值。
-func NewPathVersion(key string, version ...string) *PathVersion {
+// param 将版本号作为参数保存到上下文中是的名称，如果不需要，可以设置为空值。
+func NewPathVersion(param string, version ...string) *PathVersion {
 	for i, v := range version {
 		if v == "" {
 			panic("参数 v 不能为空值")
@@ -53,11 +64,19 @@ func NewPathVersion(key string, version ...string) *PathVersion {
 		version[i] = v
 	}
 
-	return &PathVersion{key: key, versions: version}
+	return &PathVersion{paramName: param, versions: version}
 }
 
 func (v *HeaderVersion) Match(r *http.Request) (*http.Request, bool) {
-	ver := findVersionNumberInHeader(r.Header.Get("Accept"))
+	_, ps, err := mime.ParseMediaType(r.Header.Get("Accept"))
+	if err != nil {
+		if v.ErrLog != nil {
+			v.ErrLog.Println(err)
+		}
+		return nil, false
+	}
+
+	ver := ps[versionKey]
 	for _, vv := range v.Versions {
 		if vv == ver {
 			if v.Key != "" {
@@ -74,32 +93,16 @@ func (v *PathVersion) Match(r *http.Request) (*http.Request, bool) {
 	for _, ver := range v.versions {
 		if strings.HasPrefix(p, ver) {
 			vv := ver[:len(ver)-1]
-			ps := &syntax.Params{}
-			if v.key != "" {
-				ps.Set(v.key, vv)
+
+			if v.paramName == "" {
+				r = r.Clone(r.Context()) // r.URL.Path 已改变
+			} else {
+				r = syntax.WithValue(r, &syntax.Params{Params: []syntax.Param{{K: v.paramName, V: vv}}})
 			}
 
-			if len(ps.Params) == 0 {
-				r = r.Clone(r.Context())
-			} else {
-				r = syntax.WithValue(r, ps)
-			}
 			r.URL.Path = strings.TrimPrefix(p, vv)
 			return r, true
 		}
 	}
 	return nil, false
-}
-
-// 从 accept 中找到版本号，或是没有找到时，返回第二个参数 false。
-func findVersionNumberInHeader(accept string) string {
-	accepts := strings.Split(accept, ";")
-	for _, str := range accepts {
-		str = strings.ToLower(strings.TrimSpace(str))
-		if index := strings.Index(str, versionString); index >= 0 {
-			return str[index+len(versionString):]
-		}
-	}
-
-	return ""
 }

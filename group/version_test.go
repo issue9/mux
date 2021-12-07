@@ -54,7 +54,7 @@ func TestHeaderVersion_Match(t *testing.T) {
 	// 不同版本
 	r, err = http.NewRequest(http.MethodGet, "http://not.exsits/test", nil)
 	a.NotError(err).NotNil(r)
-	r.Header.Set("Accept", "application/json; version=2")
+	r.Header.Set("Accept", "application/json; version = 2")
 	a.NotNil(r)
 	rr, ok = h.Match(r)
 	a.False(ok).Nil(rr)
@@ -148,19 +148,4 @@ func TestPathVersion_Match(t *testing.T) {
 	a.NotNil(r)
 	rr, ok = h.Match(r)
 	a.False(ok).Nil(rr)
-}
-
-func TestFindVersionNumberInHeader(t *testing.T) {
-	a := assert.New(t, false)
-
-	a.Equal(findVersionNumberInHeader(""), "")
-	a.Equal(findVersionNumberInHeader("version="), "")
-	a.Equal(findVersionNumberInHeader("Version="), "")
-	a.Equal(findVersionNumberInHeader(";version="), "")
-	a.Equal(findVersionNumberInHeader(";version=;"), "")
-	a.Equal(findVersionNumberInHeader(";version=1.0"), "1.0")
-	a.Equal(findVersionNumberInHeader(";version=1.0;"), "1.0")
-	a.Equal(findVersionNumberInHeader(";version=1.0;application/json"), "1.0")
-	a.Equal(findVersionNumberInHeader("application/json;version=1.0"), "1.0")
-	a.Equal(findVersionNumberInHeader("application/json;version=1.0;application/json"), "1.0")
 }
