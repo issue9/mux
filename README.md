@@ -121,11 +121,11 @@ import "github.com/issue9/mux/v5/group"
 
 m := group.New()
 
-def := mux.NewRouter("default", false, nil)
+def := mux.NewRouter("default")
 m.AddRouter(group.NewPathVersion("version-key", "v1"), def)
 def.Get("/path", h1)
 
-host := mux.NewRouter("host", false, nil)
+host := mux.NewRouter("host")
 m.AddRouter(group.NewHosts("*.example.com"), host)
 host.Get("/path", h2)
 
