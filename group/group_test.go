@@ -13,11 +13,12 @@ import (
 
 	"github.com/issue9/mux/v5"
 	"github.com/issue9/mux/v5/internal/syntax"
+	"github.com/issue9/mux/v5/middleware"
 )
 
 var _ http.Handler = &Group{}
 
-func buildMiddleware(a *assert.Assertion, text string) mux.MiddlewareFunc {
+func buildMiddleware(a *assert.Assertion, text string) middleware.Func {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			h.ServeHTTP(w, r) // 先输出被包含的内容
