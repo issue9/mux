@@ -38,7 +38,7 @@ func TestMiddlewares(t *testing.T) {
 	a.Equal(w.Code, 201).
 		Equal(w.Body.String(), "rp2rp1ra1ra2") // buildHandler 导致顶部的后输出
 
-	// CleanMiddlewares
+	// Middlewares.Reset()
 
 	ms.Reset()
 	w = httptest.NewRecorder()

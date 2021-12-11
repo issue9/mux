@@ -11,6 +11,7 @@ import (
 	"github.com/issue9/mux/v5/internal/options"
 	"github.com/issue9/mux/v5/internal/syntax"
 	"github.com/issue9/mux/v5/internal/tree"
+	"github.com/issue9/mux/v5/middleware"
 )
 
 // Router 路由
@@ -25,7 +26,7 @@ import (
 // 如果需要同时对多个 Router 实例进行路由，可以采用  group.Group 对象管理多个 Router 实例。
 type Router struct {
 	tree    *tree.Tree
-	ms      *Middlewares
+	ms      *middleware.Middlewares
 	options *options.Options
 	name    string
 }
@@ -47,7 +48,7 @@ func NewRouter(name string, o ...Option) *Router {
 		options: opt,
 		name:    name,
 	}
-	r.ms = NewMiddlewares(http.HandlerFunc(r.serveHTTP))
+	r.ms = middleware.NewMiddlewares(http.HandlerFunc(r.serveHTTP))
 
 	return r
 }
@@ -153,7 +154,7 @@ func (r *Router) AnyFunc(pattern string, f http.HandlerFunc) *Router {
 // strict 是否检查路由是否真实存在以及参数是否符合要求；
 // pattern 为路由项的定义内容；
 // params 为路由项中的参数，键名为参数名，键值为参数值。
-func (r *Router) URL(strict bool, pattern string, params map[string]string) (url string, err error) {
+func (r *Router) URL(strict bool, pattern string, params map[string]string) (string, error) {
 	buf := errwrap.StringBuilder{}
 	buf.Grow(len(r.options.URLDomain) + len(pattern))
 
@@ -162,16 +163,17 @@ func (r *Router) URL(strict bool, pattern string, params map[string]string) (url
 	}
 
 	switch {
-	case len(pattern) == 0:
+	case len(pattern) == 0: // 无需要处理
 	case len(params) == 0:
 		buf.WString(pattern)
 	case strict:
-		err = r.tree.URL(&buf, pattern, params)
+		if err := r.tree.URL(&buf, pattern, params); err != nil {
+			return "", err
+		}
 	default:
-		err = emptyInterceptors.URL(&buf, pattern, params)
-	}
-	if err != nil {
-		return "", err
+		if err := emptyInterceptors.URL(&buf, pattern, params); err != nil {
+			return "", err
+		}
 	}
 
 	return buf.String(), buf.Err
@@ -216,3 +218,6 @@ func (r *Router) serveHTTP(w http.ResponseWriter, req *http.Request) {
 
 // Name 路由名称
 func (r *Router) Name() string { return r.name }
+
+// Middlewares 返回中间件管理接口
+func (r *Router) Middlewares() *middleware.Middlewares { return r.ms }
