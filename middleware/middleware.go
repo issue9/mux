@@ -5,7 +5,7 @@ package middleware
 
 import "net/http"
 
-// Func 将一个 http.Handler 封装成另一个 http.Handler
+// Func 中间件处理函数
 type Func func(http.Handler) http.Handler
 
 // Middlewares 中间件管理
