@@ -21,6 +21,7 @@ mux 功能完备的 Go 路由器：
 - 支持中间件；
 - 自动生成 OPTIONS * 请求；
 - 静态文件系统；
+- panic 处理；
 
 ```go
 import "github.com/issue9/middleware/v4/compress"
