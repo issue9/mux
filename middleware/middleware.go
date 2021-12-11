@@ -15,7 +15,8 @@ type Middlewares struct {
 	next        http.Handler
 }
 
-func apply(h http.Handler, f ...Func) http.Handler {
+// Apply 按顺序将所有的中间件应用于 h
+func Apply(h http.Handler, f ...Func) http.Handler {
 	for _, ff := range f {
 		h = ff(h)
 	}
@@ -36,7 +37,7 @@ func NewMiddlewares(next http.Handler) *Middlewares {
 // 顶部的中间件在运行过程中将最早被调用，多次添加，则最后一次的在顶部。
 func (ms *Middlewares) Prepend(m Func) *Middlewares {
 	ms.middlewares = append(ms.middlewares, m)
-	ms.Handler = apply(ms.next, ms.middlewares...)
+	ms.Handler = Apply(ms.next, ms.middlewares...)
 	return ms
 }
 
@@ -50,7 +51,7 @@ func (ms *Middlewares) Append(f Func) *Middlewares {
 		fs = append(fs, ms.middlewares...)
 	}
 	ms.middlewares = fs
-	ms.Handler = apply(ms.next, ms.middlewares...)
+	ms.Handler = Apply(ms.next, ms.middlewares...)
 	return ms
 }
 
