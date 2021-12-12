@@ -75,26 +75,50 @@ func TestPrefix(t *testing.T) {
 
 func TestRouter_Prefix(t *testing.T) {
 	a := assert.New(t, false)
-	def := NewRouter("", AllowedCORS)
-	a.NotNil(def)
 
-	p := def.Prefix("/abc")
-	a.Equal(p.prefix, "/abc")
-	a.Equal(p.Router(), def)
-	p = def.Prefix("")
-	a.Equal(p.prefix, "")
+	a.Run("prefix", func(a *assert.Assertion) {
+		def := NewRouter("", AllowedCORS)
+		a.NotNil(def)
 
-	p = def.Prefix("/abc")
-	a.Equal(p.prefix, "/abc")
-	a.Equal(p.Router(), def)
-	pp := p.Prefix("")
-	a.Equal(pp.prefix, "/abc")
-	pp.Delete("", rest.BuildHandler(a, 201, "", nil))
-	w := httptest.NewRecorder()
-	r, err := http.NewRequest(http.MethodDelete, "/abc", nil)
-	a.NotError(err).NotNil(r)
-	def.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 201)
+		p := def.Prefix("/abc")
+		a.Equal(p.prefix, "/abc")
+		a.Equal(p.Router(), def)
+
+		p = def.Prefix("")
+		a.Equal(p.prefix, "")
+	}).Run("prefix with middleware", func(a *assert.Assertion) {
+		def := NewRouter("", AllowedCORS)
+		a.NotNil(def)
+
+		p := def.Prefix("/abc")
+		a.Equal(p.prefix, "/abc")
+		a.Equal(p.Router(), def)
+
+		pp := p.Prefix("")
+		a.Equal(pp.prefix, "/abc")
+		pp.Delete("", rest.BuildHandler(a, 201, "", nil))
+		w := httptest.NewRecorder()
+		r, err := http.NewRequest(http.MethodDelete, "/abc", nil)
+		a.NotError(err).NotNil(r)
+		def.ServeHTTP(w, r)
+		a.Equal(w.Result().StatusCode, 201)
+	}).Run("empty prefix with middleware", func(a *assert.Assertion) {
+		def := NewRouter("", AllowedCORS)
+		a.NotNil(def)
+
+		p := def.Prefix("/abc")
+		a.Equal(p.prefix, "/abc")
+		a.Equal(p.Router(), def)
+
+		pp := p.Prefix("", buildMiddleware(a, "p1"), buildMiddleware(a, "p2"))
+		pp.Delete("", rest.BuildHandler(a, 201, "-201-", nil))
+		w := httptest.NewRecorder()
+		r, err := http.NewRequest(http.MethodDelete, "/abc", nil)
+		a.NotError(err).NotNil(r)
+		def.ServeHTTP(w, r)
+		a.Equal(w.Result().StatusCode, 201).
+			Equal(w.Body.String(), "-201-p1p2")
+	})
 }
 
 func TestPrefix_Prefix(t *testing.T) {
