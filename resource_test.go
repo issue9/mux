@@ -105,17 +105,19 @@ func TestPrefix_Resource(t *testing.T) {
 	def := NewRouter("")
 	a.NotNil(def)
 
-	p := def.Prefix("/p1")
+	p := def.Prefix("/p1", buildMiddleware(a, "p1"), buildMiddleware(a, "p2"))
+	a.NotNil(p)
 
-	r1 := p.Resource("/abc/1")
+	r1 := p.Resource("/abc/1", buildMiddleware(a, "r1"), buildMiddleware(a, "r2"))
 	a.NotNil(r1)
 
-	r1.Delete(rest.BuildHandler(a, 201, "", nil))
+	r1.Delete(rest.BuildHandler(a, 201, "-201-", nil))
 	w := httptest.NewRecorder()
 	r, err := http.NewRequest(http.MethodDelete, "/p1/abc/1", nil)
 	a.NotError(err).NotNil(r)
 	def.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 201)
+	a.Equal(w.Result().StatusCode, 201).
+		Equal(w.Body.String(), "-201-p1p2r1r2")
 }
 
 func TestResource_URL(t *testing.T) {

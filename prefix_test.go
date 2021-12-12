@@ -4,6 +4,7 @@ package mux
 
 import (
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/issue9/assert/v2"
@@ -90,10 +91,18 @@ func TestPrefix_Prefix(t *testing.T) {
 	def := NewRouter("", AllowedCORS)
 	a.NotNil(def)
 
-	p := def.Prefix("/abc")
-	pp := p.Prefix("/def")
+	p := def.Prefix("/abc", buildMiddleware(a, "p1"), buildMiddleware(a, "p2"))
+	pp := p.Prefix("/def", buildMiddleware(a, "pp1"), buildMiddleware(a, "pp2"))
 	a.Equal(pp.prefix, "/abc/def")
 	a.Equal(p.Router(), def)
+	pp.Delete("", rest.BuildHandler(a, 201, "-201-", nil))
+
+	w := httptest.NewRecorder()
+	r, err := http.NewRequest(http.MethodDelete, "/abc/def", nil)
+	a.NotError(err).NotNil(r)
+	def.ServeHTTP(w, r)
+	a.Equal(w.Result().StatusCode, 201).
+		Equal(w.Body.String(), "-201-p1p2pp1pp2")
 
 	p = def.Prefix("")
 	pp = p.Prefix("/abc")

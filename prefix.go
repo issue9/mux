@@ -2,7 +2,11 @@
 
 package mux
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/issue9/mux/v5/middleware"
+)
 
 // Prefix 操纵统一前缀的路由
 //
@@ -14,11 +18,12 @@ import "net/http"
 type Prefix struct {
 	router *Router
 	prefix string
+	ms     []middleware.Func
 }
 
 // Handle 相当于 Router.Handle(prefix+pattern, h, methods...) 的简易写法
 func (p *Prefix) Handle(pattern string, h http.Handler, methods ...string) *Prefix {
-	p.router.Handle(p.prefix+pattern, h, methods...)
+	p.router.Handle(p.prefix+pattern, middleware.Apply(h, p.ms...), methods...)
 	return p
 }
 
@@ -110,19 +115,26 @@ func (p *Prefix) URL(strict bool, pattern string, params map[string]string) (str
 
 // Prefix 在现有 Prefix 的基础上声明一个新的 Prefix 实例
 //
+// m 中间件函数，按顺序调用，会继承 p 的中间件并按在 m 之前；
+//
 // example:
 //  p := mux.Prefix("/api")
 //  v := p.Prefix("/v2")
 //  v.Get("/users")   // 相当于 g.Get("/api/v2/users")
 //  v.Get("/users/1") // 相当于 g.Get("/api/v2/users/1")
 //  v.Get("example.com/users/1") // 相当于 g.Get("/api/v2/example.com/users/1")
-func (p *Prefix) Prefix(prefix string) *Prefix {
-	return p.router.Prefix(p.prefix + prefix)
+func (p *Prefix) Prefix(prefix string, m ...middleware.Func) *Prefix {
+	ms := make([]middleware.Func, 0, len(p.ms)+len(m))
+	ms = append(ms, p.ms...)
+	ms = append(ms, m...)
+	return p.router.Prefix(p.prefix+prefix, ms...)
 }
 
 // Prefix 声明一个 Prefix 实例
-func (r *Router) Prefix(prefix string) *Prefix {
-	return &Prefix{router: r, prefix: prefix}
+//
+// m 中间件函数，按顺序调用；
+func (r *Router) Prefix(prefix string, m ...middleware.Func) *Prefix {
+	return &Prefix{router: r, prefix: prefix, ms: m}
 }
 
 // Router 返回与当前关联的 *Router 实例

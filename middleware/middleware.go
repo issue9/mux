@@ -47,10 +47,7 @@ func (ms *Middlewares) Prepend(m Func) *Middlewares {
 func (ms *Middlewares) Append(f Func) *Middlewares {
 	fs := make([]Func, 0, 1+len(ms.middlewares))
 	fs = append(fs, f)
-	if len(ms.middlewares) > 0 {
-		fs = append(fs, ms.middlewares...)
-	}
-	ms.middlewares = fs
+	ms.middlewares = append(fs, ms.middlewares...)
 	ms.Handler = Apply(ms.next, ms.middlewares...)
 	return ms
 }
