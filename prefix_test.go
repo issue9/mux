@@ -81,9 +81,20 @@ func TestRouter_Prefix(t *testing.T) {
 	p := def.Prefix("/abc")
 	a.Equal(p.prefix, "/abc")
 	a.Equal(p.Router(), def)
-
 	p = def.Prefix("")
 	a.Equal(p.prefix, "")
+
+	p = def.Prefix("/abc")
+	a.Equal(p.prefix, "/abc")
+	a.Equal(p.Router(), def)
+	pp := p.Prefix("")
+	a.Equal(pp.prefix, "/abc")
+	pp.Delete("", rest.BuildHandler(a, 201, "", nil))
+	w := httptest.NewRecorder()
+	r, err := http.NewRequest(http.MethodDelete, "/abc", nil)
+	a.NotError(err).NotNil(r)
+	def.ServeHTTP(w, r)
+	a.Equal(w.Result().StatusCode, 201)
 }
 
 func TestPrefix_Prefix(t *testing.T) {

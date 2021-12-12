@@ -132,6 +132,7 @@ func (p *Prefix) Prefix(prefix string, m ...middleware.Func) *Prefix {
 
 // Prefix 声明一个 Prefix 实例
 //
+// prefix 路由前缀字符串，可以为空；
 // m 中间件函数，按顺序调用；
 func (r *Router) Prefix(prefix string, m ...middleware.Func) *Prefix {
 	return &Prefix{router: r, prefix: prefix, ms: m}
