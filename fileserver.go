@@ -6,7 +6,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io"
+	"io/fs"
 	"net/http"
 	"os"
 	"path"
@@ -16,7 +16,7 @@ import (
 const defaultIndex = "index.html"
 
 type fileServer struct {
-	http.FileSystem
+	fs.FS
 	paramName    string
 	index        string
 	errorHandler func(http.ResponseWriter, int, interface{})
@@ -33,11 +33,11 @@ type fileServer struct {
 // 函数原型为：
 //  func(w http.ResponseWriter, status int, msg any)
 // status 表示输出的状态码，msg 表示额外的信息，一般为空或是 error 类型的数据。
-// 返回对象同时实现了 http.FileSystem 接口；
+// 返回对象同时实现了 http.FS 接口；
 //
 //  r := NewRouter("")
-//  r.Get("/assets/{path}", FileServer(http.Dir("./assets"), "path", "index.html", nil)
-func FileServer(fsys http.FileSystem, name, index string, errHandler func(http.ResponseWriter, int, any)) http.Handler {
+//  r.Get("/assets/{path}", FileServer(os.DirFS("./assets"), "path", "index.html", nil)
+func FileServer(fsys fs.FS, name, index string, errHandler func(http.ResponseWriter, int, any)) http.Handler {
 	if fsys == nil {
 		panic("参数 fsys 不能为空")
 	}
@@ -56,7 +56,7 @@ func FileServer(fsys http.FileSystem, name, index string, errHandler func(http.R
 	}
 
 	return &fileServer{
-		FileSystem:   fsys,
+		FS:           fsys,
 		paramName:    name,
 		index:        index,
 		errorHandler: errHandler,
@@ -86,12 +86,7 @@ func (f *fileServer) serve(p string, w http.ResponseWriter, r *http.Request) err
 	}
 
 STAT:
-	fi, err := f.Open(p)
-	if err != nil {
-		return err
-	}
-
-	stat, err := fi.Stat()
+	stat, err := fs.Stat(f, p)
 	if err != nil {
 		return err
 	}
@@ -100,7 +95,7 @@ STAT:
 		goto STAT
 	}
 
-	data, err := io.ReadAll(fi)
+	data, err := fs.ReadFile(f, p)
 	if err != nil {
 		return err
 	}

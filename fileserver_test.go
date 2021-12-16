@@ -4,6 +4,7 @@ package mux
 
 import (
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/issue9/assert/v2"
@@ -15,7 +16,7 @@ func TestFileServer(t *testing.T) {
 
 	r := NewRouter("fs")
 	a.NotNil(r)
-	fs := FileServer(http.Dir("./"), "path", "go.mod", nil)
+	fs := FileServer(os.DirFS("./"), "path", "go.mod", nil)
 	a.NotNil(fs)
 	r.Get("/assets/{path}", fs)
 
@@ -46,10 +47,10 @@ func TestFileServer(t *testing.T) {
 	})
 
 	a.Panic(func() {
-		FileServer(http.Dir("./"), "", "", nil)
+		FileServer(os.DirFS("./"), "", "", nil)
 	})
 
-	fs = FileServer(http.Dir("./"), "path", "", nil)
+	fs = FileServer(os.DirFS("./"), "path", "", nil)
 	fsys, ok := fs.(*fileServer)
 	a.True(ok).
 		Equal(fsys.index, defaultIndex).
