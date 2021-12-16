@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"runtime"
 	"strings"
 	"testing"
@@ -75,7 +76,7 @@ func BenchmarkFileServer(b *testing.B) {
 	router := NewRouter("")
 	a.NotNil(router)
 
-	fs := FileServer(http.Dir("./"), "path", "", nil)
+	fs := FileServer(os.DirFS("./"), "path", "", nil)
 	router.Get("/assets/{path}", fs)
 
 	b.ReportAllocs()
