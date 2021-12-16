@@ -6,7 +6,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"path"
@@ -31,13 +31,13 @@ type fileServer struct {
 // 如果要自定义，目前 status 可能的值有 403、404 和 500，
 // 其中的 500 用于处理各类出错的情况，错误信息通过 msg 传递；
 // 函数原型为：
-//  func(w http.ResponseWriter, status int, msg interface{})
+//  func(w http.ResponseWriter, status int, msg any)
 // status 表示输出的状态码，msg 表示额外的信息，一般为空或是 error 类型的数据。
 // 返回对象同时实现了 http.FileSystem 接口；
 //
 //  r := NewRouter("")
 //  r.Get("/assets/{path}", FileServer(http.Dir("./assets"), "path", "index.html", nil)
-func FileServer(fsys http.FileSystem, name, index string, errHandler func(http.ResponseWriter, int, interface{})) http.Handler {
+func FileServer(fsys http.FileSystem, name, index string, errHandler func(http.ResponseWriter, int, any)) http.Handler {
 	if fsys == nil {
 		panic("参数 fsys 不能为空")
 	}
@@ -50,7 +50,7 @@ func FileServer(fsys http.FileSystem, name, index string, errHandler func(http.R
 	}
 
 	if errHandler == nil {
-		errHandler = func(w http.ResponseWriter, status int, msg interface{}) {
+		errHandler = func(w http.ResponseWriter, status int, msg any) {
 			http.Error(w, fmt.Sprint(msg), status)
 		}
 	}
@@ -100,7 +100,7 @@ STAT:
 		goto STAT
 	}
 
-	data, err := ioutil.ReadAll(fi)
+	data, err := io.ReadAll(fi)
 	if err != nil {
 		return err
 	}

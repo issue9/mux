@@ -44,7 +44,7 @@ func Recovery(f RecoverFunc) Option {
 
 // HTTPRecovery 仅向客户端输出 status 状态码
 func HTTPRecovery(status int) Option {
-	return Recovery(func(w http.ResponseWriter, msg interface{}) {
+	return Recovery(func(w http.ResponseWriter, msg any) {
 		http.Error(w, http.StatusText(status), status)
 	})
 }
@@ -54,7 +54,7 @@ func HTTPRecovery(status int) Option {
 // status 表示向客户端输出的状态码；
 // out 输出的 io.Writer，比如 os.Stderr 等；
 func WriterRecovery(status int, out io.Writer) Option {
-	return Recovery(func(w http.ResponseWriter, msg interface{}) {
+	return Recovery(func(w http.ResponseWriter, msg any) {
 		http.Error(w, http.StatusText(status), status)
 		if _, err := fmt.Fprint(out, msg, "\n", string(debug.Stack())); err != nil {
 			panic(err)
@@ -67,7 +67,7 @@ func WriterRecovery(status int, out io.Writer) Option {
 // status 表示向客户端输出的状态码；
 // l 为输出的日志；
 func LogRecovery(status int, l *log.Logger) Option {
-	return Recovery(func(w http.ResponseWriter, msg interface{}) {
+	return Recovery(func(w http.ResponseWriter, msg any) {
 		http.Error(w, http.StatusText(status), status)
 		l.Println(msg, "\n", string(debug.Stack()))
 	})

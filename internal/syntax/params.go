@@ -15,7 +15,7 @@ import (
 const defaultParamsCap = 5
 
 var paramsPool = &sync.Pool{
-	New: func() interface{} { return &Params{Params: make([]Param, 0, defaultParamsCap)} },
+	New: func() any { return &Params{Params: make([]Param, 0, defaultParamsCap)} },
 }
 
 const contextKeyParams contextKey = 0

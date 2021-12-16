@@ -5,3 +5,5 @@ github.com/issue9/errwrap v0.2.1 h1:hrzBGbOCRs8acitpWSg54xNl2oaLGA/WZEf71bKaiEU=
 github.com/issue9/errwrap v0.2.1/go.mod h1:hjjkt9S/owgy48er68ACFfA6YPDO/xax18QE3lsguVQ=
 github.com/issue9/sliceutil v0.7.1 h1:lnzYryF50+mxqvnsPZRZ1on+gxx0Khx5t5G7q0Cf7gU=
 github.com/issue9/sliceutil v0.7.1/go.mod h1:8e+l2bD67pBUtV8cVnGChE/Ltlq8czcDLR1pOGCC2tE=
+golang.org/x/exp v0.0.0-20211214223157-bafe2e20209a h1:AAl9OocndjmqsjP37NRIXRsHZooES2MX3Imla+GKe5o=
+golang.org/x/exp v0.0.0-20211214223157-bafe2e20209a/go.mod h1:b9TAUYHmRtqA6klRHApnXMnj+OyLce4yF5cZCUbk2ps=
