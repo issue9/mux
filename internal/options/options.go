@@ -11,7 +11,7 @@ import (
 
 type Option func(*Options)
 
-type RecoverFunc func(http.ResponseWriter, interface{})
+type RecoverFunc func(http.ResponseWriter, any)
 
 type Options struct {
 	CaseInsensitive bool
