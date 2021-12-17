@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io/fs"
 	"net/http"
-	"os"
 	"path"
 	"path/filepath"
 )
@@ -71,9 +70,9 @@ func (f *fileServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	err := f.serve(name, w, r)
 	switch {
-	case errors.Is(err, os.ErrPermission):
+	case errors.Is(err, fs.ErrPermission):
 		f.errorHandler(w, http.StatusForbidden, nil)
-	case errors.Is(err, os.ErrNotExist):
+	case errors.Is(err, fs.ErrNotExist):
 		f.errorHandler(w, http.StatusNotFound, nil)
 	case err != nil:
 		f.errorHandler(w, http.StatusInternalServerError, err)
