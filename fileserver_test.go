@@ -35,6 +35,9 @@ func TestFileServer(t *testing.T) {
 			a.Contains(string(body), "package params")
 		})
 
+	// not found index
+	s.Get("/assets/params/").Do(nil).Status(http.StatusNotFound)
+
 	s.Get("/assets/not-exists").Do(nil).Status(http.StatusNotFound)
 
 	a.Panic(func() {

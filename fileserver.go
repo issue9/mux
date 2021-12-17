@@ -80,8 +80,8 @@ func (f *fileServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (f *fileServer) serve(p string, w http.ResponseWriter, r *http.Request) error {
-	if p == "" {
-		p = "."
+	if p == "" || p[len(p)-1] == '/' {
+		p += f.index
 	}
 
 STAT:
