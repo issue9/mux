@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"runtime/debug"
 
 	"github.com/issue9/errwrap"
 
@@ -55,7 +56,7 @@ func HTTPRecovery(status int) Option {
 func WriterRecovery(status int, out io.Writer) Option {
 	return Recovery(func(w http.ResponseWriter, msg interface{}) {
 		http.Error(w, http.StatusText(status), status)
-		if _, err := fmt.Fprint(out, msg); err != nil {
+		if _, err := fmt.Fprint(out, msg, "\n", string(debug.Stack())); err != nil {
 			panic(err)
 		}
 	})
@@ -68,7 +69,7 @@ func WriterRecovery(status int, out io.Writer) Option {
 func LogRecovery(status int, l *log.Logger) Option {
 	return Recovery(func(w http.ResponseWriter, msg interface{}) {
 		http.Error(w, http.StatusText(status), status)
-		l.Println(msg)
+		l.Println(msg, "\n", string(debug.Stack()))
 	})
 }
 
