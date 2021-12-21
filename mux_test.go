@@ -75,7 +75,7 @@ func TestRecovery(t *testing.T) {
 		r, err := http.NewRequest(http.MethodGet, "/path", nil)
 		a.NotError(err).NotNil(r)
 		router.ServeHTTP(w, r)
-		a.Equal(out.String(), "test").
+		a.Contains(out.String(), "test").
 			Equal(w.Code, 404)
 	})
 

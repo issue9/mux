@@ -14,8 +14,7 @@ import (
 
 func TestBuildMethodIndexes(t *testing.T) {
 	a := assert.New(t, false)
-
-	a.Empty(methodIndexes)
+	methodIndexes = map[int]methodIndexEntity{}
 
 	index := methodIndexMap[http.MethodGet]
 	buildMethodIndexes(index)

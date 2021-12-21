@@ -226,7 +226,7 @@ func TestGroup_recovery(t *testing.T) {
 	a.NotError(err).NotNil(r)
 	g.ServeHTTP(w, r)
 	a.Equal(w.Code, 405).
-		Equal(out.String(), "test")
+		Contains(out.String(), "test")
 
 	out.Reset()
 	w = httptest.NewRecorder()
@@ -234,7 +234,7 @@ func TestGroup_recovery(t *testing.T) {
 	a.NotError(err).NotNil(r)
 	g.ServeHTTP(w, r)
 	a.Equal(w.Code, 405).
-		Equal(out.String(), "test")
+		Contains(out.String(), "test")
 
 	// no recovery
 
