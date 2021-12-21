@@ -32,6 +32,7 @@ var (
 )
 
 type headResponse struct {
+	size int
 	http.ResponseWriter
 }
 
@@ -143,9 +144,9 @@ func (tree *Tree) buildMethods(v int, methods ...string) {
 
 func (resp *headResponse) Write(bs []byte) (int, error) {
 	l := len(bs)
-	// bug(caixw): 在 WriteHeader 之后，再输出 Header 并无效果，
-	// 所以在大部分时间，此代码都用不上，除非用户不主动调用 WriteHeader。
-	resp.Header().Set("Content-Length", strconv.Itoa(l))
+	resp.size += l
+
+	resp.Header().Set("Content-Length", strconv.Itoa(resp.size))
 	return l, nil
 }
 
