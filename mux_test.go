@@ -146,7 +146,7 @@ func TestTrace(t *testing.T) {
 
 	errBuf := &bytes.Buffer{}
 	w := httptest.NewRecorder()
-	Trace(w, r, false, log.New(errBuf, "ERR", 0))
+	Trace(false, log.New(errBuf, "ERR", 0)).ServeHTTP(w, r)
 	body := w.Body.String()
 	a.Contains(body, "/path").
 		NotContains(body, "body").
@@ -156,7 +156,7 @@ func TestTrace(t *testing.T) {
 
 	errBuf.Reset()
 	w = httptest.NewRecorder()
-	Trace(w, r, true, log.New(os.Stderr, "ERR", 0))
+	Trace(true, log.New(os.Stderr, "ERR", 0)).ServeHTTP(w, r)
 	body = w.Body.String()
 	a.Contains(body, "/path").
 		Contains(body, "&lt;body&gt;").
