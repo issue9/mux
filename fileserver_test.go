@@ -28,6 +28,11 @@ func TestFileServer(t *testing.T) {
 			a.Contains(string(body), "module github.com/issue9/mux/")
 		})
 
+	s.NewRequest(http.MethodHead, "/assets/").
+		Do(nil).Status(200).
+		Status(http.StatusOK).
+		BodyEmpty()
+
 	s.Get("/assets/params/params.go").Do(nil).
 		Status(http.StatusOK).
 		BodyFunc(func(a *assert.Assertion, body []byte) {

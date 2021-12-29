@@ -32,18 +32,14 @@ import (
 //               |
 //               +---- /emails
 type Tree struct {
-	// OPTIONS * 用到的请求方法列表
-	// node.methodIndex 保存自身的请求方法 CORS 的预检机制用到 node.methodIndex。
-	methodIndex int
+	methodIndex int            // OPTIONS * 用到的请求方法列表
+	methods     map[string]int // methods 保存着每个请求方法在所有子节点上的数量。
 
-	// methods 保存着每个请求方法在所有子节点上的数量。
-	methods map[string]int
+	node *Node // CORS 的预检机制用到 node.methodIndex。所以 OPTIONS * 另有一字段；
 
-	node *Node
-
+	// 由 New 负责初始化的内容
+	locker       *sync.RWMutex
 	interceptors *syntax.Interceptors
-
-	locker *sync.RWMutex
 }
 
 // New 声明一个 Tree 实例

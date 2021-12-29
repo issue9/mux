@@ -196,7 +196,7 @@ func (r *Router) serveHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	node, ps := r.tree.Route(path)
-	if node == nil { // 由 tree.Route 保证在 node == nil 时，ps 也为 nil。
+	if node == nil {
 		r.options.NotFound.ServeHTTP(w, req)
 		return
 	}
