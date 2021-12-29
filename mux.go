@@ -220,7 +220,7 @@ const traceContentType = "message/http"
 //
 // NOTE: 并不是百分百原样返回，具体可参考 net/http/httputil.DumpRequest 的说明。
 // 如果内容包含特殊的 HTML 字符会被 html.EscapeString 转码。
-func Trace(body bool, log *log.Logger) http.HandlerFunc {
+func Trace(body bool, log *log.Logger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		text, err := httputil.DumpRequest(r, body)
 		if err == nil {
