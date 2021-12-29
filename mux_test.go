@@ -7,6 +7,8 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/issue9/assert/v2"
@@ -134,4 +136,31 @@ func TestURL(t *testing.T) {
 
 	url, err = URL("/posts/{id:\\\\d+}/author/{page}/", map[string]string{"id": "100", "page": "200"})
 	a.NotError(err).Equal(url, "/posts/100/author/200/")
+}
+
+func TestTrace(t *testing.T) {
+	a := assert.New(t, false)
+
+	r, err := http.NewRequest(http.MethodTrace, "/path", bytes.NewBufferString("<body>"))
+	a.NotError(err).NotNil(r)
+
+	errBuf := &bytes.Buffer{}
+	w := httptest.NewRecorder()
+	Trace(w, r, false, log.New(errBuf, "ERR", 0))
+	body := w.Body.String()
+	a.Contains(body, "/path").
+		NotContains(body, "body").
+		True(strings.HasPrefix(body, http.MethodTrace)).
+		Equal(w.Header().Get("content-type"), traceContentType).
+		Empty(errBuf.String())
+
+	errBuf.Reset()
+	w = httptest.NewRecorder()
+	Trace(w, r, true, log.New(os.Stderr, "ERR", 0))
+	body = w.Body.String()
+	a.Contains(body, "/path").
+		Contains(body, "&lt;body&gt;").
+		True(strings.HasPrefix(body, http.MethodTrace)).
+		Equal(w.Header().Get("content-type"), traceContentType).
+		Empty(errBuf.String())
 }
