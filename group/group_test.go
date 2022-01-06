@@ -98,13 +98,13 @@ func TestGroup(t *testing.T) {
 	def := g.New("host", h)
 	a.NotNil(def)
 
-	def.GetFunc("/posts/{id:digit}.html", func(w http.ResponseWriter, r *http.Request) {
+	def.Get("/posts/{id:digit}.html", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ps := syntax.GetParams(r)
 		a.Equal(ps.MustString("sub", "not-found"), "abc").
 			Equal(ps.MustInt("id", -1), 5)
 		w.WriteHeader(http.StatusAccepted)
 		exit <- true
-	})
+	}))
 
 	rest.NewRequest(a, http.MethodGet, "https://abc.example.com/posts/5.html").
 		Do(g).
@@ -122,7 +122,7 @@ func TestGroup_recovery(t *testing.T) {
 	a.NotNil(h)
 	def := g.New("version", h)
 	a.NotNil(def)
-	def.GetFunc("/path", func(http.ResponseWriter, *http.Request) { panic("test") })
+	def.Get("/path", http.HandlerFunc(func(http.ResponseWriter, *http.Request) { panic("test") }))
 
 	w := httptest.NewRecorder()
 	r, err := http.NewRequest(http.MethodGet, "/v2/path", nil)
@@ -147,7 +147,7 @@ func TestGroup_recovery(t *testing.T) {
 	a.NotNil(h)
 	def = g.New("version", h)
 	a.NotNil(def)
-	def.GetFunc("/path", func(http.ResponseWriter, *http.Request) { panic("test") })
+	def.Get("/path", http.HandlerFunc(func(http.ResponseWriter, *http.Request) { panic("test") }))
 
 	a.PanicString(func() {
 		w = httptest.NewRecorder()
@@ -213,7 +213,7 @@ func TestGroup_routers(t *testing.T) {
 	g.Add(h, def)
 	p1 := def.Prefix("/prefix1")
 	p2 := p1.Prefix("/prefix2")
-	p2.GetFunc("/p2", rest.BuildHandlerFunc(a, 204, "", nil))
+	p2.Get("/p2", rest.BuildHandler(a, 204, "", nil))
 
 	rest.NewRequest(a, http.MethodGet, "/prefix1/prefix2/p2").Do(g).Status(404)
 	rest.NewRequest(a, http.MethodGet, "https://localhost/prefix1/prefix2/p2").Do(g).Status(204)
@@ -224,7 +224,7 @@ func TestGroup_routers(t *testing.T) {
 	g.Add(MatcherFunc(Any), def)
 	p1 = def.Prefix("/prefix1")
 	p2 = p1.Prefix("example.com")
-	p2.GetFunc("/p2", rest.BuildHandlerFunc(a, 205, "", nil))
+	p2.Get("/p2", rest.BuildHandler(a, 205, "", nil))
 	rest.NewRequest(a, http.MethodGet, "/prefix1example.com/p2").Do(g).Status(205)
 }
 

@@ -110,34 +110,6 @@ func (r *Router) Any(pattern string, h http.Handler) *Router {
 	return r.Handle(pattern, h)
 }
 
-func (r *Router) HandleFunc(pattern string, f http.HandlerFunc, methods ...string) *Router {
-	return r.Handle(pattern, f, methods...)
-}
-
-func (r *Router) GetFunc(pattern string, f http.HandlerFunc) *Router {
-	return r.HandleFunc(pattern, f, http.MethodGet)
-}
-
-func (r *Router) PutFunc(pattern string, f http.HandlerFunc) *Router {
-	return r.HandleFunc(pattern, f, http.MethodPut)
-}
-
-func (r *Router) PostFunc(pattern string, f http.HandlerFunc) *Router {
-	return r.HandleFunc(pattern, f, http.MethodPost)
-}
-
-func (r *Router) DeleteFunc(pattern string, f http.HandlerFunc) *Router {
-	return r.HandleFunc(pattern, f, http.MethodDelete)
-}
-
-func (r *Router) PatchFunc(pattern string, f http.HandlerFunc) *Router {
-	return r.HandleFunc(pattern, f, http.MethodPatch)
-}
-
-func (r *Router) AnyFunc(pattern string, f http.HandlerFunc) *Router {
-	return r.HandleFunc(pattern, f)
-}
-
 // URL 根据参数生成地址
 //
 // strict 是否检查路由是否真实存在以及参数是否符合要求；

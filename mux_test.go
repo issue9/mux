@@ -89,11 +89,11 @@ func TestOption(t *testing.T) {
 func TestRecovery(t *testing.T) {
 	a := assert.New(t, false)
 
-	p := func(w http.ResponseWriter, r *http.Request) { panic("test") }
+	p := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { panic("test") })
 
 	router := NewRouter("")
 	a.NotNil(router).Nil(router.options.RecoverFunc)
-	router.GetFunc("/path", p)
+	router.Get("/path", p)
 	a.Panic(func() {
 		w := httptest.NewRecorder()
 		r, err := http.NewRequest(http.MethodGet, "/path", nil)
@@ -105,7 +105,7 @@ func TestRecovery(t *testing.T) {
 	out := new(bytes.Buffer)
 	router = NewRouter("", WriterRecovery(404, out))
 	a.NotNil(router).NotNil(router.options.RecoverFunc)
-	router.GetFunc("/path", p)
+	router.Get("/path", p)
 	a.NotPanic(func() {
 		w := httptest.NewRecorder()
 		r, err := http.NewRequest(http.MethodGet, "/path", nil)
@@ -120,7 +120,7 @@ func TestRecovery(t *testing.T) {
 	l := log.New(out, "test:", 0)
 	router = NewRouter("", LogRecovery(405, l))
 	a.NotNil(router).NotNil(router.options.RecoverFunc)
-	router.GetFunc("/path", p)
+	router.Get("/path", p)
 	a.NotPanic(func() {
 		w := httptest.NewRecorder()
 		r, err := http.NewRequest(http.MethodGet, "/path", nil)
@@ -133,7 +133,7 @@ func TestRecovery(t *testing.T) {
 	// HTTPRecovery
 	router = NewRouter("", HTTPRecovery(406))
 	a.NotNil(router).NotNil(router.options.RecoverFunc)
-	router.GetFunc("/path", p)
+	router.Get("/path", p)
 	a.NotPanic(func() {
 		w := httptest.NewRecorder()
 		r, err := http.NewRequest(http.MethodGet, "/path", nil)

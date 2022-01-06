@@ -46,34 +46,6 @@ func (p *Prefix) Any(pattern string, h http.Handler) *Prefix {
 	return p.Handle(pattern, h)
 }
 
-func (p *Prefix) HandleFunc(pattern string, f http.HandlerFunc, methods ...string) *Prefix {
-	return p.Handle(pattern, f, methods...)
-}
-
-func (p *Prefix) GetFunc(pattern string, f http.HandlerFunc) *Prefix {
-	return p.HandleFunc(pattern, f, http.MethodGet)
-}
-
-func (p *Prefix) PutFunc(pattern string, f http.HandlerFunc) *Prefix {
-	return p.HandleFunc(pattern, f, http.MethodPut)
-}
-
-func (p *Prefix) PostFunc(pattern string, f http.HandlerFunc) *Prefix {
-	return p.HandleFunc(pattern, f, http.MethodPost)
-}
-
-func (p *Prefix) DeleteFunc(pattern string, f http.HandlerFunc) *Prefix {
-	return p.HandleFunc(pattern, f, http.MethodDelete)
-}
-
-func (p *Prefix) PatchFunc(pattern string, f http.HandlerFunc) *Prefix {
-	return p.HandleFunc(pattern, f, http.MethodPatch)
-}
-
-func (p *Prefix) AnyFunc(pattern string, f http.HandlerFunc) *Prefix {
-	return p.HandleFunc(pattern, f)
-}
-
 // Remove 删除指定匹配模式的路由项
 func (p *Prefix) Remove(pattern string, methods ...string) {
 	p.router.Remove(p.prefix+pattern, methods...)

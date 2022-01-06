@@ -44,32 +44,6 @@ func (r *Resource) Patch(h http.Handler) *Resource {
 
 func (r *Resource) Any(h http.Handler) *Resource { return r.Handle(h) }
 
-func (r *Resource) HandleFunc(f http.HandlerFunc, methods ...string) *Resource {
-	return r.Handle(f, methods...)
-}
-
-func (r *Resource) GetFunc(f http.HandlerFunc) *Resource {
-	return r.HandleFunc(f, http.MethodGet)
-}
-
-func (r *Resource) PutFunc(f http.HandlerFunc) *Resource {
-	return r.HandleFunc(f, http.MethodPut)
-}
-
-func (r *Resource) PostFunc(f http.HandlerFunc) *Resource {
-	return r.HandleFunc(f, http.MethodPost)
-}
-
-func (r *Resource) DeleteFunc(f http.HandlerFunc) *Resource {
-	return r.HandleFunc(f, http.MethodDelete)
-}
-
-func (r *Resource) PatchFunc(f http.HandlerFunc) *Resource {
-	return r.HandleFunc(f, http.MethodPatch)
-}
-
-func (r *Resource) AnyFunc(f http.HandlerFunc) *Resource { return r.HandleFunc(f) }
-
 // Remove 删除指定匹配模式的路由项
 func (r *Resource) Remove(methods ...string) { r.router.Remove(r.pattern, methods...) }
 

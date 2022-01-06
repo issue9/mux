@@ -46,7 +46,7 @@ func init() {
 	calcMemStats(func() {
 		srv = NewRouter("", Lock)
 		for _, api := range apis {
-			srv.HandleFunc(api.pattern, benchHandler, api.method)
+			srv.Handle(api.pattern, http.HandlerFunc(benchHandler), api.method)
 		}
 	})
 }
@@ -97,7 +97,7 @@ func BenchmarkURL(b *testing.B) {
 
 	router := NewRouter("", Lock)
 	for _, api := range apis {
-		router.HandleFunc(api.pattern, benchHandler, api.method)
+		router.Handle(api.pattern, http.HandlerFunc(benchHandler), api.method)
 	}
 
 	b.ReportAllocs()
@@ -120,7 +120,7 @@ func BenchmarkRouter_URL(b *testing.B) {
 
 	router := NewRouter("", Lock, URLDomain(domain))
 	for _, api := range apis {
-		router.HandleFunc(api.pattern, benchHandler, api.method)
+		router.Handle(api.pattern, http.HandlerFunc(benchHandler), api.method)
 	}
 
 	b.ReportAllocs()
@@ -150,7 +150,7 @@ func BenchmarkRouter_AddAndServeHTTP(b *testing.B) {
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest(api.method, api.test, nil)
 
-		router.HandleFunc(api.pattern, benchHandler, api.method)
+		router.Handle(api.pattern, http.HandlerFunc(benchHandler), api.method)
 		router.ServeHTTP(w, r)
 		router.Remove(api.pattern, api.method)
 
@@ -164,7 +164,7 @@ func BenchmarkRouter_AddAndServeHTTP(b *testing.B) {
 func BenchmarkRouter_ServeHTTP(b *testing.B) {
 	router := NewRouter("")
 	for _, api := range apis {
-		router.HandleFunc(api.pattern, benchHandler, api.method)
+		router.Handle(api.pattern, http.HandlerFunc(benchHandler), api.method)
 	}
 
 	b.ReportAllocs()
