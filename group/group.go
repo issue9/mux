@@ -13,38 +13,41 @@ import (
 	"github.com/issue9/mux/v5/internal/options"
 )
 
-// Group 一组路由
+type Group = GroupOf[http.Handler]
+
+// GroupOf 一组路由
 //
 // 当路由关联的 Matcher 返回 true 时，就会进入该路由。
 // 如果多条路由的 Matcher 都返回 true，则第一条路由获得权限，
 // 即使该路由最终返回 404，也不会再在其它路由里查找相应的路由。
 // 所以在有多条子路由的情况下，第一条子路由不应该永远返回 true，
 // 否则其它子路由永远无法到达。
-type Group struct {
-	routers []*router
+type GroupOf[T any] struct {
+	routers []*routerOf[T]
 	options []mux.Option
 
 	notFound http.Handler
 	recovery mux.RecoverFunc
 }
 
-type router struct {
-	*mux.Router
+type routerOf[T any] struct {
+	*mux.RouterOf[T]
 	matcher Matcher
 }
 
 // New 声明一个新的 Groups
 //
-// o 用于设置由 New 添加的路由，有关 NotFound 与 Recovery 的设置同时会作用于 Group。
-func New(o ...mux.Option) *Group {
+// o 用于设置由 New 添加的路由，有关 NotFound 与 Recovery 的设置同时会作用于 GroupOf。
+func New[T any](o ...mux.Option) *GroupOf[T] {
+	// TODO 需要通过参数传递中间件
 	opt, err := options.Build(o...)
 	if err != nil {
 		panic(err)
 	}
 
-	g := &Group{
+	g := &GroupOf[T]{
 		options: o,
-		routers: make([]*router, 0, 1),
+		routers: make([]*routerOf, 0, 1),
 
 		notFound: opt.NotFound,
 		recovery: opt.RecoverFunc,
@@ -52,7 +55,7 @@ func New(o ...mux.Option) *Group {
 	return g
 }
 
-func (g *Group) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (g *GroupOf[T]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if g.recovery != nil {
 		defer func() {
 			if err := recover(); err != nil {
@@ -73,14 +76,14 @@ func (g *Group) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // New 声明新路由
 //
 // 初始化参数从 g.options 中获取，但是可以通过 o 作修改。
-func (g *Group) New(name string, matcher Matcher, o ...mux.Option) *mux.Router {
-	r := mux.NewRouter(name, append(g.options, o...)...)
+func (g *GroupOf[T]) New(name string, matcher Matcher, o ...mux.Option) *mux.RouterOf[T] {
+	r := mux.NewRouterOf[T](name, append(g.options, o...)...)
 	g.Add(matcher, r)
 	return r
 }
 
 // Add 添加路由
-func (g *Group) Add(matcher Matcher, r *mux.Router) {
+func (g *GroupOf[T]) Add(matcher Matcher, r *mux.RouterOf[T]) {
 	if matcher == nil {
 		panic("参数 matcher 不能为空")
 	}
@@ -97,37 +100,37 @@ func (g *Group) Add(matcher Matcher, r *mux.Router) {
 		panic(fmt.Sprintf("已经存在名为 %s 的路由", r.Name()))
 	}
 
-	g.routers = append(g.routers, &router{Router: r, matcher: matcher})
+	g.routers = append(g.routers, &routerOf[T]{RouterOf: r, matcher: matcher})
 }
 
 // Router 返回指定名称的路由
-func (g *Group) Router(name string) *mux.Router {
+func (g *GroupOf[T]) Router(name string) *mux.RouterOf[T] {
 	for _, r := range g.routers {
 		if r.Name() == name {
-			return r.Router
+			return r.RouterOf
 		}
 	}
 	return nil
 }
 
 // Routers 返回路由列表
-func (g *Group) Routers() []*mux.Router {
-	routers := make([]*mux.Router, 0, len(g.routers))
+func (g *GroupOf[T]) Routers() []*mux.RouterOf[T] {
+	routers := make([]*mux.RouterOf[T], 0, len(g.routers))
 	for _, r := range g.routers {
-		routers = append(routers, r.Router)
+		routers = append(routers, r.RouterOf)
 	}
 	return routers
 }
 
 // Remove 删除路由
-func (g *Group) Remove(name string) {
+func (g *GroupOf[T]) Remove(name string) {
 	size := sliceutil.Delete(g.routers, func(i int) bool {
 		return g.routers[i].Name() == name
 	})
 	g.routers = g.routers[:size]
 }
 
-func (g *Group) Routes() map[string]map[string][]string {
+func (g *GroupOf[T]) Routes() map[string]map[string][]string {
 	routers := g.Routers()
 
 	routes := make(map[string]map[string][]string, len(routers))

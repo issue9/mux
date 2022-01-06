@@ -14,7 +14,7 @@ import (
 func TestFileServer(t *testing.T) {
 	a := assert.New(t, false)
 
-	r := NewRouter("fs")
+	r := NewRouter("fs", nil)
 	a.NotNil(r)
 	fs := FileServer(os.DirFS("./"), "path", "go.mod", nil)
 	a.NotNil(fs)

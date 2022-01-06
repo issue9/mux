@@ -21,7 +21,7 @@ type tester struct {
 }
 
 func newTester(t testing.TB, o ...Option) *tester {
-	r := NewRouter("def", o...)
+	r := NewRouter("def", nil, o...)
 	a := assert.New(t, false)
 	a.NotNil(r)
 	a.Equal("def", r.Name())
@@ -194,7 +194,7 @@ func TestRouter_Handle_Remove(t *testing.T) {
 func TestRouter_Routes(t *testing.T) {
 	a := assert.New(t, false)
 
-	def := NewRouter("")
+	def := NewRouter("", nil)
 	a.NotNil(def)
 	def.Get("/m", rest.BuildHandler(a, 1, "", nil))
 	def.Post("/m", rest.BuildHandler(a, 1, "", nil))
@@ -203,7 +203,7 @@ func TestRouter_Routes(t *testing.T) {
 
 func TestRouter_Params(t *testing.T) {
 	a := assert.New(t, false)
-	router := NewRouter("", Interceptor(InterceptorDigit, "digit"))
+	router := NewRouter("", nil, Interceptor(InterceptorDigit, "digit"))
 	a.NotNil(router)
 
 	var globalParams Params
@@ -270,7 +270,7 @@ func TestRouter_Params(t *testing.T) {
 func TestRouter_Clean(t *testing.T) {
 	a := assert.New(t, false)
 
-	def := NewRouter("")
+	def := NewRouter("", nil)
 	a.NotNil(def)
 	def.Get("/m1", rest.BuildHandler(a, 200, "", nil)).
 		Post("/m1", rest.BuildHandler(a, 201, "", nil))

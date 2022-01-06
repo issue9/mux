@@ -41,12 +41,12 @@ func init() {
 		api.ps = ps
 	}
 
-	var srv *Router
+	var r *Router
 
 	calcMemStats(func() {
-		srv = NewRouter("", Lock)
+		r = NewRouter("", nil, Lock)
 		for _, api := range apis {
-			srv.Handle(api.pattern, http.HandlerFunc(benchHandler), api.method)
+			r.Handle(api.pattern, http.HandlerFunc(benchHandler), api.method)
 		}
 	})
 }
@@ -73,7 +73,7 @@ func calcMemStats(load func()) {
 
 func BenchmarkFileServer(b *testing.B) {
 	a := assert.New(b, false)
-	router := NewRouter("")
+	router := NewRouter("", nil)
 	a.NotNil(router)
 
 	fs := FileServer(os.DirFS("./"), "path", "", nil)
@@ -95,7 +95,7 @@ func BenchmarkFileServer(b *testing.B) {
 func BenchmarkURL(b *testing.B) {
 	a := assert.New(b, false)
 
-	router := NewRouter("", Lock)
+	router := NewRouter("", nil, Lock)
 	for _, api := range apis {
 		router.Handle(api.pattern, http.HandlerFunc(benchHandler), api.method)
 	}
@@ -118,7 +118,7 @@ func BenchmarkRouter_URL(b *testing.B) {
 	a := assert.New(b, false)
 	domain := "https://github.com"
 
-	router := NewRouter("", Lock, URLDomain(domain))
+	router := NewRouter("", nil, Lock, URLDomain(domain))
 	for _, api := range apis {
 		router.Handle(api.pattern, http.HandlerFunc(benchHandler), api.method)
 	}
@@ -139,7 +139,7 @@ func BenchmarkRouter_URL(b *testing.B) {
 
 // 动态添加和删除路由
 func BenchmarkRouter_AddAndServeHTTP(b *testing.B) {
-	router := NewRouter("", Lock)
+	router := NewRouter("", nil, Lock)
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -162,7 +162,7 @@ func BenchmarkRouter_AddAndServeHTTP(b *testing.B) {
 
 // 对一组添加完成的路由进行路由操作
 func BenchmarkRouter_ServeHTTP(b *testing.B) {
-	router := NewRouter("")
+	router := NewRouter("", nil)
 	for _, api := range apis {
 		router.Handle(api.pattern, http.HandlerFunc(benchHandler), api.method)
 	}

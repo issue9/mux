@@ -38,7 +38,7 @@ func (hs *Hosts) Match(r *http.Request) (*http.Request, bool) {
 		return nil, false
 	}
 
-	// NOTE: ps 会在 Router.ServeHTTP 中被放回池中，不用再额外处理。
+	// NOTE: ps 会在 RouterOf.ServeHTTP 中被放回池中，不用再额外处理。
 	return syntax.WithValue(r, ps), true
 }
 

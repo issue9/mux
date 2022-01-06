@@ -13,8 +13,6 @@ type Option func(*Options)
 
 type RecoverFunc func(http.ResponseWriter, any)
 
-type MiddlewareFunc func(http.Handler) http.Handler
-
 type Options struct {
 	CaseInsensitive bool
 	Lock            bool
@@ -22,7 +20,6 @@ type Options struct {
 	Interceptors    *syntax.Interceptors
 	URLDomain       string
 	RecoverFunc     RecoverFunc
-	Middlewares     []MiddlewareFunc
 
 	NotFound,
 	MethodNotAllowed http.Handler
@@ -62,6 +59,10 @@ func (o *Options) sanitize() error {
 func Build(o ...Option) (*Options, error) {
 	opt := &Options{}
 	for _, option := range o {
+		if option == nil {
+			panic("option 不能为空值")
+		}
+
 		option(opt)
 	}
 

@@ -60,7 +60,7 @@ func TestResource(t *testing.T) {
 
 func TestRouter_Resource(t *testing.T) {
 	a := assert.New(t, false)
-	def := NewRouter("")
+	def := NewRouter("", nil)
 	a.NotNil(def)
 
 	r1 := def.Resource("/abc/1")
@@ -83,7 +83,7 @@ func TestRouter_Resource(t *testing.T) {
 func TestPrefix_Resource(t *testing.T) {
 	a := assert.New(t, false)
 
-	def := NewRouter("")
+	def := NewRouter("", nil)
 	a.NotNil(def)
 
 	p := def.Prefix("/p1", buildMiddleware(a, "p1"), buildMiddleware(a, "p2"))
@@ -103,7 +103,7 @@ func TestPrefix_Resource(t *testing.T) {
 
 func TestResource_URL(t *testing.T) {
 	a := assert.New(t, false)
-	def := NewRouter("", AllowedCORS)
+	def := NewRouter("", nil, AllowedCORS)
 	a.NotNil(def)
 
 	// 非正则

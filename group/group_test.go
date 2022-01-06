@@ -15,9 +15,9 @@ import (
 	"github.com/issue9/mux/v5/internal/syntax"
 )
 
-var _ http.Handler = &Group{}
+var _ http.Handler = &GroupOf{}
 
-func newRouter(a *assert.Assertion, name string) *mux.Router {
+func newRouter(a *assert.Assertion, name string) *mux.RouterOf {
 	a.TB().Helper()
 
 	r := mux.NewRouter(name)

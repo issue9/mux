@@ -28,7 +28,7 @@ type (
 	RecoverFunc = options.RecoverFunc
 
 	// MiddlewareFunc 中间件处理函数
-	MiddlewareFunc = options.MiddlewareFunc
+	MiddlewareFunc[T any] func(T) T
 
 	// InterceptorFunc 拦截器的函数原型
 	InterceptorFunc = syntax.InterceptorFunc
@@ -37,24 +37,11 @@ type (
 	Params = params.Params
 )
 
-func applyMiddlewares(h http.Handler, f ...MiddlewareFunc) http.Handler {
+func applyMiddlewares[T any](h T, f ...MiddlewareFunc[T]) T {
 	for _, ff := range f {
 		h = ff(h)
 	}
 	return h
-}
-
-// Middleware 指定全局的中间件
-//
-// 这些指定的中间件将应用于整个 Router 或是通过 Group.New 添加的 Router。
-// 按参数顺序进行调用每个中间件。
-func Middleware(m ...MiddlewareFunc) Option {
-	return func(o *options.Options) {
-		if len(o.Middlewares) == 0 {
-			o.Middlewares = make([]MiddlewareFunc, 0, len(m)*2)
-		}
-		o.Middlewares = append(o.Middlewares, m...)
-	}
 }
 
 // Recovery 用于指路由 panic 之后的处理方法
@@ -98,7 +85,7 @@ func LogRecovery(status int, l *log.Logger) Option {
 	})
 }
 
-// URLDomain 为 Router.URL 生成的地址带上域名
+// URLDomain 为 RouterOf.URL 生成的地址带上域名
 func URLDomain(domain string) Option {
 	return func(o *options.Options) { o.URLDomain = domain }
 }
@@ -143,7 +130,7 @@ func CaseInsensitive(o *options.Options) { o.CaseInsensitive = true }
 
 // Lock 是否加锁
 //
-// 在调用 Router.Add 添加路由时，有可能会改变整个路由树的结构，
+// 在调用 RouterOf.Add 添加路由时，有可能会改变整个路由树的结构，
 // 如果需要频繁在运行时添加和删除路由项，那么应当添加此选项。
 func Lock(o *options.Options) { o.Lock = true }
 
