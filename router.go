@@ -11,7 +11,6 @@ import (
 	"github.com/issue9/mux/v5/internal/options"
 	"github.com/issue9/mux/v5/internal/syntax"
 	"github.com/issue9/mux/v5/internal/tree"
-	"github.com/issue9/mux/v5/middleware"
 )
 
 // Router 路由
@@ -26,7 +25,6 @@ import (
 // 如果需要同时对多个 Router 实例进行路由，可以采用  group.Group 对象管理多个 Router 实例。
 type Router struct {
 	tree    *tree.Tree
-	ms      *middleware.Middlewares
 	options *options.Options
 	name    string
 }
@@ -48,7 +46,6 @@ func NewRouter(name string, o ...Option) *Router {
 		options: opt,
 		name:    name,
 	}
-	r.ms = middleware.NewMiddlewares(http.HandlerFunc(r.serveHTTP))
 
 	return r
 }
@@ -76,10 +73,14 @@ func (r *Router) Remove(pattern string, methods ...string) {
 // methods 该路由项对应的请求方法，如果未指定值，则表示所有支持的请求方法，
 // 但不包含 OPTIONS 和 HEAD。
 func (r *Router) Handle(pattern string, h http.Handler, methods ...string) *Router {
+	r.handle(pattern, applyMiddlewares(h, r.options.Middlewares...), methods...)
+	return r
+}
+
+func (r *Router) handle(pattern string, h http.Handler, methods ...string) {
 	if err := r.tree.Add(pattern, h, methods...); err != nil {
 		panic(err)
 	}
-	return r
 }
 
 // Get 相当于 Router.Handle(pattern, h, http.MethodGet) 的简易写法
@@ -176,7 +177,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}()
 	}
 
-	r.ms.ServeHTTP(w, req)
+	r.serveHTTP(w, req)
 }
 
 func (r *Router) serveHTTP(w http.ResponseWriter, req *http.Request) {
@@ -206,6 +207,3 @@ func (r *Router) serveHTTP(w http.ResponseWriter, req *http.Request) {
 
 // Name 路由名称
 func (r *Router) Name() string { return r.name }
-
-// Middlewares 返回中间件管理接口
-func (r *Router) Middlewares() *middleware.Middlewares { return r.ms }

@@ -2,11 +2,7 @@
 
 package mux
 
-import (
-	"net/http"
-
-	"github.com/issue9/mux/v5/middleware"
-)
+import "net/http"
 
 // Prefix 操纵统一前缀的路由
 //
@@ -18,11 +14,11 @@ import (
 type Prefix struct {
 	router *Router
 	prefix string
-	ms     []middleware.Func
+	ms     []MiddlewareFunc
 }
 
 func (p *Prefix) Handle(pattern string, h http.Handler, methods ...string) *Prefix {
-	p.router.Handle(p.prefix+pattern, middleware.Apply(h, p.ms...), methods...)
+	p.router.handle(p.prefix+pattern, applyMiddlewares(h, p.ms...), methods...)
 	return p
 }
 
@@ -109,8 +105,8 @@ func (p *Prefix) URL(strict bool, pattern string, params map[string]string) (str
 //  v.Get("/users")   // 相当于 g.Get("/api/v2/users")
 //  v.Get("/users/1") // 相当于 g.Get("/api/v2/users/1")
 //  v.Get("example.com/users/1") // 相当于 g.Get("/api/v2/example.com/users/1")
-func (p *Prefix) Prefix(prefix string, m ...middleware.Func) *Prefix {
-	ms := make([]middleware.Func, 0, len(p.ms)+len(m))
+func (p *Prefix) Prefix(prefix string, m ...MiddlewareFunc) *Prefix {
+	ms := make([]MiddlewareFunc, 0, len(p.ms)+len(m))
 	ms = append(ms, p.ms...)
 	ms = append(ms, m...)
 	return p.router.Prefix(p.prefix+prefix, ms...)
@@ -120,8 +116,11 @@ func (p *Prefix) Prefix(prefix string, m ...middleware.Func) *Prefix {
 //
 // prefix 路由前缀字符串，可以为空；
 // m 中间件函数，按顺序调用；
-func (r *Router) Prefix(prefix string, m ...middleware.Func) *Prefix {
-	return &Prefix{router: r, prefix: prefix, ms: m}
+func (r *Router) Prefix(prefix string, m ...MiddlewareFunc) *Prefix {
+	ms := make([]MiddlewareFunc, 0, len(r.options.Middlewares)+len(m))
+	ms = append(ms, r.options.Middlewares...)
+	ms = append(ms, m...)
+	return &Prefix{router: r, prefix: prefix, ms: ms}
 }
 
 // Router 返回与当前关联的 *Router 实例

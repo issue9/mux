@@ -9,8 +9,6 @@ import (
 
 	"github.com/issue9/assert/v2"
 	"github.com/issue9/assert/v2/rest"
-
-	"github.com/issue9/mux/v5/middleware"
 )
 
 var _ http.Handler = &Router{}
@@ -351,44 +349,4 @@ func TestRouter_ServeHTTP_Order(t *testing.T) {
 	test.matchCode(http.MethodGet, "/tags", 203)                                        // f3 // 正好与 f1 的第一个节点匹配
 	test.matchCode(http.MethodGet, "/tags/1.html", 201)                                 // f1
 	test.matchCode(http.MethodGet, "/tags.html", 202)                                   // f2
-}
-
-func buildMiddleware(a *assert.Assertion, text string) middleware.Func {
-	return func(h http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			h.ServeHTTP(w, r) // 先输出被包含的内容
-			_, err := w.Write([]byte(text))
-			a.NotError(err)
-		})
-	}
-}
-
-func TestRouter_Middleware(t *testing.T) {
-	a := assert.New(t, false)
-
-	def := NewRouter("")
-	a.NotNil(def)
-	def.Get("/get", rest.BuildHandler(a, 201, "", nil))
-	ms := def.Middlewares()
-	ms.Append(buildMiddleware(a, "rp1")).
-		Prepend(buildMiddleware(a, "ra1")).
-		Append(buildMiddleware(a, "rp2")).
-		Prepend(buildMiddleware(a, "ra2"))
-
-	w := httptest.NewRecorder()
-	r, err := http.NewRequest(http.MethodGet, "/get", nil)
-	a.NotError(err).NotNil(r)
-	def.ServeHTTP(w, r)
-	a.Equal(w.Code, 201).
-		Equal(w.Body.String(), "rp2rp1ra1ra2") // buildHandler 导致顶部的后输出
-
-	// CleanMiddlewares
-
-	ms.Reset()
-	w = httptest.NewRecorder()
-	r, err = http.NewRequest(http.MethodGet, "/get", nil)
-	a.NotError(err).NotNil(r)
-	def.ServeHTTP(w, r)
-	a.Equal(w.Code, 201).
-		Empty(w.Body.String())
 }

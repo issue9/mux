@@ -27,12 +27,35 @@ type (
 	// RecoverFunc 路由对 panic 的处理函数原型
 	RecoverFunc = options.RecoverFunc
 
+	// MiddlewareFunc 中间件处理函数
+	MiddlewareFunc = options.MiddlewareFunc
+
 	// InterceptorFunc 拦截器的函数原型
 	InterceptorFunc = syntax.InterceptorFunc
 
 	// Params 路由参数
 	Params = params.Params
 )
+
+func applyMiddlewares(h http.Handler, f ...MiddlewareFunc) http.Handler {
+	for _, ff := range f {
+		h = ff(h)
+	}
+	return h
+}
+
+// Middleware 指定全局的中间件
+//
+// 这些指定的中间件将应用于整个 Router 或是通过 Group.New 添加的 Router。
+// 按参数顺序进行调用每个中间件。
+func Middleware(m ...MiddlewareFunc) Option {
+	return func(o *options.Options) {
+		if len(o.Middlewares) == 0 {
+			o.Middlewares = make([]MiddlewareFunc, 0, len(m)*2)
+		}
+		o.Middlewares = append(o.Middlewares, m...)
+	}
+}
 
 // Recovery 用于指路由 panic 之后的处理方法
 //

@@ -13,20 +13,9 @@ import (
 
 	"github.com/issue9/mux/v5"
 	"github.com/issue9/mux/v5/internal/syntax"
-	"github.com/issue9/mux/v5/middleware"
 )
 
 var _ http.Handler = &Group{}
-
-func buildMiddleware(a *assert.Assertion, text string) middleware.Func {
-	return func(h http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			h.ServeHTTP(w, r) // 先输出被包含的内容
-			_, err := w.Write([]byte(text))
-			a.NotError(err)
-		})
-	}
-}
 
 func newRouter(a *assert.Assertion, name string) *mux.Router {
 	a.TB().Helper()
@@ -34,93 +23,6 @@ func newRouter(a *assert.Assertion, name string) *mux.Router {
 	r := mux.NewRouter(name)
 	a.NotNil(r)
 	return r
-}
-
-func TestGroup_PrependMiddleware(t *testing.T) {
-	a := assert.New(t, false)
-	g := New()
-	a.NotNil(g)
-	def := newRouter(a, "def")
-	g.Add(MatcherFunc(Any), def)
-
-	def.Get("/get", rest.BuildHandler(a, 201, "", nil))
-	g.Middlewares().Prepend(buildMiddleware(a, "1")).
-		Prepend(buildMiddleware(a, "2"))
-
-	rest.NewRequest(a, http.MethodGet, "/get").Do(g).Status(201).StringBody("12")
-
-	// Reset
-
-	g.Middlewares().Reset()
-	rest.NewRequest(a, http.MethodGet, "/get").Do(g).Status(201).BodyEmpty()
-}
-
-func TestGroup_AppendMiddleware(t *testing.T) {
-	a := assert.New(t, false)
-	g := New()
-	a.NotNil(g)
-	def := newRouter(a, "def")
-	g.Add(MatcherFunc(Any), def)
-
-	def.Get("/get", rest.BuildHandler(a, 201, "", nil))
-	g.Middlewares().Append(buildMiddleware(a, "1")).
-		Append(buildMiddleware(a, "2"))
-
-	rest.NewRequest(a, http.MethodGet, "/get").Do(g).Status(201).StringBody("21")
-
-	// Reset
-
-	g.Middlewares().Reset()
-	rest.NewRequest(a, http.MethodGet, "/get").Do(g).Status(201).BodyEmpty()
-}
-
-func TestGroup_AddMiddleware(t *testing.T) {
-	a := assert.New(t, false)
-	g := New()
-	a.NotNil(g)
-	def := newRouter(a, "def")
-	g.Add(MatcherFunc(Any), def)
-
-	def.Get("/get", rest.BuildHandler(a, 201, "", nil))
-	g.Middlewares().Append(buildMiddleware(a, "p1")).
-		Prepend(buildMiddleware(a, "a1")).
-		Append(buildMiddleware(a, "p2")).
-		Prepend(buildMiddleware(a, "a2"))
-
-	rest.NewRequest(a, http.MethodGet, "/get").Do(g).Status(201).StringBody("p2p1a1a2") // buildHandler 导致顶部的后输出
-
-	// Reset
-
-	g.Middlewares().Reset()
-	rest.NewRequest(a, http.MethodGet, "/get").Do(g).Status(201).BodyEmpty()
-}
-
-func TestRouter_AddMiddleware(t *testing.T) {
-	a := assert.New(t, false)
-	g := New()
-
-	g.Middlewares().Append(buildMiddleware(a, "p1")).
-		Prepend(buildMiddleware(a, "a1")).
-		Append(buildMiddleware(a, "p2")).
-		Prepend(buildMiddleware(a, "a2"))
-
-	def := newRouter(a, "def")
-	g.Add(MatcherFunc(Any), def)
-	def.Get("/get", rest.BuildHandler(a, 201, "", nil))
-	def.Middlewares().Append(buildMiddleware(a, "rp1")).
-		Prepend(buildMiddleware(a, "ra1")).
-		Append(buildMiddleware(a, "rp2")).
-		Prepend(buildMiddleware(a, "ra2"))
-
-	rest.NewRequest(a, http.MethodGet, "/get").Do(g).Status(201).StringBody("rp2rp1ra1ra2p2p1a1a2") // buildHandler 导致顶部的后输出
-
-	// Reset
-
-	g.Middlewares().Reset()
-	rest.NewRequest(a, http.MethodGet, "/get").Do(g).Status(201).StringBody("rp2rp1ra1ra2")
-
-	def.Middlewares().Reset()
-	rest.NewRequest(a, http.MethodGet, "/get").Do(g).Status(201).BodyEmpty()
 }
 
 func TestGroup_Add(t *testing.T) {

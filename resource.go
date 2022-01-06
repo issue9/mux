@@ -2,11 +2,7 @@
 
 package mux
 
-import (
-	"net/http"
-
-	"github.com/issue9/mux/v5/middleware"
-)
+import "net/http"
 
 // Resource 以资源地址为对象的路由
 //
@@ -18,11 +14,11 @@ import (
 type Resource struct {
 	router  *Router
 	pattern string
-	ms      []middleware.Func
+	ms      []MiddlewareFunc
 }
 
 func (r *Resource) Handle(h http.Handler, methods ...string) *Resource {
-	r.router.Handle(r.pattern, middleware.Apply(h, r.ms...), methods...)
+	r.router.handle(r.pattern, applyMiddlewares(h, r.ms...), methods...)
 	return r
 }
 
@@ -97,16 +93,19 @@ func (r *Resource) URL(strict bool, params map[string]string) (string, error) {
 //
 // pattern 资源地址；
 // m 中间件函数，按顺序调用；
-func (r *Router) Resource(pattern string, m ...middleware.Func) *Resource {
-	return &Resource{router: r, pattern: pattern, ms: m}
+func (r *Router) Resource(pattern string, m ...MiddlewareFunc) *Resource {
+	ms := make([]MiddlewareFunc, 0, len(r.options.Middlewares)+len(m))
+	ms = append(ms, r.options.Middlewares...)
+	ms = append(ms, m...)
+	return &Resource{router: r, pattern: pattern, ms: ms}
 }
 
 // Resource 创建一个资源路由项
 //
 // pattern 资源地址；
 // m 中间件函数，按顺序调用，会继承 p 的中间件并按在 m 之前；
-func (p *Prefix) Resource(pattern string, m ...middleware.Func) *Resource {
-	ms := make([]middleware.Func, 0, len(p.ms)+len(m))
+func (p *Prefix) Resource(pattern string, m ...MiddlewareFunc) *Resource {
+	ms := make([]MiddlewareFunc, 0, len(p.ms)+len(m))
 	ms = append(ms, p.ms...)
 	ms = append(ms, m...)
 	return p.router.Resource(p.prefix+pattern, ms...)

@@ -17,6 +17,40 @@ import (
 	"github.com/issue9/mux/v5/internal/tree"
 )
 
+func buildMiddleware(a *assert.Assertion, text string) MiddlewareFunc {
+	return func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r) // 先输出被包含的内容
+			_, err := w.Write([]byte(text))
+			a.NotError(err)
+		})
+	}
+}
+
+func TestRouter_Middleware(t *testing.T) {
+	a := assert.New(t, false)
+
+	def := NewRouter("",
+		Middleware(
+			buildMiddleware(a, "m1"),
+			buildMiddleware(a, "m2"),
+		),
+		Middleware(
+			buildMiddleware(a, "m3"),
+			buildMiddleware(a, "m4"),
+		),
+	)
+	a.NotNil(def)
+	def.Get("/get", rest.BuildHandler(a, 201, "", nil))
+
+	w := httptest.NewRecorder()
+	r, err := http.NewRequest(http.MethodGet, "/get", nil)
+	a.NotError(err).NotNil(r)
+	def.ServeHTTP(w, r)
+	a.Equal(w.Code, 201).
+		Equal(w.Body.String(), "m1m2m3m4") // buildHandler 导致顶部的后输出
+}
+
 func TestOption(t *testing.T) {
 	a := assert.New(t, false)
 

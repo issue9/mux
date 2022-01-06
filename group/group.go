@@ -11,7 +11,6 @@ import (
 
 	"github.com/issue9/mux/v5"
 	"github.com/issue9/mux/v5/internal/options"
-	"github.com/issue9/mux/v5/middleware"
 )
 
 // Group 一组路由
@@ -23,7 +22,6 @@ import (
 // 否则其它子路由永远无法到达。
 type Group struct {
 	routers []*router
-	ms      *middleware.Middlewares
 	options []mux.Option
 
 	notFound http.Handler
@@ -51,7 +49,6 @@ func New(o ...mux.Option) *Group {
 		notFound: opt.NotFound,
 		recovery: opt.RecoverFunc,
 	}
-	g.ms = middleware.NewMiddlewares(http.HandlerFunc(g.serveHTTP))
 	return g
 }
 
@@ -64,10 +61,6 @@ func (g *Group) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}()
 	}
 
-	g.ms.ServeHTTP(w, r)
-}
-
-func (g *Group) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	for _, router := range g.routers {
 		if req, ok := router.matcher.Match(r); ok {
 			router.ServeHTTP(w, req)
@@ -133,9 +126,6 @@ func (g *Group) Remove(name string) {
 	})
 	g.routers = g.routers[:size]
 }
-
-// Middlewares 返回中间件管理接口
-func (g *Group) Middlewares() *middleware.Middlewares { return g.ms }
 
 func (g *Group) Routes() map[string]map[string][]string {
 	routers := g.Routers()
