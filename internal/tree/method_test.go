@@ -106,24 +106,20 @@ func TestTree_buildMethods(t *testing.T) {
 	// delete=1
 	tree.buildMethods(1, http.MethodDelete)
 	a.Equal(tree.methods, map[string]int{http.MethodDelete: 1})
-	a.Equal(tree.methodIndex, methodIndexMap[http.MethodDelete]+methodIndexMap[http.MethodOptions])
-	a.Equal(tree.node.methodIndex, methodIndexMap[http.MethodOptions])
+	a.Equal(tree.node.methodIndex, methodIndexMap[http.MethodDelete]+methodIndexMap[http.MethodOptions])
 
 	// get=1,delete=2
 	tree.buildMethods(1, http.MethodDelete, http.MethodGet)
 	a.Equal(tree.methods, map[string]int{http.MethodDelete: 2, http.MethodGet: 1})
-	a.Equal(tree.methodIndex, methodIndexMap[http.MethodDelete]+methodIndexMap[http.MethodOptions]+methodIndexMap[http.MethodGet]+methodIndexMap[http.MethodHead])
-	a.Equal(tree.node.methodIndex, methodIndexMap[http.MethodOptions])
+	a.Equal(tree.node.methodIndex, methodIndexMap[http.MethodDelete]+methodIndexMap[http.MethodOptions]+methodIndexMap[http.MethodGet]+methodIndexMap[http.MethodHead])
 
 	// get=1,delete=1
 	tree.buildMethods(-1, http.MethodDelete)
 	a.Equal(tree.methods, map[string]int{http.MethodDelete: 1, http.MethodGet: 1})
-	a.Equal(tree.methodIndex, methodIndexMap[http.MethodDelete]+methodIndexMap[http.MethodOptions]+methodIndexMap[http.MethodGet]+methodIndexMap[http.MethodHead])
-	a.Equal(tree.node.methodIndex, methodIndexMap[http.MethodOptions])
+	a.Equal(tree.node.methodIndex, methodIndexMap[http.MethodDelete]+methodIndexMap[http.MethodOptions]+methodIndexMap[http.MethodGet]+methodIndexMap[http.MethodHead])
 
 	// get=1,delete=0
 	tree.buildMethods(-1, http.MethodDelete)
 	a.Equal(tree.methods, map[string]int{http.MethodGet: 1, http.MethodDelete: 0})
-	a.Equal(tree.methodIndex, methodIndexMap[http.MethodOptions]+methodIndexMap[http.MethodGet]+methodIndexMap[http.MethodHead])
-	a.Equal(tree.node.methodIndex, methodIndexMap[http.MethodOptions])
+	a.Equal(tree.node.methodIndex, methodIndexMap[http.MethodOptions]+methodIndexMap[http.MethodGet]+methodIndexMap[http.MethodHead])
 }

@@ -83,7 +83,7 @@ func BenchmarkFileServer(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		w := httptest.NewRecorder()
-		r, _ := http.NewRequest(http.MethodGet, "/assets/go.mod", nil)
+		r, _ := http.NewRequest(http.MethodGet, "/assets/mux.go", nil)
 		router.ServeHTTP(w, r)
 		if w.Code != http.StatusOK {
 			b.Errorf("状态码 %d 与期望值 200 不同", w.Code)

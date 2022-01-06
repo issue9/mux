@@ -129,17 +129,17 @@ func (tree *Tree) buildMethods(v int, methods ...string) {
 		tree.methods[m] += v
 	}
 
-	tree.methodIndex = methodIndexMap[http.MethodOptions]
+	tree.node.methodIndex = methodIndexMap[http.MethodOptions]
 	for m, num := range tree.methods {
 		if num > 0 {
-			tree.methodIndex += methodIndexMap[m]
+			tree.node.methodIndex += methodIndexMap[m]
 			if m == http.MethodGet {
-				tree.methodIndex += methodIndexMap[http.MethodHead]
+				tree.node.methodIndex += methodIndexMap[http.MethodHead]
 			}
 		}
 	}
 
-	buildMethodIndexes(tree.methodIndex)
+	buildMethodIndexes(tree.node.methodIndex)
 }
 
 func (resp *headResponse) Write(bs []byte) (int, error) {

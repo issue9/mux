@@ -32,10 +32,8 @@ import (
 //               |
 //               +---- /emails
 type Tree struct {
-	methodIndex int            // OPTIONS * 用到的请求方法列表
-	methods     map[string]int // methods 保存着每个请求方法在所有子节点上的数量。
-
-	node *Node // CORS 的预检机制用到 node.methodIndex。所以 OPTIONS * 另有一字段；
+	methods map[string]int // 保存着每个请求方法在所有子节点上的数量。
+	node    *Node          // 空节点，其 methodIndex 正好用于保存 OPTIONS *。
 
 	// 由 New 负责初始化的内容
 	locker       *sync.RWMutex
@@ -51,7 +49,7 @@ func New(lock bool, i *syntax.Interceptors) *Tree {
 
 	t := &Tree{
 		methods:      make(map[string]int, len(Methods)),
-		node:         &Node{segment: s, methodIndex: methodIndexMap[http.MethodOptions]},
+		node:         &Node{segment: s},
 		interceptors: i,
 	}
 	t.node.root = t
@@ -65,7 +63,7 @@ func New(lock bool, i *syntax.Interceptors) *Tree {
 }
 
 func (tree *Tree) optionsServeHTTP(w http.ResponseWriter, _ *http.Request) {
-	optionsHandle(w, methodIndexes[tree.methodIndex].options)
+	optionsHandle(w, methodIndexes[tree.node.methodIndex].options)
 }
 
 // Add 添加路由项
