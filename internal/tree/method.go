@@ -77,10 +77,8 @@ func (n *Node) buildMethods() {
 }
 
 func (n *Node) optionsServeHTTP(w http.ResponseWriter, _ *http.Request) {
-	optionsHandle(w, n.Options())
+	w.Header().Set("Allow", n.Options())
 }
-
-func optionsHandle(w http.ResponseWriter, opt string) { w.Header().Set("Allow", opt) }
 
 // Options 获取当前支持的请求方法列表字符串
 func (n *Node) Options() string { return methodIndexes[n.methodIndex].options }
