@@ -30,8 +30,7 @@ import "github.com/issue9/mux/v5"
 
 c := compress.New()
 
-router := mux.NewRouter("")
-router.Middlewares().Append(c)
+router := mux.NewRouter("", mux.Middleware(c))
 router.Get("/users/1", h).
     Post("/login", h).
     Get("/pages/{id:\\d+}.html", h). // 匹配 /pages/123.html 等格式，path = 123
@@ -233,10 +232,7 @@ import "github.com/issue9/middleware/v4/compress"
 
 c := compress.New(log.Default(), "*")
 
-r := mux.NewRouter("")
-
-// 添加中间件
-r.Middlewares().Append(c.Middleware)
+r := mux.NewRouter("", mux.Middleware(c.Middleware))
 ```
 
 ## 性能
