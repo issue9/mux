@@ -21,73 +21,59 @@ type Prefix struct {
 	ms     []middleware.Func
 }
 
-// Handle 相当于 Router.Handle(prefix+pattern, h, methods...) 的简易写法
 func (p *Prefix) Handle(pattern string, h http.Handler, methods ...string) *Prefix {
 	p.router.Handle(p.prefix+pattern, middleware.Apply(h, p.ms...), methods...)
 	return p
 }
 
-// Get 相当于 Router.Get(prefix+pattern, h) 的简易写法
 func (p *Prefix) Get(pattern string, h http.Handler) *Prefix {
 	return p.Handle(pattern, h, http.MethodGet)
 }
 
-// Post 相当于 Router.Post(prefix+pattern, h) 的简易写法
 func (p *Prefix) Post(pattern string, h http.Handler) *Prefix {
 	return p.Handle(pattern, h, http.MethodPost)
 }
 
-// Delete 相当于 Router.Delete(prefix+pattern, h)的简易写法
 func (p *Prefix) Delete(pattern string, h http.Handler) *Prefix {
 	return p.Handle(pattern, h, http.MethodDelete)
 }
 
-// Put 相当于 Router.Put(prefix+pattern, h) 的简易写法
 func (p *Prefix) Put(pattern string, h http.Handler) *Prefix {
 	return p.Handle(pattern, h, http.MethodPut)
 }
 
-// Patch 相当于 Router.Patch(prefix+pattern, h) 的简易写法
 func (p *Prefix) Patch(pattern string, h http.Handler) *Prefix {
 	return p.Handle(pattern, h, http.MethodPatch)
 }
 
-// Any 相当于 Router.Any(prefix+pattern, h) 的简易写法
 func (p *Prefix) Any(pattern string, h http.Handler) *Prefix {
 	return p.Handle(pattern, h)
 }
 
-// HandleFunc 功能同 Router.HandleFunc(prefix+pattern, fun, ...)
 func (p *Prefix) HandleFunc(pattern string, f http.HandlerFunc, methods ...string) *Prefix {
 	return p.Handle(pattern, f, methods...)
 }
 
-// GetFunc 相当于 Router.GetFunc(prefix+pattern, func) 的简易写法
 func (p *Prefix) GetFunc(pattern string, f http.HandlerFunc) *Prefix {
 	return p.HandleFunc(pattern, f, http.MethodGet)
 }
 
-// PutFunc 相当于 Router.PutFunc(prefix+pattern, func) 的简易写法
 func (p *Prefix) PutFunc(pattern string, f http.HandlerFunc) *Prefix {
 	return p.HandleFunc(pattern, f, http.MethodPut)
 }
 
-// PostFunc 相当 于Mux.PostFunc(prefix+pattern, func) 的简易写法
 func (p *Prefix) PostFunc(pattern string, f http.HandlerFunc) *Prefix {
 	return p.HandleFunc(pattern, f, http.MethodPost)
 }
 
-// DeleteFunc 相当于 Router.DeleteFunc(prefix+pattern, func) 的简易写法
 func (p *Prefix) DeleteFunc(pattern string, f http.HandlerFunc) *Prefix {
 	return p.HandleFunc(pattern, f, http.MethodDelete)
 }
 
-// PatchFunc 相当于 Router.PatchFunc(prefix+pattern, func) 的简易写法
 func (p *Prefix) PatchFunc(pattern string, f http.HandlerFunc) *Prefix {
 	return p.HandleFunc(pattern, f, http.MethodPatch)
 }
 
-// AnyFunc 相当于 Router.AnyFunc(prefix+pattern, func) 的简易写法
 func (p *Prefix) AnyFunc(pattern string, f http.HandlerFunc) *Prefix {
 	return p.HandleFunc(pattern, f)
 }

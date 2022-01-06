@@ -89,62 +89,50 @@ func (r *Router) Get(pattern string, h http.Handler) *Router {
 	return r.Handle(pattern, h, http.MethodGet)
 }
 
-// Post 相当于 Router.Handle(pattern, h, http.MethodPost) 的简易写法
 func (r *Router) Post(pattern string, h http.Handler) *Router {
 	return r.Handle(pattern, h, http.MethodPost)
 }
 
-// Delete 相当于 Router.Handle(pattern, h, http.MethodDelete) 的简易写法
 func (r *Router) Delete(pattern string, h http.Handler) *Router {
 	return r.Handle(pattern, h, http.MethodDelete)
 }
 
-// Put 相当于 Router.Handle(pattern, h, http.MethodPut) 的简易写法
 func (r *Router) Put(pattern string, h http.Handler) *Router {
 	return r.Handle(pattern, h, http.MethodPut)
 }
 
-// Patch 相当于 Router.Handle(pattern, h, http.MethodPatch) 的简易写法
 func (r *Router) Patch(pattern string, h http.Handler) *Router {
 	return r.Handle(pattern, h, http.MethodPatch)
 }
 
-// Any 相当于 Router.Handle(pattern, h) 的简易写法
 func (r *Router) Any(pattern string, h http.Handler) *Router {
 	return r.Handle(pattern, h)
 }
 
-// HandleFunc 功能同 Router.Handle()，但是将第二个参数从 http.Handler 换成了 http.HandlerFunc
 func (r *Router) HandleFunc(pattern string, f http.HandlerFunc, methods ...string) *Router {
 	return r.Handle(pattern, f, methods...)
 }
 
-// GetFunc 相当于 Router.HandleFunc(pattern, func, http.MethodGet) 的简易写法
 func (r *Router) GetFunc(pattern string, f http.HandlerFunc) *Router {
 	return r.HandleFunc(pattern, f, http.MethodGet)
 }
 
-// PutFunc 相当于 Router.HandleFunc(pattern, func, http.MethodPut) 的简易写法
 func (r *Router) PutFunc(pattern string, f http.HandlerFunc) *Router {
 	return r.HandleFunc(pattern, f, http.MethodPut)
 }
 
-// PostFunc 相当于 Router.HandleFunc(pattern, func, "POST") 的简易写法
 func (r *Router) PostFunc(pattern string, f http.HandlerFunc) *Router {
 	return r.HandleFunc(pattern, f, http.MethodPost)
 }
 
-// DeleteFunc 相当于 Router.HandleFunc(pattern, func, http.MethodDelete) 的简易写法
 func (r *Router) DeleteFunc(pattern string, f http.HandlerFunc) *Router {
 	return r.HandleFunc(pattern, f, http.MethodDelete)
 }
 
-// PatchFunc 相当于 Router.HandleFunc(pattern, func, http.MethodPatch) 的简易写法
 func (r *Router) PatchFunc(pattern string, f http.HandlerFunc) *Router {
 	return r.HandleFunc(pattern, f, http.MethodPatch)
 }
 
-// AnyFunc 相当于 Router.HandleFunc(pattern, func) 的简易写法
 func (r *Router) AnyFunc(pattern string, f http.HandlerFunc) *Router {
 	return r.HandleFunc(pattern, f)
 }
