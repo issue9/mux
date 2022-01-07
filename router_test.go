@@ -21,7 +21,7 @@ type tester struct {
 }
 
 func newTester(t testing.TB, o ...Option) *tester {
-	r := NewRouter("def", o...)
+	r := NewRouter("def", nil, o...)
 	a := assert.New(t, false)
 	a.NotNil(r)
 	a.Equal("def", r.Name())
@@ -34,10 +34,12 @@ func newTester(t testing.TB, o ...Option) *tester {
 }
 
 func (t *tester) matchCode(method, path string, code int) {
+	t.a.TB().Helper()
 	t.srv.NewRequest(method, path).Do(nil).Status(code)
 }
 
 func (t *tester) matchHeader(method, path string, code int, headers map[string]string) {
+	t.a.TB().Helper()
 	resp := t.srv.NewRequest(method, path).Do(nil).Status(code)
 	for k, v := range headers {
 		resp.Header(k, v)
@@ -45,14 +47,17 @@ func (t *tester) matchHeader(method, path string, code int, headers map[string]s
 }
 
 func (t *tester) matchContent(method, path string, code int, content string) {
+	t.a.TB().Helper()
 	t.srv.NewRequest(method, path).Do(nil).Status(code).StringBody(content)
 }
 
 func (t *tester) matchOptions(path string, code int, allow string) {
+	t.a.TB().Helper()
 	t.matchHeader(http.MethodOptions, path, code, map[string]string{"Allow": allow})
 }
 
 func (t *tester) matchOptionsAsterisk(allow string) {
+	t.a.TB().Helper()
 	r, err := http.NewRequest(http.MethodOptions, "*", nil)
 	t.a.NotError(err).NotNil(r)
 
@@ -80,29 +85,19 @@ func TestRouter(t *testing.T) {
 
 	test.router.Get("/h/1", rest.BuildHandler(test.a, 201, "", nil))
 	test.matchCode(http.MethodGet, "/h/1", 201)
-	test.router.GetFunc("/f/1", rest.BuildHandlerFunc(test.a, 201, "", nil))
-	test.matchCode(http.MethodGet, "/f/1", 201)
 
 	test.router.Post("/h/1", rest.BuildHandler(test.a, 202, "", nil))
 	test.matchCode(http.MethodPost, "/h/1", 202)
-	test.router.PostFunc("/f/1", rest.BuildHandlerFunc(test.a, 202, "", nil))
-	test.matchCode(http.MethodPost, "/f/1", 202)
 	test.matchOptionsAsterisk("GET, HEAD, OPTIONS, POST")
 
 	test.router.Put("/h/1", rest.BuildHandler(test.a, 203, "", nil))
 	test.matchCode(http.MethodPut, "/h/1", 203)
-	test.router.PutFunc("/f/1", rest.BuildHandlerFunc(test.a, 203, "", nil))
-	test.matchCode(http.MethodPut, "/f/1", 203)
 
 	test.router.Patch("/h/1", rest.BuildHandler(test.a, 204, "", nil))
 	test.matchCode(http.MethodPatch, "/h/1", 204)
-	test.router.PatchFunc("/f/1", rest.BuildHandlerFunc(test.a, 204, "", nil))
-	test.matchCode(http.MethodPatch, "/f/1", 204)
 
 	test.router.Delete("/h/1", rest.BuildHandler(test.a, 205, "", nil))
 	test.matchCode(http.MethodDelete, "/h/1", 205)
-	test.router.DeleteFunc("/f/1", rest.BuildHandlerFunc(test.a, 205, "", nil))
-	test.matchCode(http.MethodDelete, "/f/1", 205)
 	test.matchOptionsAsterisk("DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT")
 
 	// Any
@@ -114,17 +109,9 @@ func TestRouter(t *testing.T) {
 	test.matchCode(http.MethodDelete, "/h/any", 206)
 	test.matchCode(http.MethodTrace, "/h/any", 206)
 
-	test.router.AnyFunc("/f/any", rest.BuildHandlerFunc(test.a, 206, "", nil))
-	test.matchCode(http.MethodGet, "/f/any", 206)
-	test.matchCode(http.MethodPost, "/f/any", 206)
-	test.matchCode(http.MethodPut, "/f/any", 206)
-	test.matchCode(http.MethodPatch, "/f/any", 206)
-	test.matchCode(http.MethodDelete, "/f/any", 206)
-	test.matchCode(http.MethodTrace, "/f/any", 206)
-
 	// 不能主动添加 Head
 	test.a.PanicString(func() {
-		test.router.HandleFunc("/head", rest.BuildHandlerFunc(test.a, 202, "", nil), http.MethodHead)
+		test.router.Handle("/head", rest.BuildHandler(test.a, 202, "", nil), http.MethodHead)
 	}, "OPTIONS/HEAD")
 }
 
@@ -174,9 +161,9 @@ func TestRouter_Handle_Remove(t *testing.T) {
 	// 添加 GET /api/1
 	// 添加 PUT /api/1
 	// 添加 GET /api/2
-	test.router.HandleFunc("/api/1", rest.BuildHandlerFunc(test.a, 201, "", nil), http.MethodGet)
-	test.router.HandleFunc("/api/1", rest.BuildHandlerFunc(test.a, 201, "", nil), http.MethodPut)
-	test.router.HandleFunc("/api/2", rest.BuildHandlerFunc(test.a, 202, "", nil), http.MethodGet)
+	test.router.Handle("/api/1", rest.BuildHandler(test.a, 201, "", nil), http.MethodGet)
+	test.router.Handle("/api/1", rest.BuildHandler(test.a, 201, "", nil), http.MethodPut)
+	test.router.Handle("/api/2", rest.BuildHandler(test.a, 202, "", nil), http.MethodGet)
 
 	test.matchCode(http.MethodGet, "/api/1", 201)
 	test.matchCode(http.MethodPut, "/api/1", 201)
@@ -207,7 +194,7 @@ func TestRouter_Handle_Remove(t *testing.T) {
 func TestRouter_Routes(t *testing.T) {
 	a := assert.New(t, false)
 
-	def := NewRouter("")
+	def := NewRouter("", nil)
 	a.NotNil(def)
 	def.Get("/m", rest.BuildHandler(a, 1, "", nil))
 	def.Post("/m", rest.BuildHandler(a, 1, "", nil))
@@ -216,7 +203,7 @@ func TestRouter_Routes(t *testing.T) {
 
 func TestRouter_Params(t *testing.T) {
 	a := assert.New(t, false)
-	router := NewRouter("", Interceptor(InterceptorDigit, "digit"))
+	router := NewRouter("", nil, Interceptor(InterceptorDigit, "digit"))
 	a.NotNil(router)
 
 	var globalParams Params
@@ -283,7 +270,7 @@ func TestRouter_Params(t *testing.T) {
 func TestRouter_Clean(t *testing.T) {
 	a := assert.New(t, false)
 
-	def := NewRouter("")
+	def := NewRouter("", nil)
 	a.NotNil(def)
 	def.Get("/m1", rest.BuildHandler(a, 200, "", nil)).
 		Post("/m1", rest.BuildHandler(a, 201, "", nil))
@@ -306,12 +293,12 @@ func TestRouter_Clean(t *testing.T) {
 func TestRouter_ServeHTTP_Order(t *testing.T) {
 	test := newTester(t, Interceptor(InterceptorAny, "any"))
 
-	test.router.GetFunc("/posts/{id}", rest.BuildHandlerFunc(test.a, 203, "", nil))
-	test.router.GetFunc("/posts/{id:\\d+}", rest.BuildHandlerFunc(test.a, 202, "", nil))
-	test.router.GetFunc("/posts/1", rest.BuildHandlerFunc(test.a, 201, "", nil))
-	test.router.GetFunc("/posts/{id:[0-9]+}", rest.BuildHandlerFunc(test.a, 199, "", nil)) //  两个正则，后添加的永远匹配不到
-	test.router.GetFunc("/posts-{id:any}", rest.BuildHandlerFunc(test.a, 204, "", nil))
-	test.router.GetFunc("/posts-", rest.BuildHandlerFunc(test.a, 205, "", nil))
+	test.router.Get("/posts/{id}", rest.BuildHandler(test.a, 203, "", nil))
+	test.router.Get("/posts/{id:\\d+}", rest.BuildHandler(test.a, 202, "", nil))
+	test.router.Get("/posts/1", rest.BuildHandler(test.a, 201, "", nil))
+	test.router.Get("/posts/{id:[0-9]+}", rest.BuildHandler(test.a, 199, "", nil)) //  两个正则，后添加的永远匹配不到
+	test.router.Get("/posts-{id:any}", rest.BuildHandler(test.a, 204, "", nil))
+	test.router.Get("/posts-", rest.BuildHandler(test.a, 205, "", nil))
 	test.matchCode(http.MethodGet, "/posts/1", 201)   // 普通路由项完全匹配
 	test.matchCode(http.MethodGet, "/posts/2", 202)   // 正则路由
 	test.matchCode(http.MethodGet, "/posts/abc", 203) // 命名路由
@@ -321,32 +308,32 @@ func TestRouter_ServeHTTP_Order(t *testing.T) {
 
 	// interceptor
 	test = newTester(t, Interceptor(InterceptorDigit, "[0-9]+"))
-	test.router.GetFunc("/posts/{id}", rest.BuildHandlerFunc(test.a, 203, "", nil))        // f3
-	test.router.GetFunc("/posts/{id:\\d+}", rest.BuildHandlerFunc(test.a, 202, "", nil))   // f2 永远匹配不到
-	test.router.GetFunc("/posts/1", rest.BuildHandlerFunc(test.a, 201, "", nil))           // f1
-	test.router.GetFunc("/posts/{id:[0-9]+}", rest.BuildHandlerFunc(test.a, 210, "", nil)) // f0 interceptor 权限比正则要高
-	test.matchCode(http.MethodGet, "/posts/1", 201)                                        // f1 普通路由项完全匹配
-	test.matchCode(http.MethodGet, "/posts/2", 210)                                        // f0 interceptor
-	test.matchCode(http.MethodGet, "/posts/abc", 203)                                      // f3 命名路由
-	test.matchCode(http.MethodGet, "/posts/", 203)                                         // f3
+	test.router.Get("/posts/{id}", rest.BuildHandler(test.a, 203, "", nil))        // f3
+	test.router.Get("/posts/{id:\\d+}", rest.BuildHandler(test.a, 202, "", nil))   // f2 永远匹配不到
+	test.router.Get("/posts/1", rest.BuildHandler(test.a, 201, "", nil))           // f1
+	test.router.Get("/posts/{id:[0-9]+}", rest.BuildHandler(test.a, 210, "", nil)) // f0 interceptor 权限比正则要高
+	test.matchCode(http.MethodGet, "/posts/1", 201)                                // f1 普通路由项完全匹配
+	test.matchCode(http.MethodGet, "/posts/2", 210)                                // f0 interceptor
+	test.matchCode(http.MethodGet, "/posts/abc", 203)                              // f3 命名路由
+	test.matchCode(http.MethodGet, "/posts/", 203)                                 // f3
 
 	test = newTester(t)
-	test.router.GetFunc("/p1/{p1}/p2/{p2:\\d+}", rest.BuildHandlerFunc(test.a, 201, "", nil)) // f1
-	test.router.GetFunc("/p1/{p1}/p2/{p2:\\w+}", rest.BuildHandlerFunc(test.a, 202, "", nil)) // f2
-	test.matchCode(http.MethodGet, "/p1/1/p2/1", 201)                                         // f1
-	test.matchCode(http.MethodGet, "/p1/2/p2/s", 202)                                         // f2
+	test.router.Get("/p1/{p1}/p2/{p2:\\d+}", rest.BuildHandler(test.a, 201, "", nil)) // f1
+	test.router.Get("/p1/{p1}/p2/{p2:\\w+}", rest.BuildHandler(test.a, 202, "", nil)) // f2
+	test.matchCode(http.MethodGet, "/p1/1/p2/1", 201)                                 // f1
+	test.matchCode(http.MethodGet, "/p1/2/p2/s", 202)                                 // f2
 
 	test = newTester(t)
-	test.router.GetFunc("/posts/{id}/{page}", rest.BuildHandlerFunc(test.a, 202, "", nil)) // f2
-	test.router.GetFunc("/posts/{id}/1", rest.BuildHandlerFunc(test.a, 201, "", nil))      // f1
-	test.matchCode(http.MethodGet, "/posts/1/1", 201)                                      // f1 普通路由项完全匹配
-	test.matchCode(http.MethodGet, "/posts/2/5", 202)                                      // f2 命名完全匹配
+	test.router.Get("/posts/{id}/{page}", rest.BuildHandler(test.a, 202, "", nil)) // f2
+	test.router.Get("/posts/{id}/1", rest.BuildHandler(test.a, 201, "", nil))      // f1
+	test.matchCode(http.MethodGet, "/posts/1/1", 201)                              // f1 普通路由项完全匹配
+	test.matchCode(http.MethodGet, "/posts/2/5", 202)                              // f2 命名完全匹配
 
 	test = newTester(t)
-	test.router.GetFunc("/tags/{id}.html", rest.BuildHandlerFunc(test.a, 201, "", nil)) // f1
-	test.router.GetFunc("/tags.html", rest.BuildHandlerFunc(test.a, 202, "", nil))      // f2
-	test.router.GetFunc("/{path}", rest.BuildHandlerFunc(test.a, 203, "", nil))         // f3
-	test.matchCode(http.MethodGet, "/tags", 203)                                        // f3 // 正好与 f1 的第一个节点匹配
-	test.matchCode(http.MethodGet, "/tags/1.html", 201)                                 // f1
-	test.matchCode(http.MethodGet, "/tags.html", 202)                                   // f2
+	test.router.Get("/tags/{id}.html", rest.BuildHandler(test.a, 201, "", nil)) // f1
+	test.router.Get("/tags.html", rest.BuildHandler(test.a, 202, "", nil))      // f2
+	test.router.Get("/{path}", rest.BuildHandler(test.a, 203, "", nil))         // f3
+	test.matchCode(http.MethodGet, "/tags", 203)                                // f3 // 正好与 f1 的第一个节点匹配
+	test.matchCode(http.MethodGet, "/tags/1.html", 201)                         // f1
+	test.matchCode(http.MethodGet, "/tags.html", 202)                           // f2
 }

@@ -25,28 +25,18 @@ func TestResource(t *testing.T) {
 
 	h.Get(rest.BuildHandler(a, 201, "", nil))
 	test.matchCode(http.MethodGet, "/h/1", 201)
-	f.GetFunc(rest.BuildHandlerFunc(a, 201, "", nil))
-	test.matchCode(http.MethodGet, "/f/1", 201)
 
 	h.Post(rest.BuildHandler(a, 202, "", nil))
 	test.matchCode(http.MethodPost, "/h/1", 202)
-	f.PostFunc(rest.BuildHandlerFunc(a, 202, "", nil))
-	test.matchCode(http.MethodPost, "/f/1", 202)
 
 	h.Put(rest.BuildHandler(a, 203, "", nil))
 	test.matchCode(http.MethodPut, "/h/1", 203)
-	f.PutFunc(rest.BuildHandlerFunc(a, 203, "", nil))
-	test.matchCode(http.MethodPut, "/f/1", 203)
 
 	h.Patch(rest.BuildHandler(a, 204, "", nil))
 	test.matchCode(http.MethodPatch, "/h/1", 204)
-	f.PatchFunc(rest.BuildHandlerFunc(a, 204, "", nil))
-	test.matchCode(http.MethodPatch, "/f/1", 204)
 
 	h.Delete(rest.BuildHandler(a, 205, "", nil))
 	test.matchCode(http.MethodDelete, "/h/1", 205)
-	f.DeleteFunc(rest.BuildHandlerFunc(a, 205, "", nil))
-	test.matchCode(http.MethodDelete, "/f/1", 205)
 
 	// Any
 	h = test.resource("/h/any")
@@ -58,19 +48,10 @@ func TestResource(t *testing.T) {
 	test.matchCode(http.MethodDelete, "/h/any", 206)
 	test.matchCode(http.MethodTrace, "/h/any", 206)
 
-	f = test.resource("/f/any")
-	f.AnyFunc(rest.BuildHandlerFunc(a, 206, "", nil))
-	test.matchCode(http.MethodGet, "/f/any", 206)
-	test.matchCode(http.MethodPost, "/f/any", 206)
-	test.matchCode(http.MethodPut, "/f/any", 206)
-	test.matchCode(http.MethodPatch, "/f/any", 206)
-	test.matchCode(http.MethodDelete, "/f/any", 206)
-	test.matchCode(http.MethodTrace, "/f/any", 206)
-
 	// remove
-	f.Remove(http.MethodGet, http.MethodHead)
-	test.matchCode(http.MethodGet, "/f/any", 405)
-	test.matchCode(http.MethodDelete, "/f/any", 206)
+	h.Remove(http.MethodGet, http.MethodHead)
+	test.matchCode(http.MethodGet, "/h/any", 405)
+	test.matchCode(http.MethodDelete, "/h/any", 206)
 
 	f.Clean()
 	test.matchCode(http.MethodGet, "/f/any", 404)
@@ -79,7 +60,7 @@ func TestResource(t *testing.T) {
 
 func TestRouter_Resource(t *testing.T) {
 	a := assert.New(t, false)
-	def := NewRouter("")
+	def := NewRouter("", nil)
 	a.NotNil(def)
 
 	r1 := def.Resource("/abc/1")
@@ -102,7 +83,7 @@ func TestRouter_Resource(t *testing.T) {
 func TestPrefix_Resource(t *testing.T) {
 	a := assert.New(t, false)
 
-	def := NewRouter("")
+	def := NewRouter("", nil)
 	a.NotNil(def)
 
 	p := def.Prefix("/p1", buildMiddleware(a, "p1"), buildMiddleware(a, "p2"))
@@ -122,7 +103,7 @@ func TestPrefix_Resource(t *testing.T) {
 
 func TestResource_URL(t *testing.T) {
 	a := assert.New(t, false)
-	def := NewRouter("", AllowedCORS)
+	def := NewRouter("", nil, AllowedCORS)
 	a.NotNil(def)
 
 	// 非正则
