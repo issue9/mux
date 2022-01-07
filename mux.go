@@ -184,6 +184,8 @@ func CORS(origins, allowHeaders, exposedHeaders []string, maxAge int, allowCrede
 // NOTE: AllowedCORS 与 CORS 会相互覆盖。
 func AllowedCORS(o *options.Options) { o.CORS = options.AllowedCORS() }
 
+func DenyCORS(o *options.Options) { o.CORS = options.DenyCORS() }
+
 // NotFound 自定义 404 状态码下的输出
 func NotFound(h http.Handler) Option {
 	return func(o *options.Options) { o.NotFound = h }

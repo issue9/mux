@@ -69,7 +69,7 @@ func TestCORS_handle(t *testing.T) {
 
 	// deny
 
-	c := &CORS{}
+	c := DenyCORS()
 	a.NotError(c.sanitize())
 	w := httptest.NewRecorder()
 	r, err := http.NewRequest(http.MethodGet, "/path", nil)
@@ -206,7 +206,7 @@ func TestCORS_headerIsAllowed(t *testing.T) {
 
 	// Deny
 
-	c := &CORS{}
+	c := DenyCORS()
 	a.NotNil(c).NotError(c.sanitize())
 
 	r, err := http.NewRequest(http.MethodGet, "/", nil)

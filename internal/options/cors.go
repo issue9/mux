@@ -37,6 +37,8 @@ func AllowedCORS() *CORS {
 	}
 }
 
+func DenyCORS() *CORS { return &CORS{} }
+
 func (o *Options) HandleCORS(node *tree.Node, w http.ResponseWriter, r *http.Request) {
 	o.CORS.handle(node, w, r)
 }
