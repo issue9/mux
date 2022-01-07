@@ -17,7 +17,7 @@ import (
 	"github.com/issue9/mux/v5/internal/tree"
 )
 
-func buildMiddleware(a *assert.Assertion, text string) MiddlewareFunc[http.Handler] {
+func buildMiddleware(a *assert.Assertion, text string) MiddlewareFuncOf[http.Handler] {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			h.ServeHTTP(w, r) // 先输出被包含的内容
@@ -31,7 +31,7 @@ func TestRouter_Middleware(t *testing.T) {
 	a := assert.New(t, false)
 
 	def := NewRouter("",
-		[]MiddlewareFunc[http.Handler]{
+		[]MiddlewareFuncOf[http.Handler]{
 			buildMiddleware(a, "m1"),
 			buildMiddleware(a, "m2"),
 			buildMiddleware(a, "m3"),

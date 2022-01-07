@@ -4,8 +4,6 @@ package mux
 
 import "net/http"
 
-type Resource = ResourceOf[http.Handler]
-
 // ResourceOf 以资源地址为对象的路由
 //
 //  srv := NewRouter("")
@@ -16,7 +14,7 @@ type Resource = ResourceOf[http.Handler]
 type ResourceOf[T any] struct {
 	router  *RouterOf[T]
 	pattern string
-	ms      []MiddlewareFunc[T]
+	ms      []MiddlewareFuncOf[T]
 }
 
 func (r *ResourceOf[T]) Handle(h T, methods ...string) *ResourceOf[T] {
@@ -69,8 +67,8 @@ func (r *ResourceOf[T]) URL(strict bool, params map[string]string) (string, erro
 //
 // pattern 资源地址；
 // m 中间件函数，按顺序调用；
-func (r *RouterOf[T]) Resource(pattern string, m ...MiddlewareFunc[T]) *ResourceOf[T] {
-	ms := make([]MiddlewareFunc[T], 0, len(r.ms)+len(m))
+func (r *RouterOf[T]) Resource(pattern string, m ...MiddlewareFuncOf[T]) *ResourceOf[T] {
+	ms := make([]MiddlewareFuncOf[T], 0, len(r.ms)+len(m))
 	ms = append(ms, r.ms...)
 	ms = append(ms, m...)
 	return &ResourceOf[T]{router: r, pattern: pattern, ms: ms}
@@ -80,8 +78,8 @@ func (r *RouterOf[T]) Resource(pattern string, m ...MiddlewareFunc[T]) *Resource
 //
 // pattern 资源地址；
 // m 中间件函数，按顺序调用，会继承 p 的中间件并按在 m 之前；
-func (p *PrefixOf[T]) Resource(pattern string, m ...MiddlewareFunc[T]) *ResourceOf[T] {
-	ms := make([]MiddlewareFunc[T], 0, len(p.ms)+len(m))
+func (p *PrefixOf[T]) Resource(pattern string, m ...MiddlewareFuncOf[T]) *ResourceOf[T] {
+	ms := make([]MiddlewareFuncOf[T], 0, len(p.ms)+len(m))
 	ms = append(ms, p.ms...)
 	ms = append(ms, m...)
 	return p.router.Resource(p.prefix+pattern, ms...)

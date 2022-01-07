@@ -27,8 +27,8 @@ type (
 	// RecoverFunc 路由对 panic 的处理函数原型
 	RecoverFunc = options.RecoverFunc
 
-	// MiddlewareFunc 中间件处理函数
-	MiddlewareFunc[T any] func(T) T
+	// MiddlewareFuncOf 中间件处理函数
+	MiddlewareFuncOf[T any] func(T) T
 
 	// InterceptorFunc 拦截器的函数原型
 	InterceptorFunc = syntax.InterceptorFunc
@@ -37,7 +37,7 @@ type (
 	Params = params.Params
 )
 
-func applyMiddlewares[T any](h T, f ...MiddlewareFunc[T]) T {
+func applyMiddlewares[T any](h T, f ...MiddlewareFuncOf[T]) T {
 	for _, ff := range f {
 		h = ff(h)
 	}

@@ -15,12 +15,12 @@ import (
 	"github.com/issue9/mux/v5/internal/syntax"
 )
 
-var _ http.Handler = &GroupOf{}
+var _ http.Handler = &Group{}
 
-func newRouter(a *assert.Assertion, name string) *mux.RouterOf {
+func newRouter(a *assert.Assertion, name string) *mux.Router {
 	a.TB().Helper()
 
-	r := mux.NewRouter(name)
+	r := mux.NewRouter(name, nil)
 	a.NotNil(r)
 	return r
 }
@@ -28,7 +28,7 @@ func newRouter(a *assert.Assertion, name string) *mux.RouterOf {
 func TestGroup_Add(t *testing.T) {
 	a := assert.New(t, false)
 
-	g := New()
+	g := New(nil)
 
 	// name 为空
 	a.PanicString(func() {
@@ -52,7 +52,7 @@ func TestGroup_Add(t *testing.T) {
 		g.Add(&PathVersion{}, def)
 	}, "已经存在名为 host 的路由")
 	a.PanicString(func() {
-		g.New("host", &PathVersion{})
+		g.New("host", &PathVersion{}, nil)
 	}, "已经存在名为 host 的路由")
 
 	a.Nil(g.Router("not-exists"))
@@ -60,7 +60,7 @@ func TestGroup_Add(t *testing.T) {
 
 func TestGroup_Remove(t *testing.T) {
 	a := assert.New(t, false)
-	g := New()
+	g := New(nil)
 	a.NotNil(g)
 
 	def := newRouter(a, "host")
@@ -82,7 +82,7 @@ func TestGroup_Remove(t *testing.T) {
 
 func TestGroup_empty(t *testing.T) {
 	a := assert.New(t, false)
-	g := New()
+	g := New(nil)
 	a.NotNil(g)
 
 	rest.NewRequest(a, http.MethodGet, "/path").Do(g).Status(http.StatusNotFound)
@@ -90,12 +90,12 @@ func TestGroup_empty(t *testing.T) {
 
 func TestGroup(t *testing.T) {
 	a := assert.New(t, false)
-	g := New(mux.Interceptor(mux.InterceptorDigit, "digit"))
+	g := New(nil, mux.Interceptor(mux.InterceptorDigit, "digit"))
 	exit := make(chan bool, 1)
 
 	h := NewHosts(true, "{sub}.example.com")
 	a.NotNil(h)
-	def := g.New("host", h)
+	def := g.New("host", h, nil)
 	a.NotNil(def)
 
 	def.Get("/posts/{id:digit}.html", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -116,11 +116,11 @@ func TestGroup_recovery(t *testing.T) {
 	a := assert.New(t, false)
 
 	out := new(bytes.Buffer)
-	g := New(mux.WriterRecovery(405, out))
+	g := New(nil, mux.WriterRecovery(405, out))
 	a.NotNil(g)
 	h := NewPathVersion("v", "v2")
 	a.NotNil(h)
-	def := g.New("version", h)
+	def := g.New("version", h, nil)
 	a.NotNil(def)
 	def.Get("/path", http.HandlerFunc(func(http.ResponseWriter, *http.Request) { panic("test") }))
 
@@ -141,11 +141,11 @@ func TestGroup_recovery(t *testing.T) {
 
 	// no recovery
 
-	g = New()
+	g = New(nil)
 	a.NotNil(g)
 	h = NewPathVersion("v", "v2")
 	a.NotNil(h)
-	def = g.New("version", h)
+	def = g.New("version", h, nil)
 	a.NotNil(def)
 	def.Get("/path", http.HandlerFunc(func(http.ResponseWriter, *http.Request) { panic("test") }))
 
@@ -170,7 +170,7 @@ func TestGroup_routers(t *testing.T) {
 	h := NewHosts(false, "localhost")
 	a.NotNil(h)
 
-	g := New()
+	g := New(nil)
 	a.NotNil(g)
 	def := newRouter(a, "host")
 	g.Add(h, def)
@@ -187,7 +187,7 @@ func TestGroup_routers(t *testing.T) {
 
 	// resource
 
-	g = New()
+	g = New(nil)
 	a.NotNil(g)
 	def = newRouter(a, "def")
 	g.Add(h, def)
@@ -197,7 +197,7 @@ func TestGroup_routers(t *testing.T) {
 	rest.NewRequest(a, http.MethodGet, "https://localhost/r1").Do(g).Status(202)
 
 	// prefix
-	g = New()
+	g = New(nil)
 	a.NotNil(g)
 	def = newRouter(a, "def")
 	g.Add(h, def)
@@ -207,7 +207,7 @@ func TestGroup_routers(t *testing.T) {
 	rest.NewRequest(a, http.MethodGet, "https://localhost:88/prefix1/p1").Do(g).Status(203)
 
 	// prefix prefix
-	g = New()
+	g = New(nil)
 	a.NotNil(g)
 	def = newRouter(a, "def")
 	g.Add(h, def)
@@ -219,7 +219,7 @@ func TestGroup_routers(t *testing.T) {
 	rest.NewRequest(a, http.MethodGet, "https://localhost/prefix1/prefix2/p2").Do(g).Status(204)
 
 	// 第二个 Prefix 为域名
-	g = New()
+	g = New(nil)
 	def = newRouter(a, "def")
 	g.Add(MatcherFunc(Any), def)
 	p1 = def.Prefix("/prefix1")
@@ -231,7 +231,7 @@ func TestGroup_routers(t *testing.T) {
 func TestGroup_routers_multiple(t *testing.T) {
 	a := assert.New(t, false)
 
-	g := New()
+	g := New(nil)
 	a.NotNil(g)
 
 	v1 := newRouter(a, "v1")

@@ -16,36 +16,38 @@ import (
 // RouterOf 路由
 //
 // 可以对路径按正则或是请求方法进行匹配。用法如下：
-//  router := NewRouter("")
+//  router := NewRouterOf("")
 //  router.Get("/abc/h1", h1).
 //      Post("/abc/h2", h2).
 //      Handle("/api/{version:\\d+}",h3, http.MethodGet, http.MethodPost) // 只匹配 GET 和 POST
 //  http.ListenAndServe(router)
 //
-// 如果需要同时对多个 RouterOf 实例进行路由，可以采用  group.Group 对象管理多个 RouterOf 实例。
+// 如果需要同时对多个 RouterOf 实例进行路由，可以采用  group.GroupOf 对象管理多个 RouterOf 实例。
 type RouterOf[T any] struct {
 	tree    *tree.Tree
 	options *options.Options
 	name    string
-	ms      []MiddlewareFunc[T]
-	b       func(http.ResponseWriter, *http.Request, T)
+	ms      []MiddlewareFuncOf[T]
+	b       BuildFunc[T]
 }
 
-type Router = RouterOf[http.Handler]
-
-func NewRouter(name string, ms []MiddlewareFunc[http.Handler], o ...Option) *Router {
-	return NewRouterOf[http.Handler](name, func(w http.ResponseWriter, r *http.Request, h http.Handler) {
-		h.ServeHTTP(w, r)
-	}, ms, o...)
-}
+// BuildFunc 定义了由标准库中的 http.ResponseWriter 和 *http.Request 如果转换成 T
+type BuildFunc[T any] func(http.ResponseWriter, *http.Request, T)
 
 // NewRouterOf 声明路由
 //
 // name string 路由名称，可以为空；
 //
+// b 用于将 http.ResponseWriter 和 http.Request 转换成自定义处理函数 T;
+//
+// ms 表示中间件列表，可以为空；
+//
 // o 修改路由的默认形为。比如 CaseInsensitive 会让路由忽略大小写，
 // 相同类型的函数会相互覆盖，比如 CORS 和 AllowedCORS，后传递会覆盖前传递的值。
-func NewRouterOf[T any](name string, b func(http.ResponseWriter, *http.Request, T), ms []MiddlewareFunc[T], o ...Option) *RouterOf[T] {
+//
+// T 表示用户用于处理路由项的方法，该类型最终通过 NewRouterOf 中的 b 参数与
+// http.ResponseWriter 和 *http.Request 相关联。
+func NewRouterOf[T any](name string, b BuildFunc[T], ms []MiddlewareFuncOf[T], o ...Option) *RouterOf[T] {
 	opt, err := options.Build(o...)
 	if err != nil {
 		panic(err)

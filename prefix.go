@@ -4,8 +4,6 @@ package mux
 
 import "net/http"
 
-type Prefix = PrefixOf[http.Handler]
-
 // PrefixOf 操纵统一前缀的路由
 //
 // example:
@@ -16,7 +14,7 @@ type Prefix = PrefixOf[http.Handler]
 type PrefixOf[T any] struct {
 	router *RouterOf[T]
 	prefix string
-	ms     []MiddlewareFunc[T]
+	ms     []MiddlewareFuncOf[T]
 }
 
 func (p *PrefixOf[T]) Handle(pattern string, h T, methods ...string) *PrefixOf[T] {
@@ -79,8 +77,8 @@ func (p *PrefixOf[T]) URL(strict bool, pattern string, params map[string]string)
 //  v.Get("/users")   // 相当于 g.Get("/api/v2/users")
 //  v.Get("/users/1") // 相当于 g.Get("/api/v2/users/1")
 //  v.Get("example.com/users/1") // 相当于 g.Get("/api/v2/example.com/users/1")
-func (p *PrefixOf[T]) Prefix(prefix string, m ...MiddlewareFunc[T]) *PrefixOf[T] {
-	ms := make([]MiddlewareFunc[T], 0, len(p.ms)+len(m))
+func (p *PrefixOf[T]) Prefix(prefix string, m ...MiddlewareFuncOf[T]) *PrefixOf[T] {
+	ms := make([]MiddlewareFuncOf[T], 0, len(p.ms)+len(m))
 	ms = append(ms, p.ms...)
 	ms = append(ms, m...)
 	return p.router.Prefix(p.prefix+prefix, ms...)
@@ -90,8 +88,8 @@ func (p *PrefixOf[T]) Prefix(prefix string, m ...MiddlewareFunc[T]) *PrefixOf[T]
 //
 // prefix 路由前缀字符串，可以为空；
 // m 中间件函数，按顺序调用；
-func (r *RouterOf[T]) Prefix(prefix string, m ...MiddlewareFunc[T]) *PrefixOf[T] {
-	ms := make([]MiddlewareFunc[T], 0, len(r.ms)+len(m))
+func (r *RouterOf[T]) Prefix(prefix string, m ...MiddlewareFuncOf[T]) *PrefixOf[T] {
+	ms := make([]MiddlewareFuncOf[T], 0, len(r.ms)+len(m))
 	ms = append(ms, r.ms...)
 	ms = append(ms, m...)
 	return &PrefixOf[T]{router: r, prefix: prefix, ms: ms}

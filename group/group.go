@@ -13,8 +13,6 @@ import (
 	"github.com/issue9/mux/v5/internal/options"
 )
 
-type Group = GroupOf[http.Handler]
-
 // GroupOf 一组路由
 //
 // 当路由关联的 Matcher 返回 true 时，就会进入该路由。
@@ -25,6 +23,8 @@ type Group = GroupOf[http.Handler]
 type GroupOf[T any] struct {
 	routers []*routerOf[T]
 	options []mux.Option
+	ms      []mux.MiddlewareFuncOf[T]
+	b       mux.BuildFunc[T]
 
 	notFound http.Handler
 	recovery mux.RecoverFunc
@@ -35,11 +35,10 @@ type routerOf[T any] struct {
 	matcher Matcher
 }
 
-// New 声明一个新的 Groups
+// NewOf 声明一个新的 GroupOf
 //
-// o 用于设置由 New 添加的路由，有关 NotFound 与 Recovery 的设置同时会作用于 GroupOf。
-func New[T any](o ...mux.Option) *GroupOf[T] {
-	// TODO 需要通过参数传递中间件
+// o 用于设置由 NewOf 添加的路由，有关 NotFound 与 Recovery 的设置同时会作用于 GroupOf。
+func NewOf[T any](b mux.BuildFunc[T], ms []mux.MiddlewareFuncOf[T], o ...mux.Option) *GroupOf[T] {
 	opt, err := options.Build(o...)
 	if err != nil {
 		panic(err)
@@ -47,7 +46,9 @@ func New[T any](o ...mux.Option) *GroupOf[T] {
 
 	g := &GroupOf[T]{
 		options: o,
-		routers: make([]*routerOf, 0, 1),
+		routers: make([]*routerOf[T], 0, 1),
+		ms:      ms,
+		b:       b,
 
 		notFound: opt.NotFound,
 		recovery: opt.RecoverFunc,
@@ -76,8 +77,11 @@ func (g *GroupOf[T]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // New 声明新路由
 //
 // 初始化参数从 g.options 中获取，但是可以通过 o 作修改。
-func (g *GroupOf[T]) New(name string, matcher Matcher, o ...mux.Option) *mux.RouterOf[T] {
-	r := mux.NewRouterOf[T](name, append(g.options, o...)...)
+func (g *GroupOf[T]) New(name string, matcher Matcher, ms []mux.MiddlewareFuncOf[T], o ...mux.Option) *mux.RouterOf[T] {
+	mm := make([]mux.MiddlewareFuncOf[T], 0, len(g.ms)+len(ms))
+	mm = append(mm, g.ms...)
+	mm = append(mm, ms...)
+	r := mux.NewRouterOf[T](name, g.b, mm, append(g.options, o...)...)
 	g.Add(matcher, r)
 	return r
 }
