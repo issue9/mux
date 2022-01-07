@@ -53,8 +53,8 @@ func New(lock bool, i *syntax.Interceptors) *Tree {
 		interceptors: i,
 	}
 	t.node.root = t
-	t.node.handlers = map[string]http.Handler{
-		http.MethodOptions: http.HandlerFunc(t.node.optionsServeHTTP),
+	t.node.handlers = map[string]HandlerFunc{
+		http.MethodOptions: t.node.optionsServeHTTP,
 	}
 
 	if lock {
@@ -67,7 +67,7 @@ func New(lock bool, i *syntax.Interceptors) *Tree {
 // Add 添加路由项
 //
 // methods 可以为空，表示添加除 OPTIONS 和 HEAD 之外所有支持的请求方法。
-func (tree *Tree) Add(pattern string, h http.Handler, methods ...string) error {
+func (tree *Tree) Add(pattern string, h HandlerFunc, methods ...string) error {
 	if err := tree.checkAmbiguous(pattern); err != nil {
 		return err
 	}
@@ -83,7 +83,7 @@ func (tree *Tree) Add(pattern string, h http.Handler, methods ...string) error {
 	}
 
 	if n.handlers == nil {
-		n.handlers = make(map[string]http.Handler, handlersSize)
+		n.handlers = make(map[string]HandlerFunc, handlersSize)
 	}
 
 	if len(methods) == 0 {

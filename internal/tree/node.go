@@ -8,12 +8,16 @@ import (
 	"strings"
 
 	"github.com/issue9/mux/v6/internal/syntax"
+	"github.com/issue9/mux/v6/params"
 )
 
 const (
 	indexesSize  = 5 // Node.children 的数量只有达到此值时，才会为其建立 indexes 索引表。
 	handlersSize = 7 // Node.handlers 的初始容量
 )
+
+// HandlerFunc 路由处理的函数类型
+type HandlerFunc func(http.ResponseWriter, *http.Request, params.Params)
 
 // Node 表示路由中的节点
 type Node struct {
@@ -22,7 +26,7 @@ type Node struct {
 	segment *syntax.Segment
 
 	methodIndex int
-	handlers    map[string]http.Handler // 请求方法及其对应的 http.Handler
+	handlers    map[string]HandlerFunc
 
 	// 保存着 *node 实例在 children 中的下标。
 	//
@@ -289,7 +293,7 @@ func (n *Node) routes(parent string, routes map[string][]string) {
 }
 
 // Handler 获取指定方法对应的处理函数
-func (n *Node) Handler(method string) http.Handler { return n.handlers[method] }
+func (n *Node) Handler(method string) HandlerFunc { return n.handlers[method] }
 
 func (n *Node) checkAmbiguous(pattern string, hasNonString bool) (*Node, bool, error) {
 	if pattern == "" {

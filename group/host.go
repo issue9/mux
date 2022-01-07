@@ -9,6 +9,7 @@ import (
 	"github.com/issue9/mux/v6"
 	"github.com/issue9/mux/v6/internal/syntax"
 	"github.com/issue9/mux/v6/internal/tree"
+	"github.com/issue9/mux/v6/params"
 )
 
 // Hosts 限定域名的匹配工具
@@ -51,7 +52,7 @@ func (hs *Hosts) Match(r *http.Request) (*http.Request, bool) {
 // 当语法错误时，会触发 panic，可通过 CheckSyntax 检测语法的正确性。
 func (hs *Hosts) Add(domain ...string) {
 	for _, d := range domain {
-		err := hs.tree.Add(d, http.HandlerFunc(hs.emptyHandlerFunc), http.MethodGet)
+		err := hs.tree.Add(d, hs.emptyHandlerFunc, http.MethodGet)
 		if err != nil {
 			panic(err)
 		}
@@ -61,4 +62,4 @@ func (hs *Hosts) Add(domain ...string) {
 // Delete 删除域名
 func (hs *Hosts) Delete(domain string) { hs.tree.Remove(domain) }
 
-func (hs *Hosts) emptyHandlerFunc(http.ResponseWriter, *http.Request) {}
+func (hs *Hosts) emptyHandlerFunc(http.ResponseWriter, *http.Request, params.Params) {}

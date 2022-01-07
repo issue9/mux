@@ -9,7 +9,6 @@ import (
 	"github.com/issue9/errwrap"
 
 	"github.com/issue9/mux/v6/internal/options"
-	"github.com/issue9/mux/v6/internal/syntax"
 	"github.com/issue9/mux/v6/internal/tree"
 )
 
@@ -32,7 +31,7 @@ type RouterOf[T any] struct {
 }
 
 // BuildHandlerFuncOf 定义了如何将标准的 http.Handler 如果转换成 T
-type BuildHandlerFuncOf[T any] func(http.ResponseWriter, *http.Request, T)
+type BuildHandlerFuncOf[T any] func(http.ResponseWriter, *http.Request, Params, T)
 
 // NewRouterOf 声明路由
 //
@@ -90,9 +89,9 @@ func (r *RouterOf[T]) Handle(pattern string, h T, methods ...string) *RouterOf[T
 }
 
 func (r *RouterOf[T]) handle(pattern string, h T, methods ...string) {
-	f := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		r.b(w, req, h)
-	})
+	f := func(w http.ResponseWriter, req *http.Request, ps Params) {
+		r.b(w, req, ps, h)
+	}
 	if err := r.tree.Add(pattern, f, methods...); err != nil {
 		panic(err)
 	}
@@ -181,7 +180,7 @@ func (r *RouterOf[T]) serveHTTP(w http.ResponseWriter, req *http.Request) {
 
 	if h := node.Handler(req.Method); h != nil {
 		r.options.HandleCORS(node, w, req) // 处理跨域问题
-		h.ServeHTTP(w, syntax.WithValue(req, ps))
+		h(w, req, ps)
 		ps.Destroy()
 		return
 	}

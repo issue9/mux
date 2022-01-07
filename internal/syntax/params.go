@@ -58,14 +58,15 @@ func GetParams(r *http.Request) *Params {
 // WithValue 将参数 ps 附加在 r 上
 //
 // 与 context.WithValue 功能相同，但是考虑了在同一个 r 上调用多次 WithValue 的情况。
-func WithValue(r *http.Request, ps *Params) *http.Request {
-	if ps == nil || len(ps.Params) == 0 {
+func WithValue(r *http.Request, ps params.Params) *http.Request {
+	if ps == nil || ps.Count() == 0 {
 		return r
 	}
 
+	pp := ps.(*Params)
 	if ps2 := GetParams(r); ps2 != nil && len(ps2.Params) > 0 {
 		for _, p := range ps2.Params {
-			ps.Set(p.K, p.V)
+			pp.Set(p.K, p.V)
 		}
 	}
 

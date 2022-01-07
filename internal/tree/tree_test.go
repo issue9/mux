@@ -14,7 +14,14 @@ import (
 	"github.com/issue9/errwrap"
 
 	"github.com/issue9/mux/v6/internal/syntax"
+	"github.com/issue9/mux/v6/params"
 )
+
+func buildHandler(a *assert.Assertion, code int, body string, headers map[string]string) HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request, ps params.Params) {
+		rest.BuildHandler(a, code, body, headers).ServeHTTP(w, r)
+	}
+}
 
 type tester struct {
 	tree *Tree
@@ -37,18 +44,18 @@ func newTester(a *assert.Assertion, lock bool) *tester {
 // 测试路由项的 code 需要唯一，之后也是通过此值来判断其命中的路由项。
 func (t *tester) add(method, pattern string, code int) {
 	t.a.TB().Helper()
-	t.a.NotError(t.tree.Add(pattern, rest.BuildHandler(t.a, code, "", nil), method))
+	t.a.NotError(t.tree.Add(pattern, buildHandler(t.a, code, "", nil), method))
 }
 
 func (t *tester) addAmbiguous(pattern string) {
 	t.a.TB().Helper()
-	b := rest.BuildHandler(t.a, http.StatusOK, "", nil)
+	b := buildHandler(t.a, http.StatusOK, "", nil)
 	t.a.ErrorString(t.tree.Add(pattern, b, http.MethodGet), "存在有歧义的节点")
 }
 
 // 验证按照指定的 method 和 path 访问，是否会返回相同的 code 值，
 // 若是，则返回该节点以及对应的参数。
-func (t *tester) handler(method, path string, code int) (http.Handler, *syntax.Params) {
+func (t *tester) handler(method, path string, code int) (HandlerFunc, *syntax.Params) {
 	t.a.TB().Helper()
 
 	hs, ps := t.tree.Route(path)
@@ -60,7 +67,7 @@ func (t *tester) handler(method, path string, code int) (http.Handler, *syntax.P
 	w := httptest.NewRecorder()
 	r, err := http.NewRequest(method, path, nil)
 	t.a.NotError(err).NotNil(r)
-	h.ServeHTTP(w, r)
+	h(w, r, nil)
 	t.a.Equal(w.Code, code)
 
 	return h, ps
@@ -127,7 +134,7 @@ func (t *tester) optionsTrue(path, options string) {
 	t.a.NotError(err).NotNil(u)
 	r, err := http.NewRequest(http.MethodOptions, path, nil)
 	t.a.NotError(err).NotNil(r)
-	h.ServeHTTP(w, r)
+	h(w, r, nil)
 	t.a.Equal(w.Code, http.StatusOK)
 
 	t.a.Equal(w.Header().Get("Allow"), options)
@@ -368,7 +375,7 @@ func TestTree_Clean(t *testing.T) {
 	tree := New(true, syntax.NewInterceptors())
 
 	addNode := func(p string, code int, methods ...string) {
-		a.NotError(tree.Add(p, rest.BuildHandler(a, code, "", nil), methods...))
+		a.NotError(tree.Add(p, buildHandler(a, code, "", nil), methods...))
 	}
 
 	addNode("/", 201, http.MethodGet)
@@ -392,12 +399,12 @@ func TestTree_Add_Remove(t *testing.T) {
 	tree := New(true, syntax.NewInterceptors())
 	a.NotNil(tree)
 
-	a.NotError(tree.Add("/", rest.BuildHandler(a, http.StatusAccepted, "", nil), http.MethodGet))
-	a.NotError(tree.Add("/posts/{id}", rest.BuildHandler(a, http.StatusAccepted, "", nil), http.MethodGet))
-	a.NotError(tree.Add("/posts/{-id}/ignore-name", rest.BuildHandler(a, http.StatusAccepted, "", nil), http.MethodGet))
-	a.NotError(tree.Add("/posts/{id}/author", rest.BuildHandler(a, http.StatusAccepted, "", nil), http.MethodGet, http.MethodPut, http.MethodPost))
-	a.NotError(tree.Add("/posts/1/author", rest.BuildHandler(a, http.StatusAccepted, "", nil), http.MethodGet))
-	a.NotError(tree.Add("/posts/{id}/{author:\\w+}/profile", rest.BuildHandler(a, 1, "", nil), http.MethodGet))
+	a.NotError(tree.Add("/", buildHandler(a, http.StatusAccepted, "", nil), http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}", buildHandler(a, http.StatusAccepted, "", nil), http.MethodGet))
+	a.NotError(tree.Add("/posts/{-id}/ignore-name", buildHandler(a, http.StatusAccepted, "", nil), http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}/author", buildHandler(a, http.StatusAccepted, "", nil), http.MethodGet, http.MethodPut, http.MethodPost))
+	a.NotError(tree.Add("/posts/1/author", buildHandler(a, http.StatusAccepted, "", nil), http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}/{author:\\w+}/profile", buildHandler(a, 1, "", nil), http.MethodGet))
 
 	a.NotEmpty(tree.node.find("/posts/1/author").handlers)
 	a.NotEmpty(tree.node.find("/posts/{-id}/ignore-name").handlers)
@@ -414,7 +421,7 @@ func TestTree_Add_Remove(t *testing.T) {
 
 	tree = New(false, syntax.NewInterceptors())
 	a.NotNil(tree)
-	a.NotError(tree.Add("/path", rest.BuildHandler(a, 201, "", nil)))
+	a.NotError(tree.Add("/path", buildHandler(a, 201, "", nil)))
 	node := tree.node.find("/path")
 	a.Equal(len(Methods), len(node.handlers))
 	a.Equal(len(Methods), len(node.Methods()))
@@ -424,7 +431,7 @@ func TestTree_Add_Remove(t *testing.T) {
 
 	tree = New(true, syntax.NewInterceptors())
 	a.NotNil(tree)
-	a.NotError(tree.Add("/path", rest.BuildHandler(a, http.StatusAccepted, "", nil), http.MethodGet))
+	a.NotError(tree.Add("/path", buildHandler(a, http.StatusAccepted, "", nil), http.MethodGet))
 	node = tree.node.find("/path")
 	a.Equal(3, len(node.handlers)).
 		NotNil(node.handlers[http.MethodHead]).
@@ -437,23 +444,23 @@ func TestTree_Add_Remove(t *testing.T) {
 
 	tree = New(true, syntax.NewInterceptors())
 	a.NotNil(tree)
-	a.ErrorString(tree.Add("/path", rest.BuildHandler(a, http.StatusAccepted, "", nil), http.MethodHead), "无法手动添加 OPTIONS/HEAD 请求方法")
-	a.ErrorString(tree.Add("/path", rest.BuildHandler(a, http.StatusAccepted, "", nil), "NOT-SUPPORTED"), "NOT-SUPPORTED")
-	a.NotError(tree.Add("/path", rest.BuildHandler(a, http.StatusAccepted, "", nil), http.MethodDelete))
-	a.ErrorString(tree.Add("/path", rest.BuildHandler(a, http.StatusAccepted, "", nil), http.MethodDelete), http.MethodDelete)
+	a.ErrorString(tree.Add("/path", buildHandler(a, http.StatusAccepted, "", nil), http.MethodHead), "无法手动添加 OPTIONS/HEAD 请求方法")
+	a.ErrorString(tree.Add("/path", buildHandler(a, http.StatusAccepted, "", nil), "NOT-SUPPORTED"), "NOT-SUPPORTED")
+	a.NotError(tree.Add("/path", buildHandler(a, http.StatusAccepted, "", nil), http.MethodDelete))
+	a.ErrorString(tree.Add("/path", buildHandler(a, http.StatusAccepted, "", nil), http.MethodDelete), http.MethodDelete)
 	tree.Remove("/path", http.MethodOptions) // remove options 不发生任何操作
 	a.Equal(tree.node.find("/path").Options(), "DELETE, OPTIONS")
 
-	a.ErrorString(tree.Add("/path/{id}/path/{id:\\d+}", rest.BuildHandler(a, 1, "", nil), http.MethodHead), "存在相同名称的路由参数")
-	a.ErrorString(tree.Add("/path/{id}{id2:\\d+}", rest.BuildHandler(a, 1, "", nil), http.MethodHead), "两个命名参数不能连续出现")
+	a.ErrorString(tree.Add("/path/{id}/path/{id:\\d+}", buildHandler(a, 1, "", nil), http.MethodHead), "存在相同名称的路由参数")
+	a.ErrorString(tree.Add("/path/{id}{id2:\\d+}", buildHandler(a, 1, "", nil), http.MethodHead), "两个命名参数不能连续出现")
 
 	// 多层节点的删除
 
 	tree = New(true, syntax.NewInterceptors())
-	a.NotError(tree.Add("/posts", rest.BuildHandler(a, 201, "", nil), http.MethodGet, http.MethodPut))
-	a.NotError(tree.Add("/posts/{id}", rest.BuildHandler(a, 202, "", nil), http.MethodGet))
-	a.NotError(tree.Add("/posts/{id}/author", rest.BuildHandler(a, 203, "", nil), http.MethodGet))
-	a.NotError(tree.Add("/posts/{id}/author/email", rest.BuildHandler(a, 204, "", nil), http.MethodGet))
+	a.NotError(tree.Add("/posts", buildHandler(a, 201, "", nil), http.MethodGet, http.MethodPut))
+	a.NotError(tree.Add("/posts/{id}", buildHandler(a, 202, "", nil), http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}/author", buildHandler(a, 203, "", nil), http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}/author/email", buildHandler(a, 204, "", nil), http.MethodGet))
 
 	tree.Remove("/posts/{id}") // 删除 202
 	nn := tree.node.find("/posts/{id}")
@@ -475,10 +482,10 @@ func TestTree_Routes(t *testing.T) {
 	tree := New(true, syntax.NewInterceptors())
 	a.NotNil(tree)
 
-	a.NotError(tree.Add("/", rest.BuildHandler(a, http.StatusOK, "", nil), http.MethodGet))
-	a.NotError(tree.Add("/posts", rest.BuildHandler(a, http.StatusOK, "", nil), http.MethodGet, http.MethodPost))
-	a.NotError(tree.Add("/posts/{id}", rest.BuildHandler(a, http.StatusOK, "", nil), http.MethodGet, http.MethodPut))
-	a.NotError(tree.Add("/posts/{id}/author", rest.BuildHandler(a, http.StatusOK, "", nil), http.MethodGet))
+	a.NotError(tree.Add("/", buildHandler(a, http.StatusOK, "", nil), http.MethodGet))
+	a.NotError(tree.Add("/posts", buildHandler(a, http.StatusOK, "", nil), http.MethodGet, http.MethodPost))
+	a.NotError(tree.Add("/posts/{id}", buildHandler(a, http.StatusOK, "", nil), http.MethodGet, http.MethodPut))
+	a.NotError(tree.Add("/posts/{id}/author", buildHandler(a, http.StatusOK, "", nil), http.MethodGet))
 
 	routes := tree.Routes()
 	a.Equal(routes, map[string][]string{
@@ -492,7 +499,7 @@ func TestTree_Routes(t *testing.T) {
 
 func TestTree_find(t *testing.T) {
 	a := assert.New(t, false)
-	h := rest.BuildHandler(a, http.StatusCreated, "", nil)
+	h := buildHandler(a, http.StatusCreated, "", nil)
 	tree := New(false, syntax.NewInterceptors())
 
 	a.NotError(tree.Add("/", h, http.MethodGet))

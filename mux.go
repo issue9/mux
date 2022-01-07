@@ -185,9 +185,6 @@ func MethodNotAllowed(h http.Handler) Option {
 	return func(o *options.Options) { o.MethodNotAllowed = h }
 }
 
-// GetParams 获取路由中的参数集合
-func GetParams(r *http.Request) Params { return syntax.GetParams(r) }
-
 var emptyInterceptors = syntax.NewInterceptors()
 
 // CheckSyntax 检测路由项的语法格式

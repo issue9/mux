@@ -1,6 +1,6 @@
 github.com/issue9/assert/v2 v2.0.0/go.mod h1:rKr1eVGzXUhAo2af1thiKAhIA8uiSK9Wyn7mcZ4BzAg=
-github.com/issue9/assert/v2 v2.0.1 h1:K70rjhzz9i5Tf/HK8Dh7NESAbxb2a4mN0UfdAjpWFg4=
-github.com/issue9/assert/v2 v2.0.1/go.mod h1:rKr1eVGzXUhAo2af1thiKAhIA8uiSK9Wyn7mcZ4BzAg=
+github.com/issue9/assert/v2 v2.1.0 h1:iJWTRoljwEPHzMLoI1ObGEcFnbI0QUXPq2OhTcWP1wA=
+github.com/issue9/assert/v2 v2.1.0/go.mod h1:rKr1eVGzXUhAo2af1thiKAhIA8uiSK9Wyn7mcZ4BzAg=
 github.com/issue9/errwrap v0.2.1 h1:hrzBGbOCRs8acitpWSg54xNl2oaLGA/WZEf71bKaiEU=
 github.com/issue9/errwrap v0.2.1/go.mod h1:hjjkt9S/owgy48er68ACFfA6YPDO/xax18QE3lsguVQ=
 github.com/issue9/sliceutil v0.7.1 h1:lnzYryF50+mxqvnsPZRZ1on+gxx0Khx5t5G7q0Cf7gU=

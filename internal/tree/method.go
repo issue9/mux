@@ -8,6 +8,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/issue9/mux/v6/params"
 )
 
 var (
@@ -76,7 +78,7 @@ func (n *Node) buildMethods() {
 	buildMethodIndexes(n.methodIndex)
 }
 
-func (n *Node) optionsServeHTTP(w http.ResponseWriter, _ *http.Request) {
+func (n *Node) optionsServeHTTP(w http.ResponseWriter, _ *http.Request, _ params.Params) {
 	w.Header().Set("Allow", n.Options())
 }
 
@@ -87,7 +89,7 @@ func (n *Node) Options() string { return methodIndexes[n.methodIndex].options }
 func (n *Node) Methods() []string { return methodIndexes[n.methodIndex].methods }
 
 // 添加一个处理函数
-func (n *Node) addMethods(h http.Handler, methods ...string) error {
+func (n *Node) addMethods(h HandlerFunc, methods ...string) error {
 	for _, m := range methods {
 		if m == http.MethodHead || m == http.MethodOptions {
 			return fmt.Errorf("无法手动添加 OPTIONS/HEAD 请求方法")
@@ -109,7 +111,7 @@ func (n *Node) addMethods(h http.Handler, methods ...string) error {
 
 	// 查看是否需要添加 OPTIONS
 	if _, found := n.handlers[http.MethodOptions]; !found {
-		n.handlers[http.MethodOptions] = http.HandlerFunc(n.optionsServeHTTP)
+		n.handlers[http.MethodOptions] = n.optionsServeHTTP
 	}
 
 	n.buildMethods()
@@ -148,8 +150,8 @@ func (resp *headResponse) Write(bs []byte) (int, error) {
 	return l, nil
 }
 
-func (n *Node) headServeHTTP(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		h.ServeHTTP(&headResponse{ResponseWriter: w}, r)
-	})
+func (n *Node) headServeHTTP(h HandlerFunc) HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request, ps params.Params) {
+		h(&headResponse{ResponseWriter: w}, r, ps)
+	}
 }

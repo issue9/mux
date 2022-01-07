@@ -10,6 +10,7 @@ import (
 	"github.com/issue9/assert/v2"
 
 	"github.com/issue9/mux/v6/internal/syntax"
+	"github.com/issue9/mux/v6/params"
 )
 
 func TestBuildMethodIndexes(t *testing.T) {
@@ -38,7 +39,7 @@ func TestNode_serveHTTP(t *testing.T) {
 
 	// path1，主动调用 WriteHeader
 
-	a.NotError(tree.Add("/path1", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	a.NotError(tree.Add("/path1", func(w http.ResponseWriter, r *http.Request, _ params.Params) {
 		w.Header().Set("h1", "h1")
 		w.WriteHeader(http.StatusAccepted)
 
@@ -46,7 +47,7 @@ func TestNode_serveHTTP(t *testing.T) {
 		a.NotError(err)
 		_, err = w.Write([]byte("get"))
 		a.NotError(err)
-	}), http.MethodGet))
+	}, http.MethodGet))
 
 	node, ps := tree.Route("/path1")
 	a.Empty(ps.Params).NotNil(node)
@@ -54,7 +55,7 @@ func TestNode_serveHTTP(t *testing.T) {
 	w := httptest.NewRecorder()
 	r, err := http.NewRequest(http.MethodHead, "/path1", nil)
 	a.NotError(err).NotNil(r)
-	node.Handler(http.MethodHead).ServeHTTP(w, r)
+	node.Handler(http.MethodHead)(w, r, nil)
 	a.Equal(w.Header().Get("h1"), "h1").
 		Empty(w.Body.String()).
 		Equal(w.Header().Get("Content-Length"), "6")
@@ -62,21 +63,21 @@ func TestNode_serveHTTP(t *testing.T) {
 	w = httptest.NewRecorder()
 	r, err = http.NewRequest(http.MethodOptions, "/path1", nil)
 	a.NotError(err).NotNil(r)
-	node.handlers[http.MethodOptions].ServeHTTP(w, r)
+	node.handlers[http.MethodOptions](w, r, nil)
 	a.Empty(w.Header().Get("h1")).
 		Equal(w.Header().Get("Allow"), "GET, HEAD, OPTIONS").
 		Empty(w.Body.String())
 
 	// path2，不主动调用 WriteHeader
 
-	a.NotError(tree.Add("/path2", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	a.NotError(tree.Add("/path2", func(w http.ResponseWriter, r *http.Request, _ params.Params) {
 		w.Header().Set("h1", "h2")
 
 		_, err := w.Write([]byte("get"))
 		a.NotError(err)
 		_, err = w.Write([]byte("get"))
 		a.NotError(err)
-	}), http.MethodGet))
+	}, http.MethodGet))
 
 	node, ps = tree.Route("/path2")
 	a.Empty(ps.Params).NotNil(node)
@@ -84,7 +85,7 @@ func TestNode_serveHTTP(t *testing.T) {
 	w = httptest.NewRecorder()
 	r, err = http.NewRequest(http.MethodHead, "/path2", nil)
 	a.NotError(err).NotNil(r)
-	node.Handler(http.MethodHead).ServeHTTP(w, r)
+	node.Handler(http.MethodHead)(w, r, nil)
 	a.Equal(w.Header().Get("h1"), "h2").
 		Empty(w.Body.String()).
 		Equal(w.Header().Get("Content-Length"), "6")
@@ -92,7 +93,7 @@ func TestNode_serveHTTP(t *testing.T) {
 	w = httptest.NewRecorder()
 	r, err = http.NewRequest(http.MethodOptions, "/path2", nil)
 	a.NotError(err).NotNil(r)
-	node.handlers[http.MethodOptions].ServeHTTP(w, r)
+	node.handlers[http.MethodOptions](w, r, nil)
 	a.Empty(w.Header().Get("h1")).
 		Equal(w.Header().Get("Allow"), "GET, HEAD, OPTIONS").
 		Empty(w.Body.String())
