@@ -5,7 +5,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/issue9/mux)](https://goreportcard.com/report/github.com/issue9/mux)
 [![license](https://img.shields.io/github/license/issue9/mux)](LICENSE)
 [![codecov](https://codecov.io/gh/issue9/mux/branch/master/graph/badge.svg)](https://codecov.io/gh/issue9/mux)
-[![PkgGoDev](https://pkg.go.dev/badge/github.com/issue9/mux/v5)](https://pkg.go.dev/github.com/issue9/mux/v5)
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/issue9/mux/v6)](https://pkg.go.dev/github.com/issue9/mux/v6)
 
 mux 功能完备的 Go 路由器：
 
@@ -21,12 +21,13 @@ mux 功能完备的 Go 路由器：
 - 支持中间件；
 - 自动生成 OPTIONS * 请求；
 - 静态文件系统；
-- Trace 请求方法的支持；
+- TRACE 请求方法的支持；
 - panic 处理；
+- 支持泛型，可轻易实现自定义的路由处理方式；
 
 ```go
 import "github.com/issue9/middleware/v4/compress"
-import "github.com/issue9/mux/v5"
+import "github.com/issue9/mux/v6"
 
 c := compress.New()
 
@@ -99,7 +100,7 @@ rule 表示对参数的约束，一般为正则或是空，为空表示匹配任
 通过正则表达式匹配的路由，其中带命名的参数可通过 `GetParams()` 获取：
 
 ```go
-import "github.com/issue9/mux/v5"
+import "github.com/issue9/mux/v6"
 
 params := mux.GetParams(r)
 
@@ -117,8 +118,8 @@ id := params.MustInt("id", 0) // 在无法获取 id 参数时采用 0 作为默�
 ```go
 // server.go
 
-import "github.com/issue9/mux/v5"
-import "github.com/issue9/mux/v5/group"
+import "github.com/issue9/mux/v6"
+import "github.com/issue9/mux/v6/group"
 
 m := group.New()
 
@@ -149,7 +150,7 @@ r.Do()
 但是正则表达式的性能并不是很好，这个时候我们可以通过在 `NewRouter` 传递 `Interceptor` 进行拦截：
 
 ```go
-import "github.com/issue9/mux/v5"
+import "github.com/issue9/mux/v6"
 
 func digit(path string) bool {
     for _, c := range path {
@@ -179,7 +180,7 @@ r := mux.NewRouter("", mux.Interceptor(digit, "\\d+", "[0-9]+"))
 - InterceptorWord 相当于正则的 `[a-zA-Z0-9]`；
 - InterceptorAny 表示匹配任意非空内容；
 
-用户也可以自行实现 `InterceptorFunc` 作为拦截器。具体可参考 <https://pkg.go.dev/github.com/issue9/mux/v5#Interceptor>
+用户也可以自行实现 `InterceptorFunc` 作为拦截器。具体可参考 <https://pkg.go.dev/github.com/issue9/mux/v6#Interceptor>
 
 ### CORS
 
@@ -189,7 +190,7 @@ CORS 不再是以中间件的形式提供，而是通过 NewRouter 直接传递�
 OPTIONS 请求方法由系统自动生成。
 
 ```go
-import "github.com/issue9/mux/v5"
+import "github.com/issue9/mux/v6"
 
 r := mux.NewRouter("name" ,AllowedCORS) // 任意跨域请求
 

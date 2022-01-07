@@ -11,8 +11,8 @@ import (
 	"github.com/issue9/assert/v2"
 	"github.com/issue9/assert/v2/rest"
 
-	"github.com/issue9/mux/v5"
-	"github.com/issue9/mux/v5/internal/syntax"
+	"github.com/issue9/mux/v6"
+	"github.com/issue9/mux/v6/internal/syntax"
 )
 
 var _ http.Handler = &Group{}

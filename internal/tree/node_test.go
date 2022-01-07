@@ -7,7 +7,7 @@ import (
 
 	"github.com/issue9/assert/v2"
 
-	"github.com/issue9/mux/v5/internal/syntax"
+	"github.com/issue9/mux/v6/internal/syntax"
 )
 
 // 获取当前路由下所有处理函数的节点数量

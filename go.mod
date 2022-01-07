@@ -1,4 +1,4 @@
-module github.com/issue9/mux/v5
+module github.com/issue9/mux/v6
 
 require (
 	github.com/issue9/assert/v2 v2.0.1

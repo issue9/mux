@@ -5,7 +5,7 @@ package group
 import (
 	"net/http"
 
-	"github.com/issue9/mux/v5"
+	"github.com/issue9/mux/v6"
 )
 
 type Group = GroupOf[http.Handler]

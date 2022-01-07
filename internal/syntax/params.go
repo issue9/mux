@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/issue9/mux/v5/params"
+	"github.com/issue9/mux/v6/params"
 )
 
 // 每次申请 Params.Params 分配的大小

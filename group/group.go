@@ -9,8 +9,8 @@ import (
 
 	"github.com/issue9/sliceutil"
 
-	"github.com/issue9/mux/v5"
-	"github.com/issue9/mux/v5/internal/options"
+	"github.com/issue9/mux/v6"
+	"github.com/issue9/mux/v6/internal/options"
 )
 
 // GroupOf 一组路由

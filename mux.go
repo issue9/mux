@@ -14,10 +14,10 @@ import (
 
 	"github.com/issue9/errwrap"
 
-	"github.com/issue9/mux/v5/internal/options"
-	"github.com/issue9/mux/v5/internal/syntax"
-	"github.com/issue9/mux/v5/internal/tree"
-	"github.com/issue9/mux/v5/params"
+	"github.com/issue9/mux/v6/internal/options"
+	"github.com/issue9/mux/v6/internal/syntax"
+	"github.com/issue9/mux/v6/internal/tree"
+	"github.com/issue9/mux/v6/params"
 )
 
 type (

@@ -9,7 +9,7 @@ import (
 
 	"github.com/issue9/assert/v2"
 
-	"github.com/issue9/mux/v5/params"
+	"github.com/issue9/mux/v6/params"
 )
 
 var _ params.Params = &Params{}

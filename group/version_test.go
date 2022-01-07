@@ -8,7 +8,7 @@ import (
 
 	"github.com/issue9/assert/v2"
 
-	"github.com/issue9/mux/v5/internal/syntax"
+	"github.com/issue9/mux/v6/internal/syntax"
 )
 
 var (
@@ -107,7 +107,7 @@ func TestPathVersion_Match(t *testing.T) {
 		Equal(r.URL.Path, "/v1/test").
 		Equal(syntax.GetParams(rr).MustString("version", "not-found"), "/v1")
 
-		// 相同版本号，未指定 key
+	// 相同版本号，未指定 key
 	h = NewPathVersion("", "v3", "/v2", "/v1")
 	r, err = http.NewRequest(http.MethodGet, "https://caixw.io/v1/test", nil)
 	a.NotError(err).NotNil(r)

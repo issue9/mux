@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/issue9/mux/v5/internal/syntax"
+	"github.com/issue9/mux/v6/internal/syntax"
 )
 
 // PathVersion 匹配路径中的版本号

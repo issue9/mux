@@ -13,7 +13,7 @@ import (
 	"github.com/issue9/assert/v2/rest"
 	"github.com/issue9/errwrap"
 
-	"github.com/issue9/mux/v5/internal/syntax"
+	"github.com/issue9/mux/v6/internal/syntax"
 )
 
 type tester struct {

@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/issue9/mux/v5/internal/syntax"
+	"github.com/issue9/mux/v6/internal/syntax"
 )
 
 const (

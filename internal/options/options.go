@@ -6,7 +6,7 @@ package options
 import (
 	"net/http"
 
-	"github.com/issue9/mux/v5/internal/syntax"
+	"github.com/issue9/mux/v6/internal/syntax"
 )
 
 type Option func(*Options)
