@@ -24,21 +24,19 @@ import (
 //
 // 如果需要同时对多个 RouterOf 实例进行路由，可以采用  group.GroupOf 对象管理多个 RouterOf 实例。
 type RouterOf[T any] struct {
+	name    string
 	tree    *tree.Tree
 	options *options.Options
-	name    string
 	ms      []MiddlewareFuncOf[T]
-	b       BuildFunc[T]
+	b       BuildHandlerFuncOf[T]
 }
 
-// BuildFunc 定义了由标准库中的 http.ResponseWriter 和 *http.Request 如果转换成 T
-type BuildFunc[T any] func(http.ResponseWriter, *http.Request, T)
+// BuildHandlerFuncOf 定义了如何将标准的 http.Handler 如果转换成 T
+type BuildHandlerFuncOf[T any] func(http.ResponseWriter, *http.Request, T)
 
 // NewRouterOf 声明路由
 //
 // name string 路由名称，可以为空；
-//
-// b 用于将 http.ResponseWriter 和 http.Request 转换成自定义处理函数 T;
 //
 // ms 表示中间件列表，可以为空；
 //
@@ -47,16 +45,16 @@ type BuildFunc[T any] func(http.ResponseWriter, *http.Request, T)
 //
 // T 表示用户用于处理路由项的方法，该类型最终通过 NewRouterOf 中的 b 参数与
 // http.ResponseWriter 和 *http.Request 相关联。
-func NewRouterOf[T any](name string, b BuildFunc[T], ms []MiddlewareFuncOf[T], o ...Option) *RouterOf[T] {
+func NewRouterOf[T any](name string, b BuildHandlerFuncOf[T], ms []MiddlewareFuncOf[T], o ...Option) *RouterOf[T] {
 	opt, err := options.Build(o...)
 	if err != nil {
 		panic(err)
 	}
 
 	r := &RouterOf[T]{
+		name:    name,
 		tree:    tree.New(opt.Lock, opt.Interceptors),
 		options: opt,
-		name:    name,
 		ms:      ms,
 		b:       b,
 	}

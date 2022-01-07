@@ -13,7 +13,8 @@ type (
 	MiddlewareFunc = MiddlewareFuncOf[http.Handler]
 )
 
-func StdBuildFunc(w http.ResponseWriter, r *http.Request, h http.Handler) {
+// DefaultBuildHandlerFunc 针对 http.Handler 的实现
+func DefaultBuildHandlerFunc(w http.ResponseWriter, r *http.Request, h http.Handler) {
 	h.ServeHTTP(w, r)
 }
 
@@ -21,5 +22,5 @@ func StdBuildFunc(w http.ResponseWriter, r *http.Request, h http.Handler) {
 //
 // 这是对 NewRouterOf 的特化，相当于 NewRouterOf[http.Handler]。
 func NewRouter(name string, ms []MiddlewareFunc, o ...Option) *Router {
-	return NewRouterOf[http.Handler](name, StdBuildFunc, ms, o...)
+	return NewRouterOf[http.Handler](name, DefaultBuildHandlerFunc, ms, o...)
 }
