@@ -3,8 +3,6 @@
 package syntax
 
 import (
-	"context"
-	"net/http"
 	"strconv"
 	"sync"
 
@@ -17,10 +15,6 @@ const defaultParamsCap = 5
 var paramsPool = &sync.Pool{
 	New: func() any { return &Params{Params: make([]Param, 0, defaultParamsCap)} },
 }
-
-const contextKeyParams contextKey = 0
-
-type contextKey int
 
 // Params 路由参数
 //
@@ -45,32 +39,6 @@ func (p *Params) Destroy() {
 	if p != nil {
 		paramsPool.Put(p)
 	}
-}
-
-// GetParams 获取当前请求实例上的参数列表
-func GetParams(r *http.Request) *Params {
-	if ps := r.Context().Value(contextKeyParams); ps != nil {
-		return ps.(*Params)
-	}
-	return nil
-}
-
-// WithValue 将参数 ps 附加在 r 上
-//
-// 与 context.WithValue 功能相同，但是考虑了在同一个 r 上调用多次 WithValue 的情况。
-func WithValue(r *http.Request, ps params.Params) *http.Request {
-	if ps == nil || ps.Count() == 0 {
-		return r
-	}
-
-	pp := ps.(*Params)
-	if ps2 := GetParams(r); ps2 != nil && len(ps2.Params) > 0 {
-		for _, p := range ps2.Params {
-			pp.Set(p.K, p.V)
-		}
-	}
-
-	return r.WithContext(context.WithValue(r.Context(), contextKeyParams, ps))
 }
 
 func (p *Params) Exists(key string) bool {
@@ -227,7 +195,6 @@ func (p *Params) Set(k, v string) {
 	} else {
 		p.Params = append(p.Params, Param{K: k, V: v})
 	}
-
 }
 
 func (p *Params) Delete(k string) {

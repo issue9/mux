@@ -11,5 +11,5 @@ import (
 type Group = GroupOf[http.Handler]
 
 func New(ms []mux.MiddlewareFunc, o ...mux.Option) *Group {
-	return NewOf[http.Handler](mux.DefaultBuildHandlerFunc, ms, o...)
+	return NewOf[http.Handler](mux.DefaultCall, ms, o...)
 }

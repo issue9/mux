@@ -77,4 +77,7 @@ type Params interface {
 
 	// Map 转换成 map[string]string
 	Map() map[string]string
+
+	// Set 添加或是修改值
+	Set(key, val string)
 }

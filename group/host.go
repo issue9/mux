@@ -40,7 +40,7 @@ func (hs *Hosts) Match(r *http.Request) (*http.Request, bool) {
 	}
 
 	// NOTE: ps 会在 RouterOf.ServeHTTP 中被放回池中，不用再额外处理。
-	return syntax.WithValue(r, ps), true
+	return mux.WithValue(r, ps), true
 }
 
 // Add 添加新的域名

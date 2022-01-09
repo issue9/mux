@@ -3,10 +3,13 @@
 package mux
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/issue9/mux/v6/internal/syntax"
 )
+
+const contextKeyParams contextKey = 0
 
 // 提供了标准库的默认支持
 
@@ -15,19 +18,45 @@ type (
 	Prefix         = PrefixOf[http.Handler]
 	Resource       = ResourceOf[http.Handler]
 	MiddlewareFunc = MiddlewareFuncOf[http.Handler]
+
+	contextKey int
 )
 
-// DefaultBuildHandlerFunc 针对 http.Handler 的实现
-func DefaultBuildHandlerFunc(w http.ResponseWriter, r *http.Request, ps Params, h http.Handler) {
-	h.ServeHTTP(w, syntax.WithValue(r, ps))
+// DefaultCall 针对 http.Handler 的 CallOf 实现
+func DefaultCall(w http.ResponseWriter, r *http.Request, ps Params, h http.Handler) {
+	h.ServeHTTP(w, WithValue(r, ps))
 }
 
 // NewRouter 声明适用于官方 http.Handler 接口的路由
 //
 // 这是对 NewRouterOf 的特化，相当于 NewRouterOf[http.Handler]。
 func NewRouter(name string, ms []MiddlewareFunc, o ...Option) *Router {
-	return NewRouterOf[http.Handler](name, DefaultBuildHandlerFunc, ms, o...)
+	return NewRouterOf[http.Handler](name, DefaultCall, ms, o...)
 }
 
-// GetParams 获取路由中的参数集合
-func GetParams(r *http.Request) Params { return syntax.GetParams(r) }
+// GetParams 获取当前请求实例上的参数列表
+func GetParams(r *http.Request) Params {
+	if ps := r.Context().Value(contextKeyParams); ps != nil {
+		return ps.(Params)
+	}
+	return nil
+}
+
+// WithValue 将参数 ps 附加在 r 上
+//
+// 与 context.WithValue 功能相同，但是考虑了在同一个 r 上调用多次 WithValue 的情况。
+func WithValue(r *http.Request, ps Params) *http.Request {
+	if ps == nil || ps.Count() == 0 {
+		return r
+	}
+
+	if ps2 := GetParams(r); ps2 != nil {
+		if pp := ps2.(*syntax.Params); len(pp.Params) > 0 {
+			for _, p := range pp.Params {
+				ps.Set(p.K, p.V)
+			}
+		}
+	}
+
+	return r.WithContext(context.WithValue(r.Context(), contextKeyParams, ps))
+}

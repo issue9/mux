@@ -3,8 +3,6 @@
 package syntax
 
 import (
-	"context"
-	"net/http"
 	"testing"
 
 	"github.com/issue9/assert/v2"
@@ -13,45 +11,6 @@ import (
 )
 
 var _ params.Params = &Params{}
-
-func getParams(params *Params, a *assert.Assertion) *Params {
-	r, err := http.NewRequest(http.MethodGet, "/to/path", nil)
-	a.NotError(err).NotNil(r)
-	r = WithValue(r, params)
-	a.NotNil(r)
-	return GetParams(r)
-}
-
-func TestWithValue(t *testing.T) {
-	a := assert.New(t, false)
-
-	r, err := http.NewRequest(http.MethodGet, "/to/path", nil)
-	a.NotError(err).NotNil(r)
-	a.Equal(WithValue(r, &Params{}), r)
-
-	r, err = http.NewRequest(http.MethodGet, "/to/path", nil)
-	a.NotError(err).NotNil(r)
-	r = WithValue(r, &Params{Params: []Param{{K: "k1", V: "v1"}}})
-	r = WithValue(r, &Params{Params: []Param{{K: "k2", V: "v2"}}})
-	a.Equal(GetParams(r), &Params{Params: []Param{{K: "k2", V: "v2"}, {K: "k1", V: "v1"}}})
-}
-
-func TestGetParams(t *testing.T) {
-	a := assert.New(t, false)
-
-	r, err := http.NewRequest(http.MethodGet, "/to/path", nil)
-	a.NotError(err).NotNil(r)
-	ps := GetParams(r)
-	a.Nil(ps)
-
-	kvs := []Param{{K: "key1", V: "1"}}
-	r, err = http.NewRequest(http.MethodGet, "/to/path", nil)
-	a.NotError(err).NotNil(r)
-	ctx := context.WithValue(r.Context(), contextKeyParams, &Params{Params: kvs})
-	r = r.WithContext(ctx)
-	ps = GetParams(r)
-	a.Equal(ps.Params, kvs)
-}
 
 func TestNewParams(t *testing.T) {
 	a := assert.New(t, false)
@@ -70,7 +29,7 @@ func TestNewParams(t *testing.T) {
 func TestParams_String(t *testing.T) {
 	a := assert.New(t, false)
 
-	ps := getParams(&Params{Params: []Param{{K: "key1", V: "1"}}}, a)
+	ps := &Params{Params: []Param{{K: "key1", V: "1"}}}
 
 	val, err := ps.String("key1")
 	a.NotError(err).Equal(val, "1")
@@ -87,10 +46,10 @@ func TestParams_String(t *testing.T) {
 func TestParams_Int(t *testing.T) {
 	a := assert.New(t, false)
 
-	ps := getParams(&Params{Params: []Param{
+	ps := &Params{Params: []Param{
 		{K: "key1", V: "1"},
 		{K: "key2", V: "a2"},
-	}}, a)
+	}}
 
 	val, err := ps.Int("key1")
 	a.NotError(err).Equal(val, 1)
@@ -110,11 +69,11 @@ func TestParams_Int(t *testing.T) {
 func TestParams_Uint(t *testing.T) {
 	a := assert.New(t, false)
 
-	ps := getParams(&Params{Params: []Param{
+	ps := &Params{Params: []Param{
 		{K: "key1", V: "1"},
 		{K: "key2", V: "a2"},
 		{K: "key3", V: "-1"},
-	}}, a)
+	}}
 
 	val, err := ps.Uint("key1")
 	a.NotError(err).Equal(val, 1)
@@ -139,11 +98,11 @@ func TestParams_Uint(t *testing.T) {
 func TestParams_Bool(t *testing.T) {
 	a := assert.New(t, false)
 
-	ps := getParams(&Params{Params: []Param{
+	ps := &Params{Params: []Param{
 		{K: "key1", V: "true"},
 		{K: "key2", V: "0"},
 		{K: "key3", V: "a3"},
-	}}, a)
+	}}
 
 	val, err := ps.Bool("key1")
 	a.NotError(err).True(val)
@@ -167,11 +126,11 @@ func TestParams_Bool(t *testing.T) {
 func TestParams_Float(t *testing.T) {
 	a := assert.New(t, false)
 
-	ps := getParams(&Params{Params: []Param{
+	ps := &Params{Params: []Param{
 		{K: "key1", V: "1"},
 		{K: "key2", V: "a2"},
 		{K: "key3", V: "1.1"},
-	}}, a)
+	}}
 
 	val, err := ps.Float("key1")
 	a.NotError(err).Equal(val, 1.0)

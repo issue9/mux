@@ -32,7 +32,7 @@ func TestHost_RegisterInterceptor(t *testing.T) {
 	a.NotError(err).NotNil(r)
 	rr, ok = h.Match(r)
 	a.True(ok).NotNil(rr) // rr 包含了参数信息
-	ps := syntax.GetParams(rr)
+	ps := mux.GetParams(rr).(*syntax.Params)
 	a.Equal(ps, &syntax.Params{Params: []syntax.Param{{K: "sub", V: "sub"}}})
 }
 
@@ -62,7 +62,7 @@ func TestHosts_Match(t *testing.T) {
 	a.NotError(err).NotNil(r)
 	rr, ok = h.Match(r)
 	a.True(ok).NotEqual(rr, r) // 通过 context.WithValue 修改了 rr
-	sub := syntax.GetParams(rr).MustString("sub", "yy")
+	sub := mux.GetParams(rr).MustString("sub", "yy")
 	a.Equal(sub, "xx")
 
 	// 泛域名
@@ -70,7 +70,7 @@ func TestHosts_Match(t *testing.T) {
 	a.NotError(err).NotNil(r)
 	rr, ok = h.Match(r)
 	a.True(ok).NotEqual(rr, r) // 通过 context.WithValue 修改了 rr
-	sub = syntax.GetParams(rr).MustString("sub", "yy")
+	sub = mux.GetParams(rr).MustString("sub", "yy")
 	a.Equal(sub, "xx.yy")
 
 	// 带端口

@@ -12,7 +12,6 @@ import (
 	"github.com/issue9/assert/v2/rest"
 
 	"github.com/issue9/mux/v6"
-	"github.com/issue9/mux/v6/internal/syntax"
 )
 
 var _ http.Handler = &Group{}
@@ -99,7 +98,7 @@ func TestGroup(t *testing.T) {
 	a.NotNil(def)
 
 	def.Get("/posts/{id:digit}.html", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ps := syntax.GetParams(r)
+		ps := mux.GetParams(r)
 		a.Equal(ps.MustString("sub", "not-found"), "abc").
 			Equal(ps.MustInt("id", -1), 5)
 		w.WriteHeader(http.StatusAccepted)

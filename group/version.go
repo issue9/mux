@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/issue9/mux/v6"
 	"github.com/issue9/mux/v6/internal/syntax"
 )
 
@@ -90,7 +91,7 @@ func (v *HeaderVersion) Match(r *http.Request) (*http.Request, bool) {
 	for _, vv := range v.versions {
 		if vv == ver {
 			if v.paramName != "" {
-				r = syntax.WithValue(r, &syntax.Params{Params: []syntax.Param{{K: v.paramName, V: vv}}})
+				r = mux.WithValue(r, &syntax.Params{Params: []syntax.Param{{K: v.paramName, V: vv}}})
 			}
 			return r, true
 		}
@@ -107,7 +108,7 @@ func (v *PathVersion) Match(r *http.Request) (*http.Request, bool) {
 			if v.paramName == "" {
 				r = r.Clone(r.Context()) // r.URL.Path 已改变
 			} else {
-				r = syntax.WithValue(r, &syntax.Params{Params: []syntax.Param{{K: v.paramName, V: vv}}})
+				r = mux.WithValue(r, &syntax.Params{Params: []syntax.Param{{K: v.paramName, V: vv}}})
 			}
 
 			r.URL.Path = strings.TrimPrefix(p, vv)
