@@ -9,7 +9,6 @@ import (
 	"github.com/issue9/errwrap"
 
 	"github.com/issue9/mux/v6/internal/options"
-	"github.com/issue9/mux/v6/internal/syntax"
 	"github.com/issue9/mux/v6/internal/tree"
 )
 
@@ -168,10 +167,10 @@ func (r *RouterOf[T]) Serve(w http.ResponseWriter, req *http.Request, ps Params)
 		}()
 	}
 
-	r.serveHTTP(w, req, ps)
+	r.serve(w, req, ps)
 }
 
-func (r *RouterOf[T]) serveHTTP(w http.ResponseWriter, req *http.Request, p Params) {
+func (r *RouterOf[T]) serve(w http.ResponseWriter, req *http.Request, p Params) {
 	path := req.URL.Path
 	if r.options.CaseInsensitive {
 		path = strings.ToLower(req.URL.Path)
@@ -184,18 +183,12 @@ func (r *RouterOf[T]) serveHTTP(w http.ResponseWriter, req *http.Request, p Para
 	}
 
 	if p != nil && p.Count() > 0 {
-		if ps.Count() == 0 {
-			ps = p
-		} else {
-			p.Range(func(k, v string) {
-				ps.Set(k, v)
-			})
-		}
+		p.Range(func(k, v string) {
+			ps.Set(k, v)
+		})
 	}
 
-	if ps != nil {
-		defer ps.(*syntax.Params).Destroy()
-	}
+	defer ps.Destroy()
 
 	if h := node.Handler(req.Method); h != nil {
 		r.options.HandleCORS(node, w, req) // 处理跨域问题

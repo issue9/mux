@@ -47,6 +47,5 @@ func TestGetParams(t *testing.T) {
 	a.NotError(err).NotNil(r)
 	ctx := context.WithValue(r.Context(), contextKeyParams, &syntax.Params{Params: kvs})
 	r = r.WithContext(ctx)
-	ps2 := GetParams(r).(*syntax.Params)
-	a.Equal(ps2.Params, kvs)
+	a.Equal(GetParams(r).MustString("key1", "def"), "1")
 }
