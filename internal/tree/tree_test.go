@@ -55,7 +55,7 @@ func (t *tester) addAmbiguous(pattern string) {
 
 // 验证按照指定的 method 和 path 访问，是否会返回相同的 code 值，
 // 若是，则返回该节点以及对应的参数。
-func (t *tester) handler(method, path string, code int) (HandlerFunc, *syntax.Params) {
+func (t *tester) handler(method, path string, code int) (HandlerFunc, params.Params) {
 	t.a.TB().Helper()
 
 	hs, ps := t.tree.Route(path)
@@ -94,7 +94,7 @@ func (t *tester) paramsTrue(method, path string, code int, params map[string]str
 
 	_, ps := t.handler(method, path, code)
 	if len(params) > 0 {
-		t.a.Equal(len(params), len(ps.Params))
+		t.a.Equal(len(params), ps.Count())
 		for k, v := range params {
 			vv, found := ps.Get(k)
 			t.a.True(found).Equal(vv, v)

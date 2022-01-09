@@ -7,8 +7,6 @@ import (
 	"testing"
 
 	"github.com/issue9/assert/v2"
-
-	"github.com/issue9/mux/v6"
 )
 
 var (
@@ -26,8 +24,8 @@ func TestHeaderVersion_Match(t *testing.T) {
 	a.NotError(err).NotNil(r)
 	r.Header.Set("Accept", "application/json; version=1.0")
 	a.NotNil(r)
-	rr, ok := h.Match(r)
-	a.True(ok).NotNil(rr).Equal(mux.GetParams(rr).MustString("version", "not-exists"), "1.0")
+	ps, ok := h.Match(r)
+	a.True(ok).NotNil(ps).Equal(ps.MustString("version", "not-exists"), "1.0")
 
 	// 相同版本号，未指定 paramName
 	h = NewHeaderVersion("", "", nil, "1.0", "2.0", "3.0")
@@ -35,24 +33,24 @@ func TestHeaderVersion_Match(t *testing.T) {
 	a.NotError(err).NotNil(r)
 	r.Header.Set("Accept", "application/json; version=1.0")
 	a.NotNil(r)
-	rr, ok = h.Match(r)
-	a.True(ok).NotNil(rr).Nil(mux.GetParams(rr))
+	ps, ok = h.Match(r)
+	a.True(ok).Nil(ps)
 
 	// 空版本
 	r, err = http.NewRequest(http.MethodGet, "http://not.exsits/test", nil)
 	a.NotError(err).NotNil(r)
 	r.Header.Set("Accept", "application/json; version=")
 	a.NotNil(r)
-	rr, ok = h.Match(r)
-	a.False(ok).Nil(rr)
+	ps, ok = h.Match(r)
+	a.False(ok).Nil(ps)
 
 	// 不同版本
 	r, err = http.NewRequest(http.MethodGet, "http://not.exsits/test", nil)
 	a.NotError(err).NotNil(r)
 	r.Header.Set("Accept", "application/json; version = 2")
 	a.NotNil(r)
-	rr, ok = h.Match(r)
-	a.False(ok).Nil(rr)
+	ps, ok = h.Match(r)
+	a.False(ok).Nil(ps)
 
 	// 空值，不匹配任何内容
 
@@ -61,31 +59,31 @@ func TestHeaderVersion_Match(t *testing.T) {
 	a.NotError(err).NotNil(r)
 	r.Header.Set("Accept", "application/json; version=1.0")
 	a.NotNil(r)
-	rr, ok = h.Match(r)
-	a.False(ok).Nil(rr)
+	ps, ok = h.Match(r)
+	a.False(ok).Nil(ps)
 
 	// 空版本
 	r, err = http.NewRequest(http.MethodGet, "http://not.exsits/test", nil)
 	a.NotError(err).NotNil(r)
 	r.Header.Set("Accept", "application/json; version=")
 	a.NotNil(r)
-	rr, ok = h.Match(r)
-	a.False(ok).Nil(rr)
+	ps, ok = h.Match(r)
+	a.False(ok).Nil(ps)
 
 	// 不同版本
 	r, err = http.NewRequest(http.MethodGet, "http://not.exsits/test", nil)
 	a.NotError(err).NotNil(r)
 	r.Header.Set("Accept", "application/json; version=2")
 	a.NotNil(r)
-	rr, ok = h.Match(r)
-	a.False(ok).Nil(rr)
+	ps, ok = h.Match(r)
+	a.False(ok).Nil(ps)
 
 	r, err = http.NewRequest(http.MethodGet, "https://caixw.io/test", nil)
 	a.NotError(err).NotNil(r)
 	r.Header.Set("Accept", "application/json; version=1.0")
 	a.NotNil(r)
-	rr, ok = h.Match(r)
-	a.False(ok).Nil(rr)
+	ps, ok = h.Match(r)
+	a.False(ok).Nil(ps)
 }
 
 func TestPathVersion_Match(t *testing.T) {
@@ -101,37 +99,34 @@ func TestPathVersion_Match(t *testing.T) {
 	r, err := http.NewRequest(http.MethodGet, "https://caixw.io/v1/test", nil)
 	a.NotError(err).NotNil(r)
 	a.NotNil(r)
-	rr, ok := h.Match(r)
-	a.True(ok).NotNil(rr)
-	a.Equal(rr.URL.Path, "/test").
-		Equal(r.URL.Path, "/v1/test").
-		Equal(mux.GetParams(rr).MustString("version", "not-found"), "/v1")
+	ps, ok := h.Match(r)
+	a.True(ok).NotNil(ps)
+	a.Equal(r.URL.Path, "/test").
+		Equal(ps.MustString("version", "not-found"), "/v1")
 
 	// 相同版本号，未指定 key
 	h = NewPathVersion("", "v3", "/v2", "/v1")
 	r, err = http.NewRequest(http.MethodGet, "https://caixw.io/v1/test", nil)
 	a.NotError(err).NotNil(r)
 	a.NotNil(r)
-	rr, ok = h.Match(r)
-	a.True(ok).NotNil(rr)
-	a.Equal(rr.URL.Path, "/test").
-		Equal(r.URL.Path, "/v1/test").
-		Equal(mux.GetParams(rr).MustString("version", "not-found"), "not-found")
+	ps, ok = h.Match(r)
+	a.True(ok).Nil(ps)
+	a.Equal(r.URL.Path, "/test")
 
 	// 空版本
 	r, err = http.NewRequest(http.MethodGet, "https://caixw.io/test", nil)
 	a.NotError(err).NotNil(r)
 	a.NotNil(r)
-	rr, ok = h.Match(r)
-	a.False(ok).Nil(rr)
+	ps, ok = h.Match(r)
+	a.False(ok).Nil(ps)
 	a.Equal(r.URL.Path, "/test")
 
 	// 不同版本
 	r, err = http.NewRequest(http.MethodGet, "https://caixw.io/v111/test", nil)
 	a.NotError(err).NotNil(r)
 	a.NotNil(r)
-	rr, ok = h.Match(r)
-	a.False(ok).Nil(rr)
+	ps, ok = h.Match(r)
+	a.False(ok).Nil(ps)
 	a.Equal(r.URL.Path, "/v111/test")
 
 	// 空值，不匹配任何内容
@@ -141,6 +136,6 @@ func TestPathVersion_Match(t *testing.T) {
 	a.NotError(err).NotNil(r)
 	r.Header.Set("Accept", "application/json; version=1.0")
 	a.NotNil(r)
-	rr, ok = h.Match(r)
-	a.False(ok).Nil(rr)
+	ps, ok = h.Match(r)
+	a.False(ok).Nil(ps)
 }

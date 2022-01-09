@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/issue9/mux/v6"
 	"github.com/issue9/mux/v6/internal/syntax"
+	"github.com/issue9/mux/v6/params"
 )
 
 // PathVersion 匹配路径中的版本号
@@ -78,7 +78,7 @@ func NewHeaderVersion(param, key string, errlog *log.Logger, version ...string) 
 	}
 }
 
-func (v *HeaderVersion) Match(r *http.Request) (*http.Request, bool) {
+func (v *HeaderVersion) Match(r *http.Request) (ret params.Params, ok bool) {
 	_, ps, err := mime.ParseMediaType(r.Header.Get("Accept"))
 	if err != nil {
 		if v.errlog != nil {
@@ -91,28 +91,26 @@ func (v *HeaderVersion) Match(r *http.Request) (*http.Request, bool) {
 	for _, vv := range v.versions {
 		if vv == ver {
 			if v.paramName != "" {
-				r = mux.WithValue(r, &syntax.Params{Params: []syntax.Param{{K: v.paramName, V: vv}}})
+				ret = &syntax.Params{Params: []syntax.Param{{K: v.paramName, V: vv}}}
 			}
-			return r, true
+			return ret, true
 		}
 	}
 	return nil, false
 }
 
-func (v *PathVersion) Match(r *http.Request) (*http.Request, bool) {
+func (v *PathVersion) Match(r *http.Request) (ps params.Params, ok bool) {
 	p := r.URL.Path
 	for _, ver := range v.versions {
 		if strings.HasPrefix(p, ver) {
 			vv := ver[:len(ver)-1]
 
-			if v.paramName == "" {
-				r = r.Clone(r.Context()) // r.URL.Path 已改变
-			} else {
-				r = mux.WithValue(r, &syntax.Params{Params: []syntax.Param{{K: v.paramName, V: vv}}})
+			r.URL.Path = strings.TrimPrefix(p, vv)
+			if v.paramName != "" {
+				ps = &syntax.Params{Params: []syntax.Param{{K: v.paramName, V: vv}}}
 			}
 
-			r.URL.Path = strings.TrimPrefix(p, vv)
-			return r, true
+			return ps, true
 		}
 	}
 	return nil, false

@@ -11,6 +11,7 @@ import (
 	"github.com/issue9/errwrap"
 
 	"github.com/issue9/mux/v6/internal/syntax"
+	"github.com/issue9/mux/v6/params"
 )
 
 // Tree 以树节点的形式保存的路由
@@ -177,7 +178,7 @@ func (tree *Tree) getNode(pattern string) (*Node, error) {
 // Route 找到与当前内容匹配的 Node 实例
 //
 // NOTE: 调用方需要调用 syntax.Params.Destroy 销毁对象
-func (tree *Tree) Route(path string) (*Node, *syntax.Params) {
+func (tree *Tree) Route(path string) (*Node, params.Params) {
 	if tree.locker != nil {
 		tree.locker.RLock()
 		defer tree.locker.RUnlock()

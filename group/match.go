@@ -2,7 +2,12 @@
 
 package group
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/issue9/mux/v6/internal/syntax"
+	"github.com/issue9/mux/v6/params"
+)
 
 // Matcher 验证一个请求是否符合要求
 //
@@ -11,39 +16,47 @@ import "net/http"
 type Matcher interface {
 	// Match 验证请求是否符合当前对象的要求
 	//
-	// req 为 r 的副本，除非对 r 作了修改，否则可以直接返回 r。
-	// ok 表示是否匹配成功。
-	Match(r *http.Request) (req *http.Request, ok bool)
+	// ps 为匹配过程中生成的参数信息，可以返回 nil；
+	// ok 表示是否匹配成功；
+	Match(r *http.Request) (ps params.Params, ok bool)
 }
 
 // MatcherFunc 用于将 Match(*http.Request) (*http.Request, bool) 转换成 Matcher 接口
-type MatcherFunc func(*http.Request) (*http.Request, bool)
+type MatcherFunc func(*http.Request) (params.Params, bool)
 
 // Match 实现 Matcher 接口
-func (f MatcherFunc) Match(r *http.Request) (*http.Request, bool) { return f(r) }
+func (f MatcherFunc) Match(r *http.Request) (params.Params, bool) { return f(r) }
 
 // Any 匹配任意内容
-func Any(r *http.Request) (*http.Request, bool) { return r, true }
+func Any(*http.Request) (params.Params, bool) { return nil, true }
 
 // And 按顺序符合每一个要求
 //
 // 前一个对象返回的实例将作为下一个对象的输入参数。
 func And(m ...Matcher) Matcher {
-	return MatcherFunc(func(r *http.Request) (rr *http.Request, ok bool) {
-		rr = r
+	return MatcherFunc(func(r *http.Request) (ps params.Params, ok bool) {
+		ps = syntax.NewParams("")
+
 		for _, mm := range m {
-			rr, ok = mm.Match(rr)
+			ps2, ok := mm.Match(r)
 			if !ok {
 				return nil, false
 			}
+			if ps2.Count() == 0 {
+				continue
+			}
+
+			ps2.Range(func(k, v string) {
+				ps.Set(k, v)
+			})
 		}
-		return rr, true
+		return ps, true
 	})
 }
 
 // Or 仅需符合一个要求
 func Or(m ...Matcher) Matcher {
-	return MatcherFunc(func(r *http.Request) (*http.Request, bool) {
+	return MatcherFunc(func(r *http.Request) (params.Params, bool) {
 		for _, mm := range m {
 			if rr, ok := mm.Match(r); ok {
 				return rr, true
@@ -54,12 +67,12 @@ func Or(m ...Matcher) Matcher {
 }
 
 // AndFunc 需同时符合每一个要求
-func AndFunc(f ...func(*http.Request) (*http.Request, bool)) Matcher { return And(f2i(f...)...) }
+func AndFunc(f ...func(*http.Request) (params.Params, bool)) Matcher { return And(f2i(f...)...) }
 
 // OrFunc 仅需符合一个要求
-func OrFunc(f ...func(*http.Request) (*http.Request, bool)) Matcher { return Or(f2i(f...)...) }
+func OrFunc(f ...func(*http.Request) (params.Params, bool)) Matcher { return Or(f2i(f...)...) }
 
-func f2i(f ...func(*http.Request) (*http.Request, bool)) []Matcher {
+func f2i(f ...func(*http.Request) (params.Params, bool)) []Matcher {
 	ms := make([]Matcher, 0, len(f))
 	for _, ff := range f {
 		ms = append(ms, MatcherFunc(ff))

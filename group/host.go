@@ -33,14 +33,12 @@ func (hs *Hosts) RegisterInterceptor(f mux.InterceptorFunc, name ...string) {
 	hs.i.Add(f, name...)
 }
 
-func (hs *Hosts) Match(r *http.Request) (*http.Request, bool) {
+func (hs *Hosts) Match(r *http.Request) (params.Params, bool) {
 	h, ps := hs.tree.Route(strings.ToLower(r.URL.Hostname()))
 	if h == nil || h.Handler(http.MethodGet) == nil {
 		return nil, false
 	}
-
-	// NOTE: ps 会在 RouterOf.ServeHTTP 中被放回池中，不用再额外处理。
-	return mux.WithValue(r, ps), true
+	return ps, true
 }
 
 // Add 添加新的域名

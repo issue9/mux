@@ -9,6 +9,7 @@ import (
 	"github.com/issue9/errwrap"
 
 	"github.com/issue9/mux/v6/internal/options"
+	"github.com/issue9/mux/v6/internal/syntax"
 	"github.com/issue9/mux/v6/internal/tree"
 )
 
@@ -155,6 +156,10 @@ func (r *RouterOf[T]) URL(strict bool, pattern string, params map[string]string)
 }
 
 func (r *RouterOf[T]) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	r.Serve(w, req, nil)
+}
+
+func (r *RouterOf[T]) Serve(w http.ResponseWriter, req *http.Request, ps Params) {
 	if r.options.RecoverFunc != nil {
 		defer func() {
 			if err := recover(); err != nil {
@@ -163,10 +168,10 @@ func (r *RouterOf[T]) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}()
 	}
 
-	r.serveHTTP(w, req)
+	r.serveHTTP(w, req, ps)
 }
 
-func (r *RouterOf[T]) serveHTTP(w http.ResponseWriter, req *http.Request) {
+func (r *RouterOf[T]) serveHTTP(w http.ResponseWriter, req *http.Request, p Params) {
 	path := req.URL.Path
 	if r.options.CaseInsensitive {
 		path = strings.ToLower(req.URL.Path)
@@ -178,17 +183,29 @@ func (r *RouterOf[T]) serveHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	if p != nil && p.Count() > 0 {
+		if ps.Count() == 0 {
+			ps = p
+		} else {
+			p.Range(func(k, v string) {
+				ps.Set(k, v)
+			})
+		}
+	}
+
+	if ps != nil {
+		defer ps.(*syntax.Params).Destroy()
+	}
+
 	if h := node.Handler(req.Method); h != nil {
 		r.options.HandleCORS(node, w, req) // 处理跨域问题
 		h(w, req, ps)
-		ps.Destroy()
 		return
 	}
 
 	// 存在节点，但是不允许当前请求方法。
 	w.Header().Set("Allow", node.Options())
 	r.options.MethodNotAllowed.ServeHTTP(w, req)
-	ps.Destroy()
 }
 
 // Name 路由名称

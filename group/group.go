@@ -66,8 +66,8 @@ func (g *GroupOf[T]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, router := range g.routers {
-		if req, ok := router.matcher.Match(r); ok {
-			router.ServeHTTP(w, req)
+		if ps, ok := router.matcher.Match(r); ok {
+			router.Serve(w, r, ps)
 			return
 		}
 	}

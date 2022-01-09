@@ -50,7 +50,7 @@ func TestNode_serveHTTP(t *testing.T) {
 	}, http.MethodGet))
 
 	node, ps := tree.Route("/path1")
-	a.Empty(ps.Params).NotNil(node)
+	a.Zero(ps.Count()).NotNil(node)
 
 	w := httptest.NewRecorder()
 	r, err := http.NewRequest(http.MethodHead, "/path1", nil)
@@ -80,7 +80,7 @@ func TestNode_serveHTTP(t *testing.T) {
 	}, http.MethodGet))
 
 	node, ps = tree.Route("/path2")
-	a.Empty(ps.Params).NotNil(node)
+	a.Zero(ps.Count()).NotNil(node)
 
 	w = httptest.NewRecorder()
 	r, err = http.NewRequest(http.MethodHead, "/path2", nil)
