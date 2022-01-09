@@ -214,11 +214,16 @@ r.Do() // 预检请求，可以正常访问
 
 ### 静态文件
 
-可以使用 `FileServer` 与命名参数相结合的方式实现静态文件的访问：
+可以使用 `ServeFile` 与命名参数相结合的方式实现静态文件的访问：
 
 ```go
 r := NewRouter("")
-r.Get("/assets/{path}", FileServer(os.DirFS("/static/"), "path", "index.html", nil))
+r.Get("/assets/{path}", func(w http.ResponseWriter, r *http.Request){
+    err := ServeFile(os.DirFS("/static/"), "path", "index.html", w, r)
+	if err!= nil {
+        http.Error(err.Error(), http.StatusInternalServerError)
+    }
+})
 ```
 
 ### 中间件

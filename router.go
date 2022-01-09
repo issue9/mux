@@ -27,11 +27,11 @@ type RouterOf[T any] struct {
 	tree    *tree.Tree
 	options *options.Options
 	ms      []MiddlewareFuncOf[T]
-	b       BuildHandlerFuncOf[T]
+	call    CallOf[T]
 }
 
-// BuildHandlerFuncOf 定义了如何将标准的 http.Handler 如果转换成 T
-type BuildHandlerFuncOf[T any] func(http.ResponseWriter, *http.Request, Params, T)
+// CallOf 指定如何调用用户自定义的对象 T
+type CallOf[T any] func(http.ResponseWriter, *http.Request, Params, T)
 
 // NewRouterOf 声明路由
 //
@@ -42,9 +42,9 @@ type BuildHandlerFuncOf[T any] func(http.ResponseWriter, *http.Request, Params, 
 // o 修改路由的默认形为。比如 CaseInsensitive 会让路由忽略大小写，
 // 相同类型的函数会相互覆盖，比如 CORS 和 AllowedCORS，后传递会覆盖前传递的值。
 //
-// T 表示用户用于处理路由项的方法，该类型最终通过 NewRouterOf 中的 b 参数与
+// T 表示用户用于处理路由项的方法，该类型最终通过 NewRouterOf 中的 call 参数与
 // http.ResponseWriter 和 *http.Request 相关联。
-func NewRouterOf[T any](name string, b BuildHandlerFuncOf[T], ms []MiddlewareFuncOf[T], o ...Option) *RouterOf[T] {
+func NewRouterOf[T any](name string, call CallOf[T], ms []MiddlewareFuncOf[T], o ...Option) *RouterOf[T] {
 	opt, err := options.Build(o...)
 	if err != nil {
 		panic(err)
@@ -55,7 +55,7 @@ func NewRouterOf[T any](name string, b BuildHandlerFuncOf[T], ms []MiddlewareFun
 		tree:    tree.New(opt.Lock, opt.Interceptors),
 		options: opt,
 		ms:      ms,
-		b:       b,
+		call:    call,
 	}
 
 	return r
@@ -90,7 +90,7 @@ func (r *RouterOf[T]) Handle(pattern string, h T, methods ...string) *RouterOf[T
 
 func (r *RouterOf[T]) handle(pattern string, h T, methods ...string) {
 	f := func(w http.ResponseWriter, req *http.Request, ps Params) {
-		r.b(w, req, ps, h)
+		r.call(w, req, ps, h)
 	}
 	if err := r.tree.Add(pattern, f, methods...); err != nil {
 		panic(err)

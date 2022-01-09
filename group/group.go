@@ -24,7 +24,7 @@ type GroupOf[T any] struct {
 	routers []*routerOf[T]
 	options []mux.Option
 	ms      []mux.MiddlewareFuncOf[T]
-	b       mux.BuildHandlerFuncOf[T]
+	b       mux.CallOf[T]
 
 	notFound http.Handler
 	recovery mux.RecoverFunc
@@ -38,7 +38,7 @@ type routerOf[T any] struct {
 // NewOf 声明一个新的 GroupOf
 //
 // o 用于设置由 GroupOf.New 添加的路由，有关 NotFound 与 Recovery 的设置同时会作用于 GroupOf。
-func NewOf[T any](b mux.BuildHandlerFuncOf[T], ms []mux.MiddlewareFuncOf[T], o ...mux.Option) *GroupOf[T] {
+func NewOf[T any](b mux.CallOf[T], ms []mux.MiddlewareFuncOf[T], o ...mux.Option) *GroupOf[T] {
 	opt, err := options.Build(o...)
 	if err != nil {
 		panic(err)

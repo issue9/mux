@@ -4,6 +4,7 @@ package mux
 
 import (
 	"bytes"
+	"io/fs"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -176,23 +177,48 @@ func TestTrace(t *testing.T) {
 	r, err := http.NewRequest(http.MethodTrace, "/path", bytes.NewBufferString("<body>"))
 	a.NotError(err).NotNil(r)
 
-	errBuf := &bytes.Buffer{}
 	w := httptest.NewRecorder()
-	Trace(false, log.New(errBuf, "ERR", 0)).ServeHTTP(w, r)
+	a.NotError(Trace(w, r, false))
 	body := w.Body.String()
 	a.Contains(body, "/path").
 		NotContains(body, "body").
 		True(strings.HasPrefix(body, http.MethodTrace)).
-		Equal(w.Header().Get("content-type"), traceContentType).
-		Empty(errBuf.String())
+		Equal(w.Header().Get("content-type"), traceContentType)
 
-	errBuf.Reset()
 	w = httptest.NewRecorder()
-	Trace(true, log.New(os.Stderr, "ERR", 0)).ServeHTTP(w, r)
+	a.NotError(Trace(w, r, true))
 	body = w.Body.String()
 	a.Contains(body, "/path").
 		Contains(body, "&lt;body&gt;").
 		True(strings.HasPrefix(body, http.MethodTrace)).
-		Equal(w.Header().Get("content-type"), traceContentType).
-		Empty(errBuf.String())
+		Equal(w.Header().Get("content-type"), traceContentType)
+}
+
+func TestServeFile(t *testing.T) {
+	a := assert.New(t, false)
+
+	w := httptest.NewRecorder()
+	r, err := http.NewRequest(http.MethodGet, "/assets/", nil)
+	a.NotError(err).NotNil(r)
+	a.NotError(ServeFile(os.DirFS("./"), "", "go.mod", w, r))
+	a.Contains(w.Body.String(), "module github.com/issue9/mux")
+
+	w = httptest.NewRecorder()
+	r, err = http.NewRequest(http.MethodGet, "/assets/", nil)
+	a.NotError(err).NotNil(r)
+	a.NotError(ServeFile(os.DirFS("./"), "params/params.go", "", w, r))
+	a.NotEmpty(w.Body.String())
+
+	w = httptest.NewRecorder()
+	r, err = http.NewRequest(http.MethodGet, "/assets/", nil)
+	a.NotError(err).NotNil(r)
+	a.ErrorIs(ServeFile(os.DirFS("./"), "params/", "", w, r), fs.ErrNotExist)
+	a.Empty(w.Body.String())
+
+	w = httptest.NewRecorder()
+	r, err = http.NewRequest(http.MethodGet, "/assets/", nil)
+	a.NotError(err).NotNil(r)
+	a.ErrorIs(ServeFile(os.DirFS("./"), "not-exists", "", w, r), fs.ErrNotExist)
+	a.Empty(w.Body.String())
+
 }

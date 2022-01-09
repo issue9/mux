@@ -71,13 +71,8 @@ func calcMemStats(load func()) {
 	fmt.Printf("%d Bytes\n", after-before)
 }
 
-func BenchmarkFileServer(b *testing.B) {
-	a := assert.New(b, false)
-	router := NewRouter("", nil)
-	a.NotNil(router)
-
-	fs := FileServer(os.DirFS("./"), "path", "", nil)
-	router.Get("/assets/{path}", fs)
+func BenchmarkServeFile(b *testing.B) {
+	fsys := os.DirFS("./")
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -85,9 +80,9 @@ func BenchmarkFileServer(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest(http.MethodGet, "/assets/mux.go", nil)
-		router.ServeHTTP(w, r)
-		if w.Code != http.StatusOK {
-			b.Errorf("状态码 %d 与期望值 200 不同", w.Code)
+		err := ServeFile(fsys, "mux.go", "", w, r)
+		if err != nil {
+			b.Errorf("测试出错，返回了以下错误 %s", err)
 		}
 	}
 }
