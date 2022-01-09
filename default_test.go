@@ -21,9 +21,17 @@ func TestWithValue(t *testing.T) {
 
 	r, err = http.NewRequest(http.MethodGet, "/to/path", nil)
 	a.NotError(err).NotNil(r)
-	r = WithValue(r, &syntax.Params{Params: []syntax.Param{{K: "k1", V: "v1"}}})
-	r = WithValue(r, &syntax.Params{Params: []syntax.Param{{K: "k2", V: "v2"}}})
-	a.Equal(GetParams(r), &syntax.Params{Params: []syntax.Param{{K: "k2", V: "v2"}, {K: "k1", V: "v1"}}})
+	pp := syntax.NewParams("")
+	pp.Set("k1", "v1")
+	r = WithValue(r, pp)
+
+	pp = syntax.NewParams("")
+	pp.Set("k2", "v2")
+	r = WithValue(r, pp)
+	ps := GetParams(r)
+	a.NotNil(ps).
+		Equal(ps.MustString("k2", "def"), "v2").
+		Equal(ps.MustString("k1", "def"), "v1")
 }
 
 func TestGetParams(t *testing.T) {

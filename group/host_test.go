@@ -9,7 +9,6 @@ import (
 	"github.com/issue9/assert/v2"
 
 	"github.com/issue9/mux/v6"
-	"github.com/issue9/mux/v6/internal/syntax"
 )
 
 var _ Matcher = &Hosts{}
@@ -32,7 +31,7 @@ func TestHost_RegisterInterceptor(t *testing.T) {
 	a.NotError(err).NotNil(r)
 	ps, ok = h.Match(r)
 	a.True(ok).NotNil(ps)
-	a.Equal(ps, &syntax.Params{Params: []syntax.Param{{K: "sub", V: "sub"}}})
+	a.Equal(ps.MustString("sub", "def"), "sub")
 }
 
 func TestHosts_Match(t *testing.T) {

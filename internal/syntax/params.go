@@ -22,6 +22,7 @@ var paramsPool = &sync.Pool{
 type Params struct {
 	Path   string  // 这是在 Segment.Match 中用到的路径信息。
 	Params []Param // 实际需要传递的参数
+	count  int
 }
 
 type Param struct {
@@ -32,6 +33,7 @@ func NewParams(path string) *Params {
 	ps := paramsPool.Get().(*Params)
 	ps.Path = path
 	ps.Params = ps.Params[:0]
+	ps.count = 0
 	return ps
 }
 
@@ -144,6 +146,7 @@ func (p *Params) Clone() params.Params {
 	pp := &Params{
 		Path:   p.Path,
 		Params: make([]Param, len(p.Params)),
+		count:  p.count,
 	}
 	copy(pp.Params, p.Params)
 	return pp
@@ -153,13 +156,7 @@ func (p *Params) Count() (cnt int) {
 	if p == nil {
 		return 0
 	}
-
-	for _, param := range p.Params {
-		if param.K != "" {
-			cnt++
-		}
-	}
-	return cnt
+	return p.count
 }
 
 func (p *Params) Map() map[string]string {
@@ -189,6 +186,7 @@ func (p *Params) Set(k, v string) {
 		}
 	}
 
+	p.count++
 	if deletedIndex != -1 {
 		p.Params[deletedIndex].K = k
 		p.Params[deletedIndex].V = v
@@ -205,6 +203,7 @@ func (p *Params) Delete(k string) {
 	for i, pp := range p.Params {
 		if pp.K == k {
 			p.Params[i].K = ""
+			p.count--
 			return
 		}
 	}

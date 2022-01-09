@@ -158,15 +158,16 @@ func TestParams_Float(t *testing.T) {
 func TestParams_Set(t *testing.T) {
 	a := assert.New(t, false)
 
-	ps := &Params{Params: []Param{{K: "k1", V: "v1"}}}
+	ps := NewParams("")
+	ps.Set("k1", "v1")
 	a.Equal(ps.Count(), 1)
 
 	ps.Set("k1", "v2")
 	a.Equal(ps.Count(), 1)
-	a.Equal(ps, &Params{Params: []Param{{K: "k1", V: "v2"}}})
+	a.Equal(ps, &Params{Params: []Param{{K: "k1", V: "v2"}}, count: 1})
 
 	ps.Set("k2", "v2")
-	a.Equal(ps, &Params{Params: []Param{{K: "k1", V: "v2"}, {K: "k2", V: "v2"}}})
+	a.Equal(ps, &Params{Params: []Param{{K: "k1", V: "v2"}, {K: "k2", V: "v2"}}, count: 2})
 	a.Equal(ps.Count(), 2)
 }
 
