@@ -80,4 +80,7 @@ type Params interface {
 
 	// Set 添加或是修改值
 	Set(key, val string)
+
+	// Range 依次访问每个参数
+	Range(func(key, val string))
 }

@@ -248,3 +248,16 @@ func TestParams_Map(t *testing.T) {
 	ps.Delete("k1")
 	a.Empty(ps.Map())
 }
+
+func TestParams_Range(t *testing.T) {
+	a := assert.New(t, false)
+	var size int
+
+	ps := NewParams("/path")
+	ps.Set("k1", "v1")
+	ps.Set("k2", "v2")
+	ps.Range(func(k, v string) {
+		size++
+	})
+	a.Equal(2, size)
+}

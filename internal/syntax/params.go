@@ -209,3 +209,11 @@ func (p *Params) Delete(k string) {
 		}
 	}
 }
+
+func (p *Params) Range(f func(key, val string)) {
+	for _, param := range p.Params {
+		if param.K != "" {
+			f(param.K, param.V)
+		}
+	}
+}

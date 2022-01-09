@@ -5,8 +5,6 @@ package mux
 import (
 	"context"
 	"net/http"
-
-	"github.com/issue9/mux/v6/internal/syntax"
 )
 
 const contextKeyParams contextKey = 0
@@ -50,12 +48,10 @@ func WithValue(r *http.Request, ps Params) *http.Request {
 		return r
 	}
 
-	if ps2 := GetParams(r); ps2 != nil {
-		if pp := ps2.(*syntax.Params); len(pp.Params) > 0 {
-			for _, p := range pp.Params {
-				ps.Set(p.K, p.V)
-			}
-		}
+	if ps2 := GetParams(r); ps2 != nil && ps2.Count() > 0 {
+		ps2.Range(func(k, v string) {
+			ps.Set(k, v)
+		})
 	}
 
 	return r.WithContext(context.WithValue(r.Context(), contextKeyParams, ps))
