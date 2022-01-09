@@ -241,6 +241,59 @@ c := compress.New(log.Default(), "*")
 r := mux.NewRouter("", mux.Middleware(c.Middleware))
 ```
 
+### 自定义路由
+
+官方提供的 http.Handler 未必是符合每个人的要求，通过 RouterOf 用户可以很方便地实现自定义格式的 http.Handler，
+只需要以下几个步骤：
+
+1. 定义一个专有的路由处理类型，可以是类也可以是函数；
+2. 根据此类型，生成 RouterOf、PrefixOf、ResourceOf、MiddlewareOf 类型；
+3. 定义 CallOf 函数；
+4. 将 CallOf 传递给 NewOf；
+
+```go
+type Context struct {
+	R *http.Request
+	W http.ResponseWriter
+	P Params
+}
+
+type HandlerFunc func(ctx *Context)
+
+type Router = RouterOf[HandlerFunc]
+type Prefix = PrefixOf[HandlerFunc]
+type Resource = ResourcesOf[HandlerFunc]
+type Middleware = MiddlewareOf[HandlerFunc]
+
+func New(name string, ms []Middleware, o ...Option)* Router {
+	f := func(w http.ResponseWriter, r *http.Request, ps Param, h HandlerFunc) {
+		ctx := &Context {
+			R: r,
+			W: w,
+			P: ps,
+		}       
+		h(ctx)
+    }
+	return NewOf(name, f, ms, o...)
+}
+```
+
+以上就是自定义路由的全部功能，之后就可以直接使用：
+
+```go
+r := New("router", nil, nil)
+
+r.Get("/path", func(ctx *Context){
+	// TODO
+	ctx.W.WriteHeader(200)
+})
+
+r.Prefix("/admin").Get("/login", func(ctx *Context){
+	// TODO
+	ctx.W.WriteHeader(501)
+})
+```
+
 ## 性能
 
 <https://caixw.github.io/go-http-routers-testing/> 提供了与其它几个框架的对比情况。

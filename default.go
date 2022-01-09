@@ -33,6 +33,8 @@ func NewRouter(name string, ms []MiddlewareFunc, o ...Option) *Router {
 }
 
 // GetParams 获取当前请求实例上的参数列表
+//
+// NOTE: 仅适用于 Router 而不是所有 RouterOf。
 func GetParams(r *http.Request) Params {
 	if ps := r.Context().Value(contextKeyParams); ps != nil {
 		return ps.(Params)
@@ -43,6 +45,8 @@ func GetParams(r *http.Request) Params {
 // WithValue 将参数 ps 附加在 r 上
 //
 // 与 context.WithValue 功能相同，但是考虑了在同一个 r 上调用多次 WithValue 的情况。
+//
+// NOTE: 仅适用于 Router 而不是所有 RouterOf。
 func WithValue(r *http.Request, ps Params) *http.Request {
 	if ps == nil || ps.Count() == 0 {
 		return r

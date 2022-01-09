@@ -22,25 +22,15 @@ func (r *ResourceOf[T]) Handle(h T, methods ...string) *ResourceOf[T] {
 	return r
 }
 
-func (r *ResourceOf[T]) Get(h T) *ResourceOf[T] {
-	return r.Handle(h, http.MethodGet)
-}
+func (r *ResourceOf[T]) Get(h T) *ResourceOf[T] { return r.Handle(h, http.MethodGet) }
 
-func (r *ResourceOf[T]) Post(h T) *ResourceOf[T] {
-	return r.Handle(h, http.MethodPost)
-}
+func (r *ResourceOf[T]) Post(h T) *ResourceOf[T] { return r.Handle(h, http.MethodPost) }
 
-func (r *ResourceOf[T]) Delete(h T) *ResourceOf[T] {
-	return r.Handle(h, http.MethodDelete)
-}
+func (r *ResourceOf[T]) Delete(h T) *ResourceOf[T] { return r.Handle(h, http.MethodDelete) }
 
-func (r *ResourceOf[T]) Put(h T) *ResourceOf[T] {
-	return r.Handle(h, http.MethodPut)
-}
+func (r *ResourceOf[T]) Put(h T) *ResourceOf[T] { return r.Handle(h, http.MethodPut) }
 
-func (r *ResourceOf[T]) Patch(h T) *ResourceOf[T] {
-	return r.Handle(h, http.MethodPatch)
-}
+func (r *ResourceOf[T]) Patch(h T) *ResourceOf[T] { return r.Handle(h, http.MethodPatch) }
 
 func (r *ResourceOf[T]) Any(h T) *ResourceOf[T] { return r.Handle(h) }
 

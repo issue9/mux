@@ -5,12 +5,6 @@ package mux
 import "net/http"
 
 // PrefixOf 操纵统一前缀的路由
-//
-// example:
-// r := NewRouter("")
-//  p := r.PrefixOf("/api")
-//  p.Get("/users")  // 相当于 r.Get("/api/users")
-//  p.Get("/user/1") // 相当于 r.Get("/api/user/1")
 type PrefixOf[T any] struct {
 	router *RouterOf[T]
 	prefix string
@@ -67,7 +61,7 @@ func (p *PrefixOf[T]) URL(strict bool, pattern string, params map[string]string)
 	return p.router.URL(strict, p.prefix+pattern, params)
 }
 
-// PrefixOf 在现有 PrefixOf 的基础上声明一个新的 PrefixOf 实例
+// Prefix 在现有 PrefixOf 的基础上声明一个新的 PrefixOf 实例
 //
 // m 中间件函数，按顺序调用，会继承 p 的中间件并按在 m 之前；
 //
