@@ -14,6 +14,36 @@ import (
 	"github.com/issue9/assert/v2"
 )
 
+type (
+	ctx struct {
+		R *http.Request
+		W http.ResponseWriter
+		P Params
+	}
+
+	ctxHandlerFunc func(ctx *ctx)
+	ctxRouter      = RouterOf[ctxHandlerFunc]
+	ctxMiddleware  = MiddlewareFuncOf[ctxHandlerFunc]
+)
+
+func newCtxRouter(name string, ms []ctxMiddleware, o ...Option) *ctxRouter {
+	f := func(w http.ResponseWriter, r *http.Request, ps Params, h ctxHandlerFunc) {
+		ctx := &ctx{
+			R: r,
+			W: w,
+			P: ps,
+		}
+		h(ctx)
+	}
+	return NewRouterOf[ctxHandlerFunc](name, f, ms, o...)
+}
+
+func ctxBenchHandler(c *ctx) {
+	if _, err := c.W.Write([]byte(c.R.URL.Path)); err != nil {
+		panic(err)
+	}
+}
+
 func init() {
 	for _, api := range apis {
 		ps := make(map[string]string, 5)
@@ -160,6 +190,50 @@ func BenchmarkRouter_ServeHTTP(b *testing.B) {
 	router := NewRouter("", nil)
 	for _, api := range apis {
 		router.Handle(api.pattern, http.HandlerFunc(benchHandler), api.method)
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		api := apis[i%len(apis)]
+
+		w := httptest.NewRecorder()
+		r, _ := http.NewRequest(api.method, api.test, nil)
+		router.ServeHTTP(w, r)
+
+		if w.Body.String() != r.URL.Path {
+			b.Errorf("%s:%s", w.Body.String(), r.URL.Path)
+		}
+	}
+}
+
+func BenchmarkCTXRouter_AddAndServeHTTP(b *testing.B) {
+	router := newCtxRouter("", nil, Lock)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		api := apis[i%len(apis)]
+
+		w := httptest.NewRecorder()
+		r, _ := http.NewRequest(api.method, api.test, nil)
+
+		router.Handle(api.pattern, ctxBenchHandler, api.method)
+		router.ServeHTTP(w, r)
+		router.Remove(api.pattern, api.method)
+
+		if w.Body.String() != r.URL.Path {
+			b.Errorf("%s:%s", w.Body.String(), r.URL.Path)
+		}
+	}
+}
+
+func BenchmarkCTXRouter_ServeHTTP(b *testing.B) {
+	router := newCtxRouter("", nil)
+	for _, api := range apis {
+		router.Handle(api.pattern, ctxBenchHandler, api.method)
 	}
 
 	b.ReportAllocs()

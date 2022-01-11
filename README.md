@@ -247,7 +247,7 @@ r := mux.NewRouter("", mux.Middleware(c.Middleware))
 只需要以下几个步骤：
 
 1. 定义一个专有的路由处理类型，可以是类也可以是函数；
-2. 根据此类型，生成 RouterOf、PrefixOf、ResourceOf、MiddlewareOf 类型；
+2. 根据此类型，生成 RouterOf、PrefixOf、ResourceOf、MiddlewareFuncOf 类型；
 3. 定义 CallOf 函数；
 4. 将 CallOf 传递给 NewOf；
 
@@ -262,11 +262,11 @@ type HandlerFunc func(ctx *Context)
 
 type Router = RouterOf[HandlerFunc]
 type Prefix = PrefixOf[HandlerFunc]
-type Resource = ResourcesOf[HandlerFunc]
-type Middleware = MiddlewareOf[HandlerFunc]
+type Resource = ResourceOf[HandlerFunc]
+type Middleware = MiddlewareFuncOf[HandlerFunc]
 
 func New(name string, ms []Middleware, o ...Option)* Router {
-	f := func(w http.ResponseWriter, r *http.Request, ps Param, h HandlerFunc) {
+	f := func(w http.ResponseWriter, r *http.Request, ps Params, h HandlerFunc) {
 		ctx := &Context {
 			R: r,
 			W: w,
@@ -274,7 +274,7 @@ func New(name string, ms []Middleware, o ...Option)* Router {
 		}       
 		h(ctx)
     }
-	return NewOf(name, f, ms, o...)
+	return NewRouterOf[HandlerFunc](name, f, ms, o...)
 }
 ```
 
