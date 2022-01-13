@@ -271,9 +271,9 @@ func New(name string, ms []Middleware, o ...Option)* Router {
 			R: r,
 			W: w,
 			P: ps,
-		}       
+		}
 		h(ctx)
-    }
+	}
 	return NewRouterOf[HandlerFunc](name, f, ms, o...)
 }
 ```

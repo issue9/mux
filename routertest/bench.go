@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"runtime"
+	"runtime/metrics"
 	"testing"
 
 	"github.com/issue9/assert/v2"
@@ -114,15 +115,17 @@ func (t *Tester[T]) calcMemStats(h T) {
 }
 
 func calcMemStats(load func()) {
-	stats := &runtime.MemStats{}
+	sample := make([]metrics.Sample, 1)
+	sample[0].Name = "/gc/heap/allocs:bytes"
 
 	runtime.GC()
-	runtime.ReadMemStats(stats)
-	before := stats.HeapAlloc
+	metrics.Read(sample)
+	before := sample[0].Value
 
 	load()
 
-	runtime.ReadMemStats(stats)
-	after := stats.HeapAlloc
-	fmt.Printf("%d Bytes\n", after-before)
+	metrics.Read(sample)
+	after := sample[0].Value
+
+	fmt.Printf("%d Bytes\n", after.Uint64()-before.Uint64())
 }
