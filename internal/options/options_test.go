@@ -4,10 +4,10 @@ package options
 
 import (
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/issue9/assert/v2"
+	"github.com/issue9/assert/v2/rest"
 )
 
 func TestOptions_sanitize(t *testing.T) {
@@ -19,12 +19,7 @@ func TestOptions_sanitize(t *testing.T) {
 		NotNil(o.NotFound).
 		NotNil(o.MethodNotAllowed)
 
-	r, err := http.NewRequest(http.MethodGet, "/", nil)
-	a.NotError(err).NotNil(r)
-	w := httptest.NewRecorder()
-	o.MethodNotAllowed.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 405).
-		Equal(w.Body.String(), http.StatusText(http.StatusMethodNotAllowed)+"\n")
+	rest.Get(a, "/").Do(o.MethodNotAllowed).Status(405).StringBody(http.StatusText(http.StatusMethodNotAllowed) + "\n")
 
 	// URLDomain
 

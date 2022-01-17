@@ -39,10 +39,7 @@ func (t *Tester[T]) Params(a *assert.Assertion, f func(params *mux.Params) T) {
 		a.TB().Helper()
 
 		w := httptest.NewRecorder()
-		a.NotNil(w)
-
-		r, err := http.NewRequest(method, url, nil)
-		a.NotError(err).NotNil(r)
+		r := rest.NewRequest(a, method, url).Request()
 
 		router.ServeHTTP(w, r)
 

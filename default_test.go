@@ -5,7 +5,6 @@ package mux
 import (
 	"context"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/issue9/assert/v2"
@@ -26,12 +25,10 @@ type tester struct {
 func TestWithValue(t *testing.T) {
 	a := assert.New(t, false)
 
-	r, err := http.NewRequest(http.MethodGet, "/to/path", nil)
-	a.NotError(err).NotNil(r)
+	r := rest.Get(a, "/to/path").Request()
 	a.Equal(WithValue(r, &syntax.Params{}), r)
 
-	r, err = http.NewRequest(http.MethodGet, "/to/path", nil)
-	a.NotError(err).NotNil(r)
+	r = rest.Get(a, "/to/path").Request()
 	pp := syntax.NewParams("")
 	pp.Set("k1", "v1")
 	r = WithValue(r, pp)
@@ -48,14 +45,12 @@ func TestWithValue(t *testing.T) {
 func TestGetParams(t *testing.T) {
 	a := assert.New(t, false)
 
-	r, err := http.NewRequest(http.MethodGet, "/to/path", nil)
-	a.NotError(err).NotNil(r)
+	r := rest.Get(a, "/to/path").Request()
 	ps := GetParams(r)
 	a.Nil(ps)
 
 	kvs := []syntax.Param{{K: "key1", V: "1"}}
-	r, err = http.NewRequest(http.MethodGet, "/to/path", nil)
-	a.NotError(err).NotNil(r)
+	r = rest.Get(a, "/to/path").Request()
 	ctx := context.WithValue(r.Context(), contextKeyParams, &syntax.Params{Params: kvs})
 	r = r.WithContext(ctx)
 	a.Equal(GetParams(r).MustString("key1", "def"), "1")
@@ -99,13 +94,8 @@ func (t *tester) matchOptions(path string, code int, allow string) {
 
 func (t *tester) matchOptionsAsterisk(allow string) {
 	t.a.TB().Helper()
-	r, err := http.NewRequest(http.MethodOptions, "*", nil)
-	t.a.NotError(err).NotNil(r)
-
-	w := httptest.NewRecorder()
-	t.router.ServeHTTP(w, r) // Client.Do 无法传递 * 或是空的路径请求。改用 ServeHTTP
-	t.a.Equal(w.Code, 200).
-		Equal(w.Header().Get("Allow"), allow)
+	// Client.Do 无法传递 * 或是空的路径请求。改用 ServeHTTP
+	rest.NewRequest(t.a, http.MethodOptions, "*").Do(t.router).Status(200).Header("Allow", allow)
 }
 
 func TestRouter(t *testing.T) {
@@ -210,18 +200,10 @@ func TestRouter_Clean(t *testing.T) {
 	def.Get("/m1", rest.BuildHandler(a, 200, "", nil)).
 		Post("/m1", rest.BuildHandler(a, 201, "", nil))
 
-	w := httptest.NewRecorder()
-	r, err := http.NewRequest(http.MethodGet, "http://localhost:88/m1", nil)
-	a.NotError(err).NotNil(r)
-	def.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 200)
+	rest.Get(a, "http://localhost:88/m1").Do(def).Status(200)
 
 	def.Clean()
-	w = httptest.NewRecorder()
-	r, err = http.NewRequest(http.MethodGet, "/m1", nil)
-	a.NotError(err).NotNil(r)
-	def.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 404)
+	rest.Get(a, "/m1").Do(def).Status(404)
 }
 
 // 测试匹配顺序是否正确

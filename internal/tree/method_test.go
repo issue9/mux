@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/issue9/assert/v2"
+	"github.com/issue9/assert/v2/rest"
 
 	"github.com/issue9/mux/v6/internal/syntax"
 	"github.com/issue9/mux/v6/params"
@@ -52,17 +53,15 @@ func TestNode_serveHTTP(t *testing.T) {
 	node, ps := tree.Route("/path1")
 	a.Zero(ps.Count()).NotNil(node)
 
+	r := rest.NewRequest(a, http.MethodHead, "/path1").Request()
 	w := httptest.NewRecorder()
-	r, err := http.NewRequest(http.MethodHead, "/path1", nil)
-	a.NotError(err).NotNil(r)
 	node.Handler(http.MethodHead)(w, r, nil)
 	a.Equal(w.Header().Get("h1"), "h1").
 		Empty(w.Body.String()).
 		Equal(w.Header().Get("Content-Length"), "6")
 
 	w = httptest.NewRecorder()
-	r, err = http.NewRequest(http.MethodOptions, "/path1", nil)
-	a.NotError(err).NotNil(r)
+	r = rest.NewRequest(a, http.MethodOptions, "/path1").Request()
 	node.handlers[http.MethodOptions](w, r, nil)
 	a.Empty(w.Header().Get("h1")).
 		Equal(w.Header().Get("Allow"), "GET, HEAD, OPTIONS").
@@ -83,16 +82,14 @@ func TestNode_serveHTTP(t *testing.T) {
 	a.Zero(ps.Count()).NotNil(node)
 
 	w = httptest.NewRecorder()
-	r, err = http.NewRequest(http.MethodHead, "/path2", nil)
-	a.NotError(err).NotNil(r)
+	r = rest.NewRequest(a, http.MethodHead, "/path2").Request()
 	node.Handler(http.MethodHead)(w, r, nil)
 	a.Equal(w.Header().Get("h1"), "h2").
 		Empty(w.Body.String()).
 		Equal(w.Header().Get("Content-Length"), "6")
 
 	w = httptest.NewRecorder()
-	r, err = http.NewRequest(http.MethodOptions, "/path2", nil)
-	a.NotError(err).NotNil(r)
+	r = rest.NewRequest(a, http.MethodOptions, "/path2").Request()
 	node.handlers[http.MethodOptions](w, r, nil)
 	a.Empty(w.Header().Get("h1")).
 		Equal(w.Header().Get("Allow"), "GET, HEAD, OPTIONS").

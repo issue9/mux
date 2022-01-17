@@ -65,8 +65,7 @@ func (t *tester) handler(method, path string, code int) (HandlerFunc, params.Par
 	t.a.NotNil(h)
 
 	w := httptest.NewRecorder()
-	r, err := http.NewRequest(method, path, nil)
-	t.a.NotError(err).NotNil(r)
+	r := rest.NewRequest(t.a, method, path).Request()
 	h(w, r, nil)
 	t.a.Equal(w.Code, code)
 
@@ -132,8 +131,7 @@ func (t *tester) optionsTrue(path, options string) {
 	w := httptest.NewRecorder()
 	u, err := url.Parse(path)
 	t.a.NotError(err).NotNil(u)
-	r, err := http.NewRequest(http.MethodOptions, path, nil)
-	t.a.NotError(err).NotNil(r)
+	r := rest.NewRequest(t.a, http.MethodOptions, path).Request()
 	h(w, r, nil)
 	t.a.Equal(w.Code, http.StatusOK)
 
