@@ -4,7 +4,6 @@ package mux
 
 import (
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/issue9/assert/v2"
@@ -73,11 +72,7 @@ func TestRouter_Resource(t *testing.T) {
 	a.False(r1 == r2) // 不是同一个 *Resource
 
 	r2.Delete(rest.BuildHandler(a, 201, "", nil))
-	w := httptest.NewRecorder()
-	r, err := http.NewRequest(http.MethodDelete, "/abc/1", nil)
-	a.NotError(err).NotNil(r)
-	def.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 201)
+	rest.Delete(a, "/abc/1").Do(def).Status(201)
 }
 
 func TestPrefix_Resource(t *testing.T) {
@@ -93,12 +88,7 @@ func TestPrefix_Resource(t *testing.T) {
 	a.NotNil(r1)
 
 	r1.Delete(rest.BuildHandler(a, 201, "-201-", nil))
-	w := httptest.NewRecorder()
-	r, err := http.NewRequest(http.MethodDelete, "/p1/abc/1", nil)
-	a.NotError(err).NotNil(r)
-	def.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 201).
-		Equal(w.Body.String(), "-201-p1p2r1r2")
+	rest.Delete(a, "/p1/abc/1").Do(def).Status(201).StringBody("-201-p1p2r1r2")
 }
 
 func TestResource_URL(t *testing.T) {

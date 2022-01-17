@@ -3,10 +3,10 @@
 package group
 
 import (
-	"net/http"
 	"testing"
 
 	"github.com/issue9/assert/v2"
+	"github.com/issue9/assert/v2/rest"
 
 	"github.com/issue9/mux/v6"
 )
@@ -21,14 +21,12 @@ func TestHost_RegisterInterceptor(t *testing.T) {
 	h.RegisterInterceptor(mux.InterceptorWord, "\\d+")
 	h.Add("{sub:\\d+}.example.com")
 
-	r, err := http.NewRequest(http.MethodGet, "http://sub--1.example.com/test", nil)
-	a.NotError(err).NotNil(r)
+	r := rest.Get(a, "http://sub--1.example.com/test").Request()
 	ps, ok := h.Match(r)
 	a.False(ok).Nil(ps)
 
 	// 将 \\d+ 注册为任意非空字符
-	r, err = http.NewRequest(http.MethodGet, "http://sub.example.com/test", nil)
-	a.NotError(err).NotNil(r)
+	r = rest.Get(a, "http://sub.example.com/test").Request()
 	ps, ok = h.Match(r)
 	a.True(ok).NotNil(ps)
 	a.Equal(ps.MustString("sub", "def"), "sub")
@@ -40,50 +38,42 @@ func TestHosts_Match(t *testing.T) {
 	h := NewHosts(true, "caixw.io", "caixw.oi", "{sub}.example.com")
 	a.NotNil(h)
 
-	r, err := http.NewRequest(http.MethodGet, "http://caixw.io/test", nil)
-	a.NotError(err).NotNil(r)
+	r := rest.Get(a, "http://caixw.io/test").Request()
 	ps, ok := h.Match(r)
 	a.True(ok).Zero(ps.Count())
 
-	r, err = http.NewRequest(http.MethodGet, "https://caixw.io/test", nil)
-	a.NotError(err).NotNil(r)
+	r = rest.Get(a, "https://caixw.io/test").Request()
 	ps, ok = h.Match(r)
 	a.True(ok).Zero(ps.Count())
 
-	r, err = http.NewRequest(http.MethodGet, "https://CAIXW.io/test", nil)
-	a.NotError(err).NotNil(r)
+	r = rest.Get(a, "https://CAIXW.io/test").Request()
 	ps, ok = h.Match(r)
 	a.True(ok).Zero(ps.Count())
 
 	// 泛域名
-	r, err = http.NewRequest(http.MethodGet, "https://xx.example.com/test", nil)
-	a.NotError(err).NotNil(r)
+	r = rest.Get(a, "https://xx.example.com/test").Request()
 	ps, ok = h.Match(r)
 	a.True(ok).NotNil(ps)
 	a.Equal(ps.MustString("sub", "yy"), "xx")
 
 	// 泛域名
-	r, err = http.NewRequest(http.MethodGet, "https://xx.yy.example.com/test", nil)
-	a.NotError(err).NotNil(r)
+	r = rest.Get(a, "https://xx.yy.example.com/test").Request()
 	ps, ok = h.Match(r)
 	a.True(ok).NotNil(ps)
 	a.Equal(ps.MustString("sub", "yy"), "xx.yy")
 
 	// 带端口
-	r, err = http.NewRequest(http.MethodGet, "http://caixw.io:88/test", nil)
-	a.NotError(err).NotNil(r)
+	r = rest.Get(a, "http://caixw.io:88/test").Request()
 	ps, ok = h.Match(r)
 	a.True(ok).Zero(ps.Count())
 
 	// 访问不允许的域名
-	r, err = http.NewRequest(http.MethodGet, "http://sub.caixw.io/test", nil)
-	a.NotError(err).NotNil(r)
+	r = rest.Get(a, "http://sub.caixw.io/test").Request()
 	ps, ok = h.Match(r)
 	a.False(ok).Nil(ps)
 
 	// 访问不允许的域名
-	r, err = http.NewRequest(http.MethodGet, "http://sub.1example.com/test", nil)
-	a.NotError(err).NotNil(r)
+	r = rest.Get(a, "http://sub.1eample.com/test").Request()
 	ps, ok = h.Match(r)
 	a.False(ok).Nil(ps)
 }
@@ -119,22 +109,19 @@ func TestHosts_Add_Delete(t *testing.T) {
 	})
 
 	// delete xx.example.com
-	r, err := http.NewRequest(http.MethodGet, "https://xx.example.com/api/path", nil)
-	a.NotError(err).NotNil(r)
+	r := rest.Get(a, "https://xx.example.com/api/path").Request()
 	ps, ok := h.Match(r)
 	a.True(ok).Zero(ps.Count())
 
 	// 删除 xx.example.com，则适配到 {sub}.example.com
 	h.Delete("xx.example.com")
-	r, err = http.NewRequest(http.MethodGet, "https://xx.example.com/api/path", nil)
-	a.NotError(err).NotNil(r)
+	r = rest.Get(a, "https://xx.example.com/api/path").Request()
 	ps, ok = h.Match(r)
 	a.True(ok).NotNil(ps)
 
 	// delete {sub}.example.com
 	h.Delete("{sub}.example.com")
-	r, err = http.NewRequest(http.MethodGet, "https://zzz.example.com/api/path", nil)
-	a.NotError(err).NotNil(r)
+	r = rest.Get(a, "https://zzz.example.com/api/path").Request()
 	ps, ok = h.Match(r)
 	a.False(ok).Nil(ps)
 }

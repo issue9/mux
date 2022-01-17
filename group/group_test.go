@@ -124,16 +124,14 @@ func TestGroup_recovery(t *testing.T) {
 	def.Get("/path", http.HandlerFunc(func(http.ResponseWriter, *http.Request) { panic("test") }))
 
 	w := httptest.NewRecorder()
-	r, err := http.NewRequest(http.MethodGet, "/v2/path", nil)
-	a.NotError(err).NotNil(r)
+	r := rest.Get(a, "/v2/path").Request()
 	g.ServeHTTP(w, r)
 	a.Equal(w.Code, 405).
 		Contains(out.String(), "test")
 
 	out.Reset()
 	w = httptest.NewRecorder()
-	r, err = http.NewRequest(http.MethodGet, "/v2/path", nil)
-	a.NotError(err).NotNil(r)
+	r = rest.Get(a, "/v2/path").Request()
 	g.ServeHTTP(w, r)
 	a.Equal(w.Code, 405).
 		Contains(out.String(), "test")
@@ -150,15 +148,13 @@ func TestGroup_recovery(t *testing.T) {
 
 	a.PanicString(func() {
 		w = httptest.NewRecorder()
-		r, err = http.NewRequest(http.MethodGet, "/v2/path", nil)
-		a.NotError(err).NotNil(r)
+		r = rest.Get(a, "/v2/path").Request()
 		g.ServeHTTP(w, r)
 	}, "test")
 
 	a.PanicString(func() {
 		w = httptest.NewRecorder()
-		r, err = http.NewRequest(http.MethodGet, "/v2/path", nil)
-		a.NotError(err).NotNil(r)
+		r = rest.Get(a, "/v2/path").Request()
 		g.ServeHTTP(w, r)
 	}, "test")
 

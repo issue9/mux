@@ -4,7 +4,6 @@ package mux
 
 import (
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/issue9/assert/v2"
@@ -79,11 +78,7 @@ func TestRouter_Prefix(t *testing.T) {
 		pp := p.Prefix("")
 		a.Equal(pp.prefix, "/abc")
 		pp.Delete("", rest.BuildHandler(a, 201, "", nil))
-		w := httptest.NewRecorder()
-		r, err := http.NewRequest(http.MethodDelete, "/abc", nil)
-		a.NotError(err).NotNil(r)
-		def.ServeHTTP(w, r)
-		a.Equal(w.Result().StatusCode, 201)
+		rest.Delete(a, "/abc").Do(def).Status(201)
 	}).Run("empty prefix with middleware", func(a *assert.Assertion) {
 		def := NewRouter("", nil, AllowedCORS)
 		a.NotNil(def)
@@ -94,12 +89,7 @@ func TestRouter_Prefix(t *testing.T) {
 
 		pp := p.Prefix("", buildMiddleware(a, "p1"), buildMiddleware(a, "p2"))
 		pp.Delete("", rest.BuildHandler(a, 201, "-201-", nil))
-		w := httptest.NewRecorder()
-		r, err := http.NewRequest(http.MethodDelete, "/abc", nil)
-		a.NotError(err).NotNil(r)
-		def.ServeHTTP(w, r)
-		a.Equal(w.Result().StatusCode, 201).
-			Equal(w.Body.String(), "-201-p1p2")
+		rest.Delete(a, "/abc").Do(def).Status(201).StringBody("-201-p1p2")
 	})
 }
 
@@ -114,12 +104,7 @@ func TestPrefix_Prefix(t *testing.T) {
 	a.Equal(p.Router(), def)
 	pp.Delete("", rest.BuildHandler(a, 201, "-201-", nil))
 
-	w := httptest.NewRecorder()
-	r, err := http.NewRequest(http.MethodDelete, "/abc/def", nil)
-	a.NotError(err).NotNil(r)
-	def.ServeHTTP(w, r)
-	a.Equal(w.Result().StatusCode, 201).
-		Equal(w.Body.String(), "-201-p1p2pp1pp2")
+	rest.Delete(a, "/abc/def").Do(def).Status(201).StringBody("-201-p1p2pp1pp2")
 
 	p = def.Prefix("")
 	pp = p.Prefix("/abc")

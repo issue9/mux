@@ -42,12 +42,7 @@ func TestRouter_Middleware(t *testing.T) {
 	a.NotNil(def)
 	def.Get("/get", rest.BuildHandler(a, 201, "", nil))
 
-	w := httptest.NewRecorder()
-	r, err := http.NewRequest(http.MethodGet, "/get", nil)
-	a.NotError(err).NotNil(r)
-	def.ServeHTTP(w, r)
-	a.Equal(w.Code, 201).
-		Equal(w.Body.String(), "m1m2m3m4") // buildHandler 导致顶部的后输出
+	rest.Get(a, "/get").Do(def).Status(201).StringBody("m1m2m3m4") // buildHandler 导致顶部的后输出
 }
 
 func TestOption(t *testing.T) {
@@ -95,8 +90,7 @@ func TestRecovery(t *testing.T) {
 	router.Get("/path", p)
 	a.Panic(func() {
 		w := httptest.NewRecorder()
-		r, err := http.NewRequest(http.MethodGet, "/path", nil)
-		a.NotError(err).NotNil(r)
+		r := rest.Get(a, "/path").Request()
 		router.ServeHTTP(w, r)
 	})
 
@@ -107,8 +101,7 @@ func TestRecovery(t *testing.T) {
 	router.Get("/path", p)
 	a.NotPanic(func() {
 		w := httptest.NewRecorder()
-		r, err := http.NewRequest(http.MethodGet, "/path", nil)
-		a.NotError(err).NotNil(r)
+		r := rest.Get(a, "/path").Request()
 		router.ServeHTTP(w, r)
 		a.Contains(out.String(), "test").
 			Equal(w.Code, 404)
@@ -122,8 +115,7 @@ func TestRecovery(t *testing.T) {
 	router.Get("/path", p)
 	a.NotPanic(func() {
 		w := httptest.NewRecorder()
-		r, err := http.NewRequest(http.MethodGet, "/path", nil)
-		a.NotError(err).NotNil(r)
+		r := rest.Get(a, "/path").Request()
 		router.ServeHTTP(w, r)
 		a.Equal(405, w.Code).
 			Contains(out.String(), "test")
@@ -135,8 +127,7 @@ func TestRecovery(t *testing.T) {
 	router.Get("/path", p)
 	a.NotPanic(func() {
 		w := httptest.NewRecorder()
-		r, err := http.NewRequest(http.MethodGet, "/path", nil)
-		a.NotError(err).NotNil(r)
+		r := rest.Get(a, "/path").Request()
 		router.ServeHTTP(w, r)
 		a.Equal(w.Code, 406)
 	})
@@ -174,9 +165,7 @@ func TestURL(t *testing.T) {
 func TestTrace(t *testing.T) {
 	a := assert.New(t, false)
 
-	r, err := http.NewRequest(http.MethodTrace, "/path", bytes.NewBufferString("<body>"))
-	a.NotError(err).NotNil(r)
-
+	r := rest.NewRequest(a, http.MethodTrace, "/path").Body([]byte("<body>")).Request()
 	w := httptest.NewRecorder()
 	a.NotError(Trace(w, r, false))
 	body := w.Body.String()
@@ -198,26 +187,22 @@ func TestServeFile(t *testing.T) {
 	a := assert.New(t, false)
 
 	w := httptest.NewRecorder()
-	r, err := http.NewRequest(http.MethodGet, "/assets/", nil)
-	a.NotError(err).NotNil(r)
+	r := rest.Get(a, "/assets/").Request()
 	a.NotError(ServeFile(os.DirFS("./"), "", "go.mod", w, r))
 	a.Contains(w.Body.String(), "module github.com/issue9/mux")
 
 	w = httptest.NewRecorder()
-	r, err = http.NewRequest(http.MethodGet, "/assets/", nil)
-	a.NotError(err).NotNil(r)
+	r = rest.Get(a, "/assets/").Request()
 	a.NotError(ServeFile(os.DirFS("./"), "params/params.go", "", w, r))
 	a.NotEmpty(w.Body.String())
 
 	w = httptest.NewRecorder()
-	r, err = http.NewRequest(http.MethodGet, "/assets/", nil)
-	a.NotError(err).NotNil(r)
+	r = rest.Get(a, "/assets/").Request()
 	a.ErrorIs(ServeFile(os.DirFS("./"), "params/", "", w, r), fs.ErrNotExist)
 	a.Empty(w.Body.String())
 
 	w = httptest.NewRecorder()
-	r, err = http.NewRequest(http.MethodGet, "/assets/", nil)
-	a.NotError(err).NotNil(r)
+	r = rest.Get(a, "/assets/").Request()
 	a.ErrorIs(ServeFile(os.DirFS("./"), "not-exists", "", w, r), fs.ErrNotExist)
 	a.Empty(w.Body.String())
 
