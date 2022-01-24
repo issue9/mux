@@ -48,6 +48,26 @@ func TestHeaderVersion_Match(t *testing.T) {
 	ps, ok = h.Match(r)
 	a.False(ok).Nil(ps)
 
+	// 未指定版本
+	r = rest.Get(a, "https://caixw.io/test").
+		Header("Accept", "application/json").
+		Request()
+	ps, ok = h.Match(r)
+	a.False(ok).Nil(ps)
+
+	// 未指定 media type
+	r = rest.Get(a, "https://caixw.io/test").
+		Header("Accept", ";version=1.0").
+		Request()
+	ps, ok = h.Match(r)
+	a.False(ok).Nil(ps)
+
+	// 未指定 Accept
+	r = rest.Get(a, "https://caixw.io/test").
+		Request()
+	ps, ok = h.Match(r)
+	a.False(ok).Nil(ps)
+
 	// 空值，不匹配任何内容
 
 	h = NewHeaderVersion("", "", nil)

@@ -79,7 +79,12 @@ func NewHeaderVersion(param, key string, errlog *log.Logger, version ...string) 
 }
 
 func (v *HeaderVersion) Match(r *http.Request) (ret params.Params, ok bool) {
-	_, ps, err := mime.ParseMediaType(r.Header.Get("Accept"))
+	header := r.Header.Get("Accept")
+	if header == "" {
+		return nil, false
+	}
+
+	_, ps, err := mime.ParseMediaType(header)
 	if err != nil {
 		if v.errlog != nil {
 			v.errlog.Println(err)
