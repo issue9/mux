@@ -48,8 +48,9 @@ func (p *PrefixOf[T]) Remove(pattern string, methods ...string) {
 // Clean 清除所有以 PrefixOf.prefix 开头的路由项
 //
 // 当指定多个相同的 PrefixOf 时，调用其中的一个 Clean 也将会清除其它的：
-//  p1 := mux.PrefixOf("prefix")
-//  p2 := mux.PrefixOf("prefix")
+//  r := NewRouterOf(...)
+//  p1 := r.Prefix("prefix")
+//  p2 := r.Prefix("prefix")
 //  p2.Clean() 将同时清除 p1 的内容，因为有相同的前缀。
 func (p *PrefixOf[T]) Clean() { p.router.tree.Clean(p.prefix) }
 
@@ -66,8 +67,9 @@ func (p *PrefixOf[T]) URL(strict bool, pattern string, params map[string]string)
 // m 中间件函数，按顺序调用，会继承 p 的中间件并按在 m 之前；
 //
 // example:
-//  p := mux.PrefixOf("/api")
-//  v := p.PrefixOf("/v2")
+//  r := mux.NewRouterOf(...)
+//  p := r.Prefix("/api")
+//  v := p.Prefix("/v2")
 //  v.Get("/users")   // 相当于 g.Get("/api/v2/users")
 //  v.Get("/users/1") // 相当于 g.Get("/api/v2/users/1")
 //  v.Get("example.com/users/1") // 相当于 g.Get("/api/v2/example.com/users/1")

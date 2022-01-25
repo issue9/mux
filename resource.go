@@ -5,12 +5,6 @@ package mux
 import "net/http"
 
 // ResourceOf 以资源地址为对象的路由
-//
-//  srv := NewRouter("")
-//  r, _ := srv.ResourceOf("/api/users/{id}")
-//  r.Get(h)  // 相当于 srv.Get("/api/users/{id}")
-//  r.Post(h) // 相当于 srv.Post("/api/users/{id}")
-//  url := r.URL(map[string]string{"id":5}) // 获得 /api/users/5
 type ResourceOf[T any] struct {
 	router  *RouterOf[T]
 	pattern string
@@ -44,10 +38,10 @@ func (r *ResourceOf[T]) Clean() { r.router.Remove(r.pattern) }
 //
 // params 匹配路由参数中的同名参数，或是不存在路由参数，比如普通的字符串路由项，
 // 该参数不启作用；
-//  res, := m.ResourceOf[T]("/posts/{id}")
+//  res, := m.Resource("/posts/{id}")
 //  res.URL(map[string]string{"id": "1"}, "") // /posts/1
 //
-//  res, := m.ResourceOf[T]("/posts/{id}/{path}")
+//  res, := m.Resource("/posts/{id}/{path}")
 //  res.URL(map[string]string{"id": "1","path":"author/profile"}) // /posts/1/author/profile
 func (r *ResourceOf[T]) URL(strict bool, params map[string]string) (string, error) {
 	return r.router.URL(strict, r.pattern, params)

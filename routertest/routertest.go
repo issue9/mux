@@ -93,33 +93,33 @@ func (t *Tester[T]) Serve(a *assert.Assertion, h func(status int) T) {
 	srv := rest.NewServer(a, router, nil)
 
 	router.Handle("/posts/{path}.html", h(201))
-	srv.NewRequest(http.MethodGet, "/posts/2017/1.html").Do(nil).Status(201)
-	srv.NewRequest(http.MethodGet, "/Posts/2017/1.html").Do(nil).Status(404) // 大小写不一样
+	srv.Get("/posts/2017/1.html").Do(nil).Status(201)
+	srv.Get("/Posts/2017/1.html").Do(nil).Status(404) // 大小写不一样
 
 	router.Handle("/posts/{path:.+}.html", h(202))
-	srv.NewRequest(http.MethodGet, "/posts/2017/1.html").Do(nil).Status(202)
+	srv.Get("/posts/2017/1.html").Do(nil).Status(202)
 
 	router.Handle("/posts/{id:digit}123", h(203))
-	srv.NewRequest(http.MethodGet, "/posts/123123").Do(nil).Status(203)
+	srv.Get("/posts/123123").Do(nil).Status(203)
 
 	router.Get("///", h(201))
-	srv.NewRequest(http.MethodGet, "///").Do(nil).Status(201)
-	srv.NewRequest(http.MethodGet, "//").Do(nil).Status(404)
+	srv.Get("///").Do(nil).Status(201)
+	srv.Get("//").Do(nil).Status(404)
 
-	// 对 any 和空参数的测试
+	// 对 any 拦截器和空参数的测试
 
 	router.Get("/posts1-{id}-{page}.html", h(201))
-	srv.NewRequest(http.MethodGet, "/posts1--.html").Do(nil).Status(201)
-	srv.NewRequest(http.MethodGet, "/posts1-1-0.html").Do(nil).Status(201)
+	srv.Get("/posts1--.html").Do(nil).Status(201)
+	srv.Get("/posts1-1-0.html").Do(nil).Status(201)
 
 	router.Get("/posts2-{id:any}-{page:any}.html", h(201))
-	srv.NewRequest(http.MethodGet, "/posts2--.html").Do(nil).Status(404)
-	srv.NewRequest(http.MethodGet, "/posts2-1-0.html").Do(nil).Status(201)
+	srv.Get("/posts2--.html").Do(nil).Status(404)
+	srv.Get("/posts2-1-0.html").Do(nil).Status(201)
 
 	router.Get("/posts3-{id}-{page:any}.html", h(201))
-	srv.NewRequest(http.MethodGet, "/posts3--.html").Do(nil).Status(404)
-	srv.NewRequest(http.MethodGet, "/posts3-1-0.html").Do(nil).Status(201)
-	srv.NewRequest(http.MethodGet, "/posts3--0.html").Do(nil).Status(201)
+	srv.Get("/posts3--.html").Do(nil).Status(404)
+	srv.Get("/posts3-1-0.html").Do(nil).Status(201)
+	srv.Get("/posts3--0.html").Do(nil).Status(201)
 
 	// 忽略大小写测试
 
@@ -127,6 +127,6 @@ func (t *Tester[T]) Serve(a *assert.Assertion, h func(status int) T) {
 	srv = rest.NewServer(a, router, nil)
 
 	router.Handle("/posts/{path}.html", h(201))
-	srv.NewRequest(http.MethodGet, "/posts/2017/1.html").Do(nil).Status(201)
-	srv.NewRequest(http.MethodGet, "/Posts/2017/1.html").Do(nil).Status(201) // 忽略大小写
+	srv.Get("/posts/2017/1.html").Do(nil).Status(201)
+	srv.Get("/Posts/2017/1.html").Do(nil).Status(201) // 忽略大小写
 }

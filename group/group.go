@@ -23,8 +23,8 @@ import (
 type GroupOf[T any] struct {
 	routers []*routerOf[T]
 	options []mux.Option
-	ms      []mux.MiddlewareFuncOf[T]
-	b       mux.CallOf[T]
+	ms   []mux.MiddlewareFuncOf[T]
+	call mux.CallOf[T]
 
 	notFound http.Handler
 	recovery mux.RecoverFunc
@@ -48,7 +48,7 @@ func NewOf[T any](b mux.CallOf[T], ms []mux.MiddlewareFuncOf[T], o ...mux.Option
 		options: o,
 		routers: make([]*routerOf[T], 0, 1),
 		ms:      ms,
-		b:       b,
+		call:    b,
 
 		notFound: opt.NotFound,
 		recovery: opt.RecoverFunc,
@@ -81,7 +81,7 @@ func (g *GroupOf[T]) New(name string, matcher Matcher, ms []mux.MiddlewareFuncOf
 	mm := make([]mux.MiddlewareFuncOf[T], 0, len(g.ms)+len(ms))
 	mm = append(mm, g.ms...)
 	mm = append(mm, ms...)
-	r := mux.NewRouterOf[T](name, g.b, mm, append(g.options, o...)...)
+	r := mux.NewRouterOf[T](name, g.call, mm, append(g.options, o...)...)
 	g.Add(matcher, r)
 	return r
 }

@@ -10,8 +10,6 @@ import (
 	"runtime/metrics"
 	"testing"
 
-	"github.com/issue9/assert/v2"
-
 	"github.com/issue9/mux/v6"
 )
 
@@ -23,6 +21,9 @@ import (
 //      w.Write([]byte(r.URL.Path))
 //  }
 func (t *Tester[T]) Bench(b *testing.B, h T) {
+	allocs := t.calcMemStats(h)
+	fmt.Printf("\n加载 %d 条路由总共占用 %d KB\n", len(apis), allocs/1024)
+
 	b.Run("URL", func(b *testing.B) {
 		t.benchURL(b, h)
 	})
@@ -34,12 +35,9 @@ func (t *Tester[T]) Bench(b *testing.B, h T) {
 	b.Run("Serve", func(b *testing.B) {
 		t.benchServeHTTP(b, h)
 	})
-
-	t.calcMemStats(h)
 }
 
 func (t *Tester[T]) benchURL(b *testing.B, h T) {
-	a := assert.New(b, false)
 	const domain = "https://github.com"
 
 	router := mux.NewRouterOf("test", t.c, nil, mux.Lock, mux.URLDomain(domain))
@@ -54,7 +52,9 @@ func (t *Tester[T]) benchURL(b *testing.B, h T) {
 		api := apis[i%len(apis)]
 
 		url, err := router.URL(true, api.pattern, api.ps)
-		a.NotError(err)
+		if err != nil {
+			b.Error(err)
+		}
 		if url != domain+api.test {
 			b.Errorf("URL 出错，位于 %s", api.pattern)
 		}
@@ -105,8 +105,8 @@ func (t *Tester[T]) benchServeHTTP(b *testing.B, h T) {
 	}
 }
 
-func (t *Tester[T]) calcMemStats(h T) {
-	calcMemStats(func() {
+func (t *Tester[T]) calcMemStats(h T) uint64 {
+	return calcMemStats(func() {
 		r := mux.NewRouterOf("test", t.c, nil, mux.Lock)
 		for _, api := range apis {
 			r.Handle(api.pattern, h, api.method)
@@ -114,18 +114,18 @@ func (t *Tester[T]) calcMemStats(h T) {
 	})
 }
 
-func calcMemStats(load func()) {
+func calcMemStats(load func()) uint64 {
 	sample := make([]metrics.Sample, 1)
 	sample[0].Name = "/gc/heap/allocs:bytes"
 
 	runtime.GC()
 	metrics.Read(sample)
-	before := sample[0].Value
+	before := sample[0].Value.Uint64()
 
 	load()
 
 	metrics.Read(sample)
-	after := sample[0].Value
+	after := sample[0].Value.Uint64()
 
-	fmt.Printf("%d Bytes\n", after.Uint64()-before.Uint64())
+	return after - before
 }
