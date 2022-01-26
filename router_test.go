@@ -164,7 +164,7 @@ func TestPrefix_Resource(t *testing.T) {
 
 func TestResource_URL(t *testing.T) {
 	a := assert.New(t, false)
-	def := mux.NewRouter("", nil, mux.AllowedCORS)
+	def := mux.NewRouter("", &mux.Options{CORS: mux.AllowedCORS()})
 	a.NotNil(def)
 
 	// 非正则
@@ -258,7 +258,7 @@ func TestRouter_Prefix(t *testing.T) {
 	a := assert.New(t, false)
 
 	a.Run("prefix", func(a *assert.Assertion) {
-		def := mux.NewRouter("", nil, mux.AllowedCORS)
+		def := mux.NewRouter("", &mux.Options{CORS: mux.AllowedCORS()})
 		a.NotNil(def)
 
 		p := def.Prefix("/abc")
@@ -266,7 +266,7 @@ func TestRouter_Prefix(t *testing.T) {
 
 		p = def.Prefix("")
 	}).Run("prefix with middleware", func(a *assert.Assertion) {
-		def := mux.NewRouter("", nil, mux.AllowedCORS)
+		def := mux.NewRouter("", &mux.Options{CORS: mux.AllowedCORS()})
 		a.NotNil(def)
 
 		p := def.Prefix("/abc")
@@ -276,7 +276,7 @@ func TestRouter_Prefix(t *testing.T) {
 		pp.Delete("", rest.BuildHandler(a, 201, "", nil))
 		rest.Delete(a, "/abc").Do(def).Status(201)
 	}).Run("empty prefix with middleware", func(a *assert.Assertion) {
-		def := mux.NewRouter("", nil, mux.AllowedCORS)
+		def := mux.NewRouter("", &mux.Options{CORS: mux.AllowedCORS()})
 		a.NotNil(def)
 
 		p := def.Prefix("/abc")
@@ -290,7 +290,7 @@ func TestRouter_Prefix(t *testing.T) {
 
 func TestPrefix_Prefix(t *testing.T) {
 	a := assert.New(t, false)
-	def := mux.NewRouter("", nil, mux.AllowedCORS)
+	def := mux.NewRouter("", &mux.Options{CORS: mux.AllowedCORS()})
 	a.NotNil(def)
 
 	p := def.Prefix("/abc", buildMiddleware(a, "p1"), buildMiddleware(a, "p2"))
@@ -303,7 +303,10 @@ func TestPrefix_Prefix(t *testing.T) {
 
 func TestPrefix_URL(t *testing.T) {
 	a := assert.New(t, false)
-	def := mux.NewRouter("", nil, mux.AllowedCORS, mux.URLDomain("https://example.com"))
+	def := mux.NewRouter("", &mux.Options{
+		CORS:      mux.AllowedCORS(),
+		URLDomain: "https://example.com",
+	})
 	a.NotNil(def)
 
 	// 非正则

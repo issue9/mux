@@ -25,10 +25,16 @@ type (
 	RouterOf[T any] struct {
 		name    string
 		tree    *tree.Tree
-		options *options
-		ms      []MiddlewareFuncOf[T]
 		call    CallOf[T]
 		matcher Matcher
+
+		caseInsensitive bool
+		cors            *CORS
+		urlDomain       string
+		recoverFunc     RecoverFunc
+		notFound,
+		methodNotAllowed http.Handler
+		ms []MiddlewareFuncOf[T]
 	}
 
 	// CallOf 指定如何调用用户自定义的对象 T
@@ -53,25 +59,28 @@ type (
 //
 // name string 路由名称，可以为空；
 //
-// ms 表示中间件列表，可以为空；
-//
-// o 修改路由的默认形为。比如 CaseInsensitive 会让路由忽略大小写，
-// 相同类型的函数会相互覆盖，比如 CORS 和 AllowedCORS，后传递会覆盖前传递的值。
+// o 修改路由的默认形为。比如 CaseInsensitive 会让路由忽略大小写，可以为空。
 //
 // T 表示用户用于处理路由项的方法，该类型最终通过 NewRouterOf 中的 call 参数与
 // http.ResponseWriter 和 *http.Request 相关联。
-func NewRouterOf[T any](name string, call CallOf[T], ms []MiddlewareFuncOf[T], o ...Option) *RouterOf[T] {
-	opt, err := buildOptions(o...)
+func NewRouterOf[T any](name string, call CallOf[T], o *OptionsOf[T]) *RouterOf[T] {
+	o, err := buildOptions[T](o)
 	if err != nil {
 		panic(err)
 	}
 
 	r := &RouterOf[T]{
-		name:    name,
-		tree:    tree.New(opt.Lock, opt.Interceptors),
-		options: opt,
-		ms:      ms,
-		call:    call,
+		name: name,
+		tree: tree.New(o.Lock, o.interceptors),
+		call: call,
+
+		caseInsensitive:  o.CaseInsensitive,
+		cors:             o.CORS,
+		urlDomain:        o.URLDomain,
+		recoverFunc:      o.RecoverFunc,
+		notFound:         o.NotFound,
+		methodNotAllowed: o.MethodNotAllowed,
+		ms:               o.Middlewares,
 	}
 
 	return r
@@ -147,10 +156,10 @@ func (r *RouterOf[T]) Any(pattern string, h T) *RouterOf[T] {
 // params 为路由项中的参数，键名为参数名，键值为参数值。
 func (r *RouterOf[T]) URL(strict bool, pattern string, params map[string]string) (string, error) {
 	buf := errwrap.StringBuilder{}
-	buf.Grow(len(r.options.URLDomain) + len(pattern))
+	buf.Grow(len(r.urlDomain) + len(pattern))
 
-	if r.options.URLDomain != "" {
-		buf.WString(r.options.URLDomain)
+	if r.urlDomain != "" {
+		buf.WString(r.urlDomain)
 	}
 
 	switch {
@@ -175,10 +184,10 @@ func (r *RouterOf[T]) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 func (r *RouterOf[T]) serveHTTP(w http.ResponseWriter, req *http.Request, ps Params) {
-	if r.options.RecoverFunc != nil {
+	if r.recoverFunc != nil {
 		defer func() {
 			if err := recover(); err != nil {
-				r.options.RecoverFunc(w, err)
+				r.recoverFunc(w, err)
 			}
 		}()
 	}
@@ -188,13 +197,13 @@ func (r *RouterOf[T]) serveHTTP(w http.ResponseWriter, req *http.Request, ps Par
 
 func (r *RouterOf[T]) serve(w http.ResponseWriter, req *http.Request, p Params) {
 	path := req.URL.Path
-	if r.options.CaseInsensitive {
+	if r.caseInsensitive {
 		path = strings.ToLower(req.URL.Path)
 	}
 
 	node, ps := r.tree.Route(path)
 	if node == nil {
-		r.options.NotFound.ServeHTTP(w, req)
+		r.notFound.ServeHTTP(w, req)
 		return
 	}
 
@@ -207,14 +216,14 @@ func (r *RouterOf[T]) serve(w http.ResponseWriter, req *http.Request, p Params) 
 	defer ps.Destroy()
 
 	if h := node.Handler(req.Method); h != nil {
-		r.options.handleCORS(node, w, req) // 处理跨域问题
+		r.cors.handle(node, w, req) // 处理跨域问题
 		h(w, req, ps)
 		return
 	}
 
 	// 存在节点，但是不允许当前请求方法。
 	w.Header().Set("Allow", node.Options())
-	r.options.MethodNotAllowed.ServeHTTP(w, req)
+	r.methodNotAllowed.ServeHTTP(w, req)
 }
 
 // Name 路由名称

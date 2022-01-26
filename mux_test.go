@@ -3,7 +3,6 @@
 package mux_test
 
 import (
-	"net/http"
 	"testing"
 
 	"github.com/issue9/assert/v2"
@@ -17,11 +16,13 @@ func TestRouter_Middleware(t *testing.T) {
 	a := assert.New(t, false)
 
 	def := mux.NewRouter("",
-		[]mux.MiddlewareFuncOf[http.Handler]{
-			buildMiddleware(a, "m1"),
-			buildMiddleware(a, "m2"),
-			buildMiddleware(a, "m3"),
-			buildMiddleware(a, "m4"),
+		&mux.Options{
+			Middlewares: []mux.MiddlewareFunc{
+				buildMiddleware(a, "m1"),
+				buildMiddleware(a, "m2"),
+				buildMiddleware(a, "m3"),
+				buildMiddleware(a, "m4"),
+			},
 		},
 	)
 	a.NotNil(def)

@@ -31,7 +31,7 @@ import "github.com/issue9/mux/v6"
 
 c := compress.New()
 
-router := mux.NewRouter("", mux.Middleware(c))
+router := mux.NewRouter("", mux.Options(Middlewares: []mux.Middleware{c}))
 router.Get("/users/1", h).
     Post("/login", h).
     Get("/pages/{id:\\d+}.html", h). // 匹配 /pages/123.html 等格式，path = 123
@@ -113,22 +113,22 @@ id := params.MustInt("id", 0) // 在无法获取 id 参数时采用 0 作为默�
 
 ### 分组路由
 
-可以通过匹配 `group.Matcher` 接口，定义了一组特定要求的路由项。
+可以通过匹配 `Matcher` 接口，定义了一组特定要求的路由项。
 
 ```go
 // server.go
 
 import "github.com/issue9/mux/v6"
-import "github.com/issue9/mux/v6/group"
+import "github.com/issue9/mux/v6/muxutil"
 
-m := group.New()
+m := mux.NewRouters(...)
 
 def := mux.NewRouter("default")
-m.AddRouter(group.NewPathVersion("version-key", "v1"), def)
+m.AddRouter(muxutil.NewPathVersion("version-key", "v1"), def)
 def.Get("/path", h1)
 
 host := mux.NewRouter("host")
-m.AddRouter(group.NewHosts("*.example.com"), host)
+m.AddRouter(muxutil.NewHosts("*.example.com"), host)
 host.Get("/path", h2)
 
 http.ListenAndServe(":8080", m)
@@ -162,7 +162,8 @@ func digit(path string) bool {
 }
 
 // 路由中的 \d+ 和 [0-9]+ 均采用 digit 函数进行处理，不再是正则表达式。
-r := mux.NewRouter("", mux.Interceptor(digit, "\\d+", "[0-9]+"))
+opt := mux.Options{Interceptors: map[string]mux.InterceptorFunc{"\\d+": digit, "[0-9]+": digit}
+r := mux.NewRouter("", opt)
 ```
 
 这样在所有路由项中的 `[0-9]+` 和 `\\d+` 将由 `digit` 函数处理，
@@ -180,7 +181,7 @@ r := mux.NewRouter("", mux.Interceptor(digit, "\\d+", "[0-9]+"))
 - InterceptorWord 相当于正则的 `[a-zA-Z0-9]`；
 - InterceptorAny 表示匹配任意非空内容；
 
-用户也可以自行实现 `InterceptorFunc` 作为拦截器。具体可参考 <https://pkg.go.dev/github.com/issue9/mux/v6#Interceptor>
+用户也可以自行实现 `InterceptorFunc` 作为拦截器。具体可参考 OptionsOf.Interceptors。
 
 ### CORS
 
@@ -192,7 +193,7 @@ OPTIONS 请求方法由系统自动生成。
 ```go
 import "github.com/issue9/mux/v6"
 
-r := mux.NewRouter("name" ,AllowedCORS) // 任意跨域请求
+r := mux.NewRouter("name" ,&mux.Options{CORS: AllowedCORS}) // 任意跨域请求
 
 r.Get("/posts/{id}", nil)     // 默认情况下， OPTIONS 的报头为 GET, OPTIONS
 
@@ -219,7 +220,7 @@ r.Do() // 预检请求，可以正常访问
 ```go
 r := NewRouter("")
 r.Get("/assets/{path}", func(w http.ResponseWriter, r *http.Request){
-    err := ServeFile(os.DirFS("/static/"), "path", "index.html", w, r)
+    err := muxutil.ServeFile(os.DirFS("/static/"), "path", "index.html", w, r)
 	if err!= nil {
         http.Error(err.Error(), http.StatusInternalServerError)
     }
@@ -234,11 +235,11 @@ mux 本身就是一个实现了 [http.Handler](https://pkg.go.dev/net/http#Handl
 mux 本身也提供了对中间件的管理功能，同时 [middleware](https://github.com/issue9/middleware) 提供了常用的中间件功能。
 
 ```go
-import "github.com/issue9/middleware/v4/compress"
+import "github.com/issue9/middleware/v4/debugger"
 
-c := compress.New(log.Default(), "*")
+d := debugger.Debugger{}
 
-r := mux.NewRouter("", mux.Middleware(c.Middleware))
+r := mux.NewRouter("", mux.Options{Middlewares: []mux.Middleware{d.Middleware})
 ```
 
 ### 自定义路由
@@ -281,7 +282,7 @@ func New(name string, ms []Middleware, o ...Option)* Router {
 以上就是自定义路由的全部功能，之后就可以直接使用：
 
 ```go
-r := New("router", nil, nil)
+r := New("router", nil)
 
 r.Get("/path", func(ctx *Context){
 	// TODO

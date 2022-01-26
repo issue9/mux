@@ -40,7 +40,6 @@ type Tree struct {
 	interceptors *syntax.Interceptors
 }
 
-// New 声明一个 Tree 实例
 func New(lock bool, i *syntax.Interceptors) *Tree {
 	s, err := i.NewSegment("")
 	if err != nil {

@@ -3,9 +3,7 @@
 package mux_test
 
 import (
-	"bytes"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/issue9/assert/v2"
@@ -79,12 +77,14 @@ func TestRouters_empty(t *testing.T) {
 
 func TestRouters(t *testing.T) {
 	a := assert.New(t, false)
-	g := mux.NewRouters(nil, mux.Interceptor(mux.InterceptorDigit, "digit"))
+	rs := mux.NewRouters(nil)
 	exit := make(chan bool, 1)
 
 	h := muxutil.NewHosts(true, "{sub}.example.com")
 	a.NotNil(h)
-	def := g.New("host", h, nil)
+	def := rs.New("host", h, &mux.Options{Interceptors: map[string]mux.InterceptorFunc{
+		"digit": mux.InterceptorDigit,
+	}})
 	a.NotNil(def)
 
 	def.Get("/posts/{id:digit}.html", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -96,58 +96,9 @@ func TestRouters(t *testing.T) {
 	}))
 
 	rest.NewRequest(a, http.MethodGet, "https://abc.example.com/posts/5.html").
-		Do(g).
+		Do(rs).
 		Status(http.StatusAccepted)
 	<-exit
-}
-
-func TestRouters_recovery(t *testing.T) {
-	a := assert.New(t, false)
-
-	out := new(bytes.Buffer)
-	g := mux.NewRouters(nil, mux.WriterRecovery(405, out))
-	a.NotNil(g)
-	h := muxutil.NewPathVersion("v", "v2")
-	a.NotNil(h)
-	def := g.New("version", h, nil)
-	a.NotNil(def)
-	def.Get("/path", http.HandlerFunc(func(http.ResponseWriter, *http.Request) { panic("test") }))
-
-	w := httptest.NewRecorder()
-	r := rest.Get(a, "/v2/path").Request()
-	g.ServeHTTP(w, r)
-	a.Equal(w.Code, 405).
-		Contains(out.String(), "test")
-
-	out.Reset()
-	w = httptest.NewRecorder()
-	r = rest.Get(a, "/v2/path").Request()
-	g.ServeHTTP(w, r)
-	a.Equal(w.Code, 405).
-		Contains(out.String(), "test")
-
-	// no recovery
-
-	g = mux.NewRouters(nil)
-	a.NotNil(g)
-	h = muxutil.NewPathVersion("v", "v2")
-	a.NotNil(h)
-	def = g.New("version", h, nil)
-	a.NotNil(def)
-	def.Get("/path", http.HandlerFunc(func(http.ResponseWriter, *http.Request) { panic("test") }))
-
-	a.PanicString(func() {
-		w = httptest.NewRecorder()
-		r = rest.Get(a, "/v2/path").Request()
-		g.ServeHTTP(w, r)
-	}, "test")
-
-	a.PanicString(func() {
-		w = httptest.NewRecorder()
-		r = rest.Get(a, "/v2/path").Request()
-		g.ServeHTTP(w, r)
-	}, "test")
-
 }
 
 func TestRouters_routers(t *testing.T) {

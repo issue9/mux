@@ -14,13 +14,9 @@ import (
 type (
 	// RoutersOf 一组路由的集合
 	RoutersOf[T any] struct {
-		routers []*RouterOf[T]
-		options []Option
-		ms      []MiddlewareFuncOf[T]
-		call    CallOf[T]
-
+		routers  []*RouterOf[T]
+		call     CallOf[T]
 		notFound http.Handler
-		recovery RecoverFunc
 	}
 
 	// Matcher 验证一个请求是否符合要求
@@ -49,34 +45,20 @@ func anyRouter(*http.Request) (params.Params, bool) { return nil, true }
 
 // NewRoutersOf 声明一个新的 RoutersOf
 //
-// o 用于设置由 RoutersOf.New 添加的路由，有关 NotFound 与 Recovery 的设置同时会作用于 RoutersOf。
-func NewRoutersOf[T any](b CallOf[T], ms []MiddlewareFuncOf[T], o ...Option) *RoutersOf[T] {
-	opt, err := buildOptions(o...)
-	if err != nil {
-		panic(err)
+// notFound 表示所有路由都不匹配时的处理方式，如果为空，则调用 http.NotFoundHandler。
+func NewRoutersOf[T any](b CallOf[T], notFound http.Handler) *RoutersOf[T] {
+	if notFound == nil {
+		notFound = http.NotFoundHandler()
 	}
 
-	g := &RoutersOf[T]{
-		options: o,
-		routers: make([]*RouterOf[T], 0, 1),
-		ms:      ms,
-		call:    b,
-
-		notFound: opt.NotFound,
-		recovery: opt.RecoverFunc,
+	return &RoutersOf[T]{
+		routers:  make([]*RouterOf[T], 0, 1),
+		call:     b,
+		notFound: notFound,
 	}
-	return g
 }
 
 func (rs *RoutersOf[T]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if rs.recovery != nil {
-		defer func() {
-			if err := recover(); err != nil {
-				rs.recovery(w, err)
-			}
-		}()
-	}
-
 	for _, router := range rs.routers {
 		if ps, ok := router.matcher.Match(r); ok {
 			router.serveHTTP(w, r, ps)
@@ -88,12 +70,9 @@ func (rs *RoutersOf[T]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // New 声明新路由
 //
-// 初始化参数从 g.options 中获取，但是可以通过 o 作修改。
-func (rs *RoutersOf[T]) New(name string, matcher Matcher, ms []MiddlewareFuncOf[T], o ...Option) *RouterOf[T] {
-	mm := make([]MiddlewareFuncOf[T], 0, len(rs.ms)+len(ms))
-	mm = append(mm, rs.ms...)
-	mm = append(mm, ms...)
-	r := NewRouterOf[T](name, rs.call, mm, append(rs.options, o...)...)
+// 如果 o 为 nil，则从 rs 中继承 OptionsOf 的值。
+func (rs *RoutersOf[T]) New(name string, matcher Matcher, o *OptionsOf[T]) *RouterOf[T] {
+	r := NewRouterOf[T](name, rs.call, o)
 	rs.Add(matcher, r)
 	return r
 }

@@ -51,7 +51,7 @@ func TestGetParams(t *testing.T) {
 
 func TestRouter(t *testing.T) {
 	a := assert.New(t, false)
-	r := NewRouter("def", nil, Lock)
+	r := NewRouter("def", &Options{Lock: true})
 
 	r.Get("/", rest.BuildHandler(a, 201, "201", nil))
 	r.Get("/200", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -161,7 +161,7 @@ func TestRouter_Clean(t *testing.T) {
 // 测试匹配顺序是否正确
 func TestRouter_ServeHTTP_Order(t *testing.T) {
 	a := assert.New(t, false)
-	r := NewRouter("def", nil, Interceptor(InterceptorAny, "any"))
+	r := NewRouter("def", &Options{Interceptors: map[string]InterceptorFunc{"any": InterceptorAny}})
 	a.NotNil(r)
 
 	r.Get("/posts/{id}", rest.BuildHandler(a, 203, "", nil))
@@ -178,7 +178,7 @@ func TestRouter_ServeHTTP_Order(t *testing.T) {
 	rest.Get(a, "/posts-").Do(r).Status(205)    // 204 只匹配非空
 
 	// interceptor
-	r = NewRouter("def", nil, Interceptor(InterceptorDigit, "[0-9]+"))
+	r = NewRouter("def", &Options{Interceptors: map[string]InterceptorFunc{"[0-9]+": InterceptorDigit}})
 	a.NotNil(r)
 	r.Get("/posts/{id}", rest.BuildHandler(a, 203, "", nil))        // f3
 	r.Get("/posts/{id:\\d+}", rest.BuildHandler(a, 202, "", nil))   // f2 永远匹配不到

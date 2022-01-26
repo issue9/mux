@@ -40,7 +40,10 @@ func (t *Tester[T]) Bench(b *testing.B, h T) {
 func (t *Tester[T]) benchURL(b *testing.B, h T) {
 	const domain = "https://github.com"
 
-	router := mux.NewRouterOf("test", t.c, nil, mux.Lock, mux.URLDomain(domain))
+	router := mux.NewRouterOf("test", t.c, &mux.OptionsOf[T]{
+		Lock:      true,
+		URLDomain: domain,
+	})
 	for _, api := range apis {
 		router.Handle(api.pattern, h, api.method)
 	}
@@ -62,7 +65,9 @@ func (t *Tester[T]) benchURL(b *testing.B, h T) {
 }
 
 func (t *Tester[T]) benchAddAndServeHTTP(b *testing.B, h T) {
-	router := mux.NewRouterOf("test", t.c, nil, mux.Lock)
+	router := mux.NewRouterOf("test", t.c, &mux.OptionsOf[T]{
+		Lock: true,
+	})
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -107,7 +112,7 @@ func (t *Tester[T]) benchServeHTTP(b *testing.B, h T) {
 
 func (t *Tester[T]) calcMemStats(h T) uint64 {
 	return calcMemStats(func() {
-		r := mux.NewRouterOf("test", t.c, nil, mux.Lock)
+		r := mux.NewRouterOf("test", t.c, &mux.OptionsOf[T]{Lock: true})
 		for _, api := range apis {
 			r.Handle(api.pattern, h, api.method)
 		}

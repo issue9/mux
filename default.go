@@ -17,6 +17,7 @@ type (
 	Prefix         = PrefixOf[http.Handler]
 	Resource       = ResourceOf[http.Handler]
 	MiddlewareFunc = MiddlewareFuncOf[http.Handler]
+	Options        = OptionsOf[http.Handler]
 
 	contextKey int
 )
@@ -26,15 +27,15 @@ func DefaultCall(w http.ResponseWriter, r *http.Request, ps Params, h http.Handl
 	h.ServeHTTP(w, WithValue(r, ps))
 }
 
-func NewRouters(ms []MiddlewareFunc, o ...Option) *Routers {
-	return NewRoutersOf[http.Handler](DefaultCall, ms, o...)
+func NewRouters(notFound http.Handler) *Routers {
+	return NewRoutersOf[http.Handler](DefaultCall, notFound)
 }
 
 // NewRouter 声明适用于官方 http.Handler 接口的路由
 //
 // 这是对 NewRouterOf 的特化，相当于 NewRouterOf[http.Handler]。
-func NewRouter(name string, ms []MiddlewareFunc, o ...Option) *Router {
-	return NewRouterOf[http.Handler](name, DefaultCall, ms, o...)
+func NewRouter(name string, o *Options) *Router {
+	return NewRouterOf[http.Handler](name, DefaultCall, o)
 }
 
 // GetParams 获取当前请求实例上的参数列表
