@@ -22,11 +22,11 @@ func TestWithValue(t *testing.T) {
 	a.Equal(WithValue(r, &syntax.Params{}), r)
 
 	r = rest.Get(a, "/to/path").Request()
-	pp := syntax.NewParams("")
+	pp := NewParams()
 	pp.Set("k1", "v1")
 	r = WithValue(r, pp)
 
-	pp = syntax.NewParams("")
+	pp = NewParams()
 	pp.Set("k2", "v2")
 	r = WithValue(r, pp)
 	ps := GetParams(r)

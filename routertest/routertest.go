@@ -13,7 +13,6 @@ import (
 	"github.com/issue9/assert/v2/rest"
 
 	"github.com/issue9/mux/v6"
-	"github.com/issue9/mux/v6/internal/syntax"
 )
 
 type Tester[T any] struct {
@@ -33,7 +32,7 @@ func (t *Tester[T]) Params(a *assert.Assertion, f func(params *mux.Params) T) {
 	router := mux.NewRouterOf("test", t.c, nil, mux.Interceptor(mux.InterceptorDigit, "digit"))
 	a.NotNil(router)
 
-	var globalParams mux.Params = syntax.NewParams("")
+	var globalParams mux.Params = mux.NewParams()
 
 	requestParams := func(method, url string, status int, ps map[string]string) {
 		a.TB().Helper()
@@ -51,7 +50,7 @@ func (t *Tester[T]) Params(a *assert.Assertion, f func(params *mux.Params) T) {
 				a.True(found).Equal(vv, v)
 			}
 		}
-		globalParams = syntax.NewParams("") // 清空全局的 globalParams
+		globalParams = mux.NewParams() // 清空全局的 globalParams
 	}
 
 	// 添加 patch /api/{version:\\d+}

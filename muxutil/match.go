@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/issue9/mux/v6"
-	"github.com/issue9/mux/v6/internal/syntax"
 	"github.com/issue9/mux/v6/params"
 )
 
@@ -15,7 +14,7 @@ import (
 // 前一个对象返回的实例将作为下一个对象的输入参数。
 func AndMatcher(m ...mux.Matcher) mux.Matcher {
 	return mux.MatcherFunc(func(r *http.Request) (ps params.Params, ok bool) {
-		ps = syntax.NewParams("")
+		ps = mux.NewParams()
 
 		for _, mm := range m {
 			ps2, ok := mm.Match(r)

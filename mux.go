@@ -66,3 +66,5 @@ func Methods() []string {
 	copy(methods, tree.Methods)
 	return methods
 }
+
+func NewParams() Params { return syntax.NewParams("") }
