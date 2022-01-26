@@ -4,12 +4,9 @@ package mux
 
 import (
 	"bytes"
-	"io/fs"
 	"log"
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"strings"
 	"testing"
 
 	"github.com/issue9/assert/v2"
@@ -160,50 +157,4 @@ func TestURL(t *testing.T) {
 
 	url, err = URL("/posts/{id:\\\\d+}/author/{page}/", map[string]string{"id": "100", "page": "200"})
 	a.NotError(err).Equal(url, "/posts/100/author/200/")
-}
-
-func TestTrace(t *testing.T) {
-	a := assert.New(t, false)
-
-	r := rest.NewRequest(a, http.MethodTrace, "/path").Body([]byte("<body>")).Request()
-	w := httptest.NewRecorder()
-	a.NotError(Trace(w, r, false))
-	body := w.Body.String()
-	a.Contains(body, "/path").
-		NotContains(body, "body").
-		True(strings.HasPrefix(body, http.MethodTrace)).
-		Equal(w.Header().Get("content-type"), traceContentType)
-
-	w = httptest.NewRecorder()
-	a.NotError(Trace(w, r, true))
-	body = w.Body.String()
-	a.Contains(body, "/path").
-		Contains(body, "&lt;body&gt;").
-		True(strings.HasPrefix(body, http.MethodTrace)).
-		Equal(w.Header().Get("content-type"), traceContentType)
-}
-
-func TestServeFile(t *testing.T) {
-	a := assert.New(t, false)
-
-	w := httptest.NewRecorder()
-	r := rest.Get(a, "/assets/").Request()
-	a.NotError(ServeFile(os.DirFS("./"), "", "go.mod", w, r))
-	a.Contains(w.Body.String(), "module github.com/issue9/mux")
-
-	w = httptest.NewRecorder()
-	r = rest.Get(a, "/assets/").Request()
-	a.NotError(ServeFile(os.DirFS("./"), "params/params.go", "", w, r))
-	a.NotEmpty(w.Body.String())
-
-	w = httptest.NewRecorder()
-	r = rest.Get(a, "/assets/").Request()
-	a.ErrorIs(ServeFile(os.DirFS("./"), "params/", "", w, r), fs.ErrNotExist)
-	a.Empty(w.Body.String())
-
-	w = httptest.NewRecorder()
-	r = rest.Get(a, "/assets/").Request()
-	a.ErrorIs(ServeFile(os.DirFS("./"), "not-exists", "", w, r), fs.ErrNotExist)
-	a.Empty(w.Body.String())
-
 }

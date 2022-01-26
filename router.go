@@ -8,7 +8,6 @@ import (
 
 	"github.com/issue9/errwrap"
 
-	"github.com/issue9/mux/v6/internal/options"
 	"github.com/issue9/mux/v6/internal/tree"
 )
 
@@ -26,9 +25,10 @@ type (
 	RouterOf[T any] struct {
 		name    string
 		tree    *tree.Tree
-		options *options.Options
+		options *options
 		ms      []MiddlewareFuncOf[T]
 		call    CallOf[T]
+		matcher Matcher
 	}
 
 	// CallOf 指定如何调用用户自定义的对象 T
@@ -61,7 +61,7 @@ type (
 // T 表示用户用于处理路由项的方法，该类型最终通过 NewRouterOf 中的 call 参数与
 // http.ResponseWriter 和 *http.Request 相关联。
 func NewRouterOf[T any](name string, call CallOf[T], ms []MiddlewareFuncOf[T], o ...Option) *RouterOf[T] {
-	opt, err := options.Build(o...)
+	opt, err := buildOptions(o...)
 	if err != nil {
 		panic(err)
 	}
@@ -171,10 +171,10 @@ func (r *RouterOf[T]) URL(strict bool, pattern string, params map[string]string)
 }
 
 func (r *RouterOf[T]) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	r.Serve(w, req, nil)
+	r.serveHTTP(w, req, nil)
 }
 
-func (r *RouterOf[T]) Serve(w http.ResponseWriter, req *http.Request, ps Params) {
+func (r *RouterOf[T]) serveHTTP(w http.ResponseWriter, req *http.Request, ps Params) {
 	if r.options.RecoverFunc != nil {
 		defer func() {
 			if err := recover(); err != nil {
@@ -207,7 +207,7 @@ func (r *RouterOf[T]) serve(w http.ResponseWriter, req *http.Request, p Params) 
 	defer ps.Destroy()
 
 	if h := node.Handler(req.Method); h != nil {
-		r.options.HandleCORS(node, w, req) // 处理跨域问题
+		r.options.handleCORS(node, w, req) // 处理跨域问题
 		h(w, req, ps)
 		return
 	}

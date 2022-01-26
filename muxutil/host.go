@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-package group
+package muxutil
 
 import (
 	"net/http"
