@@ -188,21 +188,6 @@ func TestParams_Get(t *testing.T) {
 
 }
 
-func TestParams_Clone(t *testing.T) {
-	a := assert.New(t, false)
-
-	var ps *Params
-	ps2 := ps.Clone()
-	a.Nil(ps2)
-
-	ps = NewParams("/path")
-	ps.Set("k1", "v1")
-	ps.Set("k2", "v2")
-	ps2 = ps.Clone()
-	a.Equal(ps2.MustString("k1", "invalid"), "v1").
-		Equal(ps2.MustString("k2", "invalid"), "v2")
-}
-
 func TestParams_Delete(t *testing.T) {
 	a := assert.New(t, false)
 
@@ -212,42 +197,19 @@ func TestParams_Delete(t *testing.T) {
 	ps = NewParams("/path")
 	ps.Set("k1", "v1")
 	ps.Set("k2", "v2")
-	ps2 := ps.Clone()
-	a.Equal(2, ps.Count()).
-		Equal(2, ps2.Count())
 
 	ps.Delete("k1")
-	a.Equal(1, ps.Count()).
-		Equal(2, ps2.Count())
+	a.Equal(1, ps.Count())
 	ps.Delete("k1") // 多次删除同一个值
-	a.Equal(1, ps.Count()).
-		Equal(2, ps2.Count())
+	a.Equal(1, ps.Count())
 
 	ps.Delete("k2")
 	a.Equal(0, ps.Count()).
-		Equal(2, ps2.Count()).
 		Equal(2, len(ps.Params))
 
 	ps.Set("k3", "v3")
 	a.Equal(1, ps.Count()).
-		Equal(2, ps2.Count()).
 		Equal(2, len(ps.Params))
-}
-
-func TestParams_Map(t *testing.T) {
-	a := assert.New(t, false)
-
-	var ps *Params
-	a.Nil(ps.Map())
-
-	ps = NewParams("/path")
-	a.Nil(ps.Map())
-
-	ps.Set("k1", "v1")
-	a.Equal(ps.Map(), map[string]string{"k1": "v1"})
-
-	ps.Delete("k1")
-	a.Empty(ps.Map())
 }
 
 func TestParams_Range(t *testing.T) {

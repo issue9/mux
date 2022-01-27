@@ -72,12 +72,6 @@ type Params interface {
 	// 若不存在或是无法转换则返回 def。
 	MustFloat(key string, def float64) float64
 
-	// Clone 复制当前参数对象
-	Clone() Params
-
-	// Map 转换成 map[string]string
-	Map() map[string]string
-
 	// Set 添加或是修改值
 	Set(key, val string)
 

@@ -34,7 +34,7 @@ func (t *Tester[T]) Params(a *assert.Assertion, f func(params *mux.Params) T) {
 	})
 	a.NotNil(router)
 
-	var globalParams mux.Params = mux.NewParams()
+	globalParams := mux.NewParams()
 
 	requestParams := func(method, url string, status int, ps map[string]string) {
 		a.TB().Helper()

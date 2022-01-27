@@ -7,9 +7,9 @@ import (
 	"net/http"
 )
 
-const contextKeyParams contextKey = 0
-
 // 提供了标准库的默认支持
+
+const contextKeyParams contextKey = 0
 
 type (
 	Routers        = RoutersOf[http.Handler]

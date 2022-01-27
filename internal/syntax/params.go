@@ -139,38 +139,11 @@ func (p *Params) Get(key string) (string, bool) {
 	return "", false
 }
 
-func (p *Params) Clone() params.Params {
-	if p == nil {
-		return nil
-	}
-	pp := &Params{
-		Path:   p.Path,
-		Params: make([]Param, len(p.Params)),
-		count:  p.count,
-	}
-	copy(pp.Params, p.Params)
-	return pp
-}
-
 func (p *Params) Count() (cnt int) {
 	if p == nil {
 		return 0
 	}
 	return p.count
-}
-
-func (p *Params) Map() map[string]string {
-	if p == nil || len(p.Params) == 0 {
-		return nil
-	}
-
-	m := make(map[string]string, len(p.Params))
-	for _, pp := range p.Params {
-		if pp.K != "" {
-			m[pp.K] = pp.V
-		}
-	}
-	return m
 }
 
 func (p *Params) Set(k, v string) {
