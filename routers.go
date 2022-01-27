@@ -87,8 +87,8 @@ func (rs *RoutersOf[T]) Add(matcher Matcher, r *RouterOf[T]) {
 	}
 
 	// 重名检测
-	index := sliceutil.Index(rs.routers, func(i int) bool {
-		return rs.routers[i].Name() == r.Name()
+	index := sliceutil.Index(rs.routers, func(rr *RouterOf[T]) bool {
+		return rr.Name() == r.Name()
 	})
 	if index > -1 {
 		panic(fmt.Sprintf("已经存在名为 %s 的路由", r.Name()))
@@ -111,12 +111,10 @@ func (rs *RoutersOf[T]) Router(name string) *RouterOf[T] {
 // Routers 返回路由列表
 func (rs *RoutersOf[T]) Routers() []*RouterOf[T] { return rs.routers }
 
-// Remove 删除路由
 func (rs *RoutersOf[T]) Remove(name string) {
-	size := sliceutil.Delete(rs.routers, func(i int) bool {
-		return rs.routers[i].Name() == name
+	rs.routers = sliceutil.Delete(rs.routers, func(r *RouterOf[T]) bool {
+		return r.Name() == name
 	})
-	rs.routers = rs.routers[:size]
 }
 
 func (rs *RoutersOf[T]) Routes() map[string]map[string][]string {

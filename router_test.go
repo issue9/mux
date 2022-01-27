@@ -36,6 +36,25 @@ func buildMiddleware(a *assert.Assertion, text string) mux.MiddlewareFuncOf[http
 	}
 }
 
+func TestRouter_Middleware(t *testing.T) {
+	a := assert.New(t, false)
+
+	def := mux.NewRouter("",
+		&mux.Options{
+			Middlewares: []mux.MiddlewareFunc{
+				buildMiddleware(a, "m1"),
+				buildMiddleware(a, "m2"),
+				buildMiddleware(a, "m3"),
+				buildMiddleware(a, "m4"),
+			},
+		},
+	)
+	a.NotNil(def)
+	def.Get("/get", rest.BuildHandler(a, 201, "", nil))
+
+	rest.Get(a, "/get").Do(def).Status(201).StringBody("m1m2m3m4") // buildHandler 导致顶部的后输出
+}
+
 func TestDefaultRouter(t *testing.T) {
 	a := assert.New(t, false)
 	tt := routertest.NewTester[http.Handler](mux.DefaultCall)

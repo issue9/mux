@@ -12,95 +12,102 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/issue9/sliceutil"
+
 	"github.com/issue9/mux/v6/internal/syntax"
 	"github.com/issue9/mux/v6/internal/tree"
 )
 
-type RecoverFunc func(http.ResponseWriter, any)
+type (
+	// InterceptorFunc 拦截器的函数原型
+	InterceptorFunc = syntax.InterceptorFunc
 
-type OptionsOf[T any] struct {
-	// CaseInsensitive 忽略大小写
-	//
-	// 该操作仅是将客户端的请求路径转换为小之后再次进行匹配，
-	// 如果服务端的路由项设置为大写，则依然是不匹配的。
-	CaseInsensitive bool
+	RecoverFunc func(http.ResponseWriter, any)
 
-	// Lock 是否加锁
-	//
-	// 在调用 RouterOf.Add 添加路由时，有可能会改变整个路由树的结构，
-	// 如果需要频繁在运行时添加和删除路由项，那么应当添加此选项。
-	Lock bool
+	OptionsOf[T any] struct {
+		// CaseInsensitive 忽略大小写
+		//
+		// 该操作仅是将客户端的请求路径转换为小之后再次进行匹配，
+		// 如果服务端的路由项设置为大写，则依然是不匹配的。
+		CaseInsensitive bool
+
+		// Lock 是否加锁
+		//
+		// 在调用 RouterOf.Add 添加路由时，有可能会改变整个路由树的结构，
+		// 如果需要频繁在运行时添加和删除路由项，那么应当添加此选项。
+		Lock bool
+
+		// CORS 自定义跨域请求设置项
+		//
+		// 为空表示禁用跨域；
+		CORS *CORS
+
+		// Interceptors 针对带参数类型路由的拦截处理
+		//
+		// 在解析诸如 /authors/{id:\\d+} 带参数的路由项时，
+		// 用户可以通过拦截并自定义对参数部分 {id:\\d+} 的解析，
+		// 从而不需要走正则表达式的那一套解析流程，可以在一定程度上增强性能。
+		//
+		// 一旦正则表达式被拦截，则节点类型也将不再是正则表达式，
+		// 其处理优先级会比正则表达式类型高。 在某些情况下，可能会造成处理结果不相同。比如：
+		//  /authors/{id:\\d+}     // 1
+		//  /authors/{id:[0-9]+}   // 2
+		// 以上两条记录是相同的，但因为表达式不同，也能正常添加，
+		// 处理流程，会按添加顺序优先比对第一条，所以第二条是永远无法匹配的。
+		// 但是如果你此时添加了 (InterceptorDigit, "[0-9]+")，
+		// 使第二个记录的优先级提升，会使第一条永远无法匹配到数据。
+		Interceptors map[string]InterceptorFunc
+		interceptors *syntax.Interceptors
+
+		// URLDomain 为 RouterOf.URL 生成的地址带上域名
+		URLDomain string
+
+		// RecoverFunc 用于指路由 panic 之后的处理方法
+		RecoverFunc RecoverFunc
+
+		// Middlewares 中间件
+		Middlewares []MiddlewareFuncOf[T]
+
+		NotFound,
+		MethodNotAllowed http.Handler
+	}
 
 	// CORS 自定义跨域请求设置项
 	//
-	// 为空表示禁用跨域；
-	CORS *CORS
+	// https://developer.mozilla.org/zh-CN/docs/Web/HTTP/cors
+	CORS struct {
+		// Origins 对应 Origin 报头
+		//
+		// 如果包含了 *，那么其它的设置将不再启作用。
+		// 如果此值为空，表示不启用跨域的相关设置；
+		Origins    []string
+		anyOrigins bool
+		deny       bool
 
-	// Interceptors 针对带参数类型路由的拦截处理
-	//
-	// 在解析诸如 /authors/{id:\\d+} 带参数的路由项时，
-	// 用户可以通过拦截并自定义对参数部分 {id:\\d+} 的解析，
-	// 从而不需要走正则表达式的那一套解析流程，可以在一定程度上增强性能。
-	//
-	// 一旦正则表达式被拦截，则节点类型也将不再是正则表达式，
-	// 其处理优先级会比正则表达式类型高。 在某些情况下，可能会造成处理结果不相同。比如：
-	//  /authors/{id:\\d+}     // 1
-	//  /authors/{id:[0-9]+}   // 2
-	// 以上两条记录是相同的，但因为表达式不同，也能正常添加，
-	// 处理流程，会按添加顺序优先比对第一条，所以第二条是永远无法匹配的。
-	// 但是如果你此时添加了 (InterceptorDigit, "[0-9]+")，
-	// 使第二个记录的优先级提升，会使第一条永远无法匹配到数据。
-	Interceptors map[string]InterceptorFunc
-	interceptors *syntax.Interceptors
+		// AllowHeaders 对应 Access-Control-Allow-Headers
+		//
+		// 可以包含 *，表示可以是任意值，其它值将不再启作用；
+		AllowHeaders       []string
+		allowHeadersString string
+		anyHeaders         bool
 
-	// URLDomain 为 RouterOf.URL 生成的地址带上域名
-	URLDomain string
+		// ExposedHeaders 对应 Access-Control-Expose-Headers
+		ExposedHeaders       []string
+		exposedHeadersString string
 
-	// RecoverFunc 用于指路由 panic 之后的处理方法
-	RecoverFunc RecoverFunc
+		// MaxAge 对应 Access-Control-Max-Age
+		//
+		// 有以下几种取值：
+		// 0 不输出该报头；
+		// -1 表示禁用；
+		// 其它 >= -1 的值正常输出数值；
+		MaxAge       int
+		maxAgeString string
 
-	// Middlewares 中间件
-	Middlewares []MiddlewareFuncOf[T]
-
-	NotFound,
-	MethodNotAllowed http.Handler
-}
-
-// CORS 自定义跨域请求设置项
-//
-// https://developer.mozilla.org/zh-CN/docs/Web/HTTP/cors
-type CORS struct {
-	// Origins 对应 Origin 报头
-	//
-	// 如果包含了 *，那么其它的设置将不再启作用。
-	// 如果此值为空，表示不启用跨域的相关设置；
-	Origins    []string
-	anyOrigins bool
-	deny       bool
-
-	// AllowHeaders 对应 Access-Control-Allow-Headers
-	//
-	// 可以包含 *，表示可以是任意值，其它值将不再启作用；
-	AllowHeaders       []string
-	allowHeadersString string
-	anyHeaders         bool
-
-	// ExposedHeaders 对应 Access-Control-Expose-Headers
-	ExposedHeaders       []string
-	exposedHeadersString string
-
-	// MaxAge 对应 Access-Control-Max-Age
-	//
-	// 有以下几种取值：
-	// 0 不输出该报头；
-	// -1 表示禁用；
-	// 其它 >= -1 的值正常输出数值；
-	MaxAge       int
-	maxAgeString string
-
-	// AllowCredentials 对应 Access-Control-Allow-Credentials
-	AllowCredentials bool
-}
+		// AllowCredentials 对应 Access-Control-Allow-Credentials
+		AllowCredentials bool
+	}
+)
 
 // HTTPRecovery 仅向客户端输出 status 状态码
 func HTTPRecovery(status int) RecoverFunc {
@@ -314,10 +321,5 @@ func (c *CORS) headerIsAllowed(r *http.Request) bool {
 }
 
 func inStrings(strs []string, s string) bool {
-	for _, str := range strs {
-		if str == s {
-			return true
-		}
-	}
-	return false
+	return sliceutil.Index(strs, func(e string) bool { return e == s }) >= 0
 }

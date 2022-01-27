@@ -11,23 +11,8 @@ import (
 	"github.com/issue9/mux/v6/params"
 )
 
-type (
-	// MiddlewareFuncOf 中间件处理函数
-	MiddlewareFuncOf[T any] func(T) T
-
-	// InterceptorFunc 拦截器的函数原型
-	InterceptorFunc = syntax.InterceptorFunc
-
-	// Params 路由参数
-	Params = params.Params
-)
-
-func applyMiddlewares[T any](h T, f ...MiddlewareFuncOf[T]) T {
-	for _, ff := range f {
-		h = ff(h)
-	}
-	return h
-}
+// Params 路由参数
+type Params = params.Params
 
 var emptyInterceptors = syntax.NewInterceptors()
 

@@ -53,7 +53,17 @@ type (
 		prefix string
 		ms     []MiddlewareFuncOf[T]
 	}
+
+	// MiddlewareFuncOf 中间件处理函数
+	MiddlewareFuncOf[T any] func(T) T
 )
+
+func applyMiddlewares[T any](h T, f ...MiddlewareFuncOf[T]) T {
+	for _, ff := range f {
+		h = ff(h)
+	}
+	return h
+}
 
 // NewRouterOf 声明路由
 //
