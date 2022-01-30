@@ -13,7 +13,10 @@ import (
 	"github.com/issue9/mux/v6/internal/syntax"
 )
 
-var _ http.Handler = &Router{}
+var (
+	_ http.Handler = &Router{}
+	_ Middleware   = MiddlewareFunc(func(http.Handler) http.Handler { return nil })
+)
 
 func TestWithValue(t *testing.T) {
 	a := assert.New(t, false)

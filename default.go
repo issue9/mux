@@ -16,8 +16,9 @@ type (
 	Router         = RouterOf[http.Handler]
 	Prefix         = PrefixOf[http.Handler]
 	Resource       = ResourceOf[http.Handler]
-	MiddlewareFunc = MiddlewareFuncOf[http.Handler]
 	Options        = OptionsOf[http.Handler]
+	MiddlewareFunc = MiddlewareFuncOf[http.Handler]
+	Middleware     = MiddlewareOf[http.Handler]
 
 	contextKey int
 )

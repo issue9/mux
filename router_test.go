@@ -26,14 +26,14 @@ func contextCall(w http.ResponseWriter, r *http.Request, ps mux.Params, h ctxHan
 	h(&ctx{R: r, W: w, P: ps})
 }
 
-func buildMiddleware(a *assert.Assertion, text string) mux.MiddlewareFuncOf[http.Handler] {
-	return func(h http.Handler) http.Handler {
+func buildMiddleware(a *assert.Assertion, text string) mux.Middleware {
+	return mux.MiddlewareFunc(func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			h.ServeHTTP(w, r) // 先输出被包含的内容
 			_, err := w.Write([]byte(text))
 			a.NotError(err)
 		})
-	}
+	})
 }
 
 func TestRouter_Middleware(t *testing.T) {
@@ -41,7 +41,7 @@ func TestRouter_Middleware(t *testing.T) {
 
 	def := mux.NewRouter("",
 		&mux.Options{
-			Middlewares: []mux.MiddlewareFunc{
+			Middlewares: []mux.Middleware{
 				buildMiddleware(a, "m1"),
 				buildMiddleware(a, "m2"),
 				buildMiddleware(a, "m3"),

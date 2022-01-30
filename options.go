@@ -66,7 +66,7 @@ type (
 		RecoverFunc RecoverFunc
 
 		// Middlewares 中间件
-		Middlewares []MiddlewareFuncOf[T]
+		Middlewares []MiddlewareOf[T]
 
 		NotFound,
 		MethodNotAllowed http.Handler
