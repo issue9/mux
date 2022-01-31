@@ -5,13 +5,16 @@ package muxutil
 
 import (
 	"bytes"
+	"expvar"
 	"html"
 	"io"
 	"io/fs"
 	"net/http"
 	"net/http/httputil"
+	"net/http/pprof"
 	"path"
 	"path/filepath"
+	"strings"
 )
 
 const traceContentType = "message/http"
@@ -73,3 +76,55 @@ STAT:
 	http.ServeContent(w, r, filepath.Base(p), stat.ModTime(), rs)
 	return nil
 }
+
+// Debug 输出调试信息
+//
+// p 是指路由中的参数值。
+//
+//  r.Get("/test/{debug}", func(w http.ResponseWriter, r *http.Request) {
+//      p := mux.GetParams(r).String("debug")
+//      Debug(p, w, r)
+//  }
+func Debug(p string, w http.ResponseWriter, r *http.Request) error {
+	switch {
+	case p == "/vars":
+		expvar.Handler().ServeHTTP(w, r)
+	case p == "/pprof/cmdline":
+		pprof.Cmdline(w, r)
+	case p == "/pprof/profile":
+		pprof.Profile(w, r)
+	case p == "/pprof/symbol":
+		pprof.Symbol(w, r)
+	case p == "/pprof/trace":
+		pprof.Trace(w, r)
+	case strings.HasPrefix(p, "/pprof/"):
+		// pprof.Index 写死了 /debug/pprof，所以直接替换这个变量
+		r.URL.Path = "/debug/pprof/" + strings.TrimPrefix(p, "/pprof/")
+		pprof.Index(w, r)
+	case p == "/":
+		if _, err := w.Write(debugHtml); err != nil {
+			return err
+		}
+	default:
+		http.NotFound(w, r)
+	}
+	return nil
+}
+
+var debugHtml = []byte(`
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>Debug</title>
+		<meta charset="utf-8" />
+	</head>
+	<body>
+		<a href="vars">vars</a><br />
+		<a href="pprof/cmdline">pprof/cmdline</a><br />
+		<a href="pprof/profile">pprof/profile</a><br />
+		<a href="pprof/symbol">pprof/symbol</a><br />
+		<a href="pprof/trace">pprof/trace</a><br />
+		<a href="pprof/">pprof/</a>
+	</body>
+</html>
+`)

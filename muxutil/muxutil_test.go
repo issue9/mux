@@ -58,5 +58,50 @@ func TestServeFile(t *testing.T) {
 	r = rest.Get(a, "/assets/").Request()
 	a.ErrorIs(ServeFile(fsys, "not-exists", "", w, r), fs.ErrNotExist)
 	a.Empty(w.Body.String())
+}
 
+func TestDebug(t *testing.T) {
+	a := assert.New(t, false)
+
+	w := httptest.NewRecorder()
+	r := rest.Get(a, "/path").Query("seconds", "10").Request()
+	a.NotError(Debug("/vars", w, r))
+	a.Equal(w.Code, http.StatusOK).NotEmpty(w.Body.String())
+
+	w = httptest.NewRecorder()
+	r = rest.Get(a, "/path").Query("seconds", "10").Request()
+	a.NotError(Debug("/pprof/cmdline", w, r))
+	a.Equal(w.Code, http.StatusOK).NotEmpty(w.Body.String())
+
+	//w = httptest.NewRecorder()
+	//r = rest.Get(a, "/path").Query("seconds", "10").Request()
+	//a.NotError(Debug("/pprof/profile", w, r))
+	//a.Equal(w.Code, http.StatusOK).NotEmpty(w.Body.String())
+
+	w = httptest.NewRecorder()
+	r = rest.Get(a, "/path").Query("seconds", "10").Request()
+	a.NotError(Debug("/pprof/symbol", w, r))
+	a.Equal(w.Code, http.StatusOK).NotEmpty(w.Body.String())
+
+	w = httptest.NewRecorder()
+	r = rest.Get(a, "/path").Query("seconds", "10").Request()
+	a.NotError(Debug("/pprof/trace", w, r))
+	a.Equal(w.Code, http.StatusOK).NotEmpty(w.Body.String())
+
+	// pprof.Index
+	w = httptest.NewRecorder()
+	r = rest.Get(a, "/path").Query("seconds", "10").Request()
+	a.NotError(Debug("/pprof/heap", w, r))
+	a.Equal(w.Code, http.StatusOK).NotEmpty(w.Body.String())
+
+	w = httptest.NewRecorder()
+	r = rest.Get(a, "/path").Query("seconds", "10").Request()
+	a.NotError(Debug("/", w, r))
+	a.Equal(w.Code, http.StatusOK)
+	a.Contains(w.Body.String(), `<a href="pprof/profile">pprof/profile</a>`)
+
+	w = httptest.NewRecorder()
+	r = rest.Get(a, "/path").Query("seconds", "10").Request()
+	a.NotError(Debug("/not-exits", w, r))
+	a.Equal(w.Code, http.StatusNotFound)
 }
