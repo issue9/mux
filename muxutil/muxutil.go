@@ -102,9 +102,8 @@ func Debug(p string, w http.ResponseWriter, r *http.Request) error {
 		r.URL.Path = "/debug/pprof/" + strings.TrimPrefix(p, "/pprof/")
 		pprof.Index(w, r)
 	case p == "/":
-		if _, err := w.Write(debugHtml); err != nil {
-			return err
-		}
+		_, err := w.Write(debugHtml)
+		return err
 	default:
 		http.NotFound(w, r)
 	}
