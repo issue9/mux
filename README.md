@@ -248,7 +248,7 @@ r := mux.NewRouter("", mux.Options{Middlewares: []mux.Middleware{d.Middleware})
 只需要以下几个步骤：
 
 1. 定义一个专有的路由处理类型，可以是类也可以是函数；
-2. 根据此类型，生成对应的 RouterOf、PrefixOf、ResourceOf、MiddlewareFuncOf、Options 等类型；
+2. 根据此类型，生成对应的 RouterOf、PrefixOf、ResourceOf、MiddlewareFuncOf、OptionsOf 等类型；
 3. 定义 CallOf 函数；
 4. 将 CallOf 传递给 NewOf；
 
