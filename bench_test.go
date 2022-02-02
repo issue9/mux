@@ -22,12 +22,12 @@ func BenchmarkDefaultRouter(b *testing.B) {
 }
 
 func BenchmarkContextRouter(b *testing.B) {
-	h := func(c *ctx) {
+	h := ctxHandlerFunc(func(c *ctx) {
 		if _, err := c.W.Write([]byte(c.R.URL.Path)); err != nil {
 			panic(err)
 		}
-	}
+	})
 
-	t := routertest.NewTester[ctxHandlerFunc](contextCall)
+	t := routertest.NewTester[ctxHandler](contextCall)
 	t.Bench(b, h)
 }

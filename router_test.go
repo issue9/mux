@@ -19,11 +19,16 @@ type (
 		W http.ResponseWriter
 		P mux.Params
 	}
+	ctxHandler interface {
+		Handle(*ctx)
+	}
 	ctxHandlerFunc func(ctx *ctx)
 )
 
-func contextCall(w http.ResponseWriter, r *http.Request, ps mux.Params, h ctxHandlerFunc) {
-	h(&ctx{R: r, W: w, P: ps})
+func (f ctxHandlerFunc) Handle(c *ctx) { f(c) }
+
+func contextCall(w http.ResponseWriter, r *http.Request, ps mux.Params, h ctxHandler) {
+	h.Handle(&ctx{R: r, W: w, P: ps})
 }
 
 func buildMiddleware(a *assert.Assertion, text string) mux.Middleware {
@@ -83,25 +88,25 @@ func TestDefaultRouter(t *testing.T) {
 
 func TestContextRouter_Params(t *testing.T) {
 	a := assert.New(t, false)
-	tt := routertest.NewTester[ctxHandlerFunc](contextCall)
+	tt := routertest.NewTester[ctxHandler](contextCall)
 
 	a.Run("params", func(a *assert.Assertion) {
-		tt.Params(a, func(ps *mux.Params) ctxHandlerFunc {
-			return func(c *ctx) {
+		tt.Params(a, func(ps *mux.Params) ctxHandler {
+			return ctxHandlerFunc(func(c *ctx) {
 				if c.P != nil {
 					c.P.Range(func(k, v string) {
 						(*ps).Set(k, v)
 					})
 				}
-			}
+			})
 		})
 	})
 
 	a.Run("serve", func(a *assert.Assertion) {
-		tt.Serve(a, func(status int) ctxHandlerFunc {
-			return func(c *ctx) {
+		tt.Serve(a, func(status int) ctxHandler {
+			return ctxHandlerFunc(func(c *ctx) {
 				c.W.WriteHeader(status)
-			}
+			})
 		})
 	})
 }
