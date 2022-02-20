@@ -297,6 +297,8 @@ r.Prefix("/admin").Get("/login", func(ctx *Context){
 })
 ```
 
+更多自定义路由的介绍可参考 <https://caixw.io/posts/2022/build-go-router-with-generics.html>
+
 ## 性能
 
 <https://caixw.github.io/go-http-routers-testing/> 提供了与其它几个框架的对比情况。

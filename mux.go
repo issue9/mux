@@ -1,6 +1,24 @@
 // SPDX-License-Identifier: MIT
 
 // Package mux 功能完备的路由中间件
+//
+// 提供了泛型版本 RouterOf，适用第三方框架自由实现路由。
+// 同时基于 RouterOf 提供了适配 http.Handler 路由 Router。
+//
+// 语法
+//
+// 路由参数采用大括号包含，内部包含名称和规则两部分：`{name:rule}`，
+// 其中的 name 表示参数的名称，rule 表示对参数的约束规则。
+//
+// name 可以包含 `-` 前缀，表示在实际执行过程中，不捕获该名称的对应的值，
+// 可以在一定程序上提升性能。
+//
+// rule 表示对参数的约束，一般为正则或是空，为空表示匹配任意值，
+// 拦截器一栏中有关 rule 的高级用法。以下是一些常见的示例。
+//  /posts/{id}.html                  // 匹配 /posts/1.html
+//  /posts-{id}-{page}.html           // 匹配 /posts-1-10.html
+//  /posts/{path:\\w+}.html           // 匹配 /posts/2020/11/11/title.html
+//  /tags/{tag:\\w+}/{path}           // 匹配 /tags/abc/title.html
 package mux
 
 import (
@@ -17,10 +35,6 @@ type Params = params.Params
 var emptyInterceptors = syntax.NewInterceptors()
 
 // CheckSyntax 检测路由项的语法格式
-//
-// 路由中可通过 {} 指定参数名称，如果参数名中带 :，则 : 之后的为参数的约束条件，
-// 比如 /posts/{id}.html 表示匹配任意任意字符的参数 id。/posts/{id:\d+}.html，
-// 表示匹配正则表达式 \d+ 的参数 id。
 func CheckSyntax(pattern string) error {
 	_, err := emptyInterceptors.Split(pattern)
 	return err

@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-// 提供了标准库的默认支持
+// 提供了对标准库 http.Handler 的支持
 
 const contextKeyParams contextKey = 0
 
@@ -34,7 +34,7 @@ func NewRouters(notFound http.Handler) *Routers {
 
 // NewRouter 声明适用于官方 http.Handler 接口的路由
 //
-// 这是对 NewRouterOf 的特化，相当于 NewRouterOf[http.Handler]。
+// 这是对 NewRouterOf 的实例化，相当于 NewRouterOf[http.Handler]。
 func NewRouter(name string, o *Options) *Router {
 	return NewRouterOf[http.Handler](name, DefaultCall, o)
 }

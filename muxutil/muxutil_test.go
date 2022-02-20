@@ -98,7 +98,7 @@ func TestDebug(t *testing.T) {
 	r = rest.Get(a, "/path").Query("seconds", "10").Request()
 	a.NotError(Debug("/", w, r))
 	a.Equal(w.Code, http.StatusOK)
-	a.Contains(w.Body.String(), `<a href="pprof/profile">pprof/profile</a>`)
+	a.Contains(w.Body.Bytes(), debugHtml)
 
 	w = httptest.NewRecorder()
 	r = rest.Get(a, "/path").Query("seconds", "10").Request()
