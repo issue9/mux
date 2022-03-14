@@ -9,11 +9,8 @@ import (
 	"github.com/issue9/mux/v6/params"
 )
 
-// 每次申请 Params.Params 分配的大小
-const defaultParamsCap = 5
-
 var paramsPool = &sync.Pool{
-	New: func() any { return &Params{Params: make([]Param, 0, defaultParamsCap)} },
+	New: func() any { return &Params{Params: make([]Param, 0, 5)} },
 }
 
 // Params 路由参数

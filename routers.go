@@ -69,8 +69,6 @@ func (rs *RoutersOf[T]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // New 声明新路由
-//
-// 如果 o 为 nil，则从 rs 中继承 OptionsOf 的值。
 func (rs *RoutersOf[T]) New(name string, matcher Matcher, o *OptionsOf[T]) *RouterOf[T] {
 	r := NewRouterOf[T](name, rs.call, o)
 	rs.Add(matcher, r)
@@ -87,10 +85,9 @@ func (rs *RoutersOf[T]) Add(matcher Matcher, r *RouterOf[T]) {
 	}
 
 	// 重名检测
-	index := sliceutil.Index(rs.routers, func(rr *RouterOf[T]) bool {
+	if sliceutil.Exists(rs.routers, func(rr *RouterOf[T]) bool {
 		return rr.Name() == r.Name()
-	})
-	if index > -1 {
+	}) {
 		panic(fmt.Sprintf("已经存在名为 %s 的路由", r.Name()))
 	}
 
