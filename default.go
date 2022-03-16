@@ -29,14 +29,14 @@ func DefaultCall(w http.ResponseWriter, r *http.Request, ps Params, h http.Handl
 }
 
 func NewRouters(notFound http.Handler) *Routers {
-	return NewRoutersOf[http.Handler](DefaultCall, notFound)
+	return NewRoutersOf(DefaultCall, notFound)
 }
 
 // NewRouter 声明适用于官方 http.Handler 接口的路由
 //
 // 这是对 NewRouterOf 的实例化，相当于 NewRouterOf[http.Handler]。
 func NewRouter(name string, o *Options) *Router {
-	return NewRouterOf[http.Handler](name, DefaultCall, o)
+	return NewRouterOf(name, DefaultCall, o)
 }
 
 // GetParams 获取当前请求实例上的参数列表

@@ -81,7 +81,7 @@ func applyMiddlewares[T any](h T, f ...MiddlewareOf[T]) T {
 // T 表示用户用于处理路由项的方法，该类型最终通过 NewRouterOf 中的 call 参数与
 // http.ResponseWriter 和 *http.Request 相关联。
 func NewRouterOf[T any](name string, call CallOf[T], o *OptionsOf[T]) *RouterOf[T] {
-	o, err := buildOptions[T](o)
+	o, err := buildOptions(o)
 	if err != nil {
 		panic(err)
 	}

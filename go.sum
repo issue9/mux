@@ -3,5 +3,5 @@ github.com/issue9/assert/v2 v2.2.1 h1:XQEnAFrGiT1Z55Tav39muM/Jg9ECiSLm7ehHQWoCHm
 github.com/issue9/assert/v2 v2.2.1/go.mod h1:rKr1eVGzXUhAo2af1thiKAhIA8uiSK9Wyn7mcZ4BzAg=
 github.com/issue9/errwrap v0.2.1 h1:hrzBGbOCRs8acitpWSg54xNl2oaLGA/WZEf71bKaiEU=
 github.com/issue9/errwrap v0.2.1/go.mod h1:hjjkt9S/owgy48er68ACFfA6YPDO/xax18QE3lsguVQ=
-github.com/issue9/sliceutil v0.10.0 h1:lUrc7faVI5FQYiWZlAFENn1qT1KR9dADdH+aM2zk6EU=
-github.com/issue9/sliceutil v0.10.0/go.mod h1:zzOSPwPHTsowvoCCx2RqCxQvPTKsxlb5eaPWWbSNAQ8=
+github.com/issue9/sliceutil v0.10.1 h1:zoI2YWYSaAcp1uQUNSiApVVlOHF+wBjTOMrB8AnwIbE=
+github.com/issue9/sliceutil v0.10.1/go.mod h1:zzOSPwPHTsowvoCCx2RqCxQvPTKsxlb5eaPWWbSNAQ8=
