@@ -221,25 +221,10 @@ r.Do() // 预检请求，可以正常访问
 r := NewRouter("")
 r.Get("/assets/{path}", func(w http.ResponseWriter, r *http.Request){
     err := muxutil.ServeFile(os.DirFS("/static/"), "path", "index.html", w, r)
-	if err!= nil {
+    if err!= nil {
         http.Error(err.Error(), http.StatusInternalServerError)
     }
 })
-```
-
-### 中间件
-
-mux 本身就是一个实现了 [http.Handler](https://pkg.go.dev/net/http#Handler) 接口的中间件，
-所有实现官方接口 `http.Handler` 的都可以附加到 mux 上作为中间件使用。
-
-mux 本身也提供了对中间件的管理功能，同时 [middleware](https://github.com/issue9/middleware) 提供了常用的中间件功能。
-
-```go
-import "github.com/issue9/middleware/v4/debugger"
-
-d := debugger.Debugger{}
-
-r := mux.NewRouter("", mux.Options{Middlewares: []mux.Middleware{d.Middleware})
 ```
 
 ### 自定义路由
@@ -254,9 +239,9 @@ r := mux.NewRouter("", mux.Options{Middlewares: []mux.Middleware{d.Middleware})
 
 ```go
 type Context struct {
-	R *http.Request
-	W http.ResponseWriter
-	P Params
+    *http.Request
+    W http.ResponseWriter
+    P Params
 }
 
 type HandlerFunc func(ctx *Context)
@@ -269,15 +254,15 @@ type Middleware = MiddlewareOf[HandlerFunc]
 type Options = OptionsOf[HandlerFunc]
 
 func New(name string, ms []Middleware, o ...Option)* Router {
-	f := func(w http.ResponseWriter, r *http.Request, ps Params, h HandlerFunc) {
-		ctx := &Context {
-			R: r,
-			W: w,
-			P: ps,
-		}
-		h(ctx)
-	}
-	return NewRouterOf[HandlerFunc](name, f, ms, o...)
+    f := func(w http.ResponseWriter, r *http.Request, ps Params, h HandlerFunc) {
+        ctx := &Context {
+            R: r,
+            W: w,
+            P: ps,
+        }
+        h(ctx)
+    }
+    return NewRouterOf[HandlerFunc](name, f, ms, o...)
 }
 ```
 
@@ -287,13 +272,13 @@ func New(name string, ms []Middleware, o ...Option)* Router {
 r := New("router", nil)
 
 r.Get("/path", func(ctx *Context){
-	// TODO
-	ctx.W.WriteHeader(200)
+    // TODO
+    ctx.W.WriteHeader(200)
 })
 
 r.Prefix("/admin").Get("/login", func(ctx *Context){
-	// TODO
-	ctx.W.WriteHeader(501)
+    // TODO
+    ctx.W.WriteHeader(501)
 })
 ```
 

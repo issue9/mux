@@ -63,11 +63,10 @@ func buildMethodIndexes(index int) {
 	}
 	sort.Strings(methods)
 
-	entity := methodIndexEntity{
+	methodIndexes[index] = methodIndexEntity{
 		methods: methods,
 		options: strings.Join(methods, ", "),
 	}
-	methodIndexes[index] = entity
 }
 
 func (n *Node) buildMethods() {
