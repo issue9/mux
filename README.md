@@ -26,12 +26,12 @@ mux 功能完备的 Go 路由器：
 - 支持泛型，可轻易实现自定义的路由处理方式；
 
 ```go
-import "github.com/issue9/middleware/v4/compress"
+import "github.com/issue9/middleware/v5/auth/basic"
 import "github.com/issue9/mux/v6"
 
-c := compress.New()
+c := basic.New()
 
-router := mux.NewRouter("", mux.Options(Middlewares: []mux.Middleware{c}))
+router := mux.NewRouter("", &mux.Options{}, c)
 router.Get("/users/1", h).
     Post("/login", h).
     Get("/pages/{id:\\d+}.html", h). // 匹配 /pages/123.html 等格式，path = 123
@@ -233,7 +233,7 @@ r.Get("/assets/{path}", func(w http.ResponseWriter, r *http.Request){
 只需要以下几个步骤：
 
 1. 定义一个专有的路由处理类型，可以是类也可以是函数；
-2. 根据此类型，生成对应的 RouterOf、PrefixOf、ResourceOf、MiddlewareFuncOf、OptionsOf 等类型；
+2. 根据此类型，生成对应的 RouterOf、PrefixOf、ResourceOf、MiddlewareFuncOf 等类型；
 3. 定义 CallOf 函数；
 4. 将 CallOf 传递给 NewOf；
 
@@ -251,9 +251,8 @@ type Prefix = PrefixOf[HandlerFunc]
 type Resource = ResourceOf[HandlerFunc]
 type MiddlewareFunc = MiddlewareFuncOf[HandlerFunc]
 type Middleware = MiddlewareOf[HandlerFunc]
-type Options = OptionsOf[HandlerFunc]
 
-func New(name string, ms []Middleware, o ...Option)* Router {
+func New(name string, ms []Middleware)* Router {
     f := func(w http.ResponseWriter, r *http.Request, ps Params, h HandlerFunc) {
         ctx := &Context {
             R: r,
@@ -262,7 +261,7 @@ func New(name string, ms []Middleware, o ...Option)* Router {
         }
         h(ctx)
     }
-    return NewRouterOf[HandlerFunc](name, f, ms, o...)
+    return NewRouterOf[HandlerFunc](name, f, ms...)
 }
 ```
 
