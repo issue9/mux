@@ -80,7 +80,7 @@ func applyMiddlewares[T any](h T, f ...MiddlewareOf[T]) T {
 //
 // T 表示用户用于处理路由项的方法，该类型最终通过 NewRouterOf 中的 call 参数与
 // http.ResponseWriter 和 *http.Request 相关联。
-func NewRouterOf[T any](name string, call CallOf[T], o *OptionsOf[T]) *RouterOf[T] {
+func NewRouterOf[T any](name string, call CallOf[T], o *Options) *RouterOf[T] {
 	o, err := buildOptions(o)
 	if err != nil {
 		panic(err)
@@ -97,7 +97,6 @@ func NewRouterOf[T any](name string, call CallOf[T], o *OptionsOf[T]) *RouterOf[
 		recoverFunc:      o.RecoverFunc,
 		notFound:         o.NotFound,
 		methodNotAllowed: o.MethodNotAllowed,
-		ms:               o.Middlewares,
 	}
 
 	return r
@@ -119,6 +118,9 @@ func (r *RouterOf[T]) Remove(pattern string, methods ...string) {
 	r.tree.Remove(pattern, methods...)
 }
 
+// Use 添加全局中间件
+func (r *RouterOf[T]) Use(m ...MiddlewareOf[T]) { r.ms = append(r.ms, m...) }
+
 // Handle 添加一条路由数据
 //
 // pattern 为路由匹配模式，可以是正则匹配也可以是字符串匹配，
@@ -126,13 +128,13 @@ func (r *RouterOf[T]) Remove(pattern string, methods ...string) {
 // methods 该路由项对应的请求方法，如果未指定值，则表示所有支持的请求方法，
 // 但不包含 OPTIONS 和 HEAD。
 func (r *RouterOf[T]) Handle(pattern string, h T, methods ...string) *RouterOf[T] {
-	r.handle(pattern, applyMiddlewares(h, r.ms...), methods...)
+	r.handle(pattern, h, methods...)
 	return r
 }
 
 func (r *RouterOf[T]) handle(pattern string, h T, methods ...string) {
 	f := func(w http.ResponseWriter, req *http.Request, ps Params) {
-		r.call(w, req, ps, h)
+		r.call(w, req, ps, applyMiddlewares(h, r.ms...))
 	}
 	if err := r.tree.Add(pattern, f, methods...); err != nil {
 		panic(err)
@@ -309,8 +311,7 @@ func (p *PrefixOf[T]) Prefix(prefix string, m ...MiddlewareOf[T]) *PrefixOf[T] {
 // prefix 路由前缀字符串，可以为空；
 // m 中间件函数，按顺序调用，会继承 r 的中间件并按在 m 之前；
 func (r *RouterOf[T]) Prefix(prefix string, m ...MiddlewareOf[T]) *PrefixOf[T] {
-	ms := make([]MiddlewareOf[T], 0, len(r.ms)+len(m))
-	ms = append(ms, r.ms...)
+	ms := make([]MiddlewareOf[T], 0, len(m))
 	ms = append(ms, m...)
 	return &PrefixOf[T]{router: r, prefix: prefix, ms: ms}
 }
@@ -359,8 +360,7 @@ func (r *ResourceOf[T]) URL(strict bool, params map[string]string) (string, erro
 // pattern 资源地址；
 // m 中间件函数，按顺序调用，会继承 r 的中间件并按在 m 之前；
 func (r *RouterOf[T]) Resource(pattern string, m ...MiddlewareOf[T]) *ResourceOf[T] {
-	ms := make([]MiddlewareOf[T], 0, len(r.ms)+len(m))
-	ms = append(ms, r.ms...)
+	ms := make([]MiddlewareOf[T], 0, len(m))
 	ms = append(ms, m...)
 	return &ResourceOf[T]{router: r, pattern: pattern, ms: ms}
 }

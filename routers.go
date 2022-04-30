@@ -69,7 +69,7 @@ func (rs *RoutersOf[T]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // New 声明新路由
-func (rs *RoutersOf[T]) New(name string, matcher Matcher, o *OptionsOf[T]) *RouterOf[T] {
+func (rs *RoutersOf[T]) New(name string, matcher Matcher, o *Options) *RouterOf[T] {
 	r := NewRouterOf(name, rs.call, o)
 	rs.Add(matcher, r)
 	return r

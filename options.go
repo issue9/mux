@@ -24,7 +24,7 @@ type (
 
 	RecoverFunc func(http.ResponseWriter, any)
 
-	OptionsOf[T any] struct {
+	Options struct {
 		// CaseInsensitive 忽略大小写
 		//
 		// 该操作仅是将客户端的请求路径转换为小之后再次进行匹配，
@@ -64,9 +64,6 @@ type (
 
 		// RecoverFunc 用于指路由 panic 之后的处理方法
 		RecoverFunc RecoverFunc
-
-		// Middlewares 中间件
-		Middlewares []MiddlewareOf[T]
 
 		NotFound,
 		MethodNotAllowed http.Handler
@@ -149,9 +146,9 @@ func InterceptorDigit(rule string) bool { return syntax.MatchDigit(rule) }
 // InterceptorWord 任意英文单词的拦截器
 func InterceptorWord(rule string) bool { return syntax.MatchWord(rule) }
 
-func buildOptions[T any](o *OptionsOf[T]) (*OptionsOf[T], error) {
+func buildOptions(o *Options) (*Options, error) {
 	if o == nil {
-		o = &OptionsOf[T]{}
+		o = &Options{}
 	}
 
 	if err := o.sanitize(); err != nil {
@@ -160,7 +157,7 @@ func buildOptions[T any](o *OptionsOf[T]) (*OptionsOf[T], error) {
 	return o, nil
 }
 
-func (o *OptionsOf[T]) sanitize() error {
+func (o *Options) sanitize() error {
 	if o.CORS == nil {
 		o.CORS = &CORS{}
 	}

@@ -44,25 +44,24 @@ func buildMiddleware(a *assert.Assertion, text string) mux.Middleware {
 func TestRouter_Middleware(t *testing.T) {
 	a := assert.New(t, false)
 
-	def := mux.NewRouter("",
-		&mux.Options{
-			Middlewares: []mux.Middleware{
-				buildMiddleware(a, "m1"),
-				buildMiddleware(a, "m2"),
-				buildMiddleware(a, "m3"),
-				buildMiddleware(a, "m4"),
-			},
-		},
-	)
+	def := mux.NewRouter("", &mux.Options{})
 	a.NotNil(def)
+	def.Use(buildMiddleware(a, "m1"), buildMiddleware(a, "m2"), buildMiddleware(a, "m3"), buildMiddleware(a, "m4"))
 	def.Get("/get", rest.BuildHandler(a, 201, "", nil))
+	def.Post("/get", rest.BuildHandler(a, 201, "", nil))
 
-	rest.Get(a, "/get").Do(def).Status(201).StringBody("m1m2m3m4") // buildHandler 导致顶部的后输出
+	rest.Get(a, "/get").Do(def).Status(201).StringBody("m1m2m3m4")
+	rest.Post(a, "/get", nil).Do(def).Status(201).StringBody("m1m2m3m4")
+	rest.Get(a, "/get").Do(def).Status(201).StringBody("m1m2m3m4")
+	rest.Post(a, "/get", nil).Do(def).Status(201).StringBody("m1m2m3m4")
+
+	def.Use(buildMiddleware(a, "m5"), buildMiddleware(a, "m6"))
+	rest.Get(a, "/get").Do(def).Status(201).StringBody("m1m2m3m4m5m6")
 }
 
 func TestDefaultRouter(t *testing.T) {
 	a := assert.New(t, false)
-	tt := routertest.NewTester[http.Handler](mux.DefaultCall)
+	tt := routertest.NewTester(mux.DefaultCall)
 
 	a.Run("params", func(a *assert.Assertion) {
 		tt.Params(a, func(ps *mux.Params) http.Handler {
@@ -88,7 +87,7 @@ func TestDefaultRouter(t *testing.T) {
 
 func TestContextRouter_Params(t *testing.T) {
 	a := assert.New(t, false)
-	tt := routertest.NewTester[ctxHandler](contextCall)
+	tt := routertest.NewTester(contextCall)
 
 	a.Run("params", func(a *assert.Assertion) {
 		tt.Params(a, func(ps *mux.Params) ctxHandler {
@@ -183,6 +182,7 @@ func TestPrefix_Resource(t *testing.T) {
 	a.NotNil(r1)
 
 	r1.Delete(rest.BuildHandler(a, 201, "-201-", nil))
+	rest.Delete(a, "/p1/abc/1").Do(def).Status(201).StringBody("-201-p1p2r1r2")
 	rest.Delete(a, "/p1/abc/1").Do(def).Status(201).StringBody("-201-p1p2r1r2")
 }
 

@@ -17,7 +17,7 @@ func BenchmarkDefaultRouter(b *testing.B) {
 		}
 	}
 
-	t := routertest.NewTester[http.Handler](mux.DefaultCall)
+	t := routertest.NewTester(mux.DefaultCall)
 	t.Bench(b, http.HandlerFunc(h))
 }
 
@@ -28,6 +28,6 @@ func BenchmarkContextRouter(b *testing.B) {
 		}
 	})
 
-	t := routertest.NewTester[ctxHandler](contextCall)
+	t := routertest.NewTester(contextCall)
 	t.Bench(b, h)
 }
