@@ -79,11 +79,12 @@ STAT:
 
 // Debug 输出调试信息
 //
-// p 是指路由中的参数值，比如以下示例中，p 的值为 debug：
-//  r.Get("/test/{debug}", func(w http.ResponseWriter, r *http.Request) {
+// p 是指路由中的参数名，比如以下示例中，p 的值为 debug：
+//  r.Get("/test{debug}", func(w http.ResponseWriter, r *http.Request) {
 //      p := mux.GetParams(r).String("debug")
 //      Debug(p, w, r)
 //  }
+// p 所代表的路径包含了前缀的 /。
 func Debug(p string, w http.ResponseWriter, r *http.Request) error {
 	switch {
 	case p == "/vars":

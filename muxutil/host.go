@@ -34,11 +34,36 @@ func (hs *Hosts) RegisterInterceptor(f mux.InterceptorFunc, name ...string) {
 }
 
 func (hs *Hosts) Match(r *http.Request) (params.Params, bool) {
-	h, ps := hs.tree.Route(strings.ToLower(r.URL.Hostname()))
+	// r.URL.Hostname() 可能为空，r.Host 一直有值！
+	host := r.Host
+	if index := strings.LastIndexByte(host, ':'); index != -1 && validOptionalPort(host[index:]) {
+		host = host[:index]
+	}
+	if strings.HasPrefix(host, "[") && strings.HasSuffix(host, "]") { // ipv6
+		host = host[1 : len(host)-1]
+	}
+
+	h, ps := hs.tree.Route(strings.ToLower(host))
 	if h == nil || h.Handler(http.MethodGet) == nil {
 		return nil, false
 	}
 	return ps, true
+}
+
+// 源自 https://github.com/golang/go/blob/d8762b2f4532cc2e5ec539670b88bbc469a13938/src/net/url/url.go#L769
+func validOptionalPort(port string) bool {
+	if port == "" {
+		return true
+	}
+	if port[0] != ':' {
+		return false
+	}
+	for _, b := range port[1:] {
+		if b < '0' || b > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 // Add 添加新的域名
