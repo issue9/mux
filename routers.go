@@ -105,6 +105,13 @@ func (rs *RoutersOf[T]) Router(name string) *RouterOf[T] {
 	return nil
 }
 
+// Use 为所有已经注册的路由添加中间件
+func (rs *RoutersOf[T]) Use(m ...MiddlewareOf[T]) {
+	for _, r := range rs.Routers() {
+		r.Use(m...)
+	}
+}
+
 // Routers 返回路由列表
 func (rs *RoutersOf[T]) Routers() []*RouterOf[T] { return rs.routers }
 
