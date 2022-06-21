@@ -28,7 +28,7 @@ var (
 
 	addAny = Methods[:len(Methods)-2] // 添加请求方法时，所采用的默认值。
 
-	methodIndexMap map[string]int // Methods 的反向对照表
+	methodIndexMap map[string]int // 各个请求方法对应的数值
 
 	methodIndexes = map[int]methodIndexEntity{}
 )

@@ -25,10 +25,10 @@ type Node struct {
 	parent  *Node
 	segment *syntax.Segment
 
-	methodIndex int
+	methodIndex int // 在 methodIndexes 中的索引值
 	handlers    map[string]HandlerFunc
 
-	// 保存着 *node 实例在 children 中的下标。
+	// 保存着 *Node 实例在 children 中的下标。
 	//
 	// 所有节点类型为字符串的子节点，其首字符必定是不同的（相同的都提升到父节点中），
 	// 根据此特性，可以将所有字符串类型的首字符做个索引，这样字符串类型节点的比较，

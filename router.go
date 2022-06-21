@@ -58,6 +58,9 @@ type (
 	MiddlewareFuncOf[T any] func(T) T
 
 	// MiddlewareOf 中间件对象需要实现的接口
+	//
+	// NOTE: OPTIONS 请求是自动生成的，所以不受中间件的影响，
+	// HEAD 请求与 GET 请求有相同的中间件。
 	MiddlewareOf[T any] interface {
 		Middleware(T) T
 	}

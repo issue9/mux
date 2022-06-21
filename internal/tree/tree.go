@@ -28,11 +28,11 @@ import (
 //     |
 //     +---- 1/author
 //     |
-//     +---- {id}/author
+//     +---- {id}/author/
 //               |
-//               +---- /profile
+//               +---- profile
 //               |
-//               +---- /emails
+//               +---- emails
 type Tree struct {
 	methods map[string]int // 保存着每个请求方法在所有子节点上的数量。
 	node    *Node          // 空节点，正好用于处理 OPTIONS *。
