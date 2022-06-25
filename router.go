@@ -42,8 +42,6 @@ type (
 	// CallOf 指定如何调用用户自定义的对象 T
 	CallOf[T any] func(http.ResponseWriter, *http.Request, Params, T)
 
-	BuildOptionsServeHTTPOf[T any] func(params.Node) T
-
 	// ResourceOf 以资源地址为对象的路由
 	ResourceOf[T any] struct {
 		router  *RouterOf[T]
@@ -72,7 +70,7 @@ func (f MiddlewareFuncOf[T]) Middleware(next T) T { return f(next) }
 //
 // T 表示用户用于处理路由项的方法，该类型最终通过 NewRouterOf 中的 call 参数与
 // http.ResponseWriter 和 *http.Request 相关联。
-func NewRouterOf[T any](name string, call CallOf[T], opt BuildOptionsServeHTTPOf[T], o *Options) *RouterOf[T] {
+func NewRouterOf[T any](name string, call CallOf[T], opt params.BuildOptionsServeHTTPOf[T], o *Options) *RouterOf[T] {
 	o, err := buildOptions(o)
 	if err != nil {
 		panic(err)

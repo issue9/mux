@@ -16,7 +16,7 @@ type (
 	RoutersOf[T any] struct {
 		routers        []*RouterOf[T]
 		call           CallOf[T]
-		optionsBuilder BuildOptionsServeHTTPOf[T]
+		optionsBuilder params.BuildOptionsServeHTTPOf[T]
 		notFound       http.Handler
 	}
 
@@ -47,7 +47,7 @@ func anyRouter(*http.Request) (params.Params, bool) { return nil, true }
 // NewRoutersOf 声明一个新的 RoutersOf
 //
 // notFound 表示所有路由都不匹配时的处理方式，如果为空，则调用 http.NotFoundHandler。
-func NewRoutersOf[T any](b CallOf[T], opt BuildOptionsServeHTTPOf[T], notFound http.Handler) *RoutersOf[T] {
+func NewRoutersOf[T any](b CallOf[T], opt params.BuildOptionsServeHTTPOf[T], notFound http.Handler) *RoutersOf[T] {
 	if notFound == nil {
 		notFound = http.NotFoundHandler()
 	}

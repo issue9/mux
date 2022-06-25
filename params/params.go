@@ -83,6 +83,8 @@ type Node interface {
 	Options() string
 }
 
+type BuildOptionsServeHTTPOf[T any] func(Node) T
+
 // MiddlewareOf 中间件对象需要实现的接口
 //
 // NOTE: OPTIONS 请求是自动生成的，所以不受中间件的影响，

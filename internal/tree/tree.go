@@ -41,10 +41,10 @@ type Tree[T any] struct {
 	// 由 New 负责初始化的内容
 	locker         *sync.RWMutex
 	interceptors   *syntax.Interceptors
-	optionsBuilder func(params.Node) T
+	optionsBuilder params.BuildOptionsServeHTTPOf[T]
 }
 
-func New[T any](lock bool, i *syntax.Interceptors, optionsBuilder func(params.Node) T) *Tree[T] {
+func New[T any](lock bool, i *syntax.Interceptors, optionsBuilder params.BuildOptionsServeHTTPOf[T]) *Tree[T] {
 	s, err := i.NewSegment("")
 	if err != nil {
 		panic("发生了不该发生的错误，应该是 syntax.NewSegment 逻辑发生变化" + err.Error())

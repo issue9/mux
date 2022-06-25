@@ -13,14 +13,15 @@ import (
 	"github.com/issue9/assert/v2/rest"
 
 	"github.com/issue9/mux/v6"
+	"github.com/issue9/mux/v6/params"
 )
 
 type Tester[T any] struct {
 	c mux.CallOf[T]
-	o mux.BuildOptionsServeHTTPOf[T]
+	o params.BuildOptionsServeHTTPOf[T]
 }
 
-func NewTester[T any](c mux.CallOf[T], o mux.BuildOptionsServeHTTPOf[T]) *Tester[T] {
+func NewTester[T any](c mux.CallOf[T], o params.BuildOptionsServeHTTPOf[T]) *Tester[T] {
 	return &Tester[T]{
 		c: c,
 		o: o,
