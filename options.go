@@ -236,7 +236,7 @@ func (c *CORS) sanitize() error {
 	return nil
 }
 
-func (c *CORS) handle(node *tree.Node, w http.ResponseWriter, r *http.Request) {
+func handleCORS[T any](c *CORS, node *tree.Node[T], w http.ResponseWriter, r *http.Request) {
 	if c.deny {
 		return
 	}

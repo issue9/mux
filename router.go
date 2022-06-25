@@ -24,7 +24,7 @@ type (
 	// 如果需要同时对多个 RouterOf 实例进行路由，可以采用 RoutersOf 对象管理多个 RouterOf 实例。
 	RouterOf[T any] struct {
 		name    string
-		tree    *tree.Tree
+		tree    *tree.Tree[T]
 		call    CallOf[T]
 		matcher Matcher
 
@@ -34,11 +34,17 @@ type (
 		recoverFunc     RecoverFunc
 		notFound,
 		methodNotAllowed http.Handler
+
 		ms []MiddlewareOf[T]
 	}
 
 	// CallOf 指定如何调用用户自定义的对象 T
 	CallOf[T any] func(http.ResponseWriter, *http.Request, Params, T)
+
+	// TODO 临时性的
+	P = tree.Options
+
+	BuildOptionsServeHTTPOf[T any] func(P) T
 
 	// ResourceOf 以资源地址为对象的路由
 	ResourceOf[T any] struct {
@@ -83,7 +89,7 @@ func applyMiddlewares[T any](h T, f ...MiddlewareOf[T]) T {
 //
 // T 表示用户用于处理路由项的方法，该类型最终通过 NewRouterOf 中的 call 参数与
 // http.ResponseWriter 和 *http.Request 相关联。
-func NewRouterOf[T any](name string, call CallOf[T], o *Options) *RouterOf[T] {
+func NewRouterOf[T any](name string, call CallOf[T], opt BuildOptionsServeHTTPOf[T], o *Options) *RouterOf[T] {
 	o, err := buildOptions(o)
 	if err != nil {
 		panic(err)
@@ -91,7 +97,7 @@ func NewRouterOf[T any](name string, call CallOf[T], o *Options) *RouterOf[T] {
 
 	r := &RouterOf[T]{
 		name: name,
-		tree: tree.New(o.Lock, o.interceptors),
+		tree: tree.New(o.Lock, o.interceptors, opt),
 		call: call,
 
 		caseInsensitive:  o.CaseInsensitive,
@@ -136,10 +142,7 @@ func (r *RouterOf[T]) Handle(pattern string, h T, methods ...string) *RouterOf[T
 }
 
 func (r *RouterOf[T]) handle(pattern string, h T, methods ...string) {
-	f := func(w http.ResponseWriter, req *http.Request, ps Params) {
-		r.call(w, req, ps, applyMiddlewares(h, r.ms...))
-	}
-	if err := r.tree.Add(pattern, f, methods...); err != nil {
+	if err := r.tree.Add(pattern, h, methods...); err != nil {
 		panic(err)
 	}
 }
@@ -223,7 +226,7 @@ func (r *RouterOf[T]) serve(w http.ResponseWriter, req *http.Request, p Params) 
 		path = strings.ToLower(req.URL.Path)
 	}
 
-	node, ps := r.tree.Route(path)
+	node, ps := r.tree.Match(path)
 	if node == nil {
 		r.notFound.ServeHTTP(w, req)
 		return
@@ -237,9 +240,9 @@ func (r *RouterOf[T]) serve(w http.ResponseWriter, req *http.Request, p Params) 
 
 	defer ps.Destroy()
 
-	if h := node.Handler(req.Method); h != nil {
-		r.cors.handle(node, w, req) // 处理跨域问题
-		h(w, req, ps)
+	if h, exists := node.Handler(req.Method); exists {
+		handleCORS(r.cors, node, w, req) // 处理跨域问题
+		r.call(w, req, ps, h)
 		return
 	}
 

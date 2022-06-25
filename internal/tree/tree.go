@@ -33,29 +33,39 @@ import (
 //               +---- profile
 //               |
 //               +---- emails
-type Tree struct {
+type Tree[T any] struct {
 	methods map[string]int // 保存着每个请求方法在所有子节点上的数量。
-	node    *Node          // 空节点，正好用于处理 OPTIONS *。
+	node    *Node[T]       // 空节点，正好用于处理 OPTIONS *。
 
 	// 由 New 负责初始化的内容
-	locker       *sync.RWMutex
-	interceptors *syntax.Interceptors
+	locker         *sync.RWMutex
+	interceptors   *syntax.Interceptors
+	optionsBuilder func(Options) T
 }
 
-func New(lock bool, i *syntax.Interceptors) *Tree {
+// TODO 临时接口，后期记得删除
+type Options interface {
+	Options() string
+}
+
+var _ Options = &Node[http.Handler]{}
+
+func New[T any](lock bool, i *syntax.Interceptors, optionsBuilder func(Options) T) *Tree[T] {
 	s, err := i.NewSegment("")
 	if err != nil {
 		panic("发生了不该发生的错误，应该是 syntax.NewSegment 逻辑发生变化" + err.Error())
 	}
 
-	t := &Tree{
-		methods:      make(map[string]int, len(Methods)),
-		node:         &Node{segment: s, methodIndex: methodIndexMap[http.MethodOptions]},
-		interceptors: i,
+	t := &Tree[T]{
+		methods: make(map[string]int, len(Methods)),
+		node:    &Node[T]{segment: s, methodIndex: methodIndexMap[http.MethodOptions]},
+
+		interceptors:   i,
+		optionsBuilder: optionsBuilder,
 	}
 	t.node.root = t
-	t.node.handlers = map[string]HandlerFunc{
-		http.MethodOptions: t.node.optionsServeHTTP,
+	t.node.handlers = map[string]T{
+		http.MethodOptions: t.optionsBuilder(t.node),
 	}
 
 	if lock {
@@ -68,7 +78,7 @@ func New(lock bool, i *syntax.Interceptors) *Tree {
 // Add 添加路由项
 //
 // methods 可以为空，表示添加除 OPTIONS 和 HEAD 之外所有支持的请求方法。
-func (tree *Tree) Add(pattern string, h HandlerFunc, methods ...string) error {
+func (tree *Tree[T]) Add(pattern string, h T, methods ...string) error {
 	if err := tree.checkAmbiguous(pattern); err != nil {
 		return err
 	}
@@ -84,7 +94,7 @@ func (tree *Tree) Add(pattern string, h HandlerFunc, methods ...string) error {
 	}
 
 	if n.handlers == nil {
-		n.handlers = make(map[string]HandlerFunc, handlersSize)
+		n.handlers = make(map[string]T, handlersSize)
 	}
 
 	if len(methods) == 0 {
@@ -93,7 +103,7 @@ func (tree *Tree) Add(pattern string, h HandlerFunc, methods ...string) error {
 	return n.addMethods(h, methods...)
 }
 
-func (tree *Tree) checkAmbiguous(pattern string) error {
+func (tree *Tree[T]) checkAmbiguous(pattern string) error {
 	n, has, err := tree.node.checkAmbiguous(pattern, false)
 	if err != nil {
 		return err
@@ -113,7 +123,7 @@ func (tree *Tree) checkAmbiguous(pattern string) error {
 }
 
 // Clean 清除路由项
-func (tree *Tree) Clean(prefix string) {
+func (tree *Tree[T]) Clean(prefix string) {
 	if tree.locker != nil {
 		tree.locker.Lock()
 		defer tree.locker.Unlock()
@@ -125,13 +135,13 @@ func (tree *Tree) Clean(prefix string) {
 // Remove 移除路由项
 //
 // methods 可以为空，表示删除所有内容。单独删除 OPTIONS，将不会发生任何事情。
-func (tree *Tree) Remove(pattern string, methods ...string) {
+func (tree *Tree[T]) Remove(pattern string, methods ...string) {
 	if tree.locker != nil {
 		tree.locker.Lock()
 		defer tree.locker.Unlock()
 	}
 
-	child := tree.find(pattern)
+	child := tree.Find(pattern)
 	if child == nil {
 		return
 	}
@@ -167,7 +177,7 @@ func (tree *Tree) Remove(pattern string, methods ...string) {
 }
 
 // 获取指定的节点，若节点不存在，则在该位置生成一个新节点。
-func (tree *Tree) getNode(pattern string) (*Node, error) {
+func (tree *Tree[T]) getNode(pattern string) (*Node[T], error) {
 	segs, err := tree.interceptors.Split(pattern)
 	if err != nil {
 		return nil, err
@@ -175,10 +185,10 @@ func (tree *Tree) getNode(pattern string) (*Node, error) {
 	return tree.node.getNode(segs)
 }
 
-// Route 找到与当前内容匹配的 Node 实例
+// Match 找到与路径 path 匹配的 Node 实例
 //
 // NOTE: 调用方需要调用 syntax.Params.Destroy 销毁对象
-func (tree *Tree) Route(path string) (*Node, *syntax.Params) {
+func (tree *Tree[T]) Match(path string) (*Node[T], *syntax.Params) {
 	if tree.locker != nil {
 		tree.locker.RLock()
 		defer tree.locker.RUnlock()
@@ -198,7 +208,7 @@ func (tree *Tree) Route(path string) (*Node, *syntax.Params) {
 }
 
 // Routes 获取当前的所有路由项以及对应的请求方法
-func (tree *Tree) Routes() map[string][]string {
+func (tree *Tree[T]) Routes() map[string][]string {
 	if tree.locker != nil {
 		tree.locker.RLock()
 		defer tree.locker.RUnlock()
@@ -206,7 +216,6 @@ func (tree *Tree) Routes() map[string][]string {
 
 	routes := make(map[string][]string, 100)
 	routes["*"] = []string{http.MethodOptions}
-
 	for _, v := range tree.node.children {
 		v.routes("", routes)
 	}
@@ -214,18 +223,19 @@ func (tree *Tree) Routes() map[string][]string {
 	return routes
 }
 
-func (tree *Tree) find(pattern string) *Node { return tree.node.find(pattern) }
+// Find 查找匹配的节点
+func (tree *Tree[T]) Find(pattern string) *Node[T] { return tree.node.find(pattern) }
 
 // URL 将 ps 填入 pattern 生成 URL
 //
 // NOTE: 会检测 pattern 是否存在于 tree 中。
-func (tree *Tree) URL(buf *errwrap.StringBuilder, pattern string, ps map[string]string) error {
-	n := tree.find(pattern)
+func (tree *Tree[T]) URL(buf *errwrap.StringBuilder, pattern string, ps map[string]string) error {
+	n := tree.Find(pattern)
 	if n == nil {
 		return fmt.Errorf("%s 并不是一条有效的注册路由项", pattern)
 	}
 
-	nodes := make([]*Node, 0, 5)
+	nodes := make([]*Node[T], 0, 5)
 	for curr := n; curr.parent != nil; curr = curr.parent { // 从尾部向上开始获取节点
 		nodes = append(nodes, curr)
 	}
@@ -256,9 +266,9 @@ func (tree *Tree) URL(buf *errwrap.StringBuilder, pattern string, ps map[string]
 }
 
 // Print 向 w 输出树状结构
-func (tree *Tree) Print(w io.Writer) { tree.node.print(w, 0) }
+func (tree *Tree[T]) Print(w io.Writer) { tree.node.print(w, 0) }
 
-func (n *Node) print(w io.Writer, deep int) {
+func (n *Node[T]) print(w io.Writer, deep int) {
 	fmt.Fprintln(w, strings.Repeat(" ", deep*4), n.segment.Value)
 	for _, child := range n.children {
 		child.print(w, deep+1)

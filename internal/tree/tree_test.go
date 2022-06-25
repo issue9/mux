@@ -17,14 +17,20 @@ import (
 	"github.com/issue9/mux/v6/params"
 )
 
-func buildHandler(a *assert.Assertion, code int, body string, headers map[string]string) HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request, ps params.Params) {
+func buildOptionsFunc(allow Options) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Allow", allow.Options())
+	})
+}
+
+func buildHandler(a *assert.Assertion, code int, body string, headers map[string]string) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		rest.BuildHandler(a, code, body, headers).ServeHTTP(w, r)
-	}
+	})
 }
 
 type tester struct {
-	tree *Tree
+	tree *Tree[http.Handler]
 	a    *assert.Assertion
 }
 
@@ -35,7 +41,7 @@ func newTester(a *assert.Assertion, lock bool) *tester {
 	i.Add(syntax.MatchDigit, "digit")
 
 	return &tester{
-		tree: New(lock, i),
+		tree: New(lock, i, buildOptionsFunc),
 		a:    a,
 	}
 }
@@ -55,18 +61,18 @@ func (t *tester) addAmbiguous(pattern string) {
 
 // 验证按照指定的 method 和 path 访问，是否会返回相同的 code 值，
 // 若是，则返回该节点以及对应的参数。
-func (t *tester) handler(method, path string, code int) (HandlerFunc, params.Params) {
+func (t *tester) handler(method, path string, code int) (http.Handler, params.Params) {
 	t.a.TB().Helper()
 
-	hs, ps := t.tree.Route(path)
+	hs, ps := t.tree.Match(path)
 	t.a.NotNil(hs)
 
-	h := hs.Handler(method)
-	t.a.NotNil(h)
+	h, exists := hs.Handler(method)
+	t.a.NotNil(h).True(exists)
 
 	w := httptest.NewRecorder()
 	r := rest.NewRequest(t.a, method, path).Request()
-	h(w, r, nil)
+	h.ServeHTTP(w, r)
 	t.a.Equal(w.Code, code)
 
 	return h, ps
@@ -83,7 +89,7 @@ func (t *tester) matchTrue(method, path string, code int) {
 func (t *tester) notFound(path string) {
 	t.a.TB().Helper()
 
-	hs, ps := t.tree.Route(path)
+	hs, ps := t.tree.Match(path)
 	t.a.Nil(hs).Nil(ps)
 }
 
@@ -122,17 +128,17 @@ func (t *tester) urlFalse(pattern string, params map[string]string, msg string) 
 func (t *tester) optionsTrue(path, options string) {
 	t.a.TB().Helper()
 
-	hs, ps := t.tree.Route(path)
-	t.a.Nil(ps).NotNil(hs)
+	hs, _ := t.tree.Match(path)
+	t.a.NotNil(hs)
 
-	h := hs.Handler(http.MethodOptions)
-	t.a.NotNil(h)
+	h, exists := hs.Handler(http.MethodOptions)
+	t.a.NotNil(h).True(exists)
 
 	w := httptest.NewRecorder()
 	u, err := url.Parse(path)
 	t.a.NotError(err).NotNil(u)
 	r := rest.NewRequest(t.a, http.MethodOptions, path).Request()
-	h(w, r, nil)
+	h.ServeHTTP(w, r)
 	t.a.Equal(w.Code, http.StatusOK)
 
 	t.a.Equal(w.Header().Get("Allow"), options)
@@ -305,17 +311,18 @@ func TestTree_Route(t *testing.T) {
 	a.Equal(c0.segment.Value, "/\xe4\xb8")
 	// /中文/5index.html 即部分匹配 /中文/5，更匹配 /中文/{id}，测试是否正确匹配
 	test.matchTrue(http.MethodGet, "/中文/5index.html", 220)
+	test.optionsTrue("/中文/5index.html", "GET, OPTIONS")
 
 	test = newTester(a, false)
 	test.add(http.MethodGet, "/admin/1", 201)
 	test.matchTrue(http.MethodGet, "/admin/1", 201)
-	test.matchTrue(http.MethodHead, "/admin/1", 201) // 同 GET 的状态码
-	test.optionsTrue("", "GET, HEAD, OPTIONS")
-	test.optionsTrue("*", "GET, HEAD, OPTIONS")
+	test.optionsTrue("/admin/1", "GET, OPTIONS")
+	test.optionsTrue("", "GET, OPTIONS")
+	test.optionsTrue("*", "GET, OPTIONS")
 
 	// 动态添加其它方法，会改变 OPTIONS 值
 	test.add(http.MethodPost, "/admin/1", 201)
-	test.optionsTrue("", "GET, HEAD, OPTIONS, POST")
+	test.optionsTrue("", "GET, OPTIONS, POST")
 }
 
 func TestTree_Params(t *testing.T) {
@@ -370,7 +377,7 @@ func TestTreeCN(t *testing.T) {
 
 func TestTree_Clean(t *testing.T) {
 	a := assert.New(t, false)
-	tree := New(true, syntax.NewInterceptors())
+	tree := New(true, syntax.NewInterceptors(), buildOptionsFunc)
 
 	addNode := func(p string, code int, methods ...string) {
 		a.NotError(tree.Add(p, buildHandler(a, code, "", nil), methods...))
@@ -394,7 +401,7 @@ func TestTree_Clean(t *testing.T) {
 func TestTree_Add_Remove(t *testing.T) {
 	a := assert.New(t, false)
 
-	tree := New(true, syntax.NewInterceptors())
+	tree := New(true, syntax.NewInterceptors(), buildOptionsFunc)
 	a.NotNil(tree)
 
 	a.NotError(tree.Add("/", buildHandler(a, http.StatusAccepted, "", nil), http.MethodGet))
@@ -417,7 +424,7 @@ func TestTree_Add_Remove(t *testing.T) {
 
 	// addAny
 
-	tree = New(false, syntax.NewInterceptors())
+	tree = New(false, syntax.NewInterceptors(), buildOptionsFunc)
 	a.NotNil(tree)
 	a.NotError(tree.Add("/path", buildHandler(a, 201, "", nil)))
 	node := tree.node.find("/path")
@@ -425,14 +432,13 @@ func TestTree_Add_Remove(t *testing.T) {
 	a.Equal(len(Methods), len(node.Methods()))
 	a.Equal(node.Options(), strings.Join(node.Methods(), ", "))
 
-	// head
+	// OPTIONS
 
-	tree = New(true, syntax.NewInterceptors())
+	tree = New(true, syntax.NewInterceptors(), buildOptionsFunc)
 	a.NotNil(tree)
 	a.NotError(tree.Add("/path", buildHandler(a, http.StatusAccepted, "", nil), http.MethodGet))
 	node = tree.node.find("/path")
-	a.Equal(3, len(node.handlers)).
-		NotNil(node.handlers[http.MethodHead]).
+	a.Equal(2, len(node.handlers)).
 		NotNil(node.handlers[http.MethodOptions])
 
 	tree.Remove("/path", http.MethodGet)
@@ -440,9 +446,8 @@ func TestTree_Add_Remove(t *testing.T) {
 
 	// error
 
-	tree = New(true, syntax.NewInterceptors())
+	tree = New(true, syntax.NewInterceptors(), buildOptionsFunc)
 	a.NotNil(tree)
-	a.ErrorString(tree.Add("/path", buildHandler(a, http.StatusAccepted, "", nil), http.MethodHead), "无法手动添加 OPTIONS/HEAD 请求方法")
 	a.ErrorString(tree.Add("/path", buildHandler(a, http.StatusAccepted, "", nil), "NOT-SUPPORTED"), "NOT-SUPPORTED")
 	a.NotError(tree.Add("/path", buildHandler(a, http.StatusAccepted, "", nil), http.MethodDelete))
 	a.ErrorString(tree.Add("/path", buildHandler(a, http.StatusAccepted, "", nil), http.MethodDelete), http.MethodDelete)
@@ -454,7 +459,7 @@ func TestTree_Add_Remove(t *testing.T) {
 
 	// 多层节点的删除
 
-	tree = New(true, syntax.NewInterceptors())
+	tree = New(true, syntax.NewInterceptors(), buildOptionsFunc)
 	a.NotError(tree.Add("/posts", buildHandler(a, 201, "", nil), http.MethodGet, http.MethodPut))
 	a.NotError(tree.Add("/posts/{id}", buildHandler(a, 202, "", nil), http.MethodGet))
 	a.NotError(tree.Add("/posts/{id}/author", buildHandler(a, 203, "", nil), http.MethodGet))
@@ -477,7 +482,7 @@ func TestTree_Add_Remove(t *testing.T) {
 
 func TestTree_Routes(t *testing.T) {
 	a := assert.New(t, false)
-	tree := New(true, syntax.NewInterceptors())
+	tree := New(true, syntax.NewInterceptors(), buildOptionsFunc)
 	a.NotNil(tree)
 
 	a.NotError(tree.Add("/", buildHandler(a, http.StatusOK, "", nil), http.MethodGet))
@@ -488,17 +493,17 @@ func TestTree_Routes(t *testing.T) {
 	routes := tree.Routes()
 	a.Equal(routes, map[string][]string{
 		"*":                  {http.MethodOptions},
-		"/":                  {http.MethodGet, http.MethodHead, http.MethodOptions},
-		"/posts":             {http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodPost},
-		"/posts/{id}":        {http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodPut},
-		"/posts/{id}/author": {http.MethodGet, http.MethodHead, http.MethodOptions},
+		"/":                  {http.MethodGet, http.MethodOptions},
+		"/posts":             {http.MethodGet, http.MethodOptions, http.MethodPost},
+		"/posts/{id}":        {http.MethodGet, http.MethodOptions, http.MethodPut},
+		"/posts/{id}/author": {http.MethodGet, http.MethodOptions},
 	})
 }
 
 func TestTree_find(t *testing.T) {
 	a := assert.New(t, false)
 	h := buildHandler(a, http.StatusCreated, "", nil)
-	tree := New(false, syntax.NewInterceptors())
+	tree := New(false, syntax.NewInterceptors(), buildOptionsFunc)
 
 	a.NotError(tree.Add("/", h, http.MethodGet))
 	a.NotError(tree.Add("/posts/{id}", h, http.MethodGet))
@@ -507,14 +512,14 @@ func TestTree_find(t *testing.T) {
 	a.NotError(tree.Add("/posts/1/author", h, http.MethodGet))
 	a.NotError(tree.Add("/posts/{id}/{author:\\w+}/profile", h, http.MethodGet))
 
-	a.Equal(tree.find("/").segment.Value, "/")
-	a.Equal(tree.find("/posts/{id}").segment.Value, "{id}")
-	a.Equal(tree.find("/posts/{-id:\\d+}/authors").segment.Value, "{-id:\\d+}/authors")
-	a.Equal(tree.find("/posts/{id}/author").segment.Value, "author")
-	a.Equal(tree.find("/posts/{id}/{author:\\w+}/profile").segment.Value, "{author:\\w+}/profile")
+	a.Equal(tree.Find("/").segment.Value, "/")
+	a.Equal(tree.Find("/posts/{id}").segment.Value, "{id}")
+	a.Equal(tree.Find("/posts/{-id:\\d+}/authors").segment.Value, "{-id:\\d+}/authors")
+	a.Equal(tree.Find("/posts/{id}/author").segment.Value, "author")
+	a.Equal(tree.Find("/posts/{id}/{author:\\w+}/profile").segment.Value, "{author:\\w+}/profile")
 
-	a.Nil(tree.find("/not-exists"))
-	a.Nil(tree.find("/posts/").handlers) // 空的节点，但是有子元素。
+	a.Nil(tree.Find("/not-exists"))
+	a.Nil(tree.Find("/posts/").handlers) // 空的节点，但是有子元素。
 }
 
 func TestTree_URL(t *testing.T) {

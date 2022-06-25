@@ -3,6 +3,7 @@
 package tree
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/issue9/assert/v2"
@@ -11,7 +12,7 @@ import (
 )
 
 // 获取当前路由下所有处理函数的节点数量
-func (n *Node) len() int {
+func (n *Node[T]) len() int {
 	var cnt int
 	for _, child := range n.children {
 		cnt += child.len()
@@ -26,13 +27,13 @@ func (n *Node) len() int {
 
 func TestRemoveNodes(t *testing.T) {
 	a := assert.New(t, false)
-	tree := New(false, syntax.NewInterceptors())
+	tree := New(false, syntax.NewInterceptors(), buildOptionsFunc)
 	a.NotNil(tree)
 
-	newNode := func(str string) *Node {
+	newNode := func(str string) *Node[http.Handler] {
 		s, err := tree.interceptors.NewSegment(str)
 		a.NotError(err).NotNil(s)
-		return &Node{segment: s, root: tree}
+		return &Node[http.Handler]{segment: s, root: tree}
 	}
 
 	n1 := newNode("/1")
@@ -41,7 +42,7 @@ func TestRemoveNodes(t *testing.T) {
 	n3 := newNode("/3")
 	n4 := newNode("/4")
 
-	nodes := []*Node{n1, n2, n21, n3, n4}
+	nodes := []*Node[http.Handler]{n1, n2, n21, n3, n4}
 
 	// 不存在的元素
 	nodes = removeNodes(nodes, "")
@@ -74,13 +75,13 @@ func TestRemoveNodes(t *testing.T) {
 
 func TestSplitNode(t *testing.T) {
 	a := assert.New(t, false)
-	tree := New(false, syntax.NewInterceptors())
+	tree := New(false, syntax.NewInterceptors(), buildOptionsFunc)
 	a.NotNil(tree)
 
-	newNode := func(str string) *Node {
+	newNode := func(str string) *Node[http.Handler] {
 		s, err := tree.interceptors.NewSegment(str)
 		a.NotError(err).NotNil(s)
-		return &Node{segment: s, root: tree}
+		return &Node[http.Handler]{segment: s, root: tree}
 	}
 	p := newNode("/blog")
 

@@ -3,12 +3,10 @@
 package tree
 
 import (
-	"net/http"
 	"sort"
 	"strings"
 
 	"github.com/issue9/mux/v6/internal/syntax"
-	"github.com/issue9/mux/v6/params"
 )
 
 const (
@@ -16,17 +14,14 @@ const (
 	handlersSize = 7 // Node.handlers 的初始容量
 )
 
-// HandlerFunc 路由处理的函数类型
-type HandlerFunc func(http.ResponseWriter, *http.Request, params.Params)
-
 // Node 表示路由中的节点
-type Node struct {
-	root    *Tree
-	parent  *Node
+type Node[T any] struct {
+	root    *Tree[T]
+	parent  *Node[T]
 	segment *syntax.Segment
 
 	methodIndex int // 在 methodIndexes 中的索引值
-	handlers    map[string]HandlerFunc
+	handlers    map[string]T
 
 	// 保存着 *Node 实例在 children 中的下标。
 	//
@@ -35,13 +30,13 @@ type Node struct {
 	// 可以通过索引排除不必要的比较操作。
 	indexes map[byte]int
 
-	children []*Node
+	children []*Node[T]
 }
 
-func (n *Node) size() int { return len(n.handlers) }
+func (n *Node[T]) size() int { return len(n.handlers) }
 
 // 构建当前节点的索引表
-func (n *Node) buildIndexes() {
+func (n *Node[T]) buildIndexes() {
 	if len(n.children) < indexesSize {
 		n.indexes = nil
 		return
@@ -58,7 +53,7 @@ func (n *Node) buildIndexes() {
 	}
 }
 
-func (n *Node) priority() int {
+func (n *Node[T]) priority() int {
 	ret := int(n.segment.Type) * 10 // 10 可以保证在当前类型的节点进行加权时，不会超过其它节点。
 
 	if len(n.children) == 0 {
@@ -73,7 +68,7 @@ func (n *Node) priority() int {
 
 // 获取指定路径下的节点，若节点不存在，则添加。
 // segments 为被 syntax.Split 拆分之后的字符串数组。
-func (n *Node) getNode(segments []*syntax.Segment) (*Node, error) {
+func (n *Node[T]) getNode(segments []*syntax.Segment) (*Node[T], error) {
 	child, err := n.addSegment(segments[0])
 	if err != nil {
 		return nil, err
@@ -86,9 +81,9 @@ func (n *Node) getNode(segments []*syntax.Segment) (*Node, error) {
 }
 
 // 将 seg 添加到当前节点，并返回新节点，如果找到相同的节点，则直接返回该子节点。
-func (n *Node) addSegment(seg *syntax.Segment) (*Node, error) {
-	var child *Node // 找到的最匹配节点
-	var l int       // 最大的匹配字符数量
+func (n *Node[T]) addSegment(seg *syntax.Segment) (*Node[T], error) {
+	var child *Node[T] // 找到的最匹配节点
+	var l int          // 最大的匹配字符数量
 	for _, c := range n.children {
 		l1 := c.segment.Similarity(seg)
 
@@ -128,13 +123,13 @@ func (n *Node) addSegment(seg *syntax.Segment) (*Node, error) {
 
 // 根据 s 内容为当前节点产生一个子节点，并返回该节点。
 // 由调用方确保 s 的语法正确性，否则可能 panic。
-func (n *Node) newChild(s *syntax.Segment) *Node {
-	child := &Node{root: n.root, parent: n, segment: s}
+func (n *Node[T]) newChild(s *syntax.Segment) *Node[T] {
+	child := &Node[T]{root: n.root, parent: n, segment: s}
 	n.children = append(n.children, child)
 	return child
 }
 
-func (n *Node) sort() {
+func (n *Node[T]) sort() {
 	sort.SliceStable(n.children, func(i, j int) bool {
 		return n.children[i].priority() < n.children[j].priority()
 	})
@@ -142,7 +137,7 @@ func (n *Node) sort() {
 }
 
 // 查找路由项，不存在返回 nil
-func (n *Node) find(pattern string) *Node {
+func (n *Node[T]) find(pattern string) *Node[T] {
 	for _, child := range n.children {
 		if child.segment.Value == pattern {
 			return child
@@ -159,7 +154,7 @@ func (n *Node) find(pattern string) *Node {
 }
 
 // 清除路由项
-func (n *Node) clean(prefix string) {
+func (n *Node[T]) clean(prefix string) {
 	if len(prefix) == 0 {
 		n.children = n.children[:0]
 		return
@@ -185,7 +180,7 @@ func (n *Node) clean(prefix string) {
 }
 
 // 从子节点中查找与当前路径匹配的节点，若找不到，则返回 nil。
-func (n *Node) matchChildren(p *syntax.Params) *Node {
+func (n *Node[T]) matchChildren(p *syntax.Params) *Node[T] {
 	if len(n.indexes) > 0 && len(p.Path) > 0 { // 普通字符串的匹配
 		child := n.children[n.indexes[p.Path[0]]]
 		if child == nil {
@@ -234,7 +229,7 @@ LOOP:
 //
 // NOTE: 实际应该中，理论上不会出现多个相同的元素，
 // 所以此处不作多余的判断。
-func removeNodes(nodes []*Node, pattern string) []*Node {
+func removeNodes[T any](nodes []*Node[T], pattern string) []*Node[T] {
 	for index, n := range nodes {
 		if n.segment.Value == pattern {
 			return append(nodes[:index], nodes[index+1:]...)
@@ -247,7 +242,7 @@ func removeNodes(nodes []*Node, pattern string) []*Node {
 // 若 pos 大于或等于 n.pattern 的长度，则直接返回 n 不会拆分，pos 处的字符作为子节点的内容。
 //
 // 若 n.parent 为 nil，都将触发 panic
-func splitNode(n *Node, pos int) (*Node, error) {
+func splitNode[T any](n *Node[T], pos int) (*Node[T], error) {
 	if len(n.segment.Value) <= pos { // 不需要拆分
 		return n, nil
 	}
@@ -280,7 +275,7 @@ func splitNode(n *Node, pos int) (*Node, error) {
 }
 
 // 获取所有的路由地址列表
-func (n *Node) routes(parent string, routes map[string][]string) {
+func (n *Node[T]) routes(parent string, routes map[string][]string) {
 	path := parent + n.segment.Value
 
 	if n.methodIndex > 0 {
@@ -293,9 +288,12 @@ func (n *Node) routes(parent string, routes map[string][]string) {
 }
 
 // Handler 获取指定方法对应的处理函数
-func (n *Node) Handler(method string) HandlerFunc { return n.handlers[method] }
+func (n *Node[T]) Handler(method string) (v T, exists bool) {
+	v, exists = n.handlers[method]
+	return
+}
 
-func (n *Node) checkAmbiguous(pattern string, hasNonString bool) (*Node, bool, error) {
+func (n *Node[T]) checkAmbiguous(pattern string, hasNonString bool) (*Node[T], bool, error) {
 	if pattern == "" {
 		if n.size() > 0 {
 			return n, hasNonString, nil

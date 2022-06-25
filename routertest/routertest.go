@@ -17,11 +17,13 @@ import (
 
 type Tester[T any] struct {
 	c mux.CallOf[T]
+	o mux.BuildOptionsServeHTTPOf[T]
 }
 
-func NewTester[T any](c mux.CallOf[T]) *Tester[T] {
+func NewTester[T any](c mux.CallOf[T], o mux.BuildOptionsServeHTTPOf[T]) *Tester[T] {
 	return &Tester[T]{
 		c: c,
+		o: o,
 	}
 }
 
@@ -29,7 +31,7 @@ func NewTester[T any](c mux.CallOf[T]) *Tester[T] {
 //
 // f 返回一个路由处理函数，该函数必须要将获得的参数写入 params.
 func (t *Tester[T]) Params(a *assert.Assertion, f func(params *mux.Params) T) {
-	router := mux.NewRouterOf("test", t.c, &mux.Options{
+	router := mux.NewRouterOf("test", t.c, t.o, &mux.Options{
 		Interceptors: map[string]mux.InterceptorFunc{"digit": mux.InterceptorDigit},
 	})
 	a.NotNil(router)
@@ -89,7 +91,7 @@ func (t *Tester[T]) Params(a *assert.Assertion, f func(params *mux.Params) T) {
 //
 // h 返回路由处理函数，该函数只要输出 status 作为其状态码即可。
 func (t *Tester[T]) Serve(a *assert.Assertion, h func(status int) T) {
-	router := mux.NewRouterOf("test", t.c, &mux.Options{
+	router := mux.NewRouterOf("test", t.c, t.o, &mux.Options{
 		Interceptors: map[string]mux.InterceptorFunc{
 			"digit": mux.InterceptorDigit,
 			"any":   mux.InterceptorAny,
@@ -129,7 +131,7 @@ func (t *Tester[T]) Serve(a *assert.Assertion, h func(status int) T) {
 
 	// 忽略大小写测试
 
-	router = mux.NewRouterOf("test", t.c, &mux.Options{CaseInsensitive: true})
+	router = mux.NewRouterOf("test", t.c, t.o, &mux.Options{CaseInsensitive: true})
 	srv = rest.NewServer(a, router, nil)
 
 	router.Handle("/posts/{path}.html", h(201))

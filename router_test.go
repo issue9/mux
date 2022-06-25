@@ -31,6 +31,12 @@ func contextCall(w http.ResponseWriter, r *http.Request, ps mux.Params, h ctxHan
 	h.Handle(&ctx{R: r, W: w, P: ps})
 }
 
+func contextOptions(p mux.P) ctxHandler {
+	return ctxHandlerFunc(func(ctx *ctx) {
+		ctx.W.Header().Set("allow", p.Options())
+	})
+}
+
 func buildMiddleware(a *assert.Assertion, text string) mux.Middleware {
 	return mux.MiddlewareFunc(func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -61,7 +67,7 @@ func TestRouter_Middleware(t *testing.T) {
 
 func TestDefaultRouter(t *testing.T) {
 	a := assert.New(t, false)
-	tt := routertest.NewTester(mux.DefaultCall)
+	tt := routertest.NewTester(mux.DefaultCall, mux.DefaultOptionsServeBuilder)
 
 	a.Run("params", func(a *assert.Assertion) {
 		tt.Params(a, func(ps *mux.Params) http.Handler {
@@ -87,7 +93,7 @@ func TestDefaultRouter(t *testing.T) {
 
 func TestContextRouter_Params(t *testing.T) {
 	a := assert.New(t, false)
-	tt := routertest.NewTester(contextCall)
+	tt := routertest.NewTester(contextCall, contextOptions)
 
 	a.Run("params", func(a *assert.Assertion) {
 		tt.Params(a, func(ps *mux.Params) ctxHandler {

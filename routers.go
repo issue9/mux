@@ -14,9 +14,10 @@ import (
 type (
 	// RoutersOf 一组路由的集合
 	RoutersOf[T any] struct {
-		routers  []*RouterOf[T]
-		call     CallOf[T]
-		notFound http.Handler
+		routers        []*RouterOf[T]
+		call           CallOf[T]
+		optionsBuilder BuildOptionsServeHTTPOf[T]
+		notFound       http.Handler
 	}
 
 	// Matcher 验证一个请求是否符合要求
@@ -46,15 +47,16 @@ func anyRouter(*http.Request) (params.Params, bool) { return nil, true }
 // NewRoutersOf 声明一个新的 RoutersOf
 //
 // notFound 表示所有路由都不匹配时的处理方式，如果为空，则调用 http.NotFoundHandler。
-func NewRoutersOf[T any](b CallOf[T], notFound http.Handler) *RoutersOf[T] {
+func NewRoutersOf[T any](b CallOf[T], opt BuildOptionsServeHTTPOf[T], notFound http.Handler) *RoutersOf[T] {
 	if notFound == nil {
 		notFound = http.NotFoundHandler()
 	}
 
 	return &RoutersOf[T]{
-		routers:  make([]*RouterOf[T], 0, 1),
-		call:     b,
-		notFound: notFound,
+		routers:        make([]*RouterOf[T], 0, 1),
+		call:           b,
+		optionsBuilder: opt,
+		notFound:       notFound,
 	}
 }
 
@@ -70,7 +72,7 @@ func (rs *RoutersOf[T]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // New 声明新路由
 func (rs *RoutersOf[T]) New(name string, matcher Matcher, o *Options) *RouterOf[T] {
-	r := NewRouterOf(name, rs.call, o)
+	r := NewRouterOf(name, rs.call, rs.optionsBuilder, o)
 	rs.Add(matcher, r)
 	return r
 }

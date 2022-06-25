@@ -17,7 +17,7 @@ func BenchmarkDefaultRouter(b *testing.B) {
 		}
 	}
 
-	t := routertest.NewTester(mux.DefaultCall)
+	t := routertest.NewTester(mux.DefaultCall, mux.DefaultOptionsServeBuilder)
 	t.Bench(b, http.HandlerFunc(h))
 }
 
@@ -28,6 +28,6 @@ func BenchmarkContextRouter(b *testing.B) {
 		}
 	})
 
-	t := routertest.NewTester(contextCall)
+	t := routertest.NewTester(contextCall, contextOptions)
 	t.Bench(b, h)
 }

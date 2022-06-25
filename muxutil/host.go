@@ -15,13 +15,13 @@ import (
 // Hosts 限定域名的匹配工具
 type Hosts struct {
 	i    *syntax.Interceptors
-	tree *tree.Tree
+	tree *tree.Tree[any]
 }
 
 // NewHosts 声明新的 Hosts 实例
 func NewHosts(lock bool, domain ...string) *Hosts {
 	i := syntax.NewInterceptors()
-	h := &Hosts{tree: tree.New(lock, i), i: i}
+	h := &Hosts{tree: tree.New(lock, i, func(o tree.Options) any { return nil }), i: i}
 	h.Add(domain...)
 	return h
 }
@@ -43,8 +43,11 @@ func (hs *Hosts) Match(r *http.Request) (params.Params, bool) {
 		host = host[1 : len(host)-1]
 	}
 
-	h, ps := hs.tree.Route(strings.ToLower(host))
-	if h == nil || h.Handler(http.MethodGet) == nil {
+	h, ps := hs.tree.Match(strings.ToLower(host))
+	if h == nil {
+		return nil, false
+	}
+	if _, exists := h.Handler(http.MethodGet); !exists {
 		return nil, false
 	}
 	return ps, true
@@ -85,4 +88,4 @@ func (hs *Hosts) Add(domain ...string) {
 // Delete 删除域名
 func (hs *Hosts) Delete(domain string) { hs.tree.Remove(domain) }
 
-func (hs *Hosts) emptyHandlerFunc(http.ResponseWriter, *http.Request, params.Params) {}
+func (hs *Hosts) emptyHandlerFunc() {}

@@ -12,9 +12,9 @@ import (
 	"github.com/issue9/mux/v6/internal/syntax"
 )
 
-func BenchmarkTree_Route(b *testing.B) {
+func BenchmarkTree_Match(b *testing.B) {
 	a := assert.New(b, false)
-	tree := New(true, syntax.NewInterceptors())
+	tree := New(true, syntax.NewInterceptors(), buildOptionsFunc)
 
 	// 添加路由项
 	a.NotError(tree.Add("/", buildHandler(a, 201, "", nil), http.MethodGet))
@@ -40,14 +40,14 @@ func BenchmarkTree_Route(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		index := i % len(paths)
-		h, _ := tree.Route(paths[index])
+		h, _ := tree.Match(paths[index])
 		a.True(len(h.handlers) > 0)
 	}
 }
 
 func BenchmarkTree_ServeHTTP(b *testing.B) {
 	a := assert.New(b, false)
-	tree := New(true, syntax.NewInterceptors())
+	tree := New(true, syntax.NewInterceptors(), buildOptionsFunc)
 
 	// 添加路由项
 	a.NotError(tree.Add("/", buildHandler(a, 201, "", nil), http.MethodGet))
@@ -73,13 +73,13 @@ func BenchmarkTree_ServeHTTP(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		index := i % len(paths)
-		h, _ := tree.Route(paths[index])
+		h, _ := tree.Match(paths[index])
 		hh := h.handlers[http.MethodGet]
 
 		w := httptest.NewRecorder()
 		r, err := http.NewRequest(http.MethodGet, paths[index], nil)
 		a.NotError(err).NotNil(r)
-		hh(w, r, nil)
+		hh.ServeHTTP(w, r)
 		a.Equal(w.Result().StatusCode, index+201)
 	}
 }

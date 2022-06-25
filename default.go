@@ -27,15 +27,21 @@ func DefaultCall(w http.ResponseWriter, r *http.Request, ps Params, h http.Handl
 	h.ServeHTTP(w, WithValue(r, ps))
 }
 
+func DefaultOptionsServeBuilder(p P) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Allow", p.Options())
+	})
+}
+
 func NewRouters(notFound http.Handler) *Routers {
-	return NewRoutersOf(DefaultCall, notFound)
+	return NewRoutersOf(DefaultCall, DefaultOptionsServeBuilder, notFound)
 }
 
 // NewRouter 声明适用于官方 http.Handler 接口的路由
 //
 // 这是对 NewRouterOf 的实例化，相当于 NewRouterOf[http.Handler]。
 func NewRouter(name string, o *Options) *Router {
-	return NewRouterOf(name, DefaultCall, o)
+	return NewRouterOf(name, DefaultCall, DefaultOptionsServeBuilder, o)
 }
 
 // GetParams 获取当前请求实例上的参数列表
