@@ -108,7 +108,7 @@ func (rs *RoutersOf[T]) Router(name string) *RouterOf[T] {
 }
 
 // Use 为所有已经注册的路由添加中间件
-func (rs *RoutersOf[T]) Use(m ...MiddlewareOf[T]) {
+func (rs *RoutersOf[T]) Use(m ...params.MiddlewareOf[T]) {
 	for _, r := range rs.Routers() {
 		r.Use(m...)
 	}

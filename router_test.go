@@ -10,6 +10,7 @@ import (
 	"github.com/issue9/assert/v2/rest"
 
 	"github.com/issue9/mux/v6"
+	"github.com/issue9/mux/v6/params"
 	"github.com/issue9/mux/v6/routertest"
 )
 
@@ -31,7 +32,7 @@ func contextCall(w http.ResponseWriter, r *http.Request, ps mux.Params, h ctxHan
 	h.Handle(&ctx{R: r, W: w, P: ps})
 }
 
-func contextOptions(p mux.P) ctxHandler {
+func contextOptions(p params.Node) ctxHandler {
 	return ctxHandlerFunc(func(ctx *ctx) {
 		ctx.W.Header().Set("allow", p.Options())
 	})

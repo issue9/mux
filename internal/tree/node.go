@@ -3,10 +3,12 @@
 package tree
 
 import (
+	"net/http"
 	"sort"
 	"strings"
 
 	"github.com/issue9/mux/v6/internal/syntax"
+	"github.com/issue9/mux/v6/params"
 )
 
 const (
@@ -334,4 +336,19 @@ func (n *Node[T]) checkAmbiguous(pattern string, hasNonString bool) (*Node[T], b
 	}
 
 	return nil, false, nil
+}
+
+func (n *Node[T]) applyMiddlewares(ms ...params.MiddlewareOf[T]) {
+	for _, c := range n.children {
+		if len(c.handlers) == 0 {
+			c.applyMiddlewares(ms...)
+			return
+		}
+
+		for m, h := range c.handlers {
+			if m != http.MethodOptions { // OPTIONS 不添加中间件
+				c.handlers[m] = params.ApplyMiddlewares(h, ms...)
+			}
+		}
+	}
 }

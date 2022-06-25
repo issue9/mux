@@ -21,7 +21,7 @@ type Hosts struct {
 // NewHosts 声明新的 Hosts 实例
 func NewHosts(lock bool, domain ...string) *Hosts {
 	i := syntax.NewInterceptors()
-	h := &Hosts{tree: tree.New(lock, i, func(o tree.Options) any { return nil }), i: i}
+	h := &Hosts{tree: tree.New(lock, i, func(o params.Node) any { return nil }), i: i}
 	h.Add(domain...)
 	return h
 }

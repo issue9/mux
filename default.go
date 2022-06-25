@@ -5,6 +5,8 @@ package mux
 import (
 	"context"
 	"net/http"
+
+	"github.com/issue9/mux/v6/params"
 )
 
 // 提供了对标准库 http.Handler 的支持
@@ -16,7 +18,7 @@ type (
 	Router         = RouterOf[http.Handler]
 	Prefix         = PrefixOf[http.Handler]
 	Resource       = ResourceOf[http.Handler]
-	Middleware     = MiddlewareOf[http.Handler]
+	Middleware     = params.MiddlewareOf[http.Handler]
 	MiddlewareFunc = MiddlewareFuncOf[http.Handler]
 
 	contextKey int
@@ -27,7 +29,7 @@ func DefaultCall(w http.ResponseWriter, r *http.Request, ps Params, h http.Handl
 	h.ServeHTTP(w, WithValue(r, ps))
 }
 
-func DefaultOptionsServeBuilder(p P) http.Handler {
+func DefaultOptionsServeBuilder(p params.Node) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Allow", p.Options())
 	})

@@ -78,3 +78,22 @@ type Params interface {
 	// Range 依次访问每个参数
 	Range(func(key, val string))
 }
+
+type Node interface {
+	Options() string
+}
+
+// MiddlewareOf 中间件对象需要实现的接口
+//
+// NOTE: OPTIONS 请求是自动生成的，所以不受中间件的影响，
+// HEAD 请求与 GET 请求有相同的中间件。
+type MiddlewareOf[T any] interface {
+	Middleware(T) T
+}
+
+func ApplyMiddlewares[T any](h T, f ...MiddlewareOf[T]) T {
+	for _, ff := range f {
+		h = ff.Middleware(h)
+	}
+	return h
+}

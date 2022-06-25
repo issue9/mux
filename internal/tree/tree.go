@@ -13,6 +13,7 @@ import (
 	"github.com/issue9/errwrap"
 
 	"github.com/issue9/mux/v6/internal/syntax"
+	"github.com/issue9/mux/v6/params"
 )
 
 // Tree 以树节点的形式保存的路由
@@ -40,17 +41,10 @@ type Tree[T any] struct {
 	// 由 New 负责初始化的内容
 	locker         *sync.RWMutex
 	interceptors   *syntax.Interceptors
-	optionsBuilder func(Options) T
+	optionsBuilder func(params.Node) T
 }
 
-// TODO 临时接口，后期记得删除
-type Options interface {
-	Options() string
-}
-
-var _ Options = &Node[http.Handler]{}
-
-func New[T any](lock bool, i *syntax.Interceptors, optionsBuilder func(Options) T) *Tree[T] {
+func New[T any](lock bool, i *syntax.Interceptors, optionsBuilder func(params.Node) T) *Tree[T] {
 	s, err := i.NewSegment("")
 	if err != nil {
 		panic("发生了不该发生的错误，应该是 syntax.NewSegment 逻辑发生变化" + err.Error())
@@ -263,6 +257,10 @@ func (tree *Tree[T]) URL(buf *errwrap.StringBuilder, pattern string, ps map[stri
 	}
 
 	return nil
+}
+
+func (tree *Tree[T]) ApplyMiddleware(ms ...params.MiddlewareOf[T]) {
+	tree.node.applyMiddlewares(ms...)
 }
 
 // Print 向 w 输出树状结构

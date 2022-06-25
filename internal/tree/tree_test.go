@@ -17,7 +17,9 @@ import (
 	"github.com/issue9/mux/v6/params"
 )
 
-func buildOptionsFunc(allow Options) http.Handler {
+var _ params.Node = &Node[http.Handler]{}
+
+func buildOptionsFunc(allow params.Node) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Allow", allow.Options())
 	})
