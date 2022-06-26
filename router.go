@@ -55,12 +55,7 @@ type (
 		prefix string
 		ms     []params.MiddlewareOf[T]
 	}
-
-	// MiddlewareFuncOf 中间件处理函数
-	MiddlewareFuncOf[T any] func(T) T
 )
-
-func (f MiddlewareFuncOf[T]) Middleware(next T) T { return f(next) }
 
 // NewRouterOf 声明路由
 //

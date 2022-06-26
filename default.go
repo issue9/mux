@@ -19,7 +19,7 @@ type (
 	Prefix         = PrefixOf[http.Handler]
 	Resource       = ResourceOf[http.Handler]
 	Middleware     = params.MiddlewareOf[http.Handler]
-	MiddlewareFunc = MiddlewareFuncOf[http.Handler]
+	MiddlewareFunc = params.MiddlewareFuncOf[http.Handler]
 
 	contextKey int
 )

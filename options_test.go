@@ -238,7 +238,7 @@ func TestCORS_handle(t *testing.T) {
 		Request()
 	handleCORS(c, node, w, r)
 	a.Equal(w.Header().Get("Access-Control-Allow-Origin"), "*")
-	a.Equal(w.Header().Get("Access-Control-Allow-Methods"), "DELETE, GET, HEAD, OPTIONS")
+	a.Equal(w.Header().Get("Access-Control-Allow-Methods"), "DELETE, GET, OPTIONS")
 
 	// preflight，但是方法不被允许
 	w = httptest.NewRecorder()

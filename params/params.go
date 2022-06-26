@@ -87,11 +87,14 @@ type BuildOptionsServeHTTPOf[T any] func(Node) T
 
 // MiddlewareOf 中间件对象需要实现的接口
 //
-// NOTE: OPTIONS 请求是自动生成的，所以不受中间件的影响，
+// NOTE: OPTIONS 请求是自动生成的，只受全局中间件的影响。
 // HEAD 请求与 GET 请求有相同的中间件。
 type MiddlewareOf[T any] interface {
 	Middleware(T) T
 }
+
+// MiddlewareFuncOf 中间件处理函数
+type MiddlewareFuncOf[T any] func(T) T
 
 func ApplyMiddlewares[T any](h T, f ...MiddlewareOf[T]) T {
 	for _, ff := range f {
@@ -99,3 +102,5 @@ func ApplyMiddlewares[T any](h T, f ...MiddlewareOf[T]) T {
 	}
 	return h
 }
+
+func (f MiddlewareFuncOf[T]) Middleware(next T) T { return f(next) }

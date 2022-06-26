@@ -186,15 +186,15 @@ func TestRouters_routers_multiple(t *testing.T) {
 	a.Equal(g.Routes(), map[string]map[string][]string{
 		"v1": {
 			"*":     {http.MethodOptions},
-			"/path": {http.MethodGet, http.MethodHead, http.MethodOptions},
+			"/path": {http.MethodGet, http.MethodOptions},
 		},
 		"v2": {
 			"*":     {http.MethodOptions},
-			"/path": {http.MethodGet, http.MethodHead, http.MethodOptions},
+			"/path": {http.MethodGet, http.MethodOptions},
 		},
 		"default": {
 			"*":   {http.MethodOptions},
-			"/t1": {http.MethodGet, http.MethodHead, http.MethodOptions},
+			"/t1": {http.MethodGet, http.MethodOptions},
 		},
 	})
 

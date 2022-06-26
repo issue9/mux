@@ -19,11 +19,11 @@ var (
 		http.MethodPatch,
 		http.MethodConnect,
 		http.MethodTrace,
-		http.MethodHead,
-		http.MethodOptions, // OPTIONS 必须在最后，后面的 addAny 需要此规则。
+		http.MethodHead, // OPTIONS/HEAD 必须在最后，后面的 addAny 需要此规则。
+		http.MethodOptions,
 	}
 
-	addAny = Methods[:len(Methods)-1] // 添加请求方法时，所采用的默认值。
+	addAny = Methods[:len(Methods)-2] // 添加请求方法时，所采用的默认值。
 
 	methodIndexMap map[string]int // 各个请求方法对应的数值
 

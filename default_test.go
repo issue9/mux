@@ -62,17 +62,17 @@ func TestRouter(t *testing.T) {
 		a.NotError(err)
 	}))
 	rest.Get(a, "/").Do(r).Status(201)
-	rest.NewRequest(a, http.MethodHead, "/").Do(r).Status(201).BodyEmpty().Header("Content-Length", "")
+	rest.NewRequest(a, http.MethodHead, "/").Do(r).Status(405)
 	rest.Get(a, "/abc").Do(r).Status(http.StatusNotFound)
-	rest.NewRequest(a, http.MethodHead, "/200").Do(r).Status(200).BodyEmpty().Header("Content-Length", "3") // 不调用 WriteHeader
-	rest.NewRequest(a, http.MethodOptions, "*").Do(r).Status(200).Header("Allow", "GET, HEAD, OPTIONS")
+	rest.NewRequest(a, http.MethodHead, "/200").Do(r).Status(405) // 不调用 WriteHeader
+	rest.NewRequest(a, http.MethodOptions, "*").Do(r).Status(200).Header("Allow", "GET, OPTIONS")
 
 	r.Get("/h/1", rest.BuildHandler(a, 201, "", nil))
 	rest.Get(a, "/h/1").Do(r).Status(201)
 
 	r.Post("/h/1", rest.BuildHandler(a, 202, "", nil))
 	rest.Post(a, "/h/1", nil).Do(r).Status(202)
-	rest.NewRequest(a, http.MethodOptions, "*").Do(r).Status(200).Header("Allow", "GET, HEAD, OPTIONS, POST")
+	rest.NewRequest(a, http.MethodOptions, "*").Do(r).Status(200).Header("Allow", "GET, OPTIONS, POST")
 
 	r.Put("/h/1", rest.BuildHandler(a, 203, "", nil))
 	rest.Put(a, "/h/1", nil).Do(r).Status(203)
@@ -82,7 +82,7 @@ func TestRouter(t *testing.T) {
 
 	r.Delete("/h/1", rest.BuildHandler(a, 205, "", nil))
 	rest.Delete(a, "/h/1").Do(r).Status(205)
-	rest.NewRequest(a, http.MethodOptions, "*").Do(r).Status(200).Header("Allow", "DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT")
+	rest.NewRequest(a, http.MethodOptions, "*").Do(r).Status(200).Header("Allow", "DELETE, GET, OPTIONS, PATCH, POST, PUT")
 
 	// Any
 	r.Any("/h/any", rest.BuildHandler(a, 206, "", nil))
@@ -95,8 +95,8 @@ func TestRouter(t *testing.T) {
 
 	// 不能主动添加 Head
 	a.PanicString(func() {
-		r.Handle("/head", rest.BuildHandler(a, 202, "", nil), http.MethodHead)
-	}, "OPTIONS/HEAD")
+		r.Handle("/options", rest.BuildHandler(a, 202, "", nil), http.MethodOptions)
+	}, "OPTIONS")
 }
 
 func TestRouter_Handle_Remove(t *testing.T) {
@@ -144,7 +144,7 @@ func TestRouter_Routes(t *testing.T) {
 	a.NotNil(def)
 	def.Get("/m", rest.BuildHandler(a, 1, "", nil))
 	def.Post("/m", rest.BuildHandler(a, 1, "", nil))
-	a.Equal(def.Routes(), map[string][]string{"*": {"OPTIONS"}, "/m": {"GET", "HEAD", "OPTIONS", "POST"}})
+	a.Equal(def.Routes(), map[string][]string{"*": {"OPTIONS"}, "/m": {"GET", "OPTIONS", "POST"}})
 }
 
 func TestRouter_Clean(t *testing.T) {

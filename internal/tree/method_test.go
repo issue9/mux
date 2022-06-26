@@ -4,11 +4,9 @@ package tree
 
 import (
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/issue9/assert/v2"
-	"github.com/issue9/assert/v2/rest"
 
 	"github.com/issue9/mux/v6/internal/syntax"
 )
@@ -31,54 +29,6 @@ func TestBuildMethodIndexes(t *testing.T) {
 
 	// 重置为空
 	methodIndexes = map[int]methodIndexEntity{}
-}
-
-func TestNode_Match(t *testing.T) {
-	a := assert.New(t, false)
-	tree := New(false, syntax.NewInterceptors(), buildOptionsFunc)
-
-	// path1，主动调用 WriteHeader
-
-	a.NotError(tree.Add("/path1", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("h1", "h1")
-		w.WriteHeader(http.StatusAccepted)
-
-		_, err := w.Write([]byte("get"))
-		a.NotError(err)
-		_, err = w.Write([]byte("get"))
-		a.NotError(err)
-	}), http.MethodGet))
-
-	node, ps := tree.Match("/path1")
-	a.Zero(ps.Count()).NotNil(node)
-
-	w := httptest.NewRecorder()
-	r := rest.NewRequest(a, http.MethodOptions, "/path1").Request()
-	node.handlers[http.MethodOptions].ServeHTTP(w, r)
-	a.Empty(w.Header().Get("h1")).
-		Equal(w.Header().Get("Allow"), "GET, OPTIONS").
-		Empty(w.Body.String())
-
-	// path2，不主动调用 WriteHeader
-
-	a.NotError(tree.Add("/path2", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("h1", "h2")
-
-		_, err := w.Write([]byte("get"))
-		a.NotError(err)
-		_, err = w.Write([]byte("get"))
-		a.NotError(err)
-	}), http.MethodGet))
-
-	node, ps = tree.Match("/path2")
-	a.Zero(ps.Count()).NotNil(node)
-
-	w = httptest.NewRecorder()
-	r = rest.NewRequest(a, http.MethodOptions, "/path2").Request()
-	node.handlers[http.MethodOptions].ServeHTTP(w, r)
-	a.Empty(w.Header().Get("h1")).
-		Equal(w.Header().Get("Allow"), "GET, OPTIONS").
-		Empty(w.Body.String())
 }
 
 func TestTree_buildMethods(t *testing.T) {
