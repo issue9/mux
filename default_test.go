@@ -61,10 +61,10 @@ func TestRouter(t *testing.T) {
 		_, err := w.Write([]byte("200"))
 		a.NotError(err)
 	}))
-	rest.Get(a, "/").Do(r).Status(201)
-	rest.NewRequest(a, http.MethodHead, "/").Do(r).Status(405)
+	rest.Get(a, "/").Do(r).Status(201).StringBody("201")
+	rest.NewRequest(a, http.MethodHead, "/").Do(r).Status(201).BodyEmpty()
 	rest.Get(a, "/abc").Do(r).Status(http.StatusNotFound)
-	rest.NewRequest(a, http.MethodHead, "/200").Do(r).Status(405) // 不调用 WriteHeader
+	rest.NewRequest(a, http.MethodHead, "/200").Do(r).Status(200).BodyEmpty() // 不调用 WriteHeader
 	rest.NewRequest(a, http.MethodOptions, "*").Do(r).Status(200).Header("Allow", "GET, OPTIONS")
 
 	r.Get("/h/1", rest.BuildHandler(a, 201, "", nil))
@@ -144,7 +144,7 @@ func TestRouter_Routes(t *testing.T) {
 	a.NotNil(def)
 	def.Get("/m", rest.BuildHandler(a, 1, "", nil))
 	def.Post("/m", rest.BuildHandler(a, 1, "", nil))
-	a.Equal(def.Routes(), map[string][]string{"*": {"OPTIONS"}, "/m": {"GET", "OPTIONS", "POST"}})
+	a.Equal(def.Routes(), map[string][]string{"*": {"OPTIONS"}, "/m": {"GET", "HEAD", "OPTIONS", "POST"}})
 }
 
 func TestRouter_Clean(t *testing.T) {

@@ -69,8 +69,7 @@ func (n *Node[T]) buildMethods() {
 	buildMethodIndexes(n.methodIndex)
 }
 
-// Options 获取当前支持的请求方法列表字符串
-func (n *Node[T]) Options() string { return methodIndexes[n.methodIndex].options }
+func (n *Node[T]) AllowHeader() string { return methodIndexes[n.methodIndex].options }
 
 // Methods 当前节点支持的请求方法
 func (n *Node[T]) Methods() []string { return methodIndexes[n.methodIndex].methods }
@@ -78,8 +77,8 @@ func (n *Node[T]) Methods() []string { return methodIndexes[n.methodIndex].metho
 // 添加一个处理函数
 func (n *Node[T]) addMethods(h T, methods ...string) error {
 	for _, m := range methods {
-		if m == http.MethodOptions {
-			return fmt.Errorf("无法手动添加 OPTIONS 请求方法")
+		if m == http.MethodOptions || m == http.MethodHead {
+			return fmt.Errorf("无法手动添加 OPTIONS/HEAD 请求方法")
 		}
 		if _, found := methodIndexMap[m]; !found {
 			return fmt.Errorf("该请求方法 %s 不被支持", m)
@@ -88,6 +87,11 @@ func (n *Node[T]) addMethods(h T, methods ...string) error {
 		if _, found := n.handlers[m]; found {
 			return fmt.Errorf("该请求方法 %s 已经存在", m)
 		}
+
+		if m == http.MethodGet {
+			n.handlers[http.MethodHead] = h
+		}
+
 		n.handlers[m] = h
 	}
 

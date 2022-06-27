@@ -80,15 +80,18 @@ type Params interface {
 }
 
 type Node interface {
-	Options() string
+	// Methods 当前节点支持的方法列表
+	Methods() []string
+
+	// AllowHeader 获取当前支持的请求方法列表字符串
+	AllowHeader() string
 }
 
 type BuildOptionsServeHTTPOf[T any] func(Node) T
 
 // MiddlewareOf 中间件对象需要实现的接口
 //
-// NOTE: OPTIONS 请求是自动生成的，只受全局中间件的影响。
-// HEAD 请求与 GET 请求有相同的中间件。
+// NOTE: OPTIONS 请求是自动生成的，不受中间件的影响。
 type MiddlewareOf[T any] interface {
 	Middleware(T) T
 }

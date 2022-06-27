@@ -4,6 +4,7 @@ package mux
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/issue9/errwrap"
@@ -54,6 +55,11 @@ type (
 		router *RouterOf[T]
 		prefix string
 		ms     []params.MiddlewareOf[T]
+	}
+
+	headResponse struct {
+		size int
+		http.ResponseWriter
 	}
 )
 
@@ -222,12 +228,15 @@ func (r *RouterOf[T]) serve(w http.ResponseWriter, req *http.Request, p Params) 
 
 	if h, exists := node.Handler(req.Method); exists {
 		handleCORS(r.cors, node, w, req) // 处理跨域问题
+		if req.Method == http.MethodHead {
+			w = &headResponse{ResponseWriter: w}
+		}
 		r.call(w, req, ps, h)
 		return
 	}
 
 	// 存在节点，但是不允许当前请求方法。
-	w.Header().Set("Allow", node.Options())
+	w.Header().Set("Allow", node.AllowHeader())
 	r.methodNotAllowed.ServeHTTP(w, req)
 }
 
@@ -364,3 +373,11 @@ func (p *PrefixOf[T]) Resource(pattern string, m ...params.MiddlewareOf[T]) *Res
 
 // Router 返回与当前资源关联的 *Router 实例
 func (r *ResourceOf[T]) Router() *RouterOf[T] { return r.router }
+
+func (resp *headResponse) Write(bs []byte) (int, error) {
+	l := len(bs)
+	resp.size += l
+
+	resp.Header().Set("Content-Length", strconv.Itoa(resp.size))
+	return l, nil
+}

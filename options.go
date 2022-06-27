@@ -255,7 +255,7 @@ func handleCORS[T any](c *CORS, node *tree.Node[T], w http.ResponseWriter, r *ht
 		if !inStrings(methods, reqMethod) {
 			return
 		}
-		wh.Set("Access-Control-Allow-Methods", node.Options())
+		wh.Set("Access-Control-Allow-Methods", node.AllowHeader())
 		wh.Add("Vary", "Access-Control-Request-Method")
 
 		// Access-Control-Allow-Headers

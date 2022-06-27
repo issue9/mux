@@ -21,7 +21,7 @@ var _ params.Node = &Node[http.Handler]{}
 
 func buildOptionsFunc(allow params.Node) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Allow", allow.Options())
+		w.Header().Set("Allow", allow.AllowHeader())
 	})
 }
 
@@ -313,12 +313,12 @@ func TestTree_Route(t *testing.T) {
 	a.Equal(c0.segment.Value, "/\xe4\xb8")
 	// /中文/5index.html 即部分匹配 /中文/5，更匹配 /中文/{id}，测试是否正确匹配
 	test.matchTrue(http.MethodGet, "/中文/5index.html", 220)
-	test.optionsTrue("/中文/5index.html", "GET, OPTIONS")
+	test.optionsTrue("/中文/5index.html", "GET, HEAD, OPTIONS")
 
 	test = newTester(a, false)
 	test.add(http.MethodGet, "/admin/1", 201)
 	test.matchTrue(http.MethodGet, "/admin/1", 201)
-	test.optionsTrue("/admin/1", "GET, OPTIONS")
+	test.optionsTrue("/admin/1", "GET, HEAD, OPTIONS")
 	test.optionsTrue("", "GET, OPTIONS")
 	test.optionsTrue("*", "GET, OPTIONS")
 
@@ -430,9 +430,9 @@ func TestTree_Add_Remove(t *testing.T) {
 	a.NotNil(tree)
 	a.NotError(tree.Add("/path", buildHandler(a, 201, "", nil)))
 	node := tree.node.find("/path")
-	a.Equal(len(Methods)-1, len(node.handlers))  // 少 HEAD
-	a.Equal(len(Methods)-1, len(node.Methods())) // 少 HEAD
-	a.Equal(node.Options(), strings.Join(node.Methods(), ", "))
+	a.Equal(len(Methods), len(node.handlers))  // 少 HEAD
+	a.Equal(len(Methods), len(node.Methods())) // 少 HEAD
+	a.Equal(node.AllowHeader(), strings.Join(node.Methods(), ", "))
 
 	// OPTIONS
 
@@ -440,7 +440,7 @@ func TestTree_Add_Remove(t *testing.T) {
 	a.NotNil(tree)
 	a.NotError(tree.Add("/path", buildHandler(a, http.StatusAccepted, "", nil), http.MethodGet))
 	node = tree.node.find("/path")
-	a.Equal(2, len(node.handlers)).
+	a.Equal(3, len(node.handlers)).
 		NotNil(node.handlers[http.MethodOptions])
 
 	tree.Remove("/path", http.MethodGet)
@@ -454,7 +454,7 @@ func TestTree_Add_Remove(t *testing.T) {
 	a.NotError(tree.Add("/path", buildHandler(a, http.StatusAccepted, "", nil), http.MethodDelete))
 	a.ErrorString(tree.Add("/path", buildHandler(a, http.StatusAccepted, "", nil), http.MethodDelete), http.MethodDelete)
 	tree.Remove("/path", http.MethodOptions) // remove options 不发生任何操作
-	a.Equal(tree.node.find("/path").Options(), "DELETE, OPTIONS")
+	a.Equal(tree.node.find("/path").AllowHeader(), "DELETE, OPTIONS")
 
 	a.ErrorString(tree.Add("/path/{id}/path/{id:\\d+}", buildHandler(a, 1, "", nil), http.MethodHead), "存在相同名称的路由参数")
 	a.ErrorString(tree.Add("/path/{id}{id2:\\d+}", buildHandler(a, 1, "", nil), http.MethodHead), "两个命名参数不能连续出现")
@@ -495,10 +495,10 @@ func TestTree_Routes(t *testing.T) {
 	routes := tree.Routes()
 	a.Equal(routes, map[string][]string{
 		"*":                  {http.MethodOptions},
-		"/":                  {http.MethodGet, http.MethodOptions},
-		"/posts":             {http.MethodGet, http.MethodOptions, http.MethodPost},
-		"/posts/{id}":        {http.MethodGet, http.MethodOptions, http.MethodPut},
-		"/posts/{id}/author": {http.MethodGet, http.MethodOptions},
+		"/":                  {http.MethodGet, http.MethodHead, http.MethodOptions},
+		"/posts":             {http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodPost},
+		"/posts/{id}":        {http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodPut},
+		"/posts/{id}/author": {http.MethodGet, http.MethodHead, http.MethodOptions},
 	})
 }
 
@@ -570,7 +570,7 @@ func TestTree_Match(t *testing.T) {
 	r := rest.NewRequest(a, http.MethodOptions, "/path1").Request()
 	node.handlers[http.MethodOptions].ServeHTTP(w, r)
 	a.Empty(w.Header().Get("h1")).
-		Equal(w.Header().Get("Allow"), "GET, OPTIONS").
+		Equal(w.Header().Get("Allow"), "GET, HEAD, OPTIONS").
 		Empty(w.Body.String())
 
 	// path2，不主动调用 WriteHeader
@@ -591,6 +591,6 @@ func TestTree_Match(t *testing.T) {
 	r = rest.NewRequest(a, http.MethodOptions, "/path2").Request()
 	node.handlers[http.MethodOptions].ServeHTTP(w, r)
 	a.Empty(w.Header().Get("h1")).
-		Equal(w.Header().Get("Allow"), "GET, OPTIONS").
+		Equal(w.Header().Get("Allow"), "GET, HEAD, OPTIONS").
 		Empty(w.Body.String())
 }

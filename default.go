@@ -31,7 +31,7 @@ func DefaultCall(w http.ResponseWriter, r *http.Request, ps Params, h http.Handl
 
 func DefaultOptionsServeBuilder(p params.Node) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Allow", p.Options())
+		w.Header().Set("Allow", p.AllowHeader())
 	})
 }
 

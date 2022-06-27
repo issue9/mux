@@ -34,7 +34,7 @@ func contextCall(w http.ResponseWriter, r *http.Request, ps mux.Params, h ctxHan
 
 func contextOptions(p params.Node) ctxHandler {
 	return ctxHandlerFunc(func(ctx *ctx) {
-		ctx.W.Header().Set("allow", p.Options())
+		ctx.W.Header().Set("allow", p.AllowHeader())
 	})
 }
 
