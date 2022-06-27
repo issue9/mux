@@ -14,30 +14,47 @@ import (
 
 	"github.com/issue9/mux/v6/internal/syntax"
 	"github.com/issue9/mux/v6/internal/tree"
+	"github.com/issue9/mux/v6/params"
 )
+
+type router = RouterOf[http.Handler]
+
+func callFunc(w http.ResponseWriter, r *http.Request, p params.Params, h http.Handler) {
+	h.ServeHTTP(w, r)
+}
+
+func optFunc(n params.Node) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Allow", n.AllowHeader())
+	})
+}
+
+func newRouter(name string, o *Options) *router {
+	return NewRouterOf(name, callFunc, optFunc, o)
+}
 
 func TestOptions(t *testing.T) {
 	a := assert.New(t, false)
 
-	r := NewRouter("", nil)
+	r := newRouter("", nil)
 	a.NotNil(r).
 		False(r.caseInsensitive).
 		NotNil(r.methodNotAllowed)
 
-	r = NewRouter("", &Options{CaseInsensitive: true})
+	r = newRouter("", &Options{CaseInsensitive: true})
 	a.NotNil(r).
 		True(r.caseInsensitive).
 		NotNil(r.methodNotAllowed)
 
 	notFound := rest.BuildHandler(a, 404, "", nil)
 	methodNotAllowed := rest.BuildHandler(a, 405, "", nil)
-	r = NewRouter("", &Options{NotFound: notFound, MethodNotAllowed: methodNotAllowed})
+	r = newRouter("", &Options{NotFound: notFound, MethodNotAllowed: methodNotAllowed})
 	a.NotNil(r).
 		False(r.caseInsensitive).
 		Equal(r.methodNotAllowed, methodNotAllowed).
 		Equal(r.notFound, notFound)
 
-	r = NewRouter("", &Options{CORS: &CORS{
+	r = newRouter("", &Options{CORS: &CORS{
 		Origins: []string{"https://example.com"},
 		MaxAge:  3600,
 	}})
@@ -46,14 +63,14 @@ func TestOptions(t *testing.T) {
 		Nil(r.cors.AllowHeaders).
 		Equal(r.cors.MaxAge, 3600)
 
-	r = NewRouter("", &Options{CORS: &CORS{
+	r = newRouter("", &Options{CORS: &CORS{
 		Origins:          []string{"https://example.com"},
 		AllowCredentials: true,
 	}})
 	a.NotNil(r)
 
 	a.Panic(func() {
-		r = NewRouter("", &Options{CORS: &CORS{
+		r = newRouter("", &Options{CORS: &CORS{
 			Origins:          []string{"*"},
 			AllowCredentials: true,
 		}})
@@ -65,7 +82,7 @@ func TestRecovery(t *testing.T) {
 
 	p := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { panic("test") })
 
-	router := NewRouter("", nil)
+	router := newRouter("", nil)
 	a.NotNil(router).Nil(router.recoverFunc)
 	router.Get("/path", p)
 	a.Panic(func() {
@@ -76,7 +93,7 @@ func TestRecovery(t *testing.T) {
 
 	// WriterRecovery
 	out := new(bytes.Buffer)
-	router = NewRouter("", &Options{RecoverFunc: WriterRecovery(404, out)})
+	router = newRouter("", &Options{RecoverFunc: WriterRecovery(404, out)})
 	a.NotNil(router).NotNil(router.recoverFunc)
 	router.Get("/path", p)
 	a.NotPanic(func() {
@@ -90,7 +107,7 @@ func TestRecovery(t *testing.T) {
 	// LogRecovery
 	out = new(bytes.Buffer)
 	l := log.New(out, "test:", 0)
-	router = NewRouter("", &Options{RecoverFunc: LogRecovery(405, l)})
+	router = newRouter("", &Options{RecoverFunc: LogRecovery(405, l)})
 	a.NotNil(router).NotNil(router.recoverFunc)
 	router.Get("/path", p)
 	a.NotPanic(func() {
@@ -102,7 +119,7 @@ func TestRecovery(t *testing.T) {
 	})
 
 	// HTTPRecovery
-	router = NewRouter("", &Options{RecoverFunc: HTTPRecovery(406)})
+	router = newRouter("", &Options{RecoverFunc: HTTPRecovery(406)})
 	a.NotNil(router).NotNil(router.recoverFunc)
 	router.Get("/path", p)
 	a.NotPanic(func() {
@@ -183,7 +200,7 @@ func TestCORS_sanitize(t *testing.T) {
 
 func TestCORS_handle(t *testing.T) {
 	a := assert.New(t, false)
-	tr := tree.New(false, syntax.NewInterceptors(), DefaultOptionsServeBuilder)
+	tr := tree.New(false, syntax.NewInterceptors(), optFunc)
 	a.NotError(tr.Add("/path", nil, http.MethodGet, http.MethodDelete))
 	node, ps := tr.Match("/path")
 	a.NotNil(node).Zero(ps.Count())
