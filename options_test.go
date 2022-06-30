@@ -14,16 +14,16 @@ import (
 
 	"github.com/issue9/mux/v6/internal/syntax"
 	"github.com/issue9/mux/v6/internal/tree"
-	"github.com/issue9/mux/v6/params"
+	"github.com/issue9/mux/v6/types"
 )
 
 type router = RouterOf[http.Handler]
 
-func callFunc(w http.ResponseWriter, r *http.Request, p params.Params, h http.Handler) {
+func callFunc(w http.ResponseWriter, r *http.Request, p types.Params, h http.Handler) {
 	h.ServeHTTP(w, r)
 }
 
-func optFunc(n params.Node) http.Handler {
+func optFunc(n types.Node) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Allow", n.AllowHeader())
 	})

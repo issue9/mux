@@ -14,12 +14,12 @@ import (
 	"github.com/issue9/errwrap"
 
 	"github.com/issue9/mux/v6/internal/syntax"
-	"github.com/issue9/mux/v6/params"
+	"github.com/issue9/mux/v6/types"
 )
 
-var _ params.Node = &Node[http.Handler]{}
+var _ types.Node = &Node[http.Handler]{}
 
-func buildOptionsFunc(allow params.Node) http.Handler {
+func buildOptionsFunc(allow types.Node) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Allow", allow.AllowHeader())
 	})
@@ -593,4 +593,50 @@ func TestTree_Match(t *testing.T) {
 	a.Empty(w.Header().Get("h1")).
 		Equal(w.Header().Get("Allow"), "GET, HEAD, OPTIONS").
 		Empty(w.Body.String())
+}
+
+func TestTree_ApplyMiddlewares(t *testing.T) {
+	a := assert.New(t, false)
+
+	tree := New(false, syntax.NewInterceptors(), buildOptionsFunc)
+	a.NotNil(tree)
+
+	err := tree.Add("/m", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("/m"))
+	}))
+	a.NotError(err)
+	err = tree.Add("/m/path", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("/m/path"))
+	}))
+	a.NotError(err)
+
+	tree.ApplyMiddleware(types.MiddlewareFuncOf[http.Handler](func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("m1"))
+			next.ServeHTTP(w, r)
+		})
+	}), types.MiddlewareFuncOf[http.Handler](func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("m2"))
+			next.ServeHTTP(w, r)
+		})
+	}))
+
+	node, _ := tree.Match("/m")
+	a.NotNil(node)
+	f, exists := node.Handler(http.MethodGet)
+	a.True(exists).NotNil(f)
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest(http.MethodGet, "/m", nil)
+	f.ServeHTTP(w, r)
+	a.Equal(w.Body.String(), "m2m1/m")
+
+	node, _ = tree.Match("/m/path")
+	a.NotNil(node)
+	f, exists = node.Handler(http.MethodGet)
+	a.True(exists).NotNil(f)
+	w = httptest.NewRecorder()
+	r, _ = http.NewRequest(http.MethodGet, "/m/path", nil)
+	f.ServeHTTP(w, r)
+	a.Equal(w.Body.String(), "m2m1/m/path")
 }

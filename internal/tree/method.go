@@ -108,10 +108,6 @@ func (n *Node[T]) addMethods(h T, methods ...string) error {
 
 // num 表示为该请求方法加上的计数
 func (tree *Tree[T]) buildMethods(num int, methods ...string) {
-	if len(methods) == 0 {
-		methods = addAny
-	}
-
 	for _, m := range methods {
 		tree.methods[m] += num
 	}

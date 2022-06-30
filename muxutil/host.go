@@ -9,7 +9,7 @@ import (
 	"github.com/issue9/mux/v6"
 	"github.com/issue9/mux/v6/internal/syntax"
 	"github.com/issue9/mux/v6/internal/tree"
-	"github.com/issue9/mux/v6/params"
+	"github.com/issue9/mux/v6/types"
 )
 
 // Hosts 限定域名的匹配工具
@@ -21,7 +21,7 @@ type Hosts struct {
 // NewHosts 声明新的 Hosts 实例
 func NewHosts(lock bool, domain ...string) *Hosts {
 	i := syntax.NewInterceptors()
-	h := &Hosts{tree: tree.New(lock, i, func(o params.Node) any { return nil }), i: i}
+	h := &Hosts{tree: tree.New(lock, i, func(o types.Node) any { return nil }), i: i}
 	h.Add(domain...)
 	return h
 }
@@ -33,7 +33,7 @@ func (hs *Hosts) RegisterInterceptor(f mux.InterceptorFunc, name ...string) {
 	hs.i.Add(f, name...)
 }
 
-func (hs *Hosts) Match(r *http.Request) (params.Params, bool) {
+func (hs *Hosts) Match(r *http.Request) (types.Params, bool) {
 	// r.URL.Hostname() 可能为空，r.Host 一直有值！
 	host := r.Host
 	if index := strings.LastIndexByte(host, ':'); index != -1 && validOptionalPort(host[index:]) {

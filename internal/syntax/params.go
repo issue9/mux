@@ -3,11 +3,12 @@
 package syntax
 
 import (
+	"errors"
 	"strconv"
 	"sync"
-
-	"github.com/issue9/mux/v6/params"
 )
+
+var ErrParamNotExists = errors.New("不存在该参数")
 
 var paramsPool = &sync.Pool{
 	New: func() any { return &Params{Params: make([]Param, 0, 5)} },
@@ -49,7 +50,7 @@ func (p *Params) String(key string) (string, error) {
 	if v, found := p.Get(key); found {
 		return v, nil
 	}
-	return "", params.ErrParamNotExists
+	return "", ErrParamNotExists
 }
 
 func (p *Params) MustString(key, def string) string {
@@ -63,7 +64,7 @@ func (p *Params) Int(key string) (int64, error) {
 	if str, found := p.Get(key); found {
 		return strconv.ParseInt(str, 10, 64)
 	}
-	return 0, params.ErrParamNotExists
+	return 0, ErrParamNotExists
 }
 
 func (p *Params) MustInt(key string, def int64) int64 {
@@ -79,7 +80,7 @@ func (p *Params) Uint(key string) (uint64, error) {
 	if str, found := p.Get(key); found {
 		return strconv.ParseUint(str, 10, 64)
 	}
-	return 0, params.ErrParamNotExists
+	return 0, ErrParamNotExists
 }
 
 func (p *Params) MustUint(key string, def uint64) uint64 {
@@ -95,7 +96,7 @@ func (p *Params) Bool(key string) (bool, error) {
 	if str, found := p.Get(key); found {
 		return strconv.ParseBool(str)
 	}
-	return false, params.ErrParamNotExists
+	return false, ErrParamNotExists
 }
 
 func (p *Params) MustBool(key string, def bool) bool {
@@ -111,7 +112,7 @@ func (p *Params) Float(key string) (float64, error) {
 	if str, found := p.Get(key); found {
 		return strconv.ParseFloat(str, 64)
 	}
-	return 0, params.ErrParamNotExists
+	return 0, ErrParamNotExists
 }
 
 func (p *Params) MustFloat(key string, def float64) float64 {

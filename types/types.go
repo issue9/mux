@@ -1,12 +1,7 @@
 // SPDX-License-Identifier: MIT
 
-// Package params 路由参数的相关声明
-package params
-
-import "errors"
-
-// ErrParamNotExists 表示地址参数中并不存在该名称的值
-var ErrParamNotExists = errors.New("不存在该参数")
+// Package types 类型的前置声明
+package types
 
 type Params interface {
 	// Count 返回参数的数量
@@ -79,14 +74,16 @@ type Params interface {
 	Range(func(key, val string))
 }
 
+// Node 路由节点
 type Node interface {
 	// Methods 当前节点支持的方法列表
 	Methods() []string
 
-	// AllowHeader 获取当前支持的请求方法列表字符串
+	// AllowHeader Allow 报头的内容
 	AllowHeader() string
 }
 
+// BuildOptionsServeHTTPOf 生成 OPTIONS 请求的方法
 type BuildOptionsServeHTTPOf[T any] func(Node) T
 
 // MiddlewareOf 中间件对象需要实现的接口
@@ -98,12 +95,5 @@ type MiddlewareOf[T any] interface {
 
 // MiddlewareFuncOf 中间件处理函数
 type MiddlewareFuncOf[T any] func(T) T
-
-func ApplyMiddlewares[T any](h T, f ...MiddlewareOf[T]) T {
-	for _, ff := range f {
-		h = ff.Middleware(h)
-	}
-	return h
-}
 
 func (f MiddlewareFuncOf[T]) Middleware(next T) T { return f(next) }

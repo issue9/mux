@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/issue9/mux/v6/internal/syntax"
-	"github.com/issue9/mux/v6/params"
+	"github.com/issue9/mux/v6/types"
 )
 
 const (
@@ -338,17 +338,21 @@ func (n *Node[T]) checkAmbiguous(pattern string, hasNonString bool) (*Node[T], b
 	return nil, false, nil
 }
 
-func (n *Node[T]) applyMiddlewares(ms ...params.MiddlewareOf[T]) {
-	for _, c := range n.children {
-		if len(c.handlers) == 0 {
-			c.applyMiddlewares(ms...)
-			return
-		}
-
-		for m, h := range c.handlers {
-			if m != http.MethodOptions { // OPTIONS 不添加中间件
-				c.handlers[m] = params.ApplyMiddlewares(h, ms...)
-			}
+func (n *Node[T]) applyMiddlewares(ms ...types.MiddlewareOf[T]) {
+	for m, h := range n.handlers {
+		if m != http.MethodOptions { // OPTIONS 不添加中间件
+			n.handlers[m] = ApplyMiddlewares(h, ms...)
 		}
 	}
+
+	for _, c := range n.children {
+		c.applyMiddlewares(ms...)
+	}
+}
+
+func ApplyMiddlewares[T any](h T, f ...types.MiddlewareOf[T]) T {
+	for _, ff := range f {
+		h = ff.Middleware(h)
+	}
+	return h
 }

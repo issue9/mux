@@ -13,15 +13,15 @@ import (
 	"github.com/issue9/assert/v2/rest"
 
 	"github.com/issue9/mux/v6"
-	"github.com/issue9/mux/v6/params"
+	"github.com/issue9/mux/v6/types"
 )
 
 type Tester[T any] struct {
 	c mux.CallOf[T]
-	o params.BuildOptionsServeHTTPOf[T]
+	o types.BuildOptionsServeHTTPOf[T]
 }
 
-func NewTester[T any](c mux.CallOf[T], o params.BuildOptionsServeHTTPOf[T]) *Tester[T] {
+func NewTester[T any](c mux.CallOf[T], o types.BuildOptionsServeHTTPOf[T]) *Tester[T] {
 	return &Tester[T]{
 		c: c,
 		o: o,
@@ -31,7 +31,7 @@ func NewTester[T any](c mux.CallOf[T], o params.BuildOptionsServeHTTPOf[T]) *Tes
 // Params 测试参数是否正常
 //
 // f 返回一个路由处理函数，该函数必须要将获得的参数写入 params.
-func (t *Tester[T]) Params(a *assert.Assertion, f func(params *mux.Params) T) {
+func (t *Tester[T]) Params(a *assert.Assertion, f func(params *types.Params) T) {
 	router := mux.NewRouterOf("test", t.c, t.o, &mux.Options{
 		Interceptors: map[string]mux.InterceptorFunc{"digit": mux.InterceptorDigit},
 	})

@@ -8,7 +8,7 @@ import (
 
 	"github.com/issue9/sliceutil"
 
-	"github.com/issue9/mux/v6/params"
+	"github.com/issue9/mux/v6/types"
 )
 
 type (
@@ -16,7 +16,7 @@ type (
 	RoutersOf[T any] struct {
 		routers        []*RouterOf[T]
 		call           CallOf[T]
-		optionsBuilder params.BuildOptionsServeHTTPOf[T]
+		optionsBuilder types.BuildOptionsServeHTTPOf[T]
 		notFound       http.Handler
 	}
 
@@ -29,25 +29,25 @@ type (
 		//
 		// ps 为匹配过程中生成的参数信息，可以返回 nil；
 		// ok 表示是否匹配成功；
-		Match(r *http.Request) (ps params.Params, ok bool)
+		Match(r *http.Request) (ps types.Params, ok bool)
 	}
 
 	// MatcherFunc 验证请求是否符合要求
 	//
 	// ps 为匹配过程中生成的参数信息，可以返回 nil；
 	// ok 表示是否匹配成功；
-	MatcherFunc func(r *http.Request) (ps Params, ok bool)
+	MatcherFunc func(r *http.Request) (ps types.Params, ok bool)
 )
 
 // Match 实现 Matcher 接口
-func (f MatcherFunc) Match(r *http.Request) (params.Params, bool) { return f(r) }
+func (f MatcherFunc) Match(r *http.Request) (types.Params, bool) { return f(r) }
 
-func anyRouter(*http.Request) (params.Params, bool) { return nil, true }
+func anyRouter(*http.Request) (types.Params, bool) { return nil, true }
 
 // NewRoutersOf 声明一个新的 RoutersOf
 //
 // notFound 表示所有路由都不匹配时的处理方式，如果为空，则调用 http.NotFoundHandler。
-func NewRoutersOf[T any](b CallOf[T], opt params.BuildOptionsServeHTTPOf[T], notFound http.Handler) *RoutersOf[T] {
+func NewRoutersOf[T any](b CallOf[T], opt types.BuildOptionsServeHTTPOf[T], notFound http.Handler) *RoutersOf[T] {
 	if notFound == nil {
 		notFound = http.NotFoundHandler()
 	}
@@ -108,7 +108,7 @@ func (rs *RoutersOf[T]) Router(name string) *RouterOf[T] {
 }
 
 // Use 为所有已经注册的路由添加中间件
-func (rs *RoutersOf[T]) Use(m ...params.MiddlewareOf[T]) {
+func (rs *RoutersOf[T]) Use(m ...types.MiddlewareOf[T]) {
 	for _, r := range rs.Routers() {
 		r.Use(m...)
 	}

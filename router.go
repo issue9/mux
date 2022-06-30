@@ -10,7 +10,7 @@ import (
 	"github.com/issue9/errwrap"
 
 	"github.com/issue9/mux/v6/internal/tree"
-	"github.com/issue9/mux/v6/params"
+	"github.com/issue9/mux/v6/types"
 )
 
 type (
@@ -37,24 +37,24 @@ type (
 		notFound,
 		methodNotAllowed http.Handler
 
-		ms []params.MiddlewareOf[T]
+		ms []types.MiddlewareOf[T]
 	}
 
 	// CallOf 指定如何调用用户自定义的对象 T
-	CallOf[T any] func(http.ResponseWriter, *http.Request, Params, T)
+	CallOf[T any] func(http.ResponseWriter, *http.Request, types.Params, T)
 
 	// ResourceOf 以资源地址为对象的路由
 	ResourceOf[T any] struct {
 		router  *RouterOf[T]
 		pattern string
-		ms      []params.MiddlewareOf[T]
+		ms      []types.MiddlewareOf[T]
 	}
 
 	// PrefixOf 操纵统一前缀的路由
 	PrefixOf[T any] struct {
 		router *RouterOf[T]
 		prefix string
-		ms     []params.MiddlewareOf[T]
+		ms     []types.MiddlewareOf[T]
 	}
 
 	headResponse struct {
@@ -71,7 +71,7 @@ type (
 //
 // T 表示用户用于处理路由项的方法，该类型最终通过 NewRouterOf 中的 call 参数与
 // http.ResponseWriter 和 *http.Request 相关联。
-func NewRouterOf[T any](name string, call CallOf[T], opt params.BuildOptionsServeHTTPOf[T], o *Options) *RouterOf[T] {
+func NewRouterOf[T any](name string, call CallOf[T], opt types.BuildOptionsServeHTTPOf[T], o *Options) *RouterOf[T] {
 	o, err := buildOptions(o)
 	if err != nil {
 		panic(err)
@@ -110,7 +110,7 @@ func (r *RouterOf[T]) Remove(pattern string, methods ...string) {
 }
 
 // Use 添加全局中间件
-func (r *RouterOf[T]) Use(m ...params.MiddlewareOf[T]) {
+func (r *RouterOf[T]) Use(m ...types.MiddlewareOf[T]) {
 	r.ms = append(r.ms, m...)
 	r.tree.ApplyMiddleware(m...)
 }
@@ -127,7 +127,7 @@ func (r *RouterOf[T]) Handle(pattern string, h T, methods ...string) *RouterOf[T
 }
 
 func (r *RouterOf[T]) handle(pattern string, h T, methods ...string) {
-	h = params.ApplyMiddlewares(h, r.ms...)
+	h = tree.ApplyMiddlewares(h, r.ms...)
 	if err := r.tree.Add(pattern, h, methods...); err != nil {
 		panic(err)
 	}
@@ -194,7 +194,7 @@ func (r *RouterOf[T]) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	r.serveHTTP(w, req, nil)
 }
 
-func (r *RouterOf[T]) serveHTTP(w http.ResponseWriter, req *http.Request, ps Params) {
+func (r *RouterOf[T]) serveHTTP(w http.ResponseWriter, req *http.Request, ps types.Params) {
 	if r.recoverFunc != nil {
 		defer func() {
 			if err := recover(); err != nil {
@@ -206,7 +206,7 @@ func (r *RouterOf[T]) serveHTTP(w http.ResponseWriter, req *http.Request, ps Par
 	r.serve(w, req, ps)
 }
 
-func (r *RouterOf[T]) serve(w http.ResponseWriter, req *http.Request, p Params) {
+func (r *RouterOf[T]) serve(w http.ResponseWriter, req *http.Request, p types.Params) {
 	path := req.URL.Path
 	if r.caseInsensitive {
 		path = strings.ToLower(req.URL.Path)
@@ -244,7 +244,7 @@ func (r *RouterOf[T]) serve(w http.ResponseWriter, req *http.Request, p Params) 
 func (r *RouterOf[T]) Name() string { return r.name }
 
 func (p *PrefixOf[T]) Handle(pattern string, h T, methods ...string) *PrefixOf[T] {
-	p.router.handle(p.prefix+pattern, params.ApplyMiddlewares(h, p.ms...), methods...)
+	p.router.handle(p.prefix+pattern, tree.ApplyMiddlewares(h, p.ms...), methods...)
 	return p
 }
 
@@ -294,8 +294,8 @@ func (p *PrefixOf[T]) URL(strict bool, pattern string, params map[string]string)
 // Prefix 在现有 PrefixOf 的基础上声明一个新的 PrefixOf 实例
 //
 // m 中间件函数，按顺序调用，会继承 p 的中间件并按在 m 之前；
-func (p *PrefixOf[T]) Prefix(prefix string, m ...params.MiddlewareOf[T]) *PrefixOf[T] {
-	ms := make([]params.MiddlewareOf[T], 0, len(p.ms)+len(m))
+func (p *PrefixOf[T]) Prefix(prefix string, m ...types.MiddlewareOf[T]) *PrefixOf[T] {
+	ms := make([]types.MiddlewareOf[T], 0, len(p.ms)+len(m))
 	ms = append(ms, p.ms...)
 	ms = append(ms, m...)
 	return p.router.Prefix(p.prefix+prefix, ms...)
@@ -305,8 +305,8 @@ func (p *PrefixOf[T]) Prefix(prefix string, m ...params.MiddlewareOf[T]) *Prefix
 //
 // prefix 路由前缀字符串，可以为空；
 // m 中间件函数，按顺序调用，会继承 r 的中间件并按在 m 之前；
-func (r *RouterOf[T]) Prefix(prefix string, m ...params.MiddlewareOf[T]) *PrefixOf[T] {
-	ms := make([]params.MiddlewareOf[T], 0, len(m))
+func (r *RouterOf[T]) Prefix(prefix string, m ...types.MiddlewareOf[T]) *PrefixOf[T] {
+	ms := make([]types.MiddlewareOf[T], 0, len(m))
 	ms = append(ms, m...)
 	return &PrefixOf[T]{router: r, prefix: prefix, ms: ms}
 }
@@ -315,7 +315,7 @@ func (r *RouterOf[T]) Prefix(prefix string, m ...params.MiddlewareOf[T]) *Prefix
 func (p *PrefixOf[T]) Router() *RouterOf[T] { return p.router }
 
 func (r *ResourceOf[T]) Handle(h T, methods ...string) *ResourceOf[T] {
-	r.router.handle(r.pattern, params.ApplyMiddlewares(h, r.ms...), methods...)
+	r.router.handle(r.pattern, tree.ApplyMiddlewares(h, r.ms...), methods...)
 	return r
 }
 
@@ -354,8 +354,8 @@ func (r *ResourceOf[T]) URL(strict bool, params map[string]string) (string, erro
 //
 // pattern 资源地址；
 // m 中间件函数，按顺序调用，会继承 r 的中间件并按在 m 之前；
-func (r *RouterOf[T]) Resource(pattern string, m ...params.MiddlewareOf[T]) *ResourceOf[T] {
-	ms := make([]params.MiddlewareOf[T], 0, len(m))
+func (r *RouterOf[T]) Resource(pattern string, m ...types.MiddlewareOf[T]) *ResourceOf[T] {
+	ms := make([]types.MiddlewareOf[T], 0, len(m))
 	ms = append(ms, m...)
 	return &ResourceOf[T]{router: r, pattern: pattern, ms: ms}
 }
@@ -364,8 +364,8 @@ func (r *RouterOf[T]) Resource(pattern string, m ...params.MiddlewareOf[T]) *Res
 //
 // pattern 资源地址；
 // m 中间件函数，按顺序调用，会继承 p 的中间件并按在 m 之前；
-func (p *PrefixOf[T]) Resource(pattern string, m ...params.MiddlewareOf[T]) *ResourceOf[T] {
-	ms := make([]params.MiddlewareOf[T], 0, len(p.ms)+len(m))
+func (p *PrefixOf[T]) Resource(pattern string, m ...types.MiddlewareOf[T]) *ResourceOf[T] {
+	ms := make([]types.MiddlewareOf[T], 0, len(p.ms)+len(m))
 	ms = append(ms, p.ms...)
 	ms = append(ms, m...)
 	return p.router.Resource(p.prefix+pattern, ms...)

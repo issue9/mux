@@ -7,10 +7,10 @@ import (
 
 	"github.com/issue9/assert/v2"
 
-	"github.com/issue9/mux/v6/params"
+	"github.com/issue9/mux/v6/types"
 )
 
-var _ params.Params = &Params{}
+var _ types.Params = &Params{}
 
 func TestNewParams(t *testing.T) {
 	a := assert.New(t, false)
@@ -38,7 +38,7 @@ func TestParams_String(t *testing.T) {
 
 	// 不存在
 	val, err = ps.String("k5")
-	a.ErrorIs(err, params.ErrParamNotExists).Equal(val, "")
+	a.ErrorIs(err, ErrParamNotExists).Equal(val, "")
 	a.False(ps.Exists("k5"))
 	a.Equal(ps.MustString("k5", "-10"), "-10")
 }
@@ -62,7 +62,7 @@ func TestParams_Int(t *testing.T) {
 
 	// 不存在
 	val, err = ps.Int("k5")
-	a.ErrorIs(err, params.ErrParamNotExists).Equal(val, 0)
+	a.ErrorIs(err, ErrParamNotExists).Equal(val, 0)
 	a.Equal(ps.MustInt("k5", -10), -10)
 }
 
@@ -91,7 +91,7 @@ func TestParams_Uint(t *testing.T) {
 
 	// 不存在
 	val, err = ps.Uint("k5")
-	a.ErrorIs(err, params.ErrParamNotExists).Equal(val, 0)
+	a.ErrorIs(err, ErrParamNotExists).Equal(val, 0)
 	a.Equal(ps.MustUint("k5", 10), 10)
 }
 
@@ -119,7 +119,7 @@ func TestParams_Bool(t *testing.T) {
 
 	// 不存在
 	val, err = ps.Bool("k5")
-	a.ErrorIs(err, params.ErrParamNotExists).False(val)
+	a.ErrorIs(err, ErrParamNotExists).False(val)
 	a.True(ps.MustBool("k5", true))
 }
 
@@ -147,12 +147,12 @@ func TestParams_Float(t *testing.T) {
 
 	// 不存在
 	val, err = ps.Float("k5")
-	a.ErrorIs(err, params.ErrParamNotExists).Equal(val, 0.0)
+	a.ErrorIs(err, ErrParamNotExists).Equal(val, 0.0)
 	a.Equal(ps.MustFloat("k5", -10.0), -10.0)
 
 	var ps2 *Params
 	val, err = ps2.Float("key1")
-	a.Equal(err, params.ErrParamNotExists).Equal(val, 0.0)
+	a.Equal(err, ErrParamNotExists).Equal(val, 0.0)
 }
 
 func TestParams_Set(t *testing.T) {

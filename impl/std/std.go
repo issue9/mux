@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/issue9/mux/v6"
-	"github.com/issue9/mux/v6/params"
+	"github.com/issue9/mux/v6/types"
 )
 
 const contextKeyParams contextKey = 0
@@ -17,17 +17,17 @@ type (
 	Router         = mux.RouterOf[http.Handler]
 	Prefix         = mux.PrefixOf[http.Handler]
 	Resource       = mux.ResourceOf[http.Handler]
-	Middleware     = params.MiddlewareOf[http.Handler]
-	MiddlewareFunc = params.MiddlewareFuncOf[http.Handler]
+	Middleware     = types.MiddlewareOf[http.Handler]
+	MiddlewareFunc = types.MiddlewareFuncOf[http.Handler]
 
 	contextKey int
 )
 
-func call(w http.ResponseWriter, r *http.Request, ps params.Params, h http.Handler) {
+func call(w http.ResponseWriter, r *http.Request, ps types.Params, h http.Handler) {
 	h.ServeHTTP(w, WithValue(r, ps))
 }
 
-func optionsHandlerBuilder(p params.Node) http.Handler {
+func optionsHandlerBuilder(p types.Node) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Allow", p.AllowHeader())
 	})
@@ -43,9 +43,9 @@ func NewRouter(name string, o *mux.Options) *Router {
 }
 
 // GetParams 获取当前请求实例上的参数列表
-func GetParams(r *http.Request) mux.Params {
+func GetParams(r *http.Request) types.Params {
 	if ps := r.Context().Value(contextKeyParams); ps != nil {
-		return ps.(params.Params)
+		return ps.(types.Params)
 	}
 	return nil
 }
@@ -53,7 +53,7 @@ func GetParams(r *http.Request) mux.Params {
 // WithValue 将参数 ps 附加在 r 上
 //
 // 与 context.WithValue 功能相同，但是考虑了在同一个 r 上调用多次 WithValue 的情况。
-func WithValue(r *http.Request, ps params.Params) *http.Request {
+func WithValue(r *http.Request, ps types.Params) *http.Request {
 	if ps == nil || ps.Count() == 0 {
 		return r
 	}

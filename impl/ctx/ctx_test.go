@@ -6,8 +6,9 @@ import (
 	"testing"
 
 	"github.com/issue9/assert/v2"
-	"github.com/issue9/mux/v6"
+
 	"github.com/issue9/mux/v6/routertest"
+	"github.com/issue9/mux/v6/types"
 )
 
 func TestContextRouter_Params(t *testing.T) {
@@ -15,7 +16,7 @@ func TestContextRouter_Params(t *testing.T) {
 	tt := routertest.NewTester(call, optionsHandlerBuilder)
 
 	a.Run("params", func(a *assert.Assertion) {
-		tt.Params(a, func(ps *mux.Params) Handler {
+		tt.Params(a, func(ps *types.Params) Handler {
 			return HandlerFunc(func(c *CTX) {
 				if c.P != nil {
 					c.P.Range(func(k, v string) {

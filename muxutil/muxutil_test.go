@@ -46,12 +46,12 @@ func TestServeFile(t *testing.T) {
 
 	w = httptest.NewRecorder()
 	r = rest.Get(a, "/assets/").Request()
-	a.NotError(ServeFile(fsys, "params/params.go", "", w, r))
+	a.NotError(ServeFile(fsys, "types/types.go", "", w, r))
 	a.NotEmpty(w.Body.String())
 
 	w = httptest.NewRecorder()
 	r = rest.Get(a, "/assets/").Request()
-	a.ErrorIs(ServeFile(fsys, "params/", "", w, r), fs.ErrNotExist)
+	a.ErrorIs(ServeFile(fsys, "types/", "", w, r), fs.ErrNotExist)
 	a.Empty(w.Body.String())
 
 	w = httptest.NewRecorder()

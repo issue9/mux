@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/issue9/mux/v6"
-	"github.com/issue9/mux/v6/params"
+	"github.com/issue9/mux/v6/types"
 )
 
 // PathVersion 匹配路径中的版本号
@@ -78,7 +78,7 @@ func NewHeaderVersion(param, key string, errlog *log.Logger, version ...string) 
 	}
 }
 
-func (v *HeaderVersion) Match(r *http.Request) (ret params.Params, ok bool) {
+func (v *HeaderVersion) Match(r *http.Request) (ret types.Params, ok bool) {
 	header := r.Header.Get("Accept")
 	if header == "" {
 		return nil, false
@@ -105,7 +105,7 @@ func (v *HeaderVersion) Match(r *http.Request) (ret params.Params, ok bool) {
 	return nil, false
 }
 
-func (v *PathVersion) Match(r *http.Request) (ps params.Params, ok bool) {
+func (v *PathVersion) Match(r *http.Request) (ps types.Params, ok bool) {
 	p := r.URL.Path
 	for _, ver := range v.versions {
 		if strings.HasPrefix(p, ver) {

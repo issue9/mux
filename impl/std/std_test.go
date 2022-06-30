@@ -13,6 +13,7 @@ import (
 	"github.com/issue9/mux/v6"
 	"github.com/issue9/mux/v6/internal/syntax"
 	"github.com/issue9/mux/v6/routertest"
+	"github.com/issue9/mux/v6/types"
 )
 
 var (
@@ -25,7 +26,7 @@ func TestRouter(t *testing.T) {
 	tt := routertest.NewTester(call, optionsHandlerBuilder)
 
 	a.Run("params", func(a *assert.Assertion) {
-		tt.Params(a, func(ps *mux.Params) http.Handler {
+		tt.Params(a, func(ps *types.Params) http.Handler {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				p := GetParams(r)
 				if p != nil {
