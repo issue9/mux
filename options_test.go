@@ -38,19 +38,12 @@ func TestOptions(t *testing.T) {
 
 	r := newRouter("", nil)
 	a.NotNil(r).
-		False(r.caseInsensitive).
-		NotNil(r.methodNotAllowed)
-
-	r = newRouter("", &Options{CaseInsensitive: true})
-	a.NotNil(r).
-		True(r.caseInsensitive).
 		NotNil(r.methodNotAllowed)
 
 	notFound := rest.BuildHandler(a, 404, "", nil)
 	methodNotAllowed := rest.BuildHandler(a, 405, "", nil)
 	r = newRouter("", &Options{NotFound: notFound, MethodNotAllowed: methodNotAllowed})
 	a.NotNil(r).
-		False(r.caseInsensitive).
 		Equal(r.methodNotAllowed, methodNotAllowed).
 		Equal(r.notFound, notFound)
 

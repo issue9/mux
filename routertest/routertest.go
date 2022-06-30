@@ -132,10 +132,9 @@ func (t *Tester[T]) Serve(a *assert.Assertion, h func(status int) T) {
 
 	// 忽略大小写测试
 
-	router = mux.NewRouterOf("test", t.c, t.o, &mux.Options{CaseInsensitive: true})
+	router = mux.NewRouterOf("test", t.c, t.o, nil)
 	srv = rest.NewServer(a, router, nil)
 
 	router.Handle("/posts/{path}.html", h(201))
 	srv.Get("/posts/2017/1.html").Do(nil).Status(201)
-	srv.Get("/Posts/2017/1.html").Do(nil).Status(201) // 忽略大小写
 }

@@ -25,12 +25,6 @@ type (
 	RecoverFunc func(http.ResponseWriter, any)
 
 	Options struct {
-		// CaseInsensitive 忽略大小写
-		//
-		// 该操作仅是将客户端的请求路径转换为小之后再次进行匹配，
-		// 如果服务端的路由项设置为大写，则依然是不匹配的。
-		CaseInsensitive bool
-
 		// Lock 是否加锁
 		//
 		// 在调用 RouterOf.Add 添加路由时，有可能会改变整个路由树的结构，

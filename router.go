@@ -5,7 +5,6 @@ package mux
 import (
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/issue9/errwrap"
 
@@ -30,10 +29,9 @@ type (
 		call    CallOf[T]
 		matcher Matcher
 
-		caseInsensitive bool
-		cors            *CORS
-		urlDomain       string
-		recoverFunc     RecoverFunc
+		cors        *CORS
+		urlDomain   string
+		recoverFunc RecoverFunc
 		notFound,
 		methodNotAllowed http.Handler
 
@@ -82,7 +80,6 @@ func NewRouterOf[T any](name string, call CallOf[T], opt types.BuildOptionsServe
 		tree: tree.New(o.Lock, o.interceptors, opt),
 		call: call,
 
-		caseInsensitive:  o.CaseInsensitive,
 		cors:             o.CORS,
 		urlDomain:        o.URLDomain,
 		recoverFunc:      o.RecoverFunc,
@@ -208,9 +205,6 @@ func (r *RouterOf[T]) serveHTTP(w http.ResponseWriter, req *http.Request, ps typ
 
 func (r *RouterOf[T]) serve(w http.ResponseWriter, req *http.Request, p types.Params) {
 	path := req.URL.Path
-	if r.caseInsensitive {
-		path = strings.ToLower(req.URL.Path)
-	}
 
 	node, ps := r.tree.Match(path)
 	if node == nil {
