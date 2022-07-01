@@ -19,9 +19,9 @@ import (
 
 var _ types.Node = &Node[http.Handler]{}
 
-func buildOptionsFunc(allow types.Node) http.Handler {
+func buildOptionsFunc(n types.Node) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Allow", allow.AllowHeader())
+		w.Header().Set("Allow", n.AllowHeader())
 	})
 }
 

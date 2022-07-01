@@ -15,7 +15,7 @@ import (
 	"github.com/issue9/sliceutil"
 
 	"github.com/issue9/mux/v6/internal/syntax"
-	"github.com/issue9/mux/v6/internal/tree"
+	"github.com/issue9/mux/v6/types"
 )
 
 type (
@@ -230,7 +230,7 @@ func (c *CORS) sanitize() error {
 	return nil
 }
 
-func handleCORS[T any](c *CORS, node *tree.Node[T], w http.ResponseWriter, r *http.Request) {
+func handleCORS(c *CORS, node types.Node, w http.ResponseWriter, r *http.Request) {
 	if c.deny {
 		return
 	}
