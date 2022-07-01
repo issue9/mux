@@ -230,7 +230,7 @@ func (c *CORS) sanitize() error {
 	return nil
 }
 
-func handleCORS(c *CORS, node types.Node, w http.ResponseWriter, r *http.Request) {
+func (c *CORS) handle(node types.Node, wh http.Header, r *http.Request) {
 	if c.deny {
 		return
 	}
@@ -240,8 +240,6 @@ func handleCORS(c *CORS, node types.Node, w http.ResponseWriter, r *http.Request
 	preflight := r.Method == http.MethodOptions &&
 		reqMethod != "" &&
 		r.URL.Path != "*" // OPTIONS * 不算预检，也不存在其它的请求方法处理方式。
-
-	wh := w.Header()
 
 	if preflight {
 		// Access-Control-Allow-Methods

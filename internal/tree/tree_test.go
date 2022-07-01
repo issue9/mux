@@ -603,40 +603,70 @@ func TestTree_ApplyMiddlewares(t *testing.T) {
 
 	err := tree.Add("/m", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("/m"))
-	}))
+	}), http.MethodGet)
 	a.NotError(err)
+
 	err = tree.Add("/m/path", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("/m/path"))
-	}))
+	}), http.MethodGet)
 	a.NotError(err)
 
 	tree.ApplyMiddleware(types.MiddlewareFuncOf[http.Handler](func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte("m1"))
+			w.Header().Add("m1", "m1")
 			next.ServeHTTP(w, r)
 		})
 	}), types.MiddlewareFuncOf[http.Handler](func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte("m2"))
+			w.Header().Add("m2", "m2")
 			next.ServeHTTP(w, r)
 		})
 	}))
 
+	// GET /m
 	node, _ := tree.Match("/m")
 	a.NotNil(node)
 	f, exists := node.Handler(http.MethodGet)
 	a.True(exists).NotNil(f)
 	w := httptest.NewRecorder()
-	r, _ := http.NewRequest(http.MethodGet, "/m", nil)
+	r := rest.Get(a, "/m").Request()
 	f.ServeHTTP(w, r)
-	a.Equal(w.Body.String(), "m2m1/m")
+	a.Equal(w.Body.String(), "m2m1/m").
+		Equal(w.Header().Get("m1"), "m1").
+		Equal(w.Header().Get("m2"), "m2")
 
+	// HEAD /m
+	f, exists = node.Handler(http.MethodHead)
+	a.True(exists).NotNil(f)
+	w = httptest.NewRecorder()
+	r = rest.NewRequest(a, http.MethodHead, "/m").Request()
+	f.ServeHTTP(w, r)
+	a.Equal(w.Body.String(), "m2m1/m").
+		Equal(w.Header().Get("m1"), "m1").
+		Equal(w.Header().Get("m2"), "m2")
+
+	// GET /m/path
 	node, _ = tree.Match("/m/path")
 	a.NotNil(node)
 	f, exists = node.Handler(http.MethodGet)
 	a.True(exists).NotNil(f)
 	w = httptest.NewRecorder()
-	r, _ = http.NewRequest(http.MethodGet, "/m/path", nil)
+	r = rest.Get(a, "/m/path").Request()
 	f.ServeHTTP(w, r)
-	a.Equal(w.Body.String(), "m2m1/m/path")
+	a.Equal(w.Body.String(), "m2m1/m/path").
+		Equal(w.Header().Get("m1"), "m1").
+		Equal(w.Header().Get("m2"), "m2")
+
+	// OPTIONS /m/path
+	f, exists = node.Handler(http.MethodOptions)
+	a.True(exists).NotNil(f)
+	w = httptest.NewRecorder()
+	r = rest.NewRequest(a, http.MethodOptions, "/m/path").Request()
+	f.ServeHTTP(w, r)
+	a.Equal(w.Body.String(), "m2m1"). // m2m1 由中间件产生
+						Equal(w.Header().Get("Allow"), "GET, HEAD, OPTIONS").
+						Equal(w.Header().Get("m1"), "m1").
+						Equal(w.Header().Get("m2"), "m2")
 }

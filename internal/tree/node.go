@@ -3,7 +3,6 @@
 package tree
 
 import (
-	"net/http"
 	"sort"
 	"strings"
 
@@ -340,9 +339,7 @@ func (n *Node[T]) checkAmbiguous(pattern string, hasNonString bool) (*Node[T], b
 
 func (n *Node[T]) applyMiddlewares(ms ...types.MiddlewareOf[T]) {
 	for m, h := range n.handlers {
-		if m != http.MethodOptions { // OPTIONS 不添加中间件
-			n.handlers[m] = ApplyMiddlewares(h, ms...)
-		}
+		n.handlers[m] = ApplyMiddlewares(h, ms...)
 	}
 
 	for _, c := range n.children {

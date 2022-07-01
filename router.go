@@ -107,6 +107,8 @@ func (r *RouterOf[T]) Remove(pattern string, methods ...string) {
 }
 
 // Use 将中间件应用到所有匹配的路由项
+//
+// OPTIONS 请求只受此函数添加的中间件影响。
 func (r *RouterOf[T]) Use(m ...types.MiddlewareOf[T]) {
 	r.ms = append(r.ms, m...)
 	r.tree.ApplyMiddleware(m...)
@@ -213,7 +215,7 @@ func (r *RouterOf[T]) serve(w http.ResponseWriter, req *http.Request, p types.Pa
 	}
 
 	if h, exists := node.Handler(req.Method); exists {
-		handleCORS(r.cors, node, w, req) // 处理跨域问题
+		r.cors.handle(node, w.Header(), req) // 处理跨域问题
 		if req.Method == http.MethodHead {
 			w = &headResponse{ResponseWriter: w}
 		}
