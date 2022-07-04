@@ -40,7 +40,7 @@ func BenchmarkTree_Match(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		index := i % len(paths)
-		h, _ := tree.Match(paths[index])
+		h := tree.Match(syntax.NewParams(paths[index]))
 		a.True(len(h.handlers) > 0)
 	}
 }
@@ -73,7 +73,7 @@ func BenchmarkTree_ServeHTTP(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		index := i % len(paths)
-		h, _ := tree.Match(paths[index])
+		h := tree.Match(syntax.NewParams(paths[index]))
 		hh := h.handlers[http.MethodGet]
 
 		w := httptest.NewRecorder()

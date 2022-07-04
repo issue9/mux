@@ -66,7 +66,8 @@ func (t *tester) addAmbiguous(pattern string) {
 func (t *tester) handler(method, path string, code int) (http.Handler, *syntax.Params) {
 	t.a.TB().Helper()
 
-	hs, ps := t.tree.Match(path)
+	ps := syntax.NewParams(path)
+	hs := t.tree.Match(ps)
 	t.a.NotNil(hs)
 
 	h, exists := hs.Handler(method)
@@ -91,8 +92,9 @@ func (t *tester) matchTrue(method, path string, code int) {
 func (t *tester) notFound(path string) {
 	t.a.TB().Helper()
 
-	hs, ps := t.tree.Match(path)
-	t.a.Nil(hs).Nil(ps)
+	ps := syntax.NewParams(path)
+	hs := t.tree.Match(ps)
+	t.a.Nil(hs).Zero(ps.Count())
 }
 
 // 验证指定的路径返回的参数是否正确
@@ -130,7 +132,7 @@ func (t *tester) urlFalse(pattern string, params map[string]string, msg string) 
 func (t *tester) optionsTrue(path, options string) {
 	t.a.TB().Helper()
 
-	hs, _ := t.tree.Match(path)
+	hs := t.tree.Match(syntax.NewParams(path))
 	t.a.NotNil(hs)
 
 	h, exists := hs.Handler(http.MethodOptions)
@@ -563,7 +565,8 @@ func TestTree_Match(t *testing.T) {
 		a.NotError(err)
 	}), http.MethodGet))
 
-	node, ps := tree.Match("/path1")
+	ps := syntax.NewParams("/path1")
+	node := tree.Match(ps)
 	a.Zero(ps.Count()).NotNil(node)
 
 	w := httptest.NewRecorder()
@@ -584,7 +587,8 @@ func TestTree_Match(t *testing.T) {
 		a.NotError(err)
 	}), http.MethodGet))
 
-	node, ps = tree.Match("/path2")
+	ps = syntax.NewParams("/path2")
+	node = tree.Match(ps)
 	a.Zero(ps.Count()).NotNil(node)
 
 	w = httptest.NewRecorder()
@@ -626,7 +630,7 @@ func TestTree_ApplyMiddlewares(t *testing.T) {
 	}))
 
 	// GET /m
-	node, _ := tree.Match("/m")
+	node := tree.Match(syntax.NewParams("/m"))
 	a.NotNil(node)
 	f, exists := node.Handler(http.MethodGet)
 	a.True(exists).NotNil(f)
@@ -648,7 +652,7 @@ func TestTree_ApplyMiddlewares(t *testing.T) {
 		Equal(w.Header().Get("m2"), "m2")
 
 	// GET /m/path
-	node, _ = tree.Match("/m/path")
+	node = tree.Match(syntax.NewParams("/m/path"))
 	a.NotNil(node)
 	f, exists = node.Handler(http.MethodGet)
 	a.True(exists).NotNil(f)

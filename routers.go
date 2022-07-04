@@ -8,6 +8,7 @@ import (
 
 	"github.com/issue9/sliceutil"
 
+	"github.com/issue9/mux/v6/internal/syntax"
 	"github.com/issue9/mux/v6/types"
 )
 
@@ -29,14 +30,14 @@ type (
 		//
 		// ps 为匹配过程中生成的参数信息，可以返回 nil；
 		// ok 表示是否匹配成功；
-		Match(r *http.Request) (ps types.Params, ok bool)
+		Match(*http.Request) (ps types.Params, ok bool)
 	}
 
 	// MatcherFunc 验证请求是否符合要求
 	//
 	// ps 为匹配过程中生成的参数信息，可以返回 nil；
 	// ok 表示是否匹配成功；
-	MatcherFunc func(r *http.Request) (ps types.Params, ok bool)
+	MatcherFunc func(*http.Request) (ps types.Params, ok bool)
 )
 
 // Match 实现 Matcher 接口
@@ -46,7 +47,7 @@ func anyRouter(*http.Request) (types.Params, bool) { return nil, true }
 
 // NewRoutersOf 声明一个新的 RoutersOf
 //
-// notFound 表示所有路由都不匹配时的处理方式，如果为空，则调用 http.NotFoundHandler。
+// notFound 表示所有路由都不匹配时的处理方式，默认调用 http.NotFoundHandler。
 func NewRoutersOf[T any](b CallOf[T], opt types.BuildOptionsServeHTTPOf[T], notFound http.Handler) *RoutersOf[T] {
 	if notFound == nil {
 		notFound = http.NotFoundHandler()
@@ -63,7 +64,11 @@ func NewRoutersOf[T any](b CallOf[T], opt types.BuildOptionsServeHTTPOf[T], notF
 func (rs *RoutersOf[T]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	for _, router := range rs.routers {
 		if ps, ok := router.matcher.Match(r); ok {
-			router.serveHTTP(w, r, ps)
+			var p *syntax.Params
+			if ps != nil {
+				p = ps.(*syntax.Params)
+			}
+			router.serveHTTP(w, r, p)
 			return
 		}
 	}

@@ -195,7 +195,8 @@ func TestCORS_handle(t *testing.T) {
 	a := assert.New(t, false)
 	tr := tree.New(false, syntax.NewInterceptors(), optFunc)
 	a.NotError(tr.Add("/path", nil, http.MethodGet, http.MethodDelete))
-	node, ps := tr.Match("/path")
+	ps := syntax.NewParams("/path")
+	node := tr.Match(ps)
 	a.NotNil(node).Zero(ps.Count())
 
 	// deny

@@ -43,7 +43,8 @@ func (hs *Hosts) Match(r *http.Request) (types.Params, bool) {
 		host = host[1 : len(host)-1]
 	}
 
-	h, ps := hs.tree.Match(strings.ToLower(host))
+	ps := syntax.NewParams(strings.ToLower(host))
+	h := hs.tree.Match(ps)
 	if h == nil {
 		return nil, false
 	}

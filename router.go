@@ -8,6 +8,7 @@ import (
 
 	"github.com/issue9/errwrap"
 
+	"github.com/issue9/mux/v6/internal/syntax"
 	"github.com/issue9/mux/v6/internal/tree"
 	"github.com/issue9/mux/v6/types"
 )
@@ -193,7 +194,7 @@ func (r *RouterOf[T]) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	r.serveHTTP(w, req, nil)
 }
 
-func (r *RouterOf[T]) serveHTTP(w http.ResponseWriter, req *http.Request, ps types.Params) {
+func (r *RouterOf[T]) serveHTTP(w http.ResponseWriter, req *http.Request, p *syntax.Params) {
 	if r.recoverFunc != nil {
 		defer func() {
 			if err := recover(); err != nil {
@@ -202,13 +203,14 @@ func (r *RouterOf[T]) serveHTTP(w http.ResponseWriter, req *http.Request, ps typ
 		}()
 	}
 
-	r.serve(w, req, ps)
-}
+	if p == nil {
+		p = syntax.NewParams(req.URL.Path)
+	} else {
+		p.Path = req.URL.Path
+	}
+	defer p.Destroy()
 
-func (r *RouterOf[T]) serve(w http.ResponseWriter, req *http.Request, p types.Params) {
-	path := req.URL.Path
-
-	node, ps := r.tree.Match(path)
+	node := r.tree.Match(p)
 	if node == nil {
 		r.notFound.ServeHTTP(w, req)
 		return
@@ -220,14 +222,7 @@ func (r *RouterOf[T]) serve(w http.ResponseWriter, req *http.Request, p types.Pa
 			w = &headResponse{ResponseWriter: w}
 		}
 
-		if p != nil && p.Count() > 0 {
-			p.Range(func(k, v string) {
-				ps.Set(k, v)
-			})
-		}
-		defer ps.Destroy()
-
-		r.call(w, req, ps, h)
+		r.call(w, req, p, h)
 		return
 	}
 

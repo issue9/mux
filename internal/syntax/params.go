@@ -16,7 +16,7 @@ var paramsPool = &sync.Pool{
 
 // Params 路由参数
 //
-// 实现了 params.Params 接口
+// 实现了 types.Params 接口
 type Params struct {
 	Path   string  // 这是在 Segment.Match 中用到的路径信息。
 	Params []Param // 实际需要传递的参数

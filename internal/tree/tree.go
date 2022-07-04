@@ -182,23 +182,21 @@ func (tree *Tree[T]) getNode(pattern string) (*Node[T], error) {
 // Match 找到与路径 path 匹配的 Node 实例
 //
 // NOTE: 调用方需要调用 syntax.Params.Destroy 销毁对象
-func (tree *Tree[T]) Match(path string) (*Node[T], *syntax.Params) {
+func (tree *Tree[T]) Match(p *syntax.Params) *Node[T] {
 	if tree.locker != nil {
 		tree.locker.RLock()
 		defer tree.locker.RUnlock()
 	}
 
-	if path == "*" || path == "" {
-		return tree.node, nil
+	if p.Path == "*" || p.Path == "" {
+		return tree.node
 	}
 
-	p := syntax.NewParams(path)
 	node := tree.node.matchChildren(p)
 	if node == nil || node.size() == 0 {
-		p.Destroy()
-		return nil, nil
+		return nil
 	}
-	return node, p
+	return node
 }
 
 // Routes 获取当前的所有路由项以及对应的请求方法
