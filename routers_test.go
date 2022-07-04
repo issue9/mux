@@ -18,7 +18,6 @@ var _ http.Handler = &std.Routers{}
 
 func newRouter(a *assert.Assertion, name string) *std.Router {
 	a.TB().Helper()
-
 	r := std.NewRouter(name, nil)
 	a.NotNil(r)
 	return r
@@ -27,7 +26,7 @@ func newRouter(a *assert.Assertion, name string) *std.Router {
 func TestRouters_Add(t *testing.T) {
 	a := assert.New(t, false)
 
-	g := std.NewRouters(nil)
+	g := std.NewRouters()
 
 	def := newRouter(a, "host")
 	g.Add(&muxutil.PathVersion{}, def)
@@ -48,7 +47,7 @@ func TestRouters_Add(t *testing.T) {
 
 func TestRouters_Remove(t *testing.T) {
 	a := assert.New(t, false)
-	g := std.NewRouters(nil)
+	g := std.NewRouters()
 	a.NotNil(g)
 
 	def := newRouter(a, "host")
@@ -70,7 +69,7 @@ func TestRouters_Remove(t *testing.T) {
 
 func TestRouters_empty(t *testing.T) {
 	a := assert.New(t, false)
-	g := std.NewRouters(nil)
+	g := std.NewRouters()
 	a.NotNil(g)
 
 	rest.NewRequest(a, http.MethodGet, "/path").Do(g).Status(http.StatusNotFound)
@@ -78,7 +77,7 @@ func TestRouters_empty(t *testing.T) {
 
 func TestRouters(t *testing.T) {
 	a := assert.New(t, false)
-	rs := std.NewRouters(nil)
+	rs := std.NewRouters()
 	exit := make(chan bool, 1)
 
 	h := muxutil.NewHosts(true, "{sub}.example.com")
@@ -107,7 +106,7 @@ func TestRouters_routers(t *testing.T) {
 	h := muxutil.NewHosts(false, "localhost")
 	a.NotNil(h)
 
-	g := std.NewRouters(nil)
+	g := std.NewRouters()
 	a.NotNil(g)
 	def := newRouter(a, "host")
 	g.Add(h, def)
@@ -124,7 +123,7 @@ func TestRouters_routers(t *testing.T) {
 
 	// resource
 
-	g = std.NewRouters(nil)
+	g = std.NewRouters()
 	a.NotNil(g)
 	def = newRouter(a, "def")
 	g.Add(h, def)
@@ -134,7 +133,7 @@ func TestRouters_routers(t *testing.T) {
 	rest.NewRequest(a, http.MethodGet, "https://localhost/r1").Do(g).Status(202)
 
 	// prefix
-	g = std.NewRouters(nil)
+	g = std.NewRouters()
 	a.NotNil(g)
 	def = newRouter(a, "def")
 	g.Add(h, def)
@@ -144,7 +143,7 @@ func TestRouters_routers(t *testing.T) {
 	rest.NewRequest(a, http.MethodGet, "https://localhost:88/prefix1/p1").Do(g).Status(203)
 
 	// prefix prefix
-	g = std.NewRouters(nil)
+	g = std.NewRouters()
 	a.NotNil(g)
 	def = newRouter(a, "def")
 	g.Add(h, def)
@@ -156,7 +155,7 @@ func TestRouters_routers(t *testing.T) {
 	rest.NewRequest(a, http.MethodGet, "https://localhost/prefix1/prefix2/p2").Do(g).Status(204)
 
 	// 第二个 Prefix 为域名
-	g = std.NewRouters(nil)
+	g = std.NewRouters()
 	def = newRouter(a, "def")
 	g.Add(nil, def)
 	p1 = def.Prefix("/prefix1")
@@ -168,7 +167,7 @@ func TestRouters_routers(t *testing.T) {
 func TestRouters_routers_multiple(t *testing.T) {
 	a := assert.New(t, false)
 
-	g := std.NewRouters(nil)
+	g := std.NewRouters()
 	a.NotNil(g)
 
 	v1 := newRouter(a, "v1")

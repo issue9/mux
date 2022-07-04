@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 
+// Package ctx 自定义路由
 package ctx
 
 import (
@@ -32,4 +33,15 @@ func optionsHandlerBuilder(p types.Node) Handler {
 	return HandlerFunc(func(ctx *CTX) {
 		ctx.W.Header().Set("allow", p.AllowHeader())
 	})
+}
+
+func methodNotAllowedBuilder(p types.Node) Handler {
+	return HandlerFunc(func(ctx *CTX) {
+		ctx.W.Header().Set("allow", p.AllowHeader())
+		ctx.W.WriteHeader(http.StatusMethodNotAllowed)
+	})
+}
+
+func notFound(ctx *CTX) {
+	ctx.W.WriteHeader(http.StatusNotFound)
 }

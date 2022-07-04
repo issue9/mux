@@ -83,8 +83,8 @@ type Node interface {
 	AllowHeader() string
 }
 
-// BuildOptionsServeHTTPOf 生成 OPTIONS 请求的方法
-type BuildOptionsServeHTTPOf[T any] func(Node) T
+// BuildNodeHandleOf 为节点生成处理方法
+type BuildNodeHandleOf[T any] func(Node) T
 
 // MiddlewareOf 中间件对象需要实现的接口
 type MiddlewareOf[T any] interface {

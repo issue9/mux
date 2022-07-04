@@ -17,35 +17,20 @@ import (
 	"github.com/issue9/mux/v6/types"
 )
 
-type router = RouterOf[http.Handler]
-
-func callFunc(w http.ResponseWriter, r *http.Request, p types.Params, h http.Handler) {
-	h.ServeHTTP(w, r)
-}
-
-func optFunc(n types.Node) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Allow", n.AllowHeader())
-	})
-}
-
-func newRouter(name string, o *Options) *router {
-	return NewRouterOf(name, callFunc, optFunc, o)
+func newRouter(name string, o *Options) *RouterOf[http.Handler] {
+	callFunc := func(w http.ResponseWriter, r *http.Request, p types.Params, h http.Handler) {
+		h.ServeHTTP(w, r)
+	}
+	m := tree.BuildTestNodeHandlerFunc(http.StatusMethodNotAllowed)
+	opt := tree.BuildTestNodeHandlerFunc(http.StatusOK)
+	return NewRouterOf(name, callFunc, http.NotFoundHandler(), m, opt, o)
 }
 
 func TestOptions(t *testing.T) {
 	a := assert.New(t, false)
 
 	r := newRouter("", nil)
-	a.NotNil(r).
-		NotNil(r.methodNotAllowed)
-
-	notFound := rest.BuildHandler(a, 404, "", nil)
-	methodNotAllowed := rest.BuildHandler(a, 405, "", nil)
-	r = newRouter("", &Options{NotFound: notFound, MethodNotAllowed: methodNotAllowed})
-	a.NotNil(r).
-		Equal(r.methodNotAllowed, methodNotAllowed).
-		Equal(r.notFound, notFound)
+	a.NotNil(r)
 
 	r = newRouter("", &Options{CORS: &CORS{
 		Origins: []string{"https://example.com"},
@@ -128,11 +113,7 @@ func TestOptions_sanitize(t *testing.T) {
 
 	o := &Options{}
 	a.NotError(o.sanitize())
-	a.NotNil(o.CORS).
-		NotNil(o.NotFound).
-		NotNil(o.MethodNotAllowed)
-
-	rest.Get(a, "/").Do(o.MethodNotAllowed).Status(405).StringBody(http.StatusText(http.StatusMethodNotAllowed) + "\n")
+	a.NotNil(o.CORS)
 
 	// URLDomain
 
@@ -193,11 +174,11 @@ func TestCORS_sanitize(t *testing.T) {
 
 func TestCORS_handle(t *testing.T) {
 	a := assert.New(t, false)
-	tr := tree.New(false, syntax.NewInterceptors(), optFunc)
+	tr := tree.NewTestTree(a, false, syntax.NewInterceptors())
 	a.NotError(tr.Add("/path", nil, http.MethodGet, http.MethodDelete))
 	ps := syntax.NewParams("/path")
-	node := tr.Match(ps)
-	a.NotNil(node).Zero(ps.Count())
+	node, _, exists := tr.Handler(ps, http.MethodGet)
+	a.NotNil(node).Zero(ps.Count()).True(exists)
 
 	// deny
 

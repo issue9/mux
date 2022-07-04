@@ -21,7 +21,9 @@ type Hosts struct {
 // NewHosts 声明新的 Hosts 实例
 func NewHosts(lock bool, domain ...string) *Hosts {
 	i := syntax.NewInterceptors()
-	h := &Hosts{tree: tree.New(lock, i, func(o types.Node) any { return nil }), i: i}
+	f := func(types.Node) any { return nil }
+	t := tree.New(lock, i, nil, f, f)
+	h := &Hosts{tree: t, i: i}
 	h.Add(domain...)
 	return h
 }
@@ -44,11 +46,7 @@ func (hs *Hosts) Match(r *http.Request) (types.Params, bool) {
 	}
 
 	ps := syntax.NewParams(strings.ToLower(host))
-	h := hs.tree.Match(ps)
-	if h == nil {
-		return nil, false
-	}
-	if _, exists := h.Handler(http.MethodGet); !exists {
+	if _, _, exists := hs.tree.Handler(ps, http.MethodGet); !exists {
 		return nil, false
 	}
 	return ps, true

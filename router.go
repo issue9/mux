@@ -33,8 +33,6 @@ type (
 		cors        *CORS
 		urlDomain   string
 		recoverFunc RecoverFunc
-		notFound,
-		methodNotAllowed http.Handler
 
 		ms []types.MiddlewareOf[T]
 	}
@@ -70,7 +68,7 @@ type (
 //
 // T 表示用户用于处理路由项的方法，该类型最终通过 NewRouterOf 中的 call 参数与
 // http.ResponseWriter 和 *http.Request 相关联。
-func NewRouterOf[T any](name string, call CallOf[T], opt types.BuildOptionsServeHTTPOf[T], o *Options) *RouterOf[T] {
+func NewRouterOf[T any](name string, call CallOf[T], notFound T, methodNotAllowedBuilder, opt types.BuildNodeHandleOf[T], o *Options) *RouterOf[T] {
 	o, err := buildOptions(o)
 	if err != nil {
 		panic(err)
@@ -78,14 +76,12 @@ func NewRouterOf[T any](name string, call CallOf[T], opt types.BuildOptionsServe
 
 	r := &RouterOf[T]{
 		name: name,
-		tree: tree.New(o.Lock, o.interceptors, opt),
+		tree: tree.New(o.Lock, o.interceptors, notFound, methodNotAllowedBuilder, opt),
 		call: call,
 
-		cors:             o.CORS,
-		urlDomain:        o.URLDomain,
-		recoverFunc:      o.RecoverFunc,
-		notFound:         o.NotFound,
-		methodNotAllowed: o.MethodNotAllowed,
+		cors:        o.CORS,
+		urlDomain:   o.URLDomain,
+		recoverFunc: o.RecoverFunc,
 	}
 
 	return r
@@ -191,7 +187,7 @@ func (r *RouterOf[T]) URL(strict bool, pattern string, params map[string]string)
 }
 
 func (r *RouterOf[T]) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	r.serveHTTP(w, req, nil)
+	r.serveHTTP(w, req, syntax.NewParams(""))
 }
 
 func (r *RouterOf[T]) serveHTTP(w http.ResponseWriter, req *http.Request, p *syntax.Params) {
@@ -203,32 +199,17 @@ func (r *RouterOf[T]) serveHTTP(w http.ResponseWriter, req *http.Request, p *syn
 		}()
 	}
 
-	if p == nil {
-		p = syntax.NewParams(req.URL.Path)
-	} else {
-		p.Path = req.URL.Path
-	}
+	p.Path = req.URL.Path
 	defer p.Destroy()
 
-	node := r.tree.Match(p)
-	if node == nil {
-		r.notFound.ServeHTTP(w, req)
-		return
-	}
-
-	if h, exists := node.Handler(req.Method); exists {
+	node, h, exists := r.tree.Handler(p, req.Method)
+	if exists {
 		r.cors.handle(node, w.Header(), req) // 处理跨域问题
 		if req.Method == http.MethodHead {
 			w = &headResponse{ResponseWriter: w}
 		}
-
-		r.call(w, req, p, h)
-		return
 	}
-
-	// 存在节点，但是不允许当前请求方法。
-	w.Header().Set("Allow", node.AllowHeader())
-	r.methodNotAllowed.ServeHTTP(w, req)
+	r.call(w, req, p, h)
 }
 
 // Name 路由名称

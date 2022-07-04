@@ -13,7 +13,7 @@ import (
 
 func TestContextRouter_Params(t *testing.T) {
 	a := assert.New(t, false)
-	tt := routertest.NewTester(call, optionsHandlerBuilder)
+	tt := routertest.NewTester[Handler](call, HandlerFunc(notFound), methodNotAllowedBuilder, optionsHandlerBuilder)
 
 	a.Run("params", func(a *assert.Assertion) {
 		tt.Params(a, func(ps *types.Params) Handler {

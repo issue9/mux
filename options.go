@@ -58,9 +58,6 @@ type (
 
 		// RecoverFunc 用于指路由 panic 之后的处理方法
 		RecoverFunc RecoverFunc
-
-		NotFound,
-		MethodNotAllowed http.Handler
 	}
 
 	// CORS 自定义跨域请求设置项
@@ -167,16 +164,6 @@ func (o *Options) sanitize() error {
 	l := len(o.URLDomain)
 	if l != 0 && o.URLDomain[l-1] == '/' {
 		o.URLDomain = o.URLDomain[:l-1]
-	}
-
-	if o.NotFound == nil {
-		o.NotFound = http.NotFoundHandler()
-	}
-
-	if o.MethodNotAllowed == nil {
-		o.MethodNotAllowed = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-		})
 	}
 
 	return nil

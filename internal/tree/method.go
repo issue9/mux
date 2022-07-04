@@ -30,6 +30,8 @@ var (
 	methodIndexes = map[int]methodIndexEntity{}
 )
 
+const methodNotAllowed = "" // 表示 405 的处理方法在各个节点上的名称。
+
 func init() {
 	methodIndexMap = make(map[string]int, len(Methods))
 	for i, m := range Methods {
@@ -61,7 +63,7 @@ func buildMethodIndexes(index int) {
 	}
 }
 
-func (n *Node[T]) buildMethods() {
+func (n *node[T]) buildMethods() {
 	n.methodIndex = 0
 	for method := range n.handlers {
 		n.methodIndex += methodIndexMap[method]
@@ -69,13 +71,13 @@ func (n *Node[T]) buildMethods() {
 	buildMethodIndexes(n.methodIndex)
 }
 
-func (n *Node[T]) AllowHeader() string { return methodIndexes[n.methodIndex].options }
+func (n *node[T]) AllowHeader() string { return methodIndexes[n.methodIndex].options }
 
 // Methods 当前节点支持的请求方法
-func (n *Node[T]) Methods() []string { return methodIndexes[n.methodIndex].methods }
+func (n *node[T]) Methods() []string { return methodIndexes[n.methodIndex].methods }
 
 // 添加一个处理函数
-func (n *Node[T]) addMethods(h T, methods ...string) error {
+func (n *node[T]) addMethods(h T, methods ...string) error {
 	for _, m := range methods {
 		if m == http.MethodOptions || m == http.MethodHead {
 			return fmt.Errorf("无法手动添加 OPTIONS/HEAD 请求方法")
@@ -98,6 +100,10 @@ func (n *Node[T]) addMethods(h T, methods ...string) error {
 	// 查看是否需要添加 OPTIONS
 	if _, found := n.handlers[http.MethodOptions]; !found {
 		n.handlers[http.MethodOptions] = n.root.optionsBuilder(n)
+	}
+
+	if _, found := n.handlers[methodNotAllowed]; !found {
+		n.handlers[methodNotAllowed] = n.root.methodNotAllowedBuilder(n)
 	}
 
 	n.buildMethods()

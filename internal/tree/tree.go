@@ -5,9 +5,7 @@ package tree
 
 import (
 	"fmt"
-	"io"
 	"net/http"
-	"strings"
 	"sync"
 
 	"github.com/issue9/errwrap"
@@ -36,15 +34,18 @@ import (
 //               +---- emails
 type Tree[T any] struct {
 	methods map[string]int // 保存着每个请求方法在所有子节点上的数量。
-	node    *Node[T]       // 空节点，正好用于处理 OPTIONS *。
+	node    *node[T]       // 空节点，正好用于处理 OPTIONS *。
 
 	// 由 New 负责初始化的内容
-	locker         *sync.RWMutex
-	interceptors   *syntax.Interceptors
-	optionsBuilder types.BuildOptionsServeHTTPOf[T]
+	locker       *sync.RWMutex
+	interceptors *syntax.Interceptors
+
+	notFound T
+	optionsBuilder,
+	methodNotAllowedBuilder types.BuildNodeHandleOf[T]
 }
 
-func New[T any](lock bool, i *syntax.Interceptors, optionsBuilder types.BuildOptionsServeHTTPOf[T]) *Tree[T] {
+func New[T any](lock bool, i *syntax.Interceptors, notFound T, methodNotAllowedBuilder, optionsBuilder types.BuildNodeHandleOf[T]) *Tree[T] {
 	s, err := i.NewSegment("")
 	if err != nil {
 		panic("发生了不该发生的错误，应该是 syntax.NewSegment 逻辑发生变化" + err.Error())
@@ -52,10 +53,12 @@ func New[T any](lock bool, i *syntax.Interceptors, optionsBuilder types.BuildOpt
 
 	t := &Tree[T]{
 		methods: make(map[string]int, len(Methods)),
-		node:    &Node[T]{segment: s, methodIndex: methodIndexMap[http.MethodOptions]},
+		node:    &node[T]{segment: s, methodIndex: methodIndexMap[http.MethodOptions]},
 
-		interceptors:   i,
-		optionsBuilder: optionsBuilder,
+		interceptors:            i,
+		notFound:                notFound,
+		optionsBuilder:          optionsBuilder,
+		methodNotAllowedBuilder: methodNotAllowedBuilder,
 	}
 	t.node.root = t
 	t.node.handlers = map[string]T{
@@ -154,8 +157,13 @@ func (tree *Tree[T]) Remove(pattern string, methods ...string) {
 			}
 		}
 
-		if _, found := child.handlers[http.MethodOptions]; found && child.size() == 1 { // 只有一个 OPTIONS 了
-			delete(child.handlers, http.MethodOptions)
+		if child.size() == 2 { // 只有一个 OPTIONS 和 method not allowed 了
+			_, e1 := child.handlers[http.MethodOptions]
+			_, e2 := child.handlers[methodNotAllowed]
+			if e1 && e2 {
+				delete(child.handlers, http.MethodOptions)
+				delete(child.handlers, methodNotAllowed)
+			}
 		}
 	}
 
@@ -171,7 +179,7 @@ func (tree *Tree[T]) Remove(pattern string, methods ...string) {
 }
 
 // 获取指定的节点，若节点不存在，则在该位置生成一个新节点。
-func (tree *Tree[T]) getNode(pattern string) (*Node[T], error) {
+func (tree *Tree[T]) getNode(pattern string) (*node[T], error) {
 	segs, err := tree.interceptors.Split(pattern)
 	if err != nil {
 		return nil, err
@@ -179,10 +187,8 @@ func (tree *Tree[T]) getNode(pattern string) (*Node[T], error) {
 	return tree.node.getNode(segs)
 }
 
-// Match 找到与路径 path 匹配的 Node 实例
-//
-// NOTE: 调用方需要调用 syntax.Params.Destroy 销毁对象
-func (tree *Tree[T]) Match(p *syntax.Params) *Node[T] {
+// match 找到与路径 path 匹配的 node 实例
+func (tree *Tree[T]) match(p *syntax.Params) *node[T] {
 	if tree.locker != nil {
 		tree.locker.RLock()
 		defer tree.locker.RUnlock()
@@ -197,6 +203,21 @@ func (tree *Tree[T]) Match(p *syntax.Params) *Node[T] {
 		return nil
 	}
 	return node
+}
+
+// Handler 查找与参数匹配的处理对象
+//
+// 如果未找到，也会返回相应在的处理对象，比如 tree.notFound 或是相应的 methodNotAllowed 方法。
+func (tree *Tree[T]) Handler(p *syntax.Params, method string) (types.Node, T, bool) {
+	node := tree.match(p)
+	if node == nil {
+		return nil, tree.notFound, false
+	}
+
+	if h, exists := node.handlers[method]; exists {
+		return node, h, true
+	}
+	return node, node.handlers[methodNotAllowed], false
 }
 
 // Routes 获取当前的所有路由项以及对应的请求方法
@@ -216,7 +237,7 @@ func (tree *Tree[T]) Routes() map[string][]string {
 }
 
 // Find 查找匹配的节点
-func (tree *Tree[T]) Find(pattern string) *Node[T] { return tree.node.find(pattern) }
+func (tree *Tree[T]) Find(pattern string) *node[T] { return tree.node.find(pattern) }
 
 // URL 将 ps 填入 pattern 生成 URL
 //
@@ -227,7 +248,7 @@ func (tree *Tree[T]) URL(buf *errwrap.StringBuilder, pattern string, ps map[stri
 		return fmt.Errorf("%s 并不是一条有效的注册路由项", pattern)
 	}
 
-	nodes := make([]*Node[T], 0, 5)
+	nodes := make([]*node[T], 0, 5)
 	for curr := n; curr.parent != nil; curr = curr.parent { // 从尾部向上开始获取节点
 		nodes = append(nodes, curr)
 	}
@@ -258,15 +279,6 @@ func (tree *Tree[T]) URL(buf *errwrap.StringBuilder, pattern string, ps map[stri
 }
 
 func (tree *Tree[T]) ApplyMiddleware(ms ...types.MiddlewareOf[T]) {
+	tree.notFound = ApplyMiddlewares(tree.notFound, ms...)
 	tree.node.applyMiddlewares(ms...)
-}
-
-// Print 向 w 输出树状结构
-func (tree *Tree[T]) Print(w io.Writer) { tree.node.print(w, 0) }
-
-func (n *Node[T]) print(w io.Writer, deep int) {
-	fmt.Fprintln(w, strings.Repeat(" ", deep*4), n.segment.Value)
-	for _, child := range n.children {
-		child.print(w, deep+1)
-	}
 }

@@ -15,6 +15,6 @@ func BenchmarkRouter(b *testing.B) {
 		}
 	})
 
-	t := routertest.NewTester(call, optionsHandlerBuilder)
+	t := routertest.NewTester[Handler](call, HandlerFunc(notFound), methodNotAllowedBuilder, optionsHandlerBuilder)
 	t.Bench(b, h)
 }

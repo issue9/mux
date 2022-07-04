@@ -14,7 +14,7 @@ import (
 
 func BenchmarkTree_Match(b *testing.B) {
 	a := assert.New(b, false)
-	tree := New(true, syntax.NewInterceptors(), buildOptionsFunc)
+	tree := NewTestTree(a, true, syntax.NewInterceptors())
 
 	// 添加路由项
 	a.NotError(tree.Add("/", buildHandler(a, 201, "", nil), http.MethodGet))
@@ -40,14 +40,14 @@ func BenchmarkTree_Match(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		index := i % len(paths)
-		h := tree.Match(syntax.NewParams(paths[index]))
+		h := tree.match(syntax.NewParams(paths[index]))
 		a.True(len(h.handlers) > 0)
 	}
 }
 
 func BenchmarkTree_ServeHTTP(b *testing.B) {
 	a := assert.New(b, false)
-	tree := New(true, syntax.NewInterceptors(), buildOptionsFunc)
+	tree := NewTestTree(a, true, syntax.NewInterceptors())
 
 	// 添加路由项
 	a.NotError(tree.Add("/", buildHandler(a, 201, "", nil), http.MethodGet))
@@ -73,7 +73,7 @@ func BenchmarkTree_ServeHTTP(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		index := i % len(paths)
-		h := tree.Match(syntax.NewParams(paths[index]))
+		h := tree.match(syntax.NewParams(paths[index]))
 		hh := h.handlers[http.MethodGet]
 
 		w := httptest.NewRecorder()

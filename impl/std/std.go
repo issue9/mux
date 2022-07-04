@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 
+// Package std 兼容标准库的路由
 package std
 
 import (
@@ -13,12 +14,13 @@ import (
 const contextKeyParams contextKey = 0
 
 type (
-	Routers        = mux.RoutersOf[http.Handler]
-	Router         = mux.RouterOf[http.Handler]
-	Prefix         = mux.PrefixOf[http.Handler]
-	Resource       = mux.ResourceOf[http.Handler]
-	Middleware     = types.MiddlewareOf[http.Handler]
-	MiddlewareFunc = types.MiddlewareFuncOf[http.Handler]
+	Routers         = mux.RoutersOf[http.Handler]
+	Router          = mux.RouterOf[http.Handler]
+	Prefix          = mux.PrefixOf[http.Handler]
+	Resource        = mux.ResourceOf[http.Handler]
+	Middleware      = types.MiddlewareOf[http.Handler]
+	MiddlewareFunc  = types.MiddlewareFuncOf[http.Handler]
+	BuildNodeHandle = types.BuildNodeHandleOf[http.Handler]
 
 	contextKey int
 )
@@ -27,19 +29,26 @@ func call(w http.ResponseWriter, r *http.Request, ps types.Params, h http.Handle
 	h.ServeHTTP(w, WithValue(r, ps))
 }
 
+func methodNotAllowedBuilder(p types.Node) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Allow", p.AllowHeader())
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	})
+}
+
 func optionsHandlerBuilder(p types.Node) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Allow", p.AllowHeader())
 	})
 }
 
-func NewRouters(notFound http.Handler) *Routers {
-	return mux.NewRoutersOf(call, optionsHandlerBuilder, notFound)
+func NewRouters() *Routers {
+	return mux.NewRoutersOf(call, http.NotFoundHandler(), methodNotAllowedBuilder, optionsHandlerBuilder)
 }
 
 // NewRouter 声明适用于官方 http.Handler 接口的路由
 func NewRouter(name string, o *mux.Options) *Router {
-	return mux.NewRouterOf(name, call, optionsHandlerBuilder, o)
+	return mux.NewRouterOf(name, call, http.NotFoundHandler(), methodNotAllowedBuilder, optionsHandlerBuilder, o)
 }
 
 // GetParams 获取当前请求实例上的参数列表
