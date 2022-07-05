@@ -76,6 +76,9 @@ type Params interface {
 
 // Node 路由节点
 type Node interface {
+	// Pattern 路由上的匹配内容
+	Pattern() string
+
 	// Methods 当前节点支持的方法列表
 	Methods() []string
 

@@ -17,8 +17,6 @@ import (
 	"github.com/issue9/mux/v7/types"
 )
 
-var _ types.Node = &node[http.Handler]{}
-
 func buildHandler(a *assert.Assertion, code int, body string, headers map[string]string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		rest.BuildHandler(a, code, body, headers).ServeHTTP(w, r)
@@ -56,30 +54,27 @@ func (t *tester) addAmbiguous(pattern string) {
 
 // 验证按照指定的 method 和 path 访问，是否会返回相同的 code 值，
 // 若是，则返回该节点以及对应的参数。
-func (t *tester) handler(method, path string, code int) (http.Handler, *syntax.Params) {
+func (t *tester) handler(method, path string, code int) (types.Node, http.Handler, *syntax.Params) {
 	t.a.TB().Helper()
 
 	ps := syntax.NewParams(path)
-	hs := t.tree.match(ps)
-	t.a.NotNil(hs)
-
-	h, exists := hs.handlers[method]
-	t.a.NotNil(h).True(exists)
+	n, h, exists := t.tree.Handler(ps, method)
+	t.a.NotNil(h).True(exists).NotNil(n)
 
 	w := httptest.NewRecorder()
 	r := rest.NewRequest(t.a, method, path).Request()
 	h.ServeHTTP(w, r)
 	t.a.Equal(w.Code, code)
 
-	return h, ps
+	return n, h, ps
 }
 
 // 验证指定的路径是否匹配正确的路由项，通过 code 来确定，并返回该节点的实例。
-func (t *tester) matchTrue(method, path string, code int) {
+func (t *tester) matchTrue(method, path string, code int, pattern string) {
 	t.a.TB().Helper()
 
-	h, _ := t.handler(method, path, code)
-	t.a.NotNil(h)
+	n, h, _ := t.handler(method, path, code)
+	t.a.NotNil(h).Equal(n.Pattern(), pattern)
 }
 
 func (t *tester) notFound(path string) {
@@ -94,7 +89,7 @@ func (t *tester) notFound(path string) {
 func (t *tester) paramsTrue(method, path string, code int, params map[string]string) {
 	t.a.TB().Helper()
 
-	_, ps := t.handler(method, path, code)
+	_, _, ps := t.handler(method, path, code)
 	if len(params) > 0 {
 		t.a.Equal(len(params), ps.Count())
 		for k, v := range params {
@@ -185,81 +180,81 @@ func TestTree_Route(t *testing.T) {
 	test.add(http.MethodGet, "/page/{page:\\d*}", 207) // 可选的正则节点
 	test.add(http.MethodGet, "/posts/{id}/{page}/author", 208)
 
-	test.matchTrue(http.MethodGet, "/", 201)
-	test.matchTrue(http.MethodGet, "/posts/1", 205)             // 正则
-	test.matchTrue(http.MethodGet, "/posts/2", 205)             // 正则
-	test.matchTrue(http.MethodGet, "/posts/2/author", 206)      // 正则
-	test.matchTrue(http.MethodGet, "/posts/1/author", 204)      // 字符串
-	test.matchTrue(http.MethodGet, "/posts/1.html", 202)        // 命名参数
-	test.matchTrue(http.MethodGet, "/posts/1.html/page", 202)   // 命名参数
-	test.matchTrue(http.MethodGet, "/posts/2.html/author", 203) // 命名参数
-	test.matchTrue(http.MethodGet, "/page/", 207)
-	test.matchTrue(http.MethodGet, "/posts/2.html/2/author", 208) // 208 比 203 更加匹配
+	test.matchTrue(http.MethodGet, "/", 201, "/")
+	test.matchTrue(http.MethodGet, "/posts/1", 205, "/posts/{id:\\d+}")               // 正则
+	test.matchTrue(http.MethodGet, "/posts/2", 205, "/posts/{id:\\d+}")               // 正则
+	test.matchTrue(http.MethodGet, "/posts/2/author", 206, "/posts/{id:\\d+}/author") // 正则
+	test.matchTrue(http.MethodGet, "/posts/1/author", 204, "/posts/1/author")         // 字符串
+	test.matchTrue(http.MethodGet, "/posts/1.html", 202, "/posts/{id}")               // 命名参数
+	test.matchTrue(http.MethodGet, "/posts/1.html/page", 202, "/posts/{id}")          // 命名参数
+	test.matchTrue(http.MethodGet, "/posts/2.html/author", 203, "/posts/{id}/author") // 命名参数
+	test.matchTrue(http.MethodGet, "/page/", 207, "/page/{page:\\d*}")
+	test.matchTrue(http.MethodGet, "/posts/2.html/2/author", 208, "/posts/{id}/{page}/author") // 208 比 203 更加匹配
 	test.notFound("/not-exists")
 
 	// 仅末尾不同的路由
 
 	test = newTester(a, false)
 	test.add(http.MethodGet, "/posts/{id}", 202)
-	test.matchTrue(http.MethodGet, "/posts/2.html/2/author", 202)
+	test.matchTrue(http.MethodGet, "/posts/2.html/2/author", 202, "/posts/{id}")
 
 	test.add(http.MethodGet, "/posts/{id}/author", 203)
-	test.matchTrue(http.MethodGet, "/posts/2.html/2/author", 203) // 203 比 202 更加匹配
+	test.matchTrue(http.MethodGet, "/posts/2.html/2/author", 203, "/posts/{id}/author") // 203 比 202 更加匹配
 
 	test.add(http.MethodGet, "/posts/{id}/{page}/author", 204)
-	test.matchTrue(http.MethodGet, "/posts/2.html/2/author", 204) // 204 比 203 更加匹配
+	test.matchTrue(http.MethodGet, "/posts/2.html/2/author", 204, "/posts/{id}/{page}/author") // 204 比 203 更加匹配
 
-	test.matchTrue(http.MethodGet, "/posts/2.html/2.html", 202)
-	test.add(http.MethodGet, "/posts/{id}/{page}.html", 209)    // 与 204 相结合，会将 {page} 生成一个节点，.html 生成一个节点
-	test.matchTrue(http.MethodGet, "/posts/2.html/2.html", 209) // 209 比 202 更匹配
+	test.matchTrue(http.MethodGet, "/posts/2.html/2.html", 202, "/posts/{id}")
+	test.add(http.MethodGet, "/posts/{id}/{page}.html", 209)                               // 与 204 相结合，会将 {page} 生成一个节点，.html 生成一个节点
+	test.matchTrue(http.MethodGet, "/posts/2.html/2.html", 209, "/posts/{id}/{page}.html") // 209 比 202 更匹配
 
-	test.matchTrue(http.MethodGet, "/posts/2.html/2/2.html", 209)
+	test.matchTrue(http.MethodGet, "/posts/2.html/2/2.html", 209, "/posts/{id}/{page}.html")
 	test.add(http.MethodGet, "/posts/{id}/{page}/{p2}.html", 210)
-	test.matchTrue(http.MethodGet, "/posts/2.html/2/2.html", 210) // 210 比 209 更匹配
+	test.matchTrue(http.MethodGet, "/posts/2.html/2/2.html", 210, "/posts/{id}/{page}/{p2}.html") // 210 比 209 更匹配
 
 	// 测试 digit 和 \\d 是否正常
 	test = newTester(a, true)
 	test.add(http.MethodGet, "/posts/{id:\\d}/author", 201)
 	test.add(http.MethodGet, "/posts/{id:digit}/author", 202)
-	test.matchTrue(http.MethodGet, "/posts/1/author", 202)
+	test.matchTrue(http.MethodGet, "/posts/1/author", 202, "/posts/{id:digit}/author")
 
 	// 测试 digit 和 named 是否正常
 	test = newTester(a, false)
 	test.add(http.MethodGet, "/posts/{id}/author", 201)
 	test.add(http.MethodGet, "/posts/{id:digit}/author", 202)
-	test.matchTrue(http.MethodGet, "/posts/1/author", 202)
+	test.matchTrue(http.MethodGet, "/posts/1/author", 202, "/posts/{id:digit}/author")
 
 	// 测试 digit 和 \\d 和 named 三者顺序是否正常
 	test = newTester(a, false)
 	test.add(http.MethodGet, "/posts/{id}/author", 201)
 	test.add(http.MethodGet, "/posts/{id:\\d}/author", 202)
 	test.add(http.MethodGet, "/posts/{id:digit}/author", 203)
-	test.matchTrue(http.MethodGet, "/posts/1/author", 203)
+	test.matchTrue(http.MethodGet, "/posts/1/author", 203, "/posts/{id:digit}/author")
 
 	// 以斜框结尾，是否能正常访问
 	test = newTester(a, false)
 	test.add(http.MethodGet, "/posts/{id}/", 201)
 	test.add(http.MethodGet, "/posts/{id}/author", 202)
-	test.matchTrue(http.MethodGet, "/posts/1/", 201)
-	test.matchTrue(http.MethodGet, "/posts/1.html/", 201)
-	test.matchTrue(http.MethodGet, "/posts/1/author", 202)
+	test.matchTrue(http.MethodGet, "/posts/1/", 201, "/posts/{id}/")
+	test.matchTrue(http.MethodGet, "/posts/1.html/", 201, "/posts/{id}/")
+	test.matchTrue(http.MethodGet, "/posts/1/author", 202, "/posts/{id}/author")
 
 	// 以 - 作为路径分隔符
 	test = newTester(a, false)
 	test.add(http.MethodGet, "/posts-{id}", 201)
 	test.add(http.MethodGet, "/posts-{id}-author", 202)
-	test.matchTrue(http.MethodGet, "/posts-1.html", 201)
-	test.matchTrue(http.MethodGet, "/posts-1-author", 202)
+	test.matchTrue(http.MethodGet, "/posts-1.html", 201, "/posts-{id}")
+	test.matchTrue(http.MethodGet, "/posts-1-author", 202, "/posts-{id}-author")
 
 	test = newTester(a, false)
 	test.add(http.MethodGet, "/admin/{path}", 201)
 	test.add(http.MethodGet, "/admin/items/{id:\\d+}", 202)
 	test.add(http.MethodGet, "/admin/items/{id:\\d+}/profile", 203)
 	test.add(http.MethodGet, "/admin/items/{id:\\d+}/profile/{type:\\d+}", 204)
-	test.matchTrue(http.MethodGet, "/admin/index.html", 201)
-	test.matchTrue(http.MethodGet, "/admin/items/1", 202)
-	test.matchTrue(http.MethodGet, "/admin/items/1/profile", 203)
-	test.matchTrue(http.MethodGet, "/admin/items/1/profile/1", 204)
+	test.matchTrue(http.MethodGet, "/admin/index.html", 201, "/admin/{path}")
+	test.matchTrue(http.MethodGet, "/admin/items/1", 202, "/admin/items/{id:\\d+}")
+	test.matchTrue(http.MethodGet, "/admin/items/1/profile", 203, "/admin/items/{id:\\d+}/profile")
+	test.matchTrue(http.MethodGet, "/admin/items/1/profile/1", 204, "/admin/items/{id:\\d+}/profile/{type:\\d+}")
 
 	// 测试 indexes 功能
 	test = newTester(a, false)
@@ -275,7 +270,7 @@ func TestTree_Route(t *testing.T) {
 	a.Equal(len(c0.indexes), 7)
 	a.Equal(c0.segment.Value, "/admin/")
 	// /admin/5index.html 即部分匹配 /admin/5，更匹配 /admin/{id}，测试是否正确匹配
-	test.matchTrue(http.MethodGet, "/admin/5index.html", 220)
+	test.matchTrue(http.MethodGet, "/admin/5index.html", 220, "/admin/{id}")
 
 	// 测试非英文字符 indexes 功能
 	test = newTester(a, false)
@@ -291,7 +286,7 @@ func TestTree_Route(t *testing.T) {
 	a.Equal(len(c0.indexes), 7)
 	a.Equal(c0.segment.Value, "/中文/")
 	// /中文/5index.html 即部分匹配 /中文/5，更匹配 /中文/{id}，测试是否正确匹配
-	test.matchTrue(http.MethodGet, "/中文/5index.html", 220)
+	test.matchTrue(http.MethodGet, "/中文/5index.html", 220, "/中文/{id}")
 
 	// 测试非英文字符 indexes 功能，汉字中的相同部分会被提取到上一级。
 	test = newTester(a, false)
@@ -307,12 +302,12 @@ func TestTree_Route(t *testing.T) {
 	a.Equal(len(c0.indexes), 0)
 	a.Equal(c0.segment.Value, "/\xe4\xb8")
 	// /中文/5index.html 即部分匹配 /中文/5，更匹配 /中文/{id}，测试是否正确匹配
-	test.matchTrue(http.MethodGet, "/中文/5index.html", 220)
+	test.matchTrue(http.MethodGet, "/中文/5index.html", 220, "/中文/{id}")
 	test.optionsTrue("/中文/5index.html", "GET, HEAD, OPTIONS")
 
 	test = newTester(a, false)
 	test.add(http.MethodGet, "/admin/1", 201)
-	test.matchTrue(http.MethodGet, "/admin/1", 201)
+	test.matchTrue(http.MethodGet, "/admin/1", 201, "/admin/1")
 	test.optionsTrue("/admin/1", "GET, HEAD, OPTIONS")
 	test.optionsTrue("", "GET, OPTIONS")
 	test.optionsTrue("*", "GET, OPTIONS")
@@ -367,8 +362,8 @@ func TestTreeCN(t *testing.T) {
 	test.add(http.MethodGet, "/posts/{id}", 201) // 命名
 	test.add(http.MethodGet, "/文章/{编号}", 202)    // 中文
 
-	test.matchTrue(http.MethodGet, "/posts/1", 201)
-	test.matchTrue(http.MethodGet, "/文章/1", 202)
+	test.matchTrue(http.MethodGet, "/posts/1", 201, "/posts/{id}")
+	test.matchTrue(http.MethodGet, "/文章/1", 202, "/文章/{编号}")
 	test.paramsTrue(http.MethodGet, "/文章/1.html", 202, map[string]string{"编号": "1.html"})
 }
 

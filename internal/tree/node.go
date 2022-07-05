@@ -19,6 +19,7 @@ type node[T any] struct {
 	root    *Tree[T]
 	parent  *node[T]
 	segment *syntax.Segment
+	pattern string
 
 	methodIndex int // 在 methodIndexes 中的索引值
 	handlers    map[string]T
@@ -121,10 +122,12 @@ func (n *node[T]) addSegment(seg *syntax.Segment) (*node[T], error) {
 	return parent.addSegment(s)
 }
 
+func (n *node[T]) Pattern() string { return n.pattern }
+
 // 根据 s 内容为当前节点产生一个子节点，并返回该节点。
 // 由调用方确保 s 的语法正确性，否则可能 panic。
 func (n *node[T]) newChild(s *syntax.Segment) *node[T] {
-	child := &node[T]{root: n.root, parent: n, segment: s}
+	child := &node[T]{root: n.root, parent: n, segment: s, pattern: n.pattern + s.Value}
 	n.children = append(n.children, child)
 	return child
 }
