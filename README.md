@@ -5,33 +5,31 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/issue9/mux)](https://goreportcard.com/report/github.com/issue9/mux)
 [![license](https://img.shields.io/github/license/issue9/mux)](LICENSE)
 [![codecov](https://codecov.io/gh/issue9/mux/branch/master/graph/badge.svg)](https://codecov.io/gh/issue9/mux)
-[![PkgGoDev](https://pkg.go.dev/badge/github.com/issue9/mux/v6)](https://pkg.go.dev/github.com/issue9/mux/v6)
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/issue9/mux/v7)](https://pkg.go.dev/github.com/issue9/mux/v7)
 
-mux 功能完备的 Go 路由器：
+**这是一个用于定制路由的包，适用于第三方框架实现自己的路由功能。想直接使用，需要少量的代码实例化泛型对象。**
+
+所有实现的路由都支持以下功能：
 
 - 路由参数；
 - 支持正则表达式作为路由项匹配方式；
 - 拦截正则表达式的行为；
-- 自动生成 OPTIONS 请求处理方式；
+- 自定义的 OPTIONS 请求处理方式；
 - 自动生成 HEAD 请求处理方式；
 - 根据路由反向生成地址；
 - 任意风格的路由，比如 discuz 这种不以 / 作为分隔符的；
 - 分组路由，比如按域名，或是版本号等；
 - CORS 跨域资源的处理；
 - 支持中间件；
-- 自动生成 OPTIONS * 请求；
+- 支持 OPTIONS * 请求；
 - 静态文件系统；
 - TRACE 请求方法的支持；
 - panic 处理；
-- 支持泛型，可轻易实现自定义的路由处理方式；
 
 ```go
-import "github.com/issue9/middleware/v5/auth/basic"
-import "github.com/issue9/mux/v6"
+import "github.com/issue9/mux/v7"
 
-c := basic.New()
-
-router := mux.NewRouter("", &mux.Options{}, c)
+router := mux.NewRouterOf[http.Handler]("", ...) // 采用泛型实现自定义对象
 router.Get("/users/1", h).
     Post("/login", h).
     Get("/pages/{id:\\d+}.html", h). // 匹配 /pages/123.html 等格式，path = 123
@@ -100,7 +98,7 @@ rule 表示对参数的约束，一般为正则或是空，为空表示匹配任
 通过正则表达式匹配的路由，其中带命名的参数可通过 `GetParams()` 获取：
 
 ```go
-import "github.com/issue9/mux/v6"
+import "github.com/issue9/mux/v7"
 
 params := mux.GetParams(r)
 
@@ -118,8 +116,8 @@ id := params.MustInt("id", 0) // 在无法获取 id 参数时采用 0 作为默�
 ```go
 // server.go
 
-import "github.com/issue9/mux/v6"
-import "github.com/issue9/mux/v6/muxutil"
+import "github.com/issue9/mux/v7"
+import "github.com/issue9/mux/v7/muxutil"
 
 m := mux.NewRouters(...)
 
@@ -150,7 +148,7 @@ r.Do()
 但是正则表达式的性能并不是很好，这个时候我们可以通过在 `NewRouter` 传递 `Interceptor` 进行拦截：
 
 ```go
-import "github.com/issue9/mux/v6"
+import "github.com/issue9/mux/v7"
 
 func digit(path string) bool {
     for _, c := range path {
@@ -191,7 +189,7 @@ CORS 不再是以中间件的形式提供，而是通过 NewRouter 直接传递�
 OPTIONS 请求方法由系统自动生成。
 
 ```go
-import "github.com/issue9/mux/v6"
+import "github.com/issue9/mux/v7"
 
 r := mux.NewRouter("name" ,&mux.Options{CORS: AllowedCORS}) // 任意跨域请求
 
@@ -252,8 +250,8 @@ type Resource = ResourceOf[HandlerFunc]
 type MiddlewareFunc = MiddlewareFuncOf[HandlerFunc]
 type Middleware = MiddlewareOf[HandlerFunc]
 
-func New(name string, ms []Middleware)* Router {
-    f := func(w http.ResponseWriter, r *http.Request, ps Params, h HandlerFunc) {
+func New(name string)* Router {
+    call := func(w http.ResponseWriter, r *http.Request, ps Params, h HandlerFunc) {
         ctx := &Context {
             R: r,
             W: w,
@@ -261,7 +259,22 @@ func New(name string, ms []Middleware)* Router {
         }
         h(ctx)
     }
-    return NewRouterOf[HandlerFunc](name, f, ms...)
+    opt := func(n types.Node) Handler {
+        return HandlerFunc(func(ctx* Context){
+            ctx.W.Header().Set("Allow", n.AllowHeader())
+        })
+    }
+
+    m := func(n types.Node) Handler {
+        return HandlerFunc(func(ctx* Context){
+            ctx.W.Header().Set("Allow", n.AllowHeader())
+            ctx.W.WriteHeader(405)
+        })
+    }
+    notFound func(ctx* Context) {
+        ctx.W.WriteHeader(404)
+    }
+    return NewRouterOf[HandlerFunc](name, f, notFound, m, opt)
 }
 ```
 
@@ -281,7 +294,7 @@ r.Prefix("/admin").Get("/login", func(ctx *Context){
 })
 ```
 
-更多自定义路由的介绍可参考 <https://caixw.io/posts/2022/build-go-router-with-generics.html>
+更多自定义路由的介绍可参考 <https://caixw.io/posts/2022/build-go-router-with-generics.html> 或是 [examples](examples) 下的示例。
 
 ## 性能
 

@@ -62,13 +62,10 @@ type (
 
 // NewRouterOf 声明路由
 //
-// name string 路由名称，可以为空；
-//
-// o 修改路由的默认形为。比如 CaseInsensitive 会让路由忽略大小写，可以为空。
-//
-// T 表示用户用于处理路由项的方法，该类型最终通过 NewRouterOf 中的 call 参数与
-// http.ResponseWriter 和 *http.Request 相关联。
-func NewRouterOf[T any](name string, call CallOf[T], notFound T, methodNotAllowedBuilder, opt types.BuildNodeHandleOf[T], o *Options) *RouterOf[T] {
+// name 路由名称，可以为空；
+// o 修改路由的默认行为，可以为空；
+// T 表示用户用于处理路由项的方法。
+func NewRouterOf[T any](name string, call CallOf[T], notFound T, methodNotAllowedBuilder, optionsBuilder types.BuildNodeHandleOf[T], o *Options) *RouterOf[T] {
 	o, err := buildOptions(o)
 	if err != nil {
 		panic(err)
@@ -76,7 +73,7 @@ func NewRouterOf[T any](name string, call CallOf[T], notFound T, methodNotAllowe
 
 	r := &RouterOf[T]{
 		name: name,
-		tree: tree.New(o.Lock, o.interceptors, notFound, methodNotAllowedBuilder, opt),
+		tree: tree.New(o.Lock, o.interceptors, notFound, methodNotAllowedBuilder, optionsBuilder),
 		call: call,
 
 		cors:        o.CORS,

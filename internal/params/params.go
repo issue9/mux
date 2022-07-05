@@ -169,8 +169,9 @@ func (p *Params) Set(k, v string) {
 		}
 	}
 
+	// 没有需要修改的项
 	p.count++
-	if deletedIndex != -1 {
+	if deletedIndex != -1 { // 优先考虑被标记为删除的项作为添加
 		p.Params[deletedIndex].K = k
 		p.Params[deletedIndex].V = v
 	} else {

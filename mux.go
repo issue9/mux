@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-// Package mux 功能完备的路由中间件
-//
-// 提供了泛型版本 RouterOf，适用第三方框架自由实现路由。
-// 同时基于 RouterOf 提供了适配 http.Handler 路由 Router。
+// Package mux 适用第三方框架实现可定制的路由
 //
 // 语法
 //
