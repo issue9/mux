@@ -8,7 +8,7 @@ import (
 
 	"github.com/issue9/errwrap"
 
-	"github.com/issue9/mux/v7/internal/syntax"
+	"github.com/issue9/mux/v7/internal/params"
 	"github.com/issue9/mux/v7/internal/tree"
 	"github.com/issue9/mux/v7/types"
 )
@@ -187,10 +187,10 @@ func (r *RouterOf[T]) URL(strict bool, pattern string, params map[string]string)
 }
 
 func (r *RouterOf[T]) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	r.serveHTTP(w, req, syntax.NewParams(""))
+	r.serveHTTP(w, req, params.New(""))
 }
 
-func (r *RouterOf[T]) serveHTTP(w http.ResponseWriter, req *http.Request, p *syntax.Params) {
+func (r *RouterOf[T]) serveHTTP(w http.ResponseWriter, req *http.Request, p *params.Params) {
 	if r.recoverFunc != nil {
 		defer func() {
 			if err := recover(); err != nil {
@@ -203,6 +203,9 @@ func (r *RouterOf[T]) serveHTTP(w http.ResponseWriter, req *http.Request, p *syn
 	defer p.Destroy()
 
 	node, h, exists := r.tree.Handler(p, req.Method)
+	p.SetNode(node)
+	p.SetRouterName(r.Name())
+
 	if exists {
 		r.cors.handle(node, w.Header(), req) // 处理跨域问题
 		if req.Method == http.MethodHead {

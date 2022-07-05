@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/issue9/mux/v7"
+	"github.com/issue9/mux/v7/internal/params"
 	"github.com/issue9/mux/v7/internal/syntax"
 	"github.com/issue9/mux/v7/internal/tree"
 	"github.com/issue9/mux/v7/types"
@@ -45,7 +46,7 @@ func (hs *Hosts) Match(r *http.Request) (types.Params, bool) {
 		host = host[1 : len(host)-1]
 	}
 
-	ps := syntax.NewParams(strings.ToLower(host))
+	ps := params.New(strings.ToLower(host))
 	if _, _, exists := hs.tree.Handler(ps, http.MethodGet); !exists {
 		return nil, false
 	}

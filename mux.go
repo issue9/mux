@@ -24,13 +24,14 @@ package mux
 import (
 	"github.com/issue9/errwrap"
 
+	"github.com/issue9/mux/v7/internal/params"
 	"github.com/issue9/mux/v7/internal/syntax"
 	"github.com/issue9/mux/v7/internal/tree"
 	"github.com/issue9/mux/v7/types"
 )
 
 // ErrParamNotExists 表示地址参数中并不存在该名称的值
-var ErrParamNotExists = syntax.ErrParamNotExists
+var ErrParamNotExists = params.ErrParamNotExists
 
 var emptyInterceptors = syntax.NewInterceptors()
 
@@ -66,4 +67,4 @@ func Methods() []string {
 	return methods
 }
 
-func NewParams() types.Params { return syntax.NewParams("") }
+func NewParams() types.Params { return params.New("") }

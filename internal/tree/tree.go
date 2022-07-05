@@ -10,6 +10,7 @@ import (
 
 	"github.com/issue9/errwrap"
 
+	"github.com/issue9/mux/v7/internal/params"
 	"github.com/issue9/mux/v7/internal/syntax"
 	"github.com/issue9/mux/v7/types"
 )
@@ -188,7 +189,7 @@ func (tree *Tree[T]) getNode(pattern string) (*node[T], error) {
 }
 
 // match 找到与路径 path 匹配的 node 实例
-func (tree *Tree[T]) match(p *syntax.Params) *node[T] {
+func (tree *Tree[T]) match(p *params.Params) *node[T] {
 	if tree.locker != nil {
 		tree.locker.RLock()
 		defer tree.locker.RUnlock()
@@ -208,7 +209,7 @@ func (tree *Tree[T]) match(p *syntax.Params) *node[T] {
 // Handler 查找与参数匹配的处理对象
 //
 // 如果未找到，也会返回相应在的处理对象，比如 tree.notFound 或是相应的 methodNotAllowed 方法。
-func (tree *Tree[T]) Handler(p *syntax.Params, method string) (types.Node, T, bool) {
+func (tree *Tree[T]) Handler(p *params.Params, method string) (types.Node, T, bool) {
 	node := tree.match(p)
 	if node == nil {
 		return nil, tree.notFound, false

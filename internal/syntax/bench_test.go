@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/issue9/assert/v2"
+
+	"github.com/issue9/mux/v7/internal/params"
 )
 
 func BenchmarkSegment_Match_Named(b *testing.B) {
@@ -17,8 +19,8 @@ func BenchmarkSegment_Match_Named(b *testing.B) {
 	a.NotError(err).NotNil(seg)
 
 	for i := 0; i < b.N; i++ {
-		p := &Params{Path: "100000/author"}
-		a.True(seg.Match(p)).Equal(p.Params, []Param{{K: "id", V: "100000"}})
+		p := &params.Params{Path: "100000/author"}
+		a.True(seg.Match(p)).Equal(p.Params, []params.Param{{K: "id", V: "100000"}})
 	}
 }
 
@@ -32,8 +34,8 @@ func BenchmarkSegment_Match_Named_withMatcher(b *testing.B) {
 	a.NotError(err).NotNil(seg)
 
 	for i := 0; i < b.N; i++ {
-		p := &Params{Path: "10000/author"}
-		a.True(seg.Match(p)).Equal(p.Params, []Param{{K: "id", V: "10000"}})
+		p := &params.Params{Path: "10000/author"}
+		a.True(seg.Match(p)).Equal(p.Params, []params.Param{{K: "id", V: "10000"}})
 	}
 }
 
@@ -46,7 +48,7 @@ func BenchmarkSegment_Match_String(b *testing.B) {
 	a.NotError(err).NotNil(seg)
 
 	for i := 0; i < b.N; i++ {
-		p := &Params{Path: "/posts/author"}
+		p := &params.Params{Path: "/posts/author"}
 		a.True(seg.Match(p)).Nil(p.Params)
 	}
 }
@@ -60,7 +62,7 @@ func BenchmarkSegment_Match_Regexp(b *testing.B) {
 	a.NotError(err).NotNil(seg)
 
 	for i := 0; i < b.N; i++ {
-		p := &Params{Path: "1/author"}
-		a.True(seg.Match(p)).Equal(p.Params, []Param{{K: "id", V: "1"}})
+		p := &params.Params{Path: "1/author"}
+		a.True(seg.Match(p)).Equal(p.Params, []params.Param{{K: "id", V: "1"}})
 	}
 }

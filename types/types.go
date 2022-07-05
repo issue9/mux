@@ -3,6 +3,7 @@
 // Package types 类型的前置声明
 package types
 
+// Params 表示路由中的参数操作接口
 type Params interface {
 	// Count 返回参数的数量
 	Count() int
@@ -72,6 +73,14 @@ type Params interface {
 
 	// Range 依次访问每个参数
 	Range(func(key, val string))
+
+	// Node 当前请求关联的节点信息
+	//
+	// 有可能返回 nil，比如请求到了 404。
+	Node() Node
+
+	// RouterName RouterOf[T].Name() 的值
+	RouterName() string
 }
 
 // Node 路由节点

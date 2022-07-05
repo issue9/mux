@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/issue9/mux/v7/internal/params"
 	"github.com/issue9/mux/v7/internal/syntax"
 	"github.com/issue9/mux/v7/types"
 )
@@ -183,7 +184,7 @@ func (n *node[T]) clean(prefix string) {
 }
 
 // 从子节点中查找与当前路径匹配的节点，若找不到，则返回 nil。
-func (n *node[T]) matchChildren(p *syntax.Params) *node[T] {
+func (n *node[T]) matchChildren(p *params.Params) *node[T] {
 	if len(n.indexes) > 0 && len(p.Path) > 0 { // 普通字符串的匹配
 		child := n.children[n.indexes[p.Path[0]]]
 		if child == nil {

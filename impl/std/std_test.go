@@ -11,7 +11,7 @@ import (
 	"github.com/issue9/assert/v2/rest"
 
 	"github.com/issue9/mux/v7"
-	"github.com/issue9/mux/v7/internal/syntax"
+	"github.com/issue9/mux/v7/internal/params"
 	"github.com/issue9/mux/v7/routertest"
 	"github.com/issue9/mux/v7/types"
 )
@@ -51,7 +51,7 @@ func TestWithValue(t *testing.T) {
 	a := assert.New(t, false)
 
 	r := rest.Get(a, "/to/path").Request()
-	a.Equal(WithValue(r, &syntax.Params{}), r)
+	a.Equal(WithValue(r, &params.Params{}), r)
 
 	r = rest.Get(a, "/to/path").Request()
 	pp := mux.NewParams()
@@ -74,9 +74,9 @@ func TestGetParams(t *testing.T) {
 	ps := GetParams(r)
 	a.Nil(ps)
 
-	kvs := []syntax.Param{{K: "key1", V: "1"}}
+	kvs := []params.Param{{K: "key1", V: "1"}}
 	r = rest.Get(a, "/to/path").Request()
-	ctx := context.WithValue(r.Context(), contextKeyParams, &syntax.Params{Params: kvs})
+	ctx := context.WithValue(r.Context(), contextKeyParams, &params.Params{Params: kvs})
 	r = r.WithContext(ctx)
 	a.Equal(GetParams(r).MustString("key1", "def"), "1")
 }

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-package syntax
+package params
 
 import (
 	"testing"
@@ -12,17 +12,17 @@ import (
 
 var _ types.Params = &Params{}
 
-func TestNewParams(t *testing.T) {
+func TestNew(t *testing.T) {
 	a := assert.New(t, false)
 
 	var p *Params
 	p.Destroy()
 
-	p = NewParams("/abc")
+	p = New("/abc")
 	a.Equal(p.Path, "/abc")
 	p.Destroy()
 
-	p = NewParams("/def")
+	p = New("/def")
 	a.Equal(p.Path, "/def")
 }
 
@@ -158,7 +158,7 @@ func TestParams_Float(t *testing.T) {
 func TestParams_Set(t *testing.T) {
 	a := assert.New(t, false)
 
-	ps := NewParams("")
+	ps := New("")
 	ps.Set("k1", "v1")
 	a.Equal(ps.Count(), 1)
 
@@ -194,7 +194,7 @@ func TestParams_Delete(t *testing.T) {
 	var ps *Params
 	ps.Delete("k1")
 
-	ps = NewParams("/path")
+	ps = New("/path")
 	ps.Set("k1", "v1")
 	ps.Set("k2", "v2")
 
@@ -216,7 +216,7 @@ func TestParams_Range(t *testing.T) {
 	a := assert.New(t, false)
 	var size int
 
-	ps := NewParams("/path")
+	ps := New("/path")
 	ps.Set("k1", "v1")
 	ps.Set("k2", "v2")
 	ps.Range(func(k, v string) {

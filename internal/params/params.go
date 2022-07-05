@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: MIT
 
-package syntax
+// Package params 路由中参数相关功能的实现
+package params
 
 import (
 	"errors"
 	"strconv"
 	"sync"
+
+	"github.com/issue9/mux/v7/types"
 )
 
 var ErrParamNotExists = errors.New("不存在该参数")
@@ -14,26 +17,35 @@ var paramsPool = &sync.Pool{
 	New: func() any { return &Params{Params: make([]Param, 0, 5)} },
 }
 
-// Params 路由参数
-//
-// 实现了 types.Params 接口
 type Params struct {
-	Path   string  // 这是在 Segment.Match 中用到的路径信息。
-	Params []Param // 实际需要传递的参数
-	count  int
+	Path       string  // 这是在 Segment.Match 中用到的路径信息。
+	Params     []Param // 实际需要传递的参数
+	count      int
+	routerName string
+	node       types.Node
 }
 
 type Param struct {
 	K, V string // 如果 K 为空，则表示该参数已经被删除。
 }
 
-func NewParams(path string) *Params {
+func New(path string) *Params {
 	ps := paramsPool.Get().(*Params)
 	ps.Path = path
 	ps.Params = ps.Params[:0]
 	ps.count = 0
+	ps.routerName = ""
+	ps.node = nil
 	return ps
 }
+
+func (p *Params) SetNode(n types.Node) { p.node = n }
+
+func (p *Params) SetRouterName(n string) { p.routerName = n }
+
+func (p *Params) Node() types.Node { return p.node }
+
+func (p *Params) RouterName() string { return p.routerName }
 
 func (p *Params) Destroy() {
 	if p != nil {

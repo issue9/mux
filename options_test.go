@@ -12,6 +12,7 @@ import (
 	"github.com/issue9/assert/v2"
 	"github.com/issue9/assert/v2/rest"
 
+	"github.com/issue9/mux/v7/internal/params"
 	"github.com/issue9/mux/v7/internal/syntax"
 	"github.com/issue9/mux/v7/internal/tree"
 	"github.com/issue9/mux/v7/types"
@@ -176,7 +177,7 @@ func TestCORS_handle(t *testing.T) {
 	a := assert.New(t, false)
 	tr := tree.NewTestTree(a, false, syntax.NewInterceptors())
 	a.NotError(tr.Add("/path", nil, http.MethodGet, http.MethodDelete))
-	ps := syntax.NewParams("/path")
+	ps := params.New("/path")
 	node, _, exists := tr.Handler(ps, http.MethodGet)
 	a.NotNil(node).Zero(ps.Count()).True(exists)
 

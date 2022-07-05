@@ -8,7 +8,7 @@ import (
 
 	"github.com/issue9/sliceutil"
 
-	"github.com/issue9/mux/v7/internal/syntax"
+	"github.com/issue9/mux/v7/internal/params"
 	"github.com/issue9/mux/v7/types"
 )
 
@@ -61,11 +61,11 @@ func NewRoutersOf[T any](b CallOf[T], notFound T, methodNotAllowedBuilder, opt t
 func (rs *RoutersOf[T]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	for _, router := range rs.routers {
 		if ps, ok := router.matcher.Match(r); ok {
-			var p *syntax.Params
+			var p *params.Params
 			if ps != nil {
-				p = ps.(*syntax.Params)
+				p = ps.(*params.Params)
 			} else {
-				p = syntax.NewParams("")
+				p = params.New("")
 			}
 			router.serveHTTP(w, r, p)
 			return

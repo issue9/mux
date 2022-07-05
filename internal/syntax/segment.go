@@ -7,6 +7,8 @@ import (
 	"math"
 	"regexp"
 	"strings"
+
+	"github.com/issue9/mux/v7/internal/params"
 )
 
 // Segment 路由项被拆分之后的分段内容
@@ -191,7 +193,7 @@ func (seg *Segment) Valid(pattern string) bool {
 // Match 路径是否与当前节点匹配
 //
 // 如果正确匹配，则将剩余的未匹配字符串写入到 p.Path 并返回 true。
-func (seg *Segment) Match(p *Params) bool {
+func (seg *Segment) Match(p *params.Params) bool {
 	switch seg.Type {
 	case String:
 		if strings.HasPrefix(p.Path, seg.Value) {
