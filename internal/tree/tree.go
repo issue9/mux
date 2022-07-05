@@ -10,8 +10,8 @@ import (
 
 	"github.com/issue9/errwrap"
 
-	"github.com/issue9/mux/v6/internal/syntax"
-	"github.com/issue9/mux/v6/types"
+	"github.com/issue9/mux/v7/internal/syntax"
+	"github.com/issue9/mux/v7/types"
 )
 
 // Tree 以树节点的形式保存的路由

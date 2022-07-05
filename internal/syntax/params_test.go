@@ -7,7 +7,7 @@ import (
 
 	"github.com/issue9/assert/v2"
 
-	"github.com/issue9/mux/v6/types"
+	"github.com/issue9/mux/v7/types"
 )
 
 var _ types.Params = &Params{}

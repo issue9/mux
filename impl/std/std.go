@@ -7,8 +7,8 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/issue9/mux/v6"
-	"github.com/issue9/mux/v6/types"
+	"github.com/issue9/mux/v7"
+	"github.com/issue9/mux/v7/types"
 )
 
 const contextKeyParams contextKey = 0

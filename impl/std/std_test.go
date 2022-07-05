@@ -10,10 +10,10 @@ import (
 	"github.com/issue9/assert/v2"
 	"github.com/issue9/assert/v2/rest"
 
-	"github.com/issue9/mux/v6"
-	"github.com/issue9/mux/v6/internal/syntax"
-	"github.com/issue9/mux/v6/routertest"
-	"github.com/issue9/mux/v6/types"
+	"github.com/issue9/mux/v7"
+	"github.com/issue9/mux/v7/internal/syntax"
+	"github.com/issue9/mux/v7/routertest"
+	"github.com/issue9/mux/v7/types"
 )
 
 var (

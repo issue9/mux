@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 
 // Package routertest 提供针对路由的测试用例
-//
-// NOTE: 只提供针对不同的类型参数 T 可能造成不周结果的测试。
 package routertest
 
 import (
@@ -12,8 +10,8 @@ import (
 	"github.com/issue9/assert/v2"
 	"github.com/issue9/assert/v2/rest"
 
-	"github.com/issue9/mux/v6"
-	"github.com/issue9/mux/v6/types"
+	"github.com/issue9/mux/v7"
+	"github.com/issue9/mux/v7/types"
 )
 
 type Tester[T any] struct {

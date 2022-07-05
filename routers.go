@@ -8,8 +8,8 @@ import (
 
 	"github.com/issue9/sliceutil"
 
-	"github.com/issue9/mux/v6/internal/syntax"
-	"github.com/issue9/mux/v6/types"
+	"github.com/issue9/mux/v7/internal/syntax"
+	"github.com/issue9/mux/v7/types"
 )
 
 type (

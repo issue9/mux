@@ -24,9 +24,9 @@ package mux
 import (
 	"github.com/issue9/errwrap"
 
-	"github.com/issue9/mux/v6/internal/syntax"
-	"github.com/issue9/mux/v6/internal/tree"
-	"github.com/issue9/mux/v6/types"
+	"github.com/issue9/mux/v7/internal/syntax"
+	"github.com/issue9/mux/v7/internal/tree"
+	"github.com/issue9/mux/v7/types"
 )
 
 // ErrParamNotExists 表示地址参数中并不存在该名称的值

@@ -6,7 +6,7 @@ package ctx
 import (
 	"net/http"
 
-	"github.com/issue9/mux/v6/types"
+	"github.com/issue9/mux/v7/types"
 )
 
 type (

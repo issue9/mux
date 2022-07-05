@@ -7,8 +7,8 @@ import (
 
 	"github.com/issue9/assert/v2"
 
-	"github.com/issue9/mux/v6"
-	"github.com/issue9/mux/v6/internal/tree"
+	"github.com/issue9/mux/v7"
+	"github.com/issue9/mux/v7/internal/tree"
 )
 
 func TestMethods(t *testing.T) {

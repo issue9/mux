@@ -10,8 +10,8 @@ import (
 
 	"github.com/issue9/assert/v2"
 
-	"github.com/issue9/mux/v6/internal/syntax"
-	"github.com/issue9/mux/v6/types"
+	"github.com/issue9/mux/v7/internal/syntax"
+	"github.com/issue9/mux/v7/types"
 )
 
 // NewTestTree 返回以 http.Handler 作为参数实例化的 Tree

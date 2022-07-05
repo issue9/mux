@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/issue9/mux/v6"
-	"github.com/issue9/mux/v6/types"
+	"github.com/issue9/mux/v7"
+	"github.com/issue9/mux/v7/types"
 )
 
 // PathVersion 匹配路径中的版本号

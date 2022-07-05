@@ -9,9 +9,9 @@ import (
 	"github.com/issue9/assert/v2"
 	"github.com/issue9/assert/v2/rest"
 
-	"github.com/issue9/mux/v6"
-	"github.com/issue9/mux/v6/impl/std"
-	"github.com/issue9/mux/v6/muxutil"
+	"github.com/issue9/mux/v7"
+	"github.com/issue9/mux/v7/impl/std"
+	"github.com/issue9/mux/v7/muxutil"
 )
 
 var _ http.Handler = &std.Routers{}
