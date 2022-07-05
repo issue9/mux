@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/issue9/mux/v7"
 	"github.com/issue9/mux/v7/types"
 )
 
@@ -78,10 +77,10 @@ func NewHeaderVersion(param, key string, errlog *log.Logger, version ...string) 
 	}
 }
 
-func (v *HeaderVersion) Match(r *http.Request) (ret types.Params, ok bool) {
+func (v *HeaderVersion) Match(r *http.Request, ret types.Params) (ok bool) {
 	header := r.Header.Get("Accept")
 	if header == "" {
-		return nil, false
+		return false
 	}
 
 	_, ps, err := mime.ParseMediaType(header)
@@ -89,23 +88,22 @@ func (v *HeaderVersion) Match(r *http.Request) (ret types.Params, ok bool) {
 		if v.errlog != nil {
 			v.errlog.Println(err)
 		}
-		return nil, false
+		return false
 	}
 
 	ver := ps[v.acceptKey]
 	for _, vv := range v.versions {
 		if vv == ver {
 			if v.paramName != "" {
-				ret = mux.NewParams()
 				ret.Set(v.paramName, vv)
 			}
-			return ret, true
+			return true
 		}
 	}
-	return nil, false
+	return false
 }
 
-func (v *PathVersion) Match(r *http.Request) (ps types.Params, ok bool) {
+func (v *PathVersion) Match(r *http.Request, ps types.Params) (ok bool) {
 	p := r.URL.Path
 	for _, ver := range v.versions {
 		if strings.HasPrefix(p, ver) {
@@ -113,12 +111,11 @@ func (v *PathVersion) Match(r *http.Request) (ps types.Params, ok bool) {
 
 			r.URL.Path = strings.TrimPrefix(p, vv)
 			if v.paramName != "" {
-				ps = mux.NewParams()
 				ps.Set(v.paramName, vv)
 			}
 
-			return ps, true
+			return true
 		}
 	}
-	return nil, false
+	return false
 }

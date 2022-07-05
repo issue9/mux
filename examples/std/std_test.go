@@ -10,7 +10,6 @@ import (
 	"github.com/issue9/assert/v2"
 	"github.com/issue9/assert/v2/rest"
 
-	"github.com/issue9/mux/v7"
 	"github.com/issue9/mux/v7/internal/params"
 	"github.com/issue9/mux/v7/routertest"
 	"github.com/issue9/mux/v7/types"
@@ -54,11 +53,11 @@ func TestWithValue(t *testing.T) {
 	a.Equal(WithValue(r, &params.Params{}), r)
 
 	r = rest.Get(a, "/to/path").Request()
-	pp := mux.NewParams()
+	pp := params.New("")
 	pp.Set("k1", "v1")
 	r = WithValue(r, pp)
 
-	pp = mux.NewParams()
+	pp = params.New("")
 	pp.Set("k2", "v2")
 	r = WithValue(r, pp)
 	ps := GetParams(r)

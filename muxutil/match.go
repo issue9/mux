@@ -13,49 +13,39 @@ import (
 //
 // 前一个对象返回的实例将作为下一个对象的输入参数。
 func AndMatcher(m ...mux.Matcher) mux.Matcher {
-	return mux.MatcherFunc(func(r *http.Request) (ps types.Params, ok bool) {
-		ps = mux.NewParams()
-
+	return mux.MatcherFunc(func(r *http.Request, ps types.Params) (ok bool) {
 		for _, mm := range m {
-			ps2, ok := mm.Match(r)
-			if !ok {
-				return nil, false
+			if !mm.Match(r, ps) {
+				return false
 			}
-			if ps2.Count() == 0 {
-				continue
-			}
-
-			ps2.Range(func(k, v string) {
-				ps.Set(k, v)
-			})
 		}
-		return ps, true
+		return true
 	})
 }
 
 // OrMatcher 仅需符合一个要求
 func OrMatcher(m ...mux.Matcher) mux.Matcher {
-	return mux.MatcherFunc(func(r *http.Request) (types.Params, bool) {
+	return mux.MatcherFunc(func(r *http.Request, ps types.Params) bool {
 		for _, mm := range m {
-			if rr, ok := mm.Match(r); ok {
-				return rr, true
+			if ok := mm.Match(r, ps); ok {
+				return true
 			}
 		}
-		return nil, false
+		return false
 	})
 }
 
 // AndMatcherFunc 需同时符合每一个要求
-func AndMatcherFunc(f ...func(*http.Request) (types.Params, bool)) mux.Matcher {
+func AndMatcherFunc(f ...func(*http.Request, types.Params) bool) mux.Matcher {
 	return AndMatcher(f2i(f...)...)
 }
 
 // OrMatcherFunc 仅需符合一个要求
-func OrMatcherFunc(f ...func(*http.Request) (types.Params, bool)) mux.Matcher {
+func OrMatcherFunc(f ...func(*http.Request, types.Params) bool) mux.Matcher {
 	return OrMatcher(f2i(f...)...)
 }
 
-func f2i(f ...func(*http.Request) (types.Params, bool)) []mux.Matcher {
+func f2i(f ...func(*http.Request, types.Params) bool) []mux.Matcher {
 	ms := make([]mux.Matcher, 0, len(f))
 	for _, ff := range f {
 		ms = append(ms, mux.MatcherFunc(ff))

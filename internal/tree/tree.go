@@ -188,13 +188,8 @@ func (tree *Tree[T]) getNode(pattern string) (*node[T], error) {
 	return tree.node.getNode(segs)
 }
 
-// match 找到与路径 path 匹配的 node 实例
+// match 找到与路径 p.Path 匹配的 node 实例
 func (tree *Tree[T]) match(p *params.Params) *node[T] {
-	if tree.locker != nil {
-		tree.locker.RLock()
-		defer tree.locker.RUnlock()
-	}
-
 	if p.Path == "*" || p.Path == "" {
 		return tree.node
 	}
@@ -210,6 +205,11 @@ func (tree *Tree[T]) match(p *params.Params) *node[T] {
 //
 // 如果未找到，也会返回相应在的处理对象，比如 tree.notFound 或是相应的 methodNotAllowed 方法。
 func (tree *Tree[T]) Handler(p *params.Params, method string) (types.Node, T, bool) {
+	if tree.locker != nil {
+		tree.locker.RLock()
+		defer tree.locker.RUnlock()
+	}
+
 	node := tree.match(p)
 	if node == nil {
 		return nil, tree.notFound, false

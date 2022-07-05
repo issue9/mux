@@ -36,9 +36,8 @@ func (hs *Hosts) RegisterInterceptor(f mux.InterceptorFunc, name ...string) {
 	hs.i.Add(f, name...)
 }
 
-func (hs *Hosts) Match(r *http.Request) (types.Params, bool) {
-	// r.URL.Hostname() 可能为空，r.Host 一直有值！
-	host := r.Host
+func (hs *Hosts) Match(r *http.Request, ps types.Params) bool {
+	host := r.Host // r.URL.Hostname() 可能为空，r.Host 一直有值！
 	if index := strings.LastIndexByte(host, ':'); index != -1 && validOptionalPort(host[index:]) {
 		host = host[:index]
 	}
@@ -46,11 +45,10 @@ func (hs *Hosts) Match(r *http.Request) (types.Params, bool) {
 		host = host[1 : len(host)-1]
 	}
 
-	ps := params.New(strings.ToLower(host))
-	if _, _, exists := hs.tree.Handler(ps, http.MethodGet); !exists {
-		return nil, false
-	}
-	return ps, true
+	ps1 := ps.(*params.Params) // 由 RoutersOf.ServeHTTP 保证该类型为 *params.Params
+	ps1.Path = strings.ToLower(host)
+	_, _, exists := hs.tree.Handler(ps1, http.MethodGet)
+	return exists
 }
 
 // 源自 https://github.com/golang/go/blob/d8762b2f4532cc2e5ec539670b88bbc469a13938/src/net/url/url.go#L769

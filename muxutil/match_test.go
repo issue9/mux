@@ -7,6 +7,7 @@ import (
 
 	"github.com/issue9/assert/v2"
 	"github.com/issue9/assert/v2/rest"
+	"github.com/issue9/mux/v7/internal/params"
 )
 
 func TestAndMatcherFunc(t *testing.T) {
@@ -17,14 +18,15 @@ func TestAndMatcherFunc(t *testing.T) {
 
 	m := AndMatcherFunc(p1.Match, p2.Match)
 	r := rest.Get(a, "/v1/v2/path").Request()
-	ps, ok := m.Match(r)
-	a.True(ok).NotNil(ps).
-		Equal(r.URL.Path, "/path")
+	ps := params.New("")
+	ok := m.Match(r, ps)
+	a.True(ok).Equal(r.URL.Path, "/path")
 
 	m = AndMatcherFunc(p1.Match, p2.Match)
 	r = rest.Get(a, "/v2/v1/path").Request()
-	ps, ok = m.Match(r)
-	a.False(ok).Nil(ps)
+	ps = params.New("")
+	ok = m.Match(r, ps)
+	a.False(ok)
 }
 
 func TestOrMatcherFunc(t *testing.T) {
@@ -35,18 +37,19 @@ func TestOrMatcherFunc(t *testing.T) {
 
 	m := OrMatcherFunc(p1.Match, p2.Match)
 	r := rest.Get(a, "/v1/v2/path").Request()
-	ps, ok := m.Match(r)
-	a.True(ok).NotNil(ps).
-		Equal(r.URL.Path, "/v2/path")
+	ps := params.New("")
+	ok := m.Match(r, ps)
+	a.True(ok).Equal(r.URL.Path, "/v2/path")
 
 	m = OrMatcherFunc(p1.Match, p2.Match)
 	r = rest.Get(a, "/v2/v1/path").Request()
-	ps, ok = m.Match(r)
-	a.True(ok).NotNil(ps).
-		Equal(r.URL.Path, "/v1/path")
+	ps = params.New("")
+	ok = m.Match(r, ps)
+	a.True(ok).Equal(r.URL.Path, "/v1/path")
 
 	m = OrMatcherFunc(p1.Match, p2.Match)
 	r = rest.Get(a, "/v111/v2/v1/path").Request()
-	ps, ok = m.Match(r)
-	a.False(ok).Nil(ps)
+	ps = params.New("")
+	ok = m.Match(r, ps)
+	a.False(ok)
 }
