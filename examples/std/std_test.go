@@ -24,12 +24,12 @@ func TestRouter(t *testing.T) {
 	tt := routertest.NewTester(call, http.NotFoundHandler(), methodNotAllowedBuilder, optionsHandlerBuilder)
 
 	a.Run("params", func(a *assert.Assertion) {
-		tt.Params(a, func(ps *types.Params) http.Handler {
+		tt.Params(a, func(ctx *types.Context) http.Handler {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				p := GetParams(r)
 				if p != nil {
 					p.Params().Range(func(k, v string) {
-						(*ps).Set(k, v)
+						ctx.Set(k, v)
 					})
 				}
 			})
@@ -52,11 +52,11 @@ func TestWithValue(t *testing.T) {
 	a.NotEqual(WithValue(r, &types.Context{}), r)
 
 	r = rest.Get(a, "/to/path").Request()
-	pp := types.NewContext("")
+	pp := types.NewContext()
 	pp.Set("k1", "v1")
 	r = WithValue(r, pp)
 
-	pp = types.NewContext("")
+	pp = types.NewContext()
 	pp.Set("k2", "v2")
 	r = WithValue(r, pp)
 	ps := GetParams(r)
@@ -72,7 +72,7 @@ func TestGetParams(t *testing.T) {
 	ps := GetParams(r)
 	a.Nil(ps)
 
-	c := types.NewContext("")
+	c := types.NewContext()
 	c.Set("key1", "1")
 	r = rest.Get(a, "/to/path").Request()
 	ctx := context.WithValue(r.Context(), contextKeyParams, c)

@@ -26,7 +26,7 @@ func TestHeaderVersion_Match(t *testing.T) {
 	r := rest.Get(a, "https://caixw.io/test").
 		Header("Accept", "application/json; version=1.0").
 		Request()
-	ps := types.NewContext("")
+	ps := types.NewContext()
 	ok := h.Match(r, ps)
 	a.True(ok).Equal(ps.MustString("version", "not-exists"), "1.0")
 
@@ -35,7 +35,7 @@ func TestHeaderVersion_Match(t *testing.T) {
 	r = rest.Get(a, "https://caixw.io/test").
 		Header("Accept", "application/json; version=1.0").
 		Request()
-	ps = types.NewContext("")
+	ps = types.NewContext()
 	ok = h.Match(r, ps)
 	a.True(ok)
 
@@ -43,7 +43,7 @@ func TestHeaderVersion_Match(t *testing.T) {
 	r = rest.Get(a, "https://not.exists/test").
 		Header("Accept", "application/json; version=").
 		Request()
-	ps = types.NewContext("")
+	ps = types.NewContext()
 	ok = h.Match(r, ps)
 	a.False(ok)
 
@@ -51,7 +51,7 @@ func TestHeaderVersion_Match(t *testing.T) {
 	r = rest.Get(a, "https://not.exists/test").
 		Header("Accept", "application/json; version = 2").
 		Request()
-	ps = types.NewContext("")
+	ps = types.NewContext()
 	ok = h.Match(r, ps)
 	a.False(ok)
 
@@ -59,7 +59,7 @@ func TestHeaderVersion_Match(t *testing.T) {
 	r = rest.Get(a, "https://caixw.io/test").
 		Header("Accept", "application/json").
 		Request()
-	ps = types.NewContext("")
+	ps = types.NewContext()
 	ok = h.Match(r, ps)
 	a.False(ok)
 
@@ -67,14 +67,14 @@ func TestHeaderVersion_Match(t *testing.T) {
 	r = rest.Get(a, "https://caixw.io/test").
 		Header("Accept", ";version=1.0").
 		Request()
-	ps = types.NewContext("")
+	ps = types.NewContext()
 	ok = h.Match(r, ps)
 	a.False(ok)
 
 	// 未指定 Accept
 	r = rest.Get(a, "https://caixw.io/test").
 		Request()
-	ps = types.NewContext("")
+	ps = types.NewContext()
 	ok = h.Match(r, ps)
 	a.False(ok)
 
@@ -84,7 +84,7 @@ func TestHeaderVersion_Match(t *testing.T) {
 	r = rest.Get(a, "https://caixw.io/test").
 		Header("Accept", "application/json; version=1.0").
 		Request()
-	ps = types.NewContext("")
+	ps = types.NewContext()
 	ok = h.Match(r, ps)
 	a.False(ok)
 
@@ -92,7 +92,7 @@ func TestHeaderVersion_Match(t *testing.T) {
 	r = rest.Get(a, "https://not.exists/test").
 		Header("Accept", "application/json; version=").
 		Request()
-	ps = types.NewContext("")
+	ps = types.NewContext()
 	ok = h.Match(r, ps)
 	a.False(ok)
 
@@ -100,14 +100,14 @@ func TestHeaderVersion_Match(t *testing.T) {
 	r = rest.Get(a, "https://not.exists/test").
 		Header("Accept", "application/json; version=2").
 		Request()
-	ps = types.NewContext("")
+	ps = types.NewContext()
 	ok = h.Match(r, ps)
 	a.False(ok)
 
 	r = rest.Get(a, "https://caixw.io/test").
 		Header("Accept", "application/json; version=1.0").
 		Request()
-	ps = types.NewContext("")
+	ps = types.NewContext()
 	ok = h.Match(r, ps)
 	a.False(ok)
 }
@@ -123,7 +123,7 @@ func TestPathVersion_Match(t *testing.T) {
 
 	// 相同版本号
 	r := rest.Get(a, "https://caixw.io/v1/test").Request()
-	ps := types.NewContext("")
+	ps := types.NewContext()
 	ok := h.Match(r, ps)
 	a.True(ok)
 	a.Equal(r.URL.Path, "/test").
@@ -132,14 +132,14 @@ func TestPathVersion_Match(t *testing.T) {
 	// 相同版本号，未指定 key
 	h = NewPathVersion("", "v3", "/v2", "/v1")
 	r = rest.Get(a, "https://caixw.io/v1/test").Request()
-	ps = types.NewContext("")
+	ps = types.NewContext()
 	ok = h.Match(r, ps)
 	a.True(ok)
 	a.Equal(r.URL.Path, "/test")
 
 	// 空版本
 	r = rest.Get(a, "https://caixw.io/test").Request()
-	ps = types.NewContext("")
+	ps = types.NewContext()
 	ok = h.Match(r, ps)
 	a.False(ok)
 	a.Equal(r.URL.Path, "/test")
@@ -147,7 +147,7 @@ func TestPathVersion_Match(t *testing.T) {
 	// 不同版本
 	r = rest.Get(a, "https://caixw.io/v111/test").Request()
 	a.NotNil(r)
-	ps = types.NewContext("")
+	ps = types.NewContext()
 	ok = h.Match(r, ps)
 	a.False(ok)
 	a.Equal(r.URL.Path, "/v111/test")
@@ -158,7 +158,7 @@ func TestPathVersion_Match(t *testing.T) {
 	r = rest.Get(a, "https://caixw.io/test").
 		Header("Accept", "application/json; version=1.0").
 		Request()
-	ps = types.NewContext("")
+	ps = types.NewContext()
 	ok = h.Match(r, ps)
 	a.False(ok)
 }

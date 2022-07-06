@@ -16,11 +16,11 @@ func TestContextRouter_Params(t *testing.T) {
 	tt := routertest.NewTester[Handler](call, HandlerFunc(notFound), methodNotAllowedBuilder, optionsHandlerBuilder)
 
 	a.Run("params", func(a *assert.Assertion) {
-		tt.Params(a, func(ps *types.Params) Handler {
+		tt.Params(a, func(ctx *types.Context) Handler {
 			return HandlerFunc(func(c *CTX) {
 				if c.P != nil {
 					c.P.Params().Range(func(k, v string) {
-						(*ps).Set(k, v)
+						ctx.Set(k, v)
 					})
 				}
 			})

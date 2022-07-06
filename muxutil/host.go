@@ -35,7 +35,7 @@ func (hs *Hosts) RegisterInterceptor(f mux.InterceptorFunc, name ...string) {
 	hs.i.Add(f, name...)
 }
 
-func (hs *Hosts) Match(r *http.Request, ps types.Params) bool {
+func (hs *Hosts) Match(r *http.Request, ctx *types.Context) bool {
 	host := r.Host // r.URL.Hostname() 可能为空，r.Host 一直有值！
 	if index := strings.LastIndexByte(host, ':'); index != -1 && validOptionalPort(host[index:]) {
 		host = host[:index]
@@ -44,9 +44,8 @@ func (hs *Hosts) Match(r *http.Request, ps types.Params) bool {
 		host = host[1 : len(host)-1]
 	}
 
-	ps1 := ps.(*types.Context) // 由 RoutersOf.ServeHTTP 保证该类型为 *types.Context
-	ps1.Path = strings.ToLower(host)
-	_, _, exists := hs.tree.Handler(ps1, http.MethodGet)
+	ctx.Path = strings.ToLower(host)
+	_, _, exists := hs.tree.Handler(ctx, http.MethodGet)
 	return exists
 }
 

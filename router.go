@@ -183,12 +183,12 @@ func (r *RouterOf[T]) URL(strict bool, pattern string, params map[string]string)
 }
 
 func (r *RouterOf[T]) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	p := types.NewContext("")
+	p := types.NewContext()
 	defer p.Destroy()
-	r.serveHTTP(w, req, p)
+	r.ServeContext(w, req, p)
 }
 
-func (r *RouterOf[T]) serveHTTP(w http.ResponseWriter, req *http.Request, p *types.Context) {
+func (r *RouterOf[T]) ServeContext(w http.ResponseWriter, req *http.Request, ctx *types.Context) {
 	if r.recoverFunc != nil {
 		defer func() {
 			if err := recover(); err != nil {
@@ -197,10 +197,10 @@ func (r *RouterOf[T]) serveHTTP(w http.ResponseWriter, req *http.Request, p *typ
 		}()
 	}
 
-	p.Path = req.URL.Path
-	node, h, exists := r.tree.Handler(p, req.Method)
-	p.SetNode(node)
-	p.SetRouterName(r.Name())
+	ctx.Path = req.URL.Path
+	node, h, exists := r.tree.Handler(ctx, req.Method)
+	ctx.SetNode(node)
+	ctx.SetRouterName(r.Name())
 
 	if exists {
 		r.cors.handle(node, w.Header(), req)
@@ -208,7 +208,7 @@ func (r *RouterOf[T]) serveHTTP(w http.ResponseWriter, req *http.Request, p *typ
 			w = &headResponse{ResponseWriter: w}
 		}
 	}
-	r.call(w, req, p, h)
+	r.call(w, req, ctx, h)
 }
 
 // Name 路由名称

@@ -176,9 +176,10 @@ func TestCORS_handle(t *testing.T) {
 	a := assert.New(t, false)
 	tr := tree.NewTestTree(a, false, syntax.NewInterceptors())
 	a.NotError(tr.Add("/path", nil, http.MethodGet, http.MethodDelete))
-	ps := types.NewContext("/path")
-	node, _, exists := tr.Handler(ps, http.MethodGet)
-	a.NotNil(node).Zero(ps.Count()).True(exists)
+	ctx := types.NewContext()
+	ctx.Path = "/path"
+	node, _, exists := tr.Handler(ctx, http.MethodGet)
+	a.NotNil(node).Zero(ctx.Count()).True(exists)
 
 	// deny
 

@@ -31,17 +31,17 @@ type (
 		//
 		// p 为匹配过程中生成的参数信息，必须为非空值；
 		// ok 表示是否匹配成功；
-		Match(r *http.Request, p types.Params) (ok bool)
+		Match(r *http.Request, p *types.Context) (ok bool)
 	}
 
 	// MatcherFunc 验证请求是否符合要求
-	MatcherFunc func(*http.Request, types.Params) (ok bool)
+	MatcherFunc func(*http.Request, *types.Context) (ok bool)
 )
 
 // Match 实现 Matcher 接口
-func (f MatcherFunc) Match(r *http.Request, p types.Params) bool { return f(r, p) }
+func (f MatcherFunc) Match(r *http.Request, p *types.Context) bool { return f(r, p) }
 
-func anyRouter(*http.Request, types.Params) bool { return true }
+func anyRouter(*http.Request, *types.Context) bool { return true }
 
 // NewRoutersOf 声明一个新的 RoutersOf
 func NewRoutersOf[T any](b CallOf[T], notFound T, methodNotAllowedBuilder, opt types.BuildNodeHandleOf[T]) *RoutersOf[T] {
@@ -56,11 +56,11 @@ func NewRoutersOf[T any](b CallOf[T], notFound T, methodNotAllowedBuilder, opt t
 
 func (rs *RoutersOf[T]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	for _, router := range rs.routers {
-		ps := types.NewContext("")
+		ps := types.NewContext()
 		defer ps.Destroy()
 
 		if ok := router.matcher.Match(r, ps); ok {
-			router.serveHTTP(w, r, ps)
+			router.ServeContext(w, r, ps)
 			return
 		}
 	}

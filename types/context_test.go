@@ -16,11 +16,13 @@ func TestNew(t *testing.T) {
 	var p *Context
 	p.Destroy()
 
-	p = NewContext("/abc")
+	p = NewContext()
+	p.Path = "/abc"
 	a.Equal(p.Path, "/abc")
 	p.Destroy()
 
-	p = NewContext("/def")
+	p = NewContext()
+	p.Path = "/def"
 	a.Equal(p.Path, "/def")
 }
 
@@ -156,16 +158,16 @@ func TestParams_Float(t *testing.T) {
 func TestParams_Set(t *testing.T) {
 	a := assert.New(t, false)
 
-	ps := NewContext("")
+	ps := NewContext()
 	ps.Set("k1", "v1")
 	a.Equal(ps.Count(), 1)
 
 	ps.Set("k1", "v2")
 	a.Equal(ps.Count(), 1)
-	a.Equal(ps, &Context{params: []param{{K: "k1", V: "v2"}}, parameterCount: 1})
+	a.Equal(ps, &Context{params: []param{{K: "k1", V: "v2"}}, paramsCount: 1})
 
 	ps.Set("k2", "v2")
-	a.Equal(ps, &Context{params: []param{{K: "k1", V: "v2"}, {K: "k2", V: "v2"}}, parameterCount: 2})
+	a.Equal(ps, &Context{params: []param{{K: "k1", V: "v2"}, {K: "k2", V: "v2"}}, paramsCount: 2})
 	a.Equal(ps.Count(), 2)
 }
 
@@ -192,7 +194,8 @@ func TestParams_Delete(t *testing.T) {
 	var ps *Context
 	ps.Delete("k1")
 
-	ps = NewContext("/path")
+	ps = NewContext()
+	ps.Path = "/path"
 	ps.Set("k1", "v1")
 	ps.Set("k2", "v2")
 
@@ -214,7 +217,8 @@ func TestParams_Range(t *testing.T) {
 	a := assert.New(t, false)
 	var size int
 
-	ps := NewContext("/path")
+	ps := NewContext()
+	ps.Path = "/path"
 	ps.Set("k1", "v1")
 	ps.Set("k2", "v2")
 	ps.Range(func(k, v string) {

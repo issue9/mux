@@ -13,25 +13,29 @@ var contextPool = &sync.Pool{
 
 // Context 保存着路由匹配过程中的上下文关系
 type Context struct {
-	Path           string  // 实际请求的路径信息
-	params         []param // 实际需要传递的参数
-	parameterCount int
-	routerName     string
-	node           Node
+	Path        string  // 实际请求的路径信息
+	params      []param // 实际需要传递的参数
+	paramsCount int
+	routerName  string
+	node        Node
 }
 
 type param struct {
 	K, V string // 如果 K 为空，则表示该参数已经被删除。
 }
 
-func NewContext(path string) *Context {
-	ps := contextPool.Get().(*Context)
-	ps.Path = path
-	ps.params = ps.params[:0]
-	ps.parameterCount = 0
-	ps.routerName = ""
-	ps.node = nil
-	return ps
+func NewContext() *Context {
+	ctx := contextPool.Get().(*Context)
+	ctx.Reset()
+	return ctx
+}
+
+func (ctx *Context) Reset() {
+	ctx.Path = ""
+	ctx.params = ctx.params[:0]
+	ctx.paramsCount = 0
+	ctx.routerName = ""
+	ctx.node = nil
 }
 
 func (ctx *Context) Params() Params { return ctx }
@@ -150,7 +154,7 @@ func (ctx *Context) Count() (cnt int) {
 	if ctx == nil {
 		return 0
 	}
-	return ctx.parameterCount
+	return ctx.paramsCount
 }
 
 func (ctx *Context) Set(k, v string) {
@@ -167,7 +171,7 @@ func (ctx *Context) Set(k, v string) {
 	}
 
 	// 没有需要修改的项
-	ctx.parameterCount++
+	ctx.paramsCount++
 	if deletedIndex != -1 { // 优先考虑被标记为删除的项作为添加
 		ctx.params[deletedIndex].K = k
 		ctx.params[deletedIndex].V = v
@@ -184,7 +188,7 @@ func (ctx *Context) Delete(k string) {
 	for i, pp := range ctx.params {
 		if pp.K == k {
 			ctx.params[i].K = ""
-			ctx.parameterCount--
+			ctx.paramsCount--
 			return
 		}
 	}

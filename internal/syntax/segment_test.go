@@ -272,7 +272,8 @@ func TestSegment_Match(t *testing.T) {
 	// Named:any
 	seg, err := i.NewSegment("{id:any}/author")
 	a.NotError(err).NotNil(seg)
-	p := types.NewContext("1/author")
+	p := types.NewContext()
+	p.Path = "1/author"
 	a.True(seg.Match(p)).
 		Empty(p.Path).
 		Equal(1, p.Count()).Equal(p.MustString("id", "not-exists"), "1")
@@ -280,7 +281,8 @@ func TestSegment_Match(t *testing.T) {
 	// Named 完全匹配
 	seg, err = i.NewSegment("{id}/author")
 	a.NotError(err).NotNil(seg)
-	p = types.NewContext("1/author")
+	p = types.NewContext()
+	p.Path = "1/author"
 	a.True(seg.Match(p)).
 		Empty(p.Path).
 		Equal(1, p.Count()).
@@ -289,7 +291,8 @@ func TestSegment_Match(t *testing.T) {
 	// Named 部分匹配
 	seg, err = i.NewSegment("{id}/author")
 	a.NotError(err).NotNil(seg)
-	p = types.NewContext("1/author/email")
+	p = types.NewContext()
+	p.Path = "1/author/email"
 	a.True(seg.Match(p))
 	a.Equal(p.Path, "/email").
 		Equal(1, p.Count()).
@@ -298,14 +301,16 @@ func TestSegment_Match(t *testing.T) {
 	// Named 不匹配
 	seg, err = i.NewSegment("{id}/author")
 	a.NotError(err).NotNil(seg)
-	p = types.NewContext("1/aut")
+	p = types.NewContext()
+	p.Path = "1/aut"
 	a.False(seg.Match(p))
 	a.Equal(p.Path, "1/aut").Zero(p.Count())
 
 	// Named 1/2 匹配 {id}
 	seg, err = i.NewSegment("{id}/author")
 	a.NotError(err).NotNil(seg)
-	p = types.NewContext("1/2/author")
+	p = types.NewContext()
+	p.Path = "1/2/author"
 	a.True(seg.Match(p)).
 		Equal(p.Path, "").
 		Equal(1, p.Count()).
@@ -314,7 +319,8 @@ func TestSegment_Match(t *testing.T) {
 	// Interceptor 1/2 匹配 {id}
 	seg, err = i.NewSegment("{id:any}/author")
 	a.NotError(err).NotNil(seg)
-	p = types.NewContext("1/2/author")
+	p = types.NewContext()
+	p.Path = "1/2/author"
 	a.True(seg.Match(p)).
 		Equal(p.Path, "").
 		Equal(1, p.Count()).
@@ -322,13 +328,15 @@ func TestSegment_Match(t *testing.T) {
 
 	seg, err = i.NewSegment("{any}/123")
 	a.NotError(err).NotNil(seg)
-	p = types.NewContext("123")
+	p = types.NewContext()
+	p.Path = "123"
 	a.False(seg.Match(p)).
 		Equal(p.Path, "123").Zero(p.Count())
 
 	seg, err = i.NewSegment("{any:any}/123")
 	a.NotError(err).NotNil(seg)
-	p = types.NewContext("123")
+	p = types.NewContext()
+	p.Path = "123"
 	a.False(seg.Match(p)).
 		Equal(p.Path, "123").Zero(p.Count())
 
@@ -336,7 +344,8 @@ func TestSegment_Match(t *testing.T) {
 	seg, err = i.NewSegment("{any}123")
 	a.NotError(err).NotNil(seg)
 	a.Equal(seg.Type, Named)
-	p = types.NewContext("123123")
+	p = types.NewContext()
+	p.Path = "123123"
 	a.True(seg.Match(p)).
 		Equal(p.Path, "123").
 		Equal(1, p.Count()).
@@ -346,7 +355,8 @@ func TestSegment_Match(t *testing.T) {
 	seg, err = i.NewSegment("{any:any}123")
 	a.NotError(err).NotNil(seg)
 	a.Equal(seg.Type, Interceptor)
-	p = types.NewContext("123123")
+	p = types.NewContext()
+	p.Path = "123123"
 	a.True(seg.Match(p))
 	a.Empty(p.Path).
 		Equal(1, p.Count()).
@@ -354,7 +364,8 @@ func TestSegment_Match(t *testing.T) {
 
 	seg, err = i.NewSegment("{any:any}123")
 	a.NotError(err).NotNil(seg)
-	p = types.NewContext("12345123")
+	p = types.NewContext()
+	p.Path = "12345123"
 	a.True(seg.Match(p)).
 		Empty(p.Path).
 		Equal(1, p.Count()).
@@ -362,7 +373,8 @@ func TestSegment_Match(t *testing.T) {
 
 	seg, err = i.NewSegment("{any:digit}123")
 	a.NotError(err).NotNil(seg)
-	p = types.NewContext("12345123")
+	p = types.NewContext()
+	p.Path = "12345123"
 	a.True(seg.Match(p)).
 		Empty(p.Path).
 		Equal(1, p.Count()).
@@ -371,7 +383,8 @@ func TestSegment_Match(t *testing.T) {
 	// Named Endpoint 匹配
 	seg, err = i.NewSegment("{path}")
 	a.NotError(err).NotNil(seg)
-	p = types.NewContext("/posts/author")
+	p = types.NewContext()
+	p.Path = "/posts/author"
 	a.True(seg.Match(p)).
 		Empty(p.Path).
 		Equal(1, p.Count()).
@@ -380,7 +393,8 @@ func TestSegment_Match(t *testing.T) {
 	// Named:digit Endpoint 匹配
 	seg, err = i.NewSegment("{id:digit}")
 	a.NotError(err).NotNil(seg)
-	p = types.NewContext("123")
+	p = types.NewContext()
+	p.Path = "123"
 	a.True(seg.Match(p))
 	a.Empty(p.Path).
 		Equal(1, p.Count()).
@@ -389,7 +403,8 @@ func TestSegment_Match(t *testing.T) {
 	// Named:digit Endpoint 不匹配，不会删除传入的参数
 	seg, err = i.NewSegment("{id:digit}")
 	a.NotError(err).NotNil(seg)
-	p = types.NewContext("one")
+	p = types.NewContext()
+	p.Path = "one"
 	p.Set("p1", "v1")
 	a.False(seg.Match(p)).
 		Equal(p.Path, "one").
@@ -401,12 +416,14 @@ func TestSegment_Match(t *testing.T) {
 	a.NotError(err).NotNil(seg)
 
 	// Named:digit 不匹配
-	p = types.NewContext("1/aut")
+	p = types.NewContext()
+	p.Path = "1/aut"
 	a.False(seg.Match(p)).
 		Equal(p.Path, "1/aut").Zero(p.Count())
 
 	// Named:digit 类型不匹配
-	p = types.NewContext("xx/author")
+	p = types.NewContext()
+	p.Path = "xx/author"
 	a.False(seg.Match(p)).
 		Equal(p.Path, "xx/author").
 		Zero(p.Count())
@@ -416,7 +433,8 @@ func TestSegment_Match(t *testing.T) {
 	a.NotError(err).NotNil(seg)
 
 	// String 匹配
-	p = types.NewContext("/posts/author")
+	p = types.NewContext()
+	p.Path = "/posts/author"
 	p.Set("p1", "v1")
 	a.True(seg.Match(p)).
 		Empty(p.Path).
@@ -424,7 +442,8 @@ func TestSegment_Match(t *testing.T) {
 		Equal(p.MustString("p1", "not-exists"), "v1")
 
 	// String 不匹配
-	p = types.NewContext("/posts/author/email")
+	p = types.NewContext()
+	p.Path = "/posts/author/email"
 	a.True(seg.Match(p))
 	a.Equal(p.Path, "/email").Zero(p.Count())
 
@@ -433,20 +452,23 @@ func TestSegment_Match(t *testing.T) {
 	a.NotError(err).NotNil(seg)
 
 	// Regexp 完全匹配
-	p = types.NewContext("1/author")
+	p = types.NewContext()
+	p.Path = "1/author"
 	a.True(seg.Match(p)).
 		Empty(p.Path).
 		Equal(1, p.Count()).
 		Equal(p.MustString("id", "not-exists"), "1")
 
 	// Regexp 不匹配
-	p = types.NewContext("xxx/author")
+	p = types.NewContext()
+	p.Path = "xxx/author"
 	a.False(seg.Match(p)).
 		Equal(p.Path, "xxx/author").
 		Zero(p.Count())
 
 	// Regexp 部分匹配
-	p = types.NewContext("1/author/email")
+	p = types.NewContext()
+	p.Path = "1/author/email"
 	a.True(seg.Match(p)).
 		Equal(p.Path, "/email").
 		Equal(1, p.Count()).

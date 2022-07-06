@@ -57,8 +57,9 @@ func (t *tester) addAmbiguous(pattern string) {
 func (t *tester) handler(method, path string, code int) (types.Node, http.Handler, *types.Context) {
 	t.a.TB().Helper()
 
-	ps := types.NewContext(path)
-	n, h, exists := t.tree.Handler(ps, method)
+	ctx := types.NewContext()
+	ctx.Path = path
+	n, h, exists := t.tree.Handler(ctx, method)
 	t.a.NotNil(h).True(exists).NotNil(n)
 
 	w := httptest.NewRecorder()
@@ -66,7 +67,7 @@ func (t *tester) handler(method, path string, code int) (types.Node, http.Handle
 	h.ServeHTTP(w, r)
 	t.a.Equal(w.Code, code)
 
-	return n, h, ps
+	return n, h, ctx
 }
 
 // 验证指定的路径是否匹配正确的路由项，通过 code 来确定，并返回该节点的实例。
@@ -80,9 +81,10 @@ func (t *tester) matchTrue(method, path string, code int, pattern string) {
 func (t *tester) notFound(path string) {
 	t.a.TB().Helper()
 
-	ps := types.NewContext(path)
-	hs := t.tree.match(ps)
-	t.a.Nil(hs).Zero(ps.Count())
+	ctx := types.NewContext()
+	ctx.Path = path
+	hs := t.tree.match(ctx)
+	t.a.Nil(hs).Zero(ctx.Count())
 }
 
 // 验证指定的路径返回的参数是否正确
@@ -120,7 +122,9 @@ func (t *tester) urlFalse(pattern string, params map[string]string, msg string) 
 func (t *tester) optionsTrue(path, options string) {
 	t.a.TB().Helper()
 
-	hs := t.tree.match(types.NewContext(path))
+	ctx := types.NewContext()
+	ctx.Path = path
+	hs := t.tree.match(ctx)
 	t.a.NotNil(hs)
 
 	h, exists := hs.handlers[http.MethodOptions]
@@ -548,9 +552,10 @@ func TestTree_match(t *testing.T) {
 		a.NotError(err)
 	}), http.MethodGet))
 
-	ps := types.NewContext("/path1")
-	node := tree.match(ps)
-	a.Zero(ps.Count()).NotNil(node)
+	ctx := types.NewContext()
+	ctx.Path = "/path1"
+	node := tree.match(ctx)
+	a.Zero(ctx.Count()).NotNil(node)
 
 	w := httptest.NewRecorder()
 	r := rest.NewRequest(a, http.MethodOptions, "/path1").Request()
@@ -570,9 +575,10 @@ func TestTree_match(t *testing.T) {
 		a.NotError(err)
 	}), http.MethodGet))
 
-	ps = types.NewContext("/path2")
-	node = tree.match(ps)
-	a.Zero(ps.Count()).NotNil(node)
+	ctx = types.NewContext()
+	ctx.Path = "/path2"
+	node = tree.match(ctx)
+	a.Zero(ctx.Count()).NotNil(node)
 
 	w = httptest.NewRecorder()
 	r = rest.NewRequest(a, http.MethodOptions, "/path2").Request()
@@ -607,8 +613,14 @@ func TestTree_ApplyMiddlewares(t *testing.T) {
 		})
 	}))
 
+	newCtx := func(path string) *types.Context {
+		ctx := types.NewContext()
+		ctx.Path = path
+		return ctx
+	}
+
 	// GET /m
-	_, f, exists := tree.Handler(types.NewContext("/m"), http.MethodGet)
+	_, f, exists := tree.Handler(newCtx("/m"), http.MethodGet)
 	a.True(exists).NotNil(f)
 	w := httptest.NewRecorder()
 	r := rest.Get(a, "/m").Request()
@@ -618,7 +630,7 @@ func TestTree_ApplyMiddlewares(t *testing.T) {
 		Equal(w.Header().Get("m2"), "m2")
 
 	// HEAD /m
-	_, f, exists = tree.Handler(types.NewContext("/m"), http.MethodHead)
+	_, f, exists = tree.Handler(newCtx("/m"), http.MethodHead)
 	a.True(exists).NotNil(f)
 	w = httptest.NewRecorder()
 	r = rest.NewRequest(a, http.MethodHead, "/m").Request()
@@ -628,7 +640,7 @@ func TestTree_ApplyMiddlewares(t *testing.T) {
 		Equal(w.Header().Get("m2"), "m2")
 
 	// GET /m/path
-	_, f, exists = tree.Handler(types.NewContext("/m/path"), http.MethodGet)
+	_, f, exists = tree.Handler(newCtx("/m/path"), http.MethodGet)
 	a.True(exists).NotNil(f)
 	w = httptest.NewRecorder()
 	r = rest.Get(a, "/m/path").Request()
@@ -638,7 +650,7 @@ func TestTree_ApplyMiddlewares(t *testing.T) {
 		Equal(w.Header().Get("m2"), "m2")
 
 	// OPTIONS /m/path
-	_, f, exists = tree.Handler(types.NewContext("/m/path"), http.MethodOptions)
+	_, f, exists = tree.Handler(newCtx("/m/path"), http.MethodOptions)
 	a.True(exists).NotNil(f)
 	w = httptest.NewRecorder()
 	r = rest.NewRequest(a, http.MethodOptions, "/m/path").Request()
@@ -649,7 +661,7 @@ func TestTree_ApplyMiddlewares(t *testing.T) {
 						Equal(w.Header().Get("m2"), "m2")
 
 	// DELETE /m/path  method not allowed
-	_, f, exists = tree.Handler(types.NewContext("/m/path"), http.MethodDelete)
+	_, f, exists = tree.Handler(newCtx("/m/path"), http.MethodDelete)
 	a.False(exists).NotNil(f)
 	w = httptest.NewRecorder()
 	r = rest.Get(a, "/m/path").Request()
@@ -660,7 +672,7 @@ func TestTree_ApplyMiddlewares(t *testing.T) {
 						Equal(w.Header().Get("m2"), "m2")
 
 	// DELETE /not-exists  not found
-	_, f, exists = tree.Handler(types.NewContext("/not-exists"), http.MethodDelete)
+	_, f, exists = tree.Handler(newCtx("/not-exists"), http.MethodDelete)
 	a.False(exists).NotNil(f)
 	w = httptest.NewRecorder()
 	r = rest.Get(a, "/m/path").Request()
@@ -680,13 +692,19 @@ func TestTree_Handler(t *testing.T) {
 	}), http.MethodDelete, http.MethodGet)
 
 	// path 不存在
-	n, h, exists := tree.Handler(types.NewContext("/path"), http.MethodDelete)
+	ctx := types.NewContext()
+	ctx.Path = "/path"
+	n, h, exists := tree.Handler(ctx, http.MethodDelete)
 	a.False(exists).NotNil(h).Nil(n)
 
 	// method 不存在
-	n, h, exists = tree.Handler(types.NewContext("/path1"), http.MethodPut)
+	ctx = types.NewContext()
+	ctx.Path = "/path1"
+	n, h, exists = tree.Handler(ctx, http.MethodPut)
 	a.False(exists).NotNil(h).NotNil(n)
 
-	n, h, exists = tree.Handler(types.NewContext("/path1"), http.MethodHead)
+	ctx = types.NewContext()
+	ctx.Path = "/path1"
+	n, h, exists = tree.Handler(ctx, http.MethodHead)
 	a.True(exists).NotNil(h).NotNil(n)
 }

@@ -31,14 +31,14 @@ func NewTester[T any](c mux.CallOf[T], notFound T, m, o types.BuildNodeHandleOf[
 
 // Params 测试参数是否正常
 //
-// f 返回一个路由处理函数，该函数必须要将获得的参数写入 params.
-func (t *Tester[T]) Params(a *assert.Assertion, f func(params *types.Params) T) {
+// f 返回一个路由处理函数，该函数必须要将获得的参数写入 ctx。
+func (t *Tester[T]) Params(a *assert.Assertion, f func(ctx *types.Context) T) {
 	router := mux.NewRouterOf("test", t.c, t.notFound, t.m, t.o, &mux.Options{
 		Interceptors: map[string]mux.InterceptorFunc{"digit": mux.InterceptorDigit},
 	})
 	a.NotNil(router)
 
-	globalParams := mux.NewParams()
+	globalParams := types.NewContext()
 
 	requestParams := func(method, url string, status int, ps map[string]string) {
 		a.TB().Helper()
@@ -56,36 +56,36 @@ func (t *Tester[T]) Params(a *assert.Assertion, f func(params *types.Params) T) 
 				a.True(found).Equal(vv, v)
 			}
 		}
-		globalParams = mux.NewParams() // 清空全局的 globalParams
+		globalParams.Reset() // 清空全局的 globalParams
 	}
 
 	// 添加 patch /api/{version:\\d+}
-	router.Patch("/api/{version:\\d+}", f(&globalParams))
+	router.Patch("/api/{version:\\d+}", f(globalParams))
 	requestParams(http.MethodPatch, "/api/256", http.StatusOK, map[string]string{"version": "256"})
 	requestParams(http.MethodPatch, "/api/2", http.StatusOK, map[string]string{"version": "2"})
 	requestParams(http.MethodGet, "/api/256", http.StatusMethodNotAllowed, nil) // 不存在的请求方法
 
 	// 添加 patch /api/v2/{version:\\d*}
 	router.Clean()
-	router.Patch("/api/v2/{version:\\d*}", f(&globalParams))
+	router.Patch("/api/v2/{version:\\d*}", f(globalParams))
 	requestParams(http.MethodPatch, "/api/v2/2", http.StatusOK, map[string]string{"version": "2"})
 	requestParams(http.MethodPatch, "/api/v2/", http.StatusOK, map[string]string{"version": ""})
 
 	// 忽略名称捕获
 	router.Clean()
-	router.Patch("/api/v3/{-version:\\d*}", f(&globalParams))
+	router.Patch("/api/v3/{-version:\\d*}", f(globalParams))
 	requestParams(http.MethodPatch, "/api/v3/2", http.StatusOK, nil)
 	requestParams(http.MethodPatch, "/api/v3/", http.StatusOK, nil)
 
 	// 添加 patch /api/v2/{version:\\d*}/test
 	router.Clean()
-	router.Patch("/api/v2/{version:\\d*}/test", f(&globalParams))
+	router.Patch("/api/v2/{version:\\d*}/test", f(globalParams))
 	requestParams(http.MethodPatch, "/api/v2/2/test", http.StatusOK, map[string]string{"version": "2"})
 	requestParams(http.MethodPatch, "/api/v2//test", http.StatusOK, map[string]string{"version": ""})
 
 	// 中文作为值
 	router.Clean()
-	router.Patch("/api/v3/{版本:digit}", f(&globalParams))
+	router.Patch("/api/v3/{版本:digit}", f(globalParams))
 	requestParams(http.MethodPatch, "/api/v3/2", http.StatusOK, map[string]string{"版本": "2"})
 }
 

@@ -23,7 +23,6 @@ import (
 
 	"github.com/issue9/mux/v7/internal/syntax"
 	"github.com/issue9/mux/v7/internal/tree"
-	"github.com/issue9/mux/v7/types"
 )
 
 var emptyInterceptors = syntax.NewInterceptors()
@@ -59,5 +58,3 @@ func Methods() []string {
 	copy(methods, tree.Methods)
 	return methods
 }
-
-func NewParams() types.Params { return types.NewContext("") }

@@ -77,7 +77,7 @@ func NewHeaderVersion(param, key string, errlog *log.Logger, version ...string) 
 	}
 }
 
-func (v *HeaderVersion) Match(r *http.Request, ret types.Params) (ok bool) {
+func (v *HeaderVersion) Match(r *http.Request, ctx *types.Context) (ok bool) {
 	header := r.Header.Get("Accept")
 	if header == "" {
 		return false
@@ -95,7 +95,7 @@ func (v *HeaderVersion) Match(r *http.Request, ret types.Params) (ok bool) {
 	for _, vv := range v.versions {
 		if vv == ver {
 			if v.paramName != "" {
-				ret.Set(v.paramName, vv)
+				ctx.Set(v.paramName, vv)
 			}
 			return true
 		}
@@ -103,7 +103,7 @@ func (v *HeaderVersion) Match(r *http.Request, ret types.Params) (ok bool) {
 	return false
 }
 
-func (v *PathVersion) Match(r *http.Request, ps types.Params) (ok bool) {
+func (v *PathVersion) Match(r *http.Request, ctx *types.Context) (ok bool) {
 	p := r.URL.Path
 	for _, ver := range v.versions {
 		if strings.HasPrefix(p, ver) {
@@ -111,7 +111,7 @@ func (v *PathVersion) Match(r *http.Request, ps types.Params) (ok bool) {
 
 			r.URL.Path = strings.TrimPrefix(p, vv)
 			if v.paramName != "" {
-				ps.Set(v.paramName, vv)
+				ctx.Set(v.paramName, vv)
 			}
 
 			return true
