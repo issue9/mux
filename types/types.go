@@ -3,6 +3,10 @@
 // Package types 类型的前置声明
 package types
 
+import "errors"
+
+var ErrParamNotExists = errors.New("不存在该参数")
+
 // Params 表示路由中的参数操作接口
 type Params interface {
 	// Count 返回参数的数量

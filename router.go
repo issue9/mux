@@ -8,7 +8,6 @@ import (
 
 	"github.com/issue9/errwrap"
 
-	"github.com/issue9/mux/v7/internal/params"
 	"github.com/issue9/mux/v7/internal/tree"
 	"github.com/issue9/mux/v7/types"
 )
@@ -184,12 +183,12 @@ func (r *RouterOf[T]) URL(strict bool, pattern string, params map[string]string)
 }
 
 func (r *RouterOf[T]) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	p := params.New("")
+	p := types.NewContext("")
 	defer p.Destroy()
 	r.serveHTTP(w, req, p)
 }
 
-func (r *RouterOf[T]) serveHTTP(w http.ResponseWriter, req *http.Request, p *params.Params) {
+func (r *RouterOf[T]) serveHTTP(w http.ResponseWriter, req *http.Request, p *types.Context) {
 	if r.recoverFunc != nil {
 		defer func() {
 			if err := recover(); err != nil {

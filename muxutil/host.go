@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/issue9/mux/v7"
-	"github.com/issue9/mux/v7/internal/params"
 	"github.com/issue9/mux/v7/internal/syntax"
 	"github.com/issue9/mux/v7/internal/tree"
 	"github.com/issue9/mux/v7/types"
@@ -45,7 +44,7 @@ func (hs *Hosts) Match(r *http.Request, ps types.Params) bool {
 		host = host[1 : len(host)-1]
 	}
 
-	ps1 := ps.(*params.Params) // 由 RoutersOf.ServeHTTP 保证该类型为 *params.Params
+	ps1 := ps.(*types.Context) // 由 RoutersOf.ServeHTTP 保证该类型为 *types.Context
 	ps1.Path = strings.ToLower(host)
 	_, _, exists := hs.tree.Handler(ps1, http.MethodGet)
 	return exists

@@ -8,7 +8,6 @@ import (
 
 	"github.com/issue9/sliceutil"
 
-	"github.com/issue9/mux/v7/internal/params"
 	"github.com/issue9/mux/v7/types"
 )
 
@@ -57,7 +56,7 @@ func NewRoutersOf[T any](b CallOf[T], notFound T, methodNotAllowedBuilder, opt t
 
 func (rs *RoutersOf[T]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	for _, router := range rs.routers {
-		ps := params.New("")
+		ps := types.NewContext("")
 		defer ps.Destroy()
 
 		if ok := router.matcher.Match(r, ps); ok {

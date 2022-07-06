@@ -1,35 +1,33 @@
 // SPDX-License-Identifier: MIT
 
-package params
+package types
 
 import (
 	"testing"
 
 	"github.com/issue9/assert/v2"
-
-	"github.com/issue9/mux/v7/types"
 )
 
-var _ types.Route = &Params{}
+var _ Route = &Context{}
 
 func TestNew(t *testing.T) {
 	a := assert.New(t, false)
 
-	var p *Params
+	var p *Context
 	p.Destroy()
 
-	p = New("/abc")
+	p = NewContext("/abc")
 	a.Equal(p.Path, "/abc")
 	p.Destroy()
 
-	p = New("/def")
+	p = NewContext("/def")
 	a.Equal(p.Path, "/def")
 }
 
 func TestParams_String(t *testing.T) {
 	a := assert.New(t, false)
 
-	ps := &Params{Parameters: []Param{{K: "key1", V: "1"}}}
+	ps := &Context{params: []param{{K: "key1", V: "1"}}}
 
 	val, err := ps.String("key1")
 	a.NotError(err).Equal(val, "1")
@@ -46,7 +44,7 @@ func TestParams_String(t *testing.T) {
 func TestParams_Int(t *testing.T) {
 	a := assert.New(t, false)
 
-	ps := &Params{Parameters: []Param{
+	ps := &Context{params: []param{
 		{K: "key1", V: "1"},
 		{K: "key2", V: "a2"},
 	}}
@@ -69,7 +67,7 @@ func TestParams_Int(t *testing.T) {
 func TestParams_Uint(t *testing.T) {
 	a := assert.New(t, false)
 
-	ps := &Params{Parameters: []Param{
+	ps := &Context{params: []param{
 		{K: "key1", V: "1"},
 		{K: "key2", V: "a2"},
 		{K: "key3", V: "-1"},
@@ -98,7 +96,7 @@ func TestParams_Uint(t *testing.T) {
 func TestParams_Bool(t *testing.T) {
 	a := assert.New(t, false)
 
-	ps := &Params{Parameters: []Param{
+	ps := &Context{params: []param{
 		{K: "key1", V: "true"},
 		{K: "key2", V: "0"},
 		{K: "key3", V: "a3"},
@@ -126,7 +124,7 @@ func TestParams_Bool(t *testing.T) {
 func TestParams_Float(t *testing.T) {
 	a := assert.New(t, false)
 
-	ps := &Params{Parameters: []Param{
+	ps := &Context{params: []param{
 		{K: "key1", V: "1"},
 		{K: "key2", V: "a2"},
 		{K: "key3", V: "1.1"},
@@ -150,7 +148,7 @@ func TestParams_Float(t *testing.T) {
 	a.ErrorIs(err, ErrParamNotExists).Equal(val, 0.0)
 	a.Equal(ps.MustFloat("k5", -10.0), -10.0)
 
-	var ps2 *Params
+	var ps2 *Context
 	val, err = ps2.Float("key1")
 	a.Equal(err, ErrParamNotExists).Equal(val, 0.0)
 }
@@ -158,28 +156,28 @@ func TestParams_Float(t *testing.T) {
 func TestParams_Set(t *testing.T) {
 	a := assert.New(t, false)
 
-	ps := New("")
+	ps := NewContext("")
 	ps.Set("k1", "v1")
 	a.Equal(ps.Count(), 1)
 
 	ps.Set("k1", "v2")
 	a.Equal(ps.Count(), 1)
-	a.Equal(ps, &Params{Parameters: []Param{{K: "k1", V: "v2"}}, count: 1})
+	a.Equal(ps, &Context{params: []param{{K: "k1", V: "v2"}}, parameterCount: 1})
 
 	ps.Set("k2", "v2")
-	a.Equal(ps, &Params{Parameters: []Param{{K: "k1", V: "v2"}, {K: "k2", V: "v2"}}, count: 2})
+	a.Equal(ps, &Context{params: []param{{K: "k1", V: "v2"}, {K: "k2", V: "v2"}}, parameterCount: 2})
 	a.Equal(ps.Count(), 2)
 }
 
 func TestParams_Get(t *testing.T) {
 	a := assert.New(t, false)
 
-	var ps *Params
+	var ps *Context
 	a.Zero(ps.Count())
 	v, found := ps.Get("not-exists")
 	a.False(found).Zero(v)
 
-	ps = &Params{Parameters: []Param{{K: "k1", V: "v1"}}}
+	ps = &Context{params: []param{{K: "k1", V: "v1"}}}
 	v, found = ps.Get("k1")
 	a.True(found).Equal(v, "v1")
 
@@ -191,10 +189,10 @@ func TestParams_Get(t *testing.T) {
 func TestParams_Delete(t *testing.T) {
 	a := assert.New(t, false)
 
-	var ps *Params
+	var ps *Context
 	ps.Delete("k1")
 
-	ps = New("/path")
+	ps = NewContext("/path")
 	ps.Set("k1", "v1")
 	ps.Set("k2", "v2")
 
@@ -205,18 +203,18 @@ func TestParams_Delete(t *testing.T) {
 
 	ps.Delete("k2")
 	a.Equal(0, ps.Count()).
-		Equal(2, len(ps.Parameters))
+		Equal(2, len(ps.params))
 
 	ps.Set("k3", "v3")
 	a.Equal(1, ps.Count()).
-		Equal(2, len(ps.Parameters))
+		Equal(2, len(ps.params))
 }
 
 func TestParams_Range(t *testing.T) {
 	a := assert.New(t, false)
 	var size int
 
-	ps := New("/path")
+	ps := NewContext("/path")
 	ps.Set("k1", "v1")
 	ps.Set("k2", "v2")
 	ps.Range(func(k, v string) {
