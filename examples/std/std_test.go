@@ -16,6 +16,7 @@ import (
 
 var (
 	_ http.Handler = &Router{}
+	_ http.Handler = &Routers{}
 	_ Middleware   = MiddlewareFunc(func(http.Handler) http.Handler { return nil })
 )
 

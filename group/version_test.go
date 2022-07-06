@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-package muxutil
+package group
 
 import (
 	"testing"
@@ -8,13 +8,12 @@ import (
 	"github.com/issue9/assert/v2"
 	"github.com/issue9/assert/v2/rest"
 
-	"github.com/issue9/mux/v7"
 	"github.com/issue9/mux/v7/types"
 )
 
 var (
-	_ mux.Matcher = &HeaderVersion{}
-	_ mux.Matcher = &PathVersion{}
+	_ Matcher = &HeaderVersion{}
+	_ Matcher = &PathVersion{}
 )
 
 func TestHeaderVersion_Match(t *testing.T) {

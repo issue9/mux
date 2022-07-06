@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-package mux_test
+package group_test
 
 import (
 	"net/http"
@@ -11,10 +11,8 @@ import (
 
 	"github.com/issue9/mux/v7"
 	"github.com/issue9/mux/v7/examples/std"
-	"github.com/issue9/mux/v7/muxutil"
+	"github.com/issue9/mux/v7/group"
 )
-
-var _ http.Handler = &std.Routers{}
 
 func newRouter(a *assert.Assertion, name string) *std.Router {
 	a.TB().Helper()
@@ -23,43 +21,43 @@ func newRouter(a *assert.Assertion, name string) *std.Router {
 	return r
 }
 
-func TestRouters_Add(t *testing.T) {
+func TestGroup_Add(t *testing.T) {
 	a := assert.New(t, false)
 
 	g := std.NewRouters()
 
 	def := newRouter(a, "host")
-	g.Add(&muxutil.PathVersion{}, def)
+	g.Add(&group.PathVersion{}, def)
 	r := g.Router("host")
 	a.Equal(r.Name(), "host")
 
 	// 同名添加不成功
 	def = newRouter(a, "host")
 	a.PanicString(func() {
-		g.Add(&muxutil.PathVersion{}, def)
+		g.Add(&group.PathVersion{}, def)
 	}, "已经存在名为 host 的路由")
 	a.PanicString(func() {
-		g.New("host", &muxutil.PathVersion{}, nil)
+		g.New("host", &group.PathVersion{}, nil)
 	}, "已经存在名为 host 的路由")
 
 	a.Nil(g.Router("not-exists"))
 }
 
-func TestRouters_Remove(t *testing.T) {
+func TestGroup_Remove(t *testing.T) {
 	a := assert.New(t, false)
 	g := std.NewRouters()
 	a.NotNil(g)
 
 	def := newRouter(a, "host")
-	g.Add(&muxutil.PathVersion{}, def)
+	g.Add(&group.PathVersion{}, def)
 	def = newRouter(a, "host-2")
-	g.Add(&muxutil.PathVersion{}, def)
+	g.Add(&group.PathVersion{}, def)
 
 	g.Remove("host")
 	g.Remove("host") // 已经删除，不存在了
 	a.Equal(1, len(g.Routers()))
 	def = newRouter(a, "host")
-	g.Add(&muxutil.PathVersion{}, def)
+	g.Add(&group.PathVersion{}, def)
 	a.Equal(2, len(g.Routers()))
 
 	// 删除空名，不出错。
@@ -67,7 +65,7 @@ func TestRouters_Remove(t *testing.T) {
 	a.Equal(2, len(g.Routers()))
 }
 
-func TestRouters_empty(t *testing.T) {
+func TestGroup_empty(t *testing.T) {
 	a := assert.New(t, false)
 	g := std.NewRouters()
 	a.NotNil(g)
@@ -75,12 +73,12 @@ func TestRouters_empty(t *testing.T) {
 	rest.NewRequest(a, http.MethodGet, "/path").Do(g).Status(http.StatusNotFound)
 }
 
-func TestRouters(t *testing.T) {
+func TestGroup_ServeHTTP(t *testing.T) {
 	a := assert.New(t, false)
 	rs := std.NewRouters()
 	exit := make(chan bool, 1)
 
-	h := muxutil.NewHosts(true, "{sub}.example.com")
+	h := group.NewHosts(true, "{sub}.example.com")
 	a.NotNil(h)
 	def := rs.New("host", h, &mux.Options{Interceptors: map[string]mux.InterceptorFunc{
 		"digit": mux.InterceptorDigit,
@@ -101,9 +99,9 @@ func TestRouters(t *testing.T) {
 	<-exit
 }
 
-func TestRouters_routers(t *testing.T) {
+func TestGroup_routers(t *testing.T) {
 	a := assert.New(t, false)
-	h := muxutil.NewHosts(false, "localhost")
+	h := group.NewHosts(false, "localhost")
 	a.NotNil(h)
 
 	g := std.NewRouters()
@@ -164,18 +162,18 @@ func TestRouters_routers(t *testing.T) {
 	rest.NewRequest(a, http.MethodGet, "/prefix1example.com/p2").Do(g).Status(205)
 }
 
-func TestRouters_routers_multiple(t *testing.T) {
+func TestGroup_routers_multiple(t *testing.T) {
 	a := assert.New(t, false)
 
 	g := std.NewRouters()
 	a.NotNil(g)
 
 	v1 := newRouter(a, "v1")
-	g.Add(muxutil.NewPathVersion("", "v1"), v1)
+	g.Add(group.NewPathVersion("", "v1"), v1)
 	v1.Get("/path", rest.BuildHandler(a, 202, "", nil))
 
 	v2 := newRouter(a, "v2")
-	g.Add(muxutil.NewPathVersion("", "v1", "v2"), v2)
+	g.Add(group.NewPathVersion("", "v1", "v2"), v2)
 	v2.Get("/path", rest.BuildHandler(a, 203, "", nil))
 
 	// def 匹配任意内容，放在最后。

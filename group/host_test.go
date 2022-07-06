@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-package muxutil
+package group
 
 import (
 	"testing"
@@ -12,7 +12,7 @@ import (
 	"github.com/issue9/mux/v7/types"
 )
 
-var _ mux.Matcher = &Hosts{}
+var _ Matcher = &Hosts{}
 
 func TestHost_RegisterInterceptor(t *testing.T) {
 	a := assert.New(t, false)

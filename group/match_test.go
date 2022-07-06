@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-package muxutil
+package group
 
 import (
 	"testing"
