@@ -25,7 +25,7 @@ type (
 	contextKey int
 )
 
-func call(w http.ResponseWriter, r *http.Request, ps types.Params, h http.Handler) {
+func call(w http.ResponseWriter, r *http.Request, ps types.Route, h http.Handler) {
 	h.ServeHTTP(w, WithValue(r, ps))
 }
 
@@ -52,9 +52,9 @@ func NewRouter(name string, o *mux.Options) *Router {
 }
 
 // GetParams 获取当前请求实例上的参数列表
-func GetParams(r *http.Request) types.Params {
+func GetParams(r *http.Request) types.Route {
 	if ps := r.Context().Value(contextKeyParams); ps != nil {
-		return ps.(types.Params)
+		return ps.(types.Route)
 	}
 	return nil
 }
@@ -62,14 +62,14 @@ func GetParams(r *http.Request) types.Params {
 // WithValue 将参数 ps 附加在 r 上
 //
 // 与 context.WithValue 功能相同，但是考虑了在同一个 r 上调用多次 WithValue 的情况。
-func WithValue(r *http.Request, ps types.Params) *http.Request {
-	if ps == nil || ps.Count() == 0 {
+func WithValue(r *http.Request, ps types.Route) *http.Request {
+	if ps == nil {
 		return r
 	}
 
-	if ps2 := GetParams(r); ps2 != nil && ps2.Count() > 0 {
-		ps2.Range(func(k, v string) {
-			ps.Set(k, v)
+	if ps2 := GetParams(r); ps2 != nil && ps2.Params().Count() > 0 {
+		ps2.Params().Range(func(k, v string) {
+			ps.Params().Set(k, v)
 		})
 	}
 

@@ -10,7 +10,7 @@ import (
 	"github.com/issue9/mux/v7/types"
 )
 
-var _ types.Params = &Params{}
+var _ types.Route = &Params{}
 
 func TestNew(t *testing.T) {
 	a := assert.New(t, false)
@@ -29,7 +29,7 @@ func TestNew(t *testing.T) {
 func TestParams_String(t *testing.T) {
 	a := assert.New(t, false)
 
-	ps := &Params{Params: []Param{{K: "key1", V: "1"}}}
+	ps := &Params{Parameters: []Param{{K: "key1", V: "1"}}}
 
 	val, err := ps.String("key1")
 	a.NotError(err).Equal(val, "1")
@@ -46,7 +46,7 @@ func TestParams_String(t *testing.T) {
 func TestParams_Int(t *testing.T) {
 	a := assert.New(t, false)
 
-	ps := &Params{Params: []Param{
+	ps := &Params{Parameters: []Param{
 		{K: "key1", V: "1"},
 		{K: "key2", V: "a2"},
 	}}
@@ -69,7 +69,7 @@ func TestParams_Int(t *testing.T) {
 func TestParams_Uint(t *testing.T) {
 	a := assert.New(t, false)
 
-	ps := &Params{Params: []Param{
+	ps := &Params{Parameters: []Param{
 		{K: "key1", V: "1"},
 		{K: "key2", V: "a2"},
 		{K: "key3", V: "-1"},
@@ -98,7 +98,7 @@ func TestParams_Uint(t *testing.T) {
 func TestParams_Bool(t *testing.T) {
 	a := assert.New(t, false)
 
-	ps := &Params{Params: []Param{
+	ps := &Params{Parameters: []Param{
 		{K: "key1", V: "true"},
 		{K: "key2", V: "0"},
 		{K: "key3", V: "a3"},
@@ -126,7 +126,7 @@ func TestParams_Bool(t *testing.T) {
 func TestParams_Float(t *testing.T) {
 	a := assert.New(t, false)
 
-	ps := &Params{Params: []Param{
+	ps := &Params{Parameters: []Param{
 		{K: "key1", V: "1"},
 		{K: "key2", V: "a2"},
 		{K: "key3", V: "1.1"},
@@ -164,10 +164,10 @@ func TestParams_Set(t *testing.T) {
 
 	ps.Set("k1", "v2")
 	a.Equal(ps.Count(), 1)
-	a.Equal(ps, &Params{Params: []Param{{K: "k1", V: "v2"}}, count: 1})
+	a.Equal(ps, &Params{Parameters: []Param{{K: "k1", V: "v2"}}, count: 1})
 
 	ps.Set("k2", "v2")
-	a.Equal(ps, &Params{Params: []Param{{K: "k1", V: "v2"}, {K: "k2", V: "v2"}}, count: 2})
+	a.Equal(ps, &Params{Parameters: []Param{{K: "k1", V: "v2"}, {K: "k2", V: "v2"}}, count: 2})
 	a.Equal(ps.Count(), 2)
 }
 
@@ -179,7 +179,7 @@ func TestParams_Get(t *testing.T) {
 	v, found := ps.Get("not-exists")
 	a.False(found).Zero(v)
 
-	ps = &Params{Params: []Param{{K: "k1", V: "v1"}}}
+	ps = &Params{Parameters: []Param{{K: "k1", V: "v1"}}}
 	v, found = ps.Get("k1")
 	a.True(found).Equal(v, "v1")
 
@@ -205,11 +205,11 @@ func TestParams_Delete(t *testing.T) {
 
 	ps.Delete("k2")
 	a.Equal(0, ps.Count()).
-		Equal(2, len(ps.Params))
+		Equal(2, len(ps.Parameters))
 
 	ps.Set("k3", "v3")
 	a.Equal(1, ps.Count()).
-		Equal(2, len(ps.Params))
+		Equal(2, len(ps.Parameters))
 }
 
 func TestParams_Range(t *testing.T) {

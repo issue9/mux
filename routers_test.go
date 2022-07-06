@@ -89,8 +89,8 @@ func TestRouters(t *testing.T) {
 
 	def.Get("/posts/{id:digit}.html", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ps := std.GetParams(r)
-		a.Equal(ps.MustString("sub", "not-found"), "abc").
-			Equal(ps.MustInt("id", -1), 5)
+		a.Equal(ps.Params().MustString("sub", "not-found"), "abc").
+			Equal(ps.Params().MustInt("id", -1), 5)
 		w.WriteHeader(http.StatusAccepted)
 		exit <- true
 	}))

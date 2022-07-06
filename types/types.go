@@ -9,13 +9,9 @@ type Params interface {
 	Count() int
 
 	// Get 获取指定名称的参数值
-	//
-	// 如果不存在此值，第二个值返回 false。
-	Get(key string) (string, bool)
+	Get(key string) (v string, found bool)
 
 	// Exists 查找指定名称的参数是否存在
-	//
-	// NOTE: 如果是可选参数，可能会不存在。
 	Exists(key string) bool
 
 	// String 获取地址参数中的名为 key 的变量并将其转换成 string
@@ -73,6 +69,12 @@ type Params interface {
 
 	// Range 依次访问每个参数
 	Range(func(key, val string))
+}
+
+// Route 当前请求生成的路由信息
+type Route interface {
+	// Params 当前请求关联的参数
+	Params() Params
 
 	// Node 当前请求关联的节点信息
 	//

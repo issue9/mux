@@ -29,7 +29,7 @@ func TestRouter(t *testing.T) {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				p := GetParams(r)
 				if p != nil {
-					p.Range(func(k, v string) {
+					p.Params().Range(func(k, v string) {
 						(*ps).Set(k, v)
 					})
 				}
@@ -50,7 +50,7 @@ func TestWithValue(t *testing.T) {
 	a := assert.New(t, false)
 
 	r := rest.Get(a, "/to/path").Request()
-	a.Equal(WithValue(r, &params.Params{}), r)
+	a.NotEqual(WithValue(r, &params.Params{}), r)
 
 	r = rest.Get(a, "/to/path").Request()
 	pp := params.New("")
@@ -62,8 +62,8 @@ func TestWithValue(t *testing.T) {
 	r = WithValue(r, pp)
 	ps := GetParams(r)
 	a.NotNil(ps).
-		Equal(ps.MustString("k2", "def"), "v2").
-		Equal(ps.MustString("k1", "def"), "v1")
+		Equal(ps.Params().MustString("k2", "def"), "v2").
+		Equal(ps.Params().MustString("k1", "def"), "v1")
 }
 
 func TestGetParams(t *testing.T) {
@@ -75,7 +75,7 @@ func TestGetParams(t *testing.T) {
 
 	kvs := []params.Param{{K: "key1", V: "1"}}
 	r = rest.Get(a, "/to/path").Request()
-	ctx := context.WithValue(r.Context(), contextKeyParams, &params.Params{Params: kvs})
+	ctx := context.WithValue(r.Context(), contextKeyParams, &params.Params{Parameters: kvs})
 	r = r.WithContext(ctx)
-	a.Equal(GetParams(r).MustString("key1", "def"), "1")
+	a.Equal(GetParams(r).Params().MustString("key1", "def"), "1")
 }

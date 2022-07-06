@@ -38,7 +38,7 @@ type (
 	}
 
 	// CallOf 指定如何调用用户自定义的对象 T
-	CallOf[T any] func(http.ResponseWriter, *http.Request, types.Params, T)
+	CallOf[T any] func(http.ResponseWriter, *http.Request, types.Route, T)
 
 	// ResourceOf 以资源地址为对象的路由
 	ResourceOf[T any] struct {

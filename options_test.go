@@ -19,7 +19,7 @@ import (
 )
 
 func newRouter(name string, o *Options) *RouterOf[http.Handler] {
-	callFunc := func(w http.ResponseWriter, r *http.Request, p types.Params, h http.Handler) {
+	callFunc := func(w http.ResponseWriter, r *http.Request, p types.Route, h http.Handler) {
 		h.ServeHTTP(w, r)
 	}
 	m := tree.BuildTestNodeHandlerFunc(http.StatusMethodNotAllowed)

@@ -13,7 +13,7 @@ type (
 	CTX struct {
 		R *http.Request
 		W http.ResponseWriter
-		P types.Params
+		P types.Route
 	}
 
 	Handler interface {
@@ -25,7 +25,7 @@ type (
 
 func (f HandlerFunc) Handle(c *CTX) { f(c) }
 
-func call(w http.ResponseWriter, r *http.Request, ps types.Params, h Handler) {
+func call(w http.ResponseWriter, r *http.Request, ps types.Route, h Handler) {
 	h.Handle(&CTX{R: r, W: w, P: ps})
 }
 

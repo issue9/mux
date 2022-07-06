@@ -20,7 +20,7 @@ func BenchmarkSegment_Match_Named(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		p := &params.Params{Path: "100000/author"}
-		a.True(seg.Match(p)).Equal(p.Params, []params.Param{{K: "id", V: "100000"}})
+		a.True(seg.Match(p)).Equal(p.Parameters, []params.Param{{K: "id", V: "100000"}})
 	}
 }
 
@@ -35,7 +35,7 @@ func BenchmarkSegment_Match_Named_withMatcher(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		p := &params.Params{Path: "10000/author"}
-		a.True(seg.Match(p)).Equal(p.Params, []params.Param{{K: "id", V: "10000"}})
+		a.True(seg.Match(p)).Equal(p.Parameters, []params.Param{{K: "id", V: "10000"}})
 	}
 }
 
@@ -49,7 +49,7 @@ func BenchmarkSegment_Match_String(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		p := &params.Params{Path: "/posts/author"}
-		a.True(seg.Match(p)).Nil(p.Params)
+		a.True(seg.Match(p)).Nil(p.Parameters)
 	}
 }
 
@@ -63,6 +63,6 @@ func BenchmarkSegment_Match_Regexp(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		p := &params.Params{Path: "1/author"}
-		a.True(seg.Match(p)).Equal(p.Params, []params.Param{{K: "id", V: "1"}})
+		a.True(seg.Match(p)).Equal(p.Parameters, []params.Param{{K: "id", V: "1"}})
 	}
 }

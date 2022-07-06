@@ -14,12 +14,12 @@ import (
 var ErrParamNotExists = errors.New("不存在该参数")
 
 var paramsPool = &sync.Pool{
-	New: func() any { return &Params{Params: make([]Param, 0, 5)} },
+	New: func() any { return &Params{Parameters: make([]Param, 0, 5)} },
 }
 
 type Params struct {
 	Path       string  // 这是在 Segment.Match 中用到的路径信息。
-	Params     []Param // 实际需要传递的参数
+	Parameters []Param // 实际需要传递的参数
 	count      int
 	routerName string
 	node       types.Node
@@ -32,12 +32,14 @@ type Param struct {
 func New(path string) *Params {
 	ps := paramsPool.Get().(*Params)
 	ps.Path = path
-	ps.Params = ps.Params[:0]
+	ps.Parameters = ps.Parameters[:0]
 	ps.count = 0
 	ps.routerName = ""
 	ps.node = nil
 	return ps
 }
+
+func (p *Params) Params() types.Params { return p }
 
 func (p *Params) SetNode(n types.Node) { p.node = n }
 
@@ -141,7 +143,7 @@ func (p *Params) Get(key string) (string, bool) {
 		return "", false
 	}
 
-	for _, kv := range p.Params {
+	for _, kv := range p.Parameters {
 		if kv.K == key {
 			return kv.V, true
 		}
@@ -159,9 +161,9 @@ func (p *Params) Count() (cnt int) {
 func (p *Params) Set(k, v string) {
 	deletedIndex := -1
 
-	for i, param := range p.Params {
+	for i, param := range p.Parameters {
 		if param.K == k {
-			p.Params[i].V = v
+			p.Parameters[i].V = v
 			return
 		}
 		if param.K == "" && deletedIndex == -1 {
@@ -172,10 +174,10 @@ func (p *Params) Set(k, v string) {
 	// 没有需要修改的项
 	p.count++
 	if deletedIndex != -1 { // 优先考虑被标记为删除的项作为添加
-		p.Params[deletedIndex].K = k
-		p.Params[deletedIndex].V = v
+		p.Parameters[deletedIndex].K = k
+		p.Parameters[deletedIndex].V = v
 	} else {
-		p.Params = append(p.Params, Param{K: k, V: v})
+		p.Parameters = append(p.Parameters, Param{K: k, V: v})
 	}
 }
 
@@ -184,9 +186,9 @@ func (p *Params) Delete(k string) {
 		return
 	}
 
-	for i, pp := range p.Params {
+	for i, pp := range p.Parameters {
 		if pp.K == k {
-			p.Params[i].K = ""
+			p.Parameters[i].K = ""
 			p.count--
 			return
 		}
@@ -194,7 +196,7 @@ func (p *Params) Delete(k string) {
 }
 
 func (p *Params) Range(f func(key, val string)) {
-	for _, param := range p.Params {
+	for _, param := range p.Parameters {
 		if param.K != "" {
 			f(param.K, param.V)
 		}

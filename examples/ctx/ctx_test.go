@@ -19,7 +19,7 @@ func TestContextRouter_Params(t *testing.T) {
 		tt.Params(a, func(ps *types.Params) Handler {
 			return HandlerFunc(func(c *CTX) {
 				if c.P != nil {
-					c.P.Range(func(k, v string) {
+					c.P.Params().Range(func(k, v string) {
 						(*ps).Set(k, v)
 					})
 				}

@@ -17,8 +17,7 @@ import (
 
 // Tree 以树节点的形式保存的路由
 //
-// 多段路由项，会提取其中的相同的内容组成树状结构的节点。
-// 比如以下路由项：
+// 多段路由项，会提取其中的相同的内容组成树状结构的节点。比如以下路由项：
 //  /posts/{id}/author
 //  /posts/{id}/author/emails
 //  /posts/{id}/author/profile
