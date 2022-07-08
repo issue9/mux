@@ -48,8 +48,8 @@ func NewRouters() *Routers {
 }
 
 // NewRouter 声明适用于官方 http.Handler 接口的路由
-func NewRouter(name string, o *mux.Options) *Router {
-	return mux.NewRouterOf(name, call, http.NotFoundHandler(), methodNotAllowedBuilder, optionsHandlerBuilder, o)
+func NewRouter(name string, o ...mux.Option) *Router {
+	return mux.NewRouterOf(name, call, http.NotFoundHandler(), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
 }
 
 // GetParams 获取当前请求实例上的参数列表

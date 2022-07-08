@@ -17,7 +17,7 @@ import (
 )
 
 func BenchmarkServeFile(b *testing.B) {
-	fsys := os.DirFS("../")
+	fsys := os.DirFS("./")
 
 	b.ReportAllocs()
 	b.ResetTimer()

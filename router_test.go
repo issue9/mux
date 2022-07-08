@@ -25,7 +25,7 @@ func buildMiddleware(a *assert.Assertion, text string) std.Middleware {
 
 func TestRouterOf(t *testing.T) {
 	a := assert.New(t, false)
-	r := std.NewRouter("def", &mux.Options{Lock: true})
+	r := std.NewRouter("def", mux.Lock(true))
 
 	r.Get("/", rest.BuildHandler(a, 201, "201", nil))
 	r.Get("/200", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -72,7 +72,7 @@ func TestRouterOf(t *testing.T) {
 
 func TestRouterOf_Handle_Remove(t *testing.T) {
 	a := assert.New(t, false)
-	r := std.NewRouter("", nil)
+	r := std.NewRouter("")
 	a.NotNil(r)
 
 	// 添加 GET /api/1
@@ -111,7 +111,7 @@ func TestRouterOf_Handle_Remove(t *testing.T) {
 func TestRouter_Routes(t *testing.T) {
 	a := assert.New(t, false)
 
-	def := std.NewRouter("", nil)
+	def := std.NewRouter("")
 	a.NotNil(def)
 	def.Get("/m", rest.BuildHandler(a, 1, "", nil))
 	def.Post("/m", rest.BuildHandler(a, 1, "", nil))
@@ -121,7 +121,7 @@ func TestRouter_Routes(t *testing.T) {
 func TestRouter_Clean(t *testing.T) {
 	a := assert.New(t, false)
 
-	def := std.NewRouter("", nil)
+	def := std.NewRouter("")
 	a.NotNil(def)
 	def.Get("/m1", rest.BuildHandler(a, 200, "", nil)).
 		Post("/m1", rest.BuildHandler(a, 201, "", nil))
@@ -135,7 +135,7 @@ func TestRouter_Clean(t *testing.T) {
 // 测试匹配顺序是否正确
 func TestRouterOf_ServeHTTP_Order(t *testing.T) {
 	a := assert.New(t, false)
-	r := std.NewRouter("def", &mux.Options{Interceptors: map[string]mux.InterceptorFunc{"any": mux.InterceptorAny}})
+	r := std.NewRouter("def", mux.AnyInterceptor("any"))
 	a.NotNil(r)
 
 	r.Get("/posts/{id}", rest.BuildHandler(a, 203, "", nil))
@@ -152,7 +152,7 @@ func TestRouterOf_ServeHTTP_Order(t *testing.T) {
 	rest.Get(a, "/posts-").Do(r).Status(205)    // 204 只匹配非空
 
 	// interceptor
-	r = std.NewRouter("def", &mux.Options{Interceptors: map[string]mux.InterceptorFunc{"[0-9]+": mux.InterceptorDigit}})
+	r = std.NewRouter("def", mux.DigitInterceptor("[0-9]+"))
 	a.NotNil(r)
 	r.Get("/posts/{id}", rest.BuildHandler(a, 203, "", nil))        // f3
 	r.Get("/posts/{id:\\d+}", rest.BuildHandler(a, 202, "", nil))   // f2 永远匹配不到
@@ -163,21 +163,21 @@ func TestRouterOf_ServeHTTP_Order(t *testing.T) {
 	rest.Get(a, "/posts/abc").Do(r).Status(203)                     // f3 命名路由
 	rest.Get(a, "/posts/").Do(r).Status(203)                        // f3
 
-	r = std.NewRouter("def", nil)
+	r = std.NewRouter("def")
 	a.NotNil(r)
 	r.Get("/p1/{p1}/p2/{p2:\\d+}", rest.BuildHandler(a, 201, "", nil)) // f1
 	r.Get("/p1/{p1}/p2/{p2:\\w+}", rest.BuildHandler(a, 202, "", nil)) // f2
 	rest.Get(a, "/p1/1/p2/1").Do(r).Status(201)                        // f1
 	rest.Get(a, "/p1/2/p2/s").Do(r).Status(202)                        // f2
 
-	r = std.NewRouter("def", nil)
+	r = std.NewRouter("def")
 	a.NotNil(r)
 	r.Get("/posts/{id}/{page}", rest.BuildHandler(a, 202, "", nil)) // f2
 	r.Get("/posts/{id}/1", rest.BuildHandler(a, 201, "", nil))      // f1
 	rest.Get(a, "/posts/1/1").Do(r).Status(201)                     // f1 普通路由项完全匹配
 	rest.Get(a, "/posts/2/5").Do(r).Status(202)                     // f2 命名完全匹配
 
-	r = std.NewRouter("def", nil)
+	r = std.NewRouter("def")
 	a.NotNil(r)
 	r.Get("/tags/{id}.html", rest.BuildHandler(a, 201, "", nil)) // f1
 	r.Get("/tags.html", rest.BuildHandler(a, 202, "", nil))      // f2
@@ -190,7 +190,7 @@ func TestRouterOf_ServeHTTP_Order(t *testing.T) {
 func TestRouter_Middleware(t *testing.T) {
 	a := assert.New(t, false)
 
-	def := std.NewRouter("", &mux.Options{})
+	def := std.NewRouter("")
 	a.NotNil(def)
 	def.Use(buildMiddleware(a, "m1"), buildMiddleware(a, "m2"), buildMiddleware(a, "m3"), buildMiddleware(a, "m4"))
 	def.Get("/get", rest.BuildHandler(a, 201, "", nil))
@@ -207,7 +207,7 @@ func TestRouter_Middleware(t *testing.T) {
 
 func TestResource(t *testing.T) {
 	a := assert.New(t, false)
-	r := std.NewRouter("", nil)
+	r := std.NewRouter("")
 
 	h := r.Resource("/h/1")
 	a.NotNil(h)
@@ -249,7 +249,7 @@ func TestResource(t *testing.T) {
 
 func TestRouter_Resource(t *testing.T) {
 	a := assert.New(t, false)
-	def := std.NewRouter("", nil)
+	def := std.NewRouter("")
 	a.NotNil(def)
 
 	r1 := def.Resource("/abc/1")
@@ -267,7 +267,7 @@ func TestRouter_Resource(t *testing.T) {
 func TestPrefix_Resource(t *testing.T) {
 	a := assert.New(t, false)
 
-	def := std.NewRouter("", nil)
+	def := std.NewRouter("")
 	a.NotNil(def)
 
 	p := def.Prefix("/p1", buildMiddleware(a, "p1"), buildMiddleware(a, "p2"))
@@ -283,7 +283,7 @@ func TestPrefix_Resource(t *testing.T) {
 
 func TestResource_URL(t *testing.T) {
 	a := assert.New(t, false)
-	def := std.NewRouter("", &mux.Options{CORS: mux.AllowedCORS()})
+	def := std.NewRouter("", mux.AllowedCORS(3600))
 	a.NotNil(def)
 
 	// 非正则
@@ -334,7 +334,7 @@ func TestResource_URL(t *testing.T) {
 
 func TestPrefix(t *testing.T) {
 	a := assert.New(t, false)
-	r := std.NewRouter("", nil)
+	r := std.NewRouter("")
 	a.NotNil(r)
 	p := r.Prefix("/p")
 
@@ -377,7 +377,7 @@ func TestRouter_Prefix(t *testing.T) {
 	a := assert.New(t, false)
 
 	a.Run("prefix", func(a *assert.Assertion) {
-		def := std.NewRouter("", &mux.Options{CORS: mux.AllowedCORS()})
+		def := std.NewRouter("", mux.AllowedCORS(3600))
 		a.NotNil(def)
 
 		p := def.Prefix("/abc")
@@ -385,7 +385,7 @@ func TestRouter_Prefix(t *testing.T) {
 
 		p = def.Prefix("")
 	}).Run("prefix with middleware", func(a *assert.Assertion) {
-		def := std.NewRouter("", &mux.Options{CORS: mux.AllowedCORS()})
+		def := std.NewRouter("", mux.AllowedCORS(3600))
 		a.NotNil(def)
 
 		p := def.Prefix("/abc")
@@ -395,7 +395,7 @@ func TestRouter_Prefix(t *testing.T) {
 		pp.Delete("", rest.BuildHandler(a, 201, "", nil))
 		rest.Delete(a, "/abc").Do(def).Status(201)
 	}).Run("empty prefix with middleware", func(a *assert.Assertion) {
-		def := std.NewRouter("", &mux.Options{CORS: mux.AllowedCORS()})
+		def := std.NewRouter("", mux.AllowedCORS(3600))
 		a.NotNil(def)
 
 		p := def.Prefix("/abc")
@@ -409,7 +409,7 @@ func TestRouter_Prefix(t *testing.T) {
 
 func TestPrefix_Prefix(t *testing.T) {
 	a := assert.New(t, false)
-	def := std.NewRouter("", &mux.Options{CORS: mux.AllowedCORS()})
+	def := std.NewRouter("", mux.AllowedCORS(3600))
 	a.NotNil(def)
 
 	p := def.Prefix("/abc", buildMiddleware(a, "p1"), buildMiddleware(a, "p2"))
@@ -422,10 +422,7 @@ func TestPrefix_Prefix(t *testing.T) {
 
 func TestPrefix_URL(t *testing.T) {
 	a := assert.New(t, false)
-	def := std.NewRouter("", &mux.Options{
-		CORS:      mux.AllowedCORS(),
-		URLDomain: "https://example.com",
-	})
+	def := std.NewRouter("", mux.AllowedCORS(3600), mux.URLDomain("https://example.com"))
 	a.NotNil(def)
 
 	// 非正则

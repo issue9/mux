@@ -8,6 +8,7 @@ import (
 
 	"github.com/issue9/errwrap"
 
+	"github.com/issue9/mux/v7/internal/options"
 	"github.com/issue9/mux/v7/internal/tree"
 	"github.com/issue9/mux/v7/types"
 )
@@ -28,7 +29,7 @@ type (
 		tree *tree.Tree[T]
 		call CallOf[T]
 
-		cors        *CORS
+		cors        *options.CORS
 		urlDomain   string
 		recoverFunc RecoverFunc
 
@@ -61,22 +62,21 @@ type (
 // NewRouterOf 声明路由
 //
 // name 路由名称，可以为空；
-// o 修改路由的默认行为，可以为空；
 // T 表示用户用于处理路由项的方法。
-func NewRouterOf[T any](name string, call CallOf[T], notFound T, methodNotAllowedBuilder, optionsBuilder types.BuildNodeHandleOf[T], o *Options) *RouterOf[T] {
-	o, err := buildOptions(o)
+func NewRouterOf[T any](name string, call CallOf[T], notFound T, methodNotAllowedBuilder, optionsBuilder types.BuildNodeHandleOf[T], o ...Option) *RouterOf[T] {
+	opt, err := options.Build(o...)
 	if err != nil {
 		panic(err)
 	}
 
 	r := &RouterOf[T]{
 		name: name,
-		tree: tree.New(o.Lock, o.interceptors, notFound, methodNotAllowedBuilder, optionsBuilder),
+		tree: tree.New(opt.Lock, opt.Interceptors, notFound, methodNotAllowedBuilder, optionsBuilder),
 		call: call,
 
-		cors:        o.CORS,
-		urlDomain:   o.URLDomain,
-		recoverFunc: o.RecoverFunc,
+		cors:        opt.CORS,
+		urlDomain:   opt.URLDomain,
+		recoverFunc: opt.RecoverFunc,
 	}
 
 	return r
@@ -202,7 +202,7 @@ func (r *RouterOf[T]) ServeContext(w http.ResponseWriter, req *http.Request, ctx
 	ctx.SetRouterName(r.Name())
 
 	if exists {
-		r.cors.handle(node, w.Header(), req)
+		r.cors.Handle(node, w.Header(), req)
 		if req.Method == http.MethodHead {
 			w = &headResponse{ResponseWriter: w}
 		}

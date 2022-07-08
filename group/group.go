@@ -17,8 +17,8 @@ type (
 	// GroupOf 一组路由的集合
 	GroupOf[T any] struct {
 		routers []*routerOf[T]
-		call    mux.CallOf[T]
 
+		call     mux.CallOf[T]
 		notFound T
 		methodNotAllowedBuilder,
 		optionsBuilder types.BuildNodeHandleOf[T]
@@ -30,11 +30,11 @@ type (
 	}
 )
 
-// NewGroupOf 声明一个新的 GroupOf
-func NewGroupOf[T any](b mux.CallOf[T], notFound T, methodNotAllowedBuilder, opt types.BuildNodeHandleOf[T]) *GroupOf[T] {
+func NewGroupOf[T any](call mux.CallOf[T], notFound T, methodNotAllowedBuilder, opt types.BuildNodeHandleOf[T]) *GroupOf[T] {
 	return &GroupOf[T]{
-		routers:                 make([]*routerOf[T], 0, 1),
-		call:                    b,
+		routers: make([]*routerOf[T], 0, 1),
+
+		call:                    call,
 		notFound:                notFound,
 		methodNotAllowedBuilder: methodNotAllowedBuilder,
 		optionsBuilder:          opt,
@@ -55,8 +55,8 @@ func (g *GroupOf[T]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // New 声明新路由
-func (g *GroupOf[T]) New(name string, matcher Matcher, o *mux.Options) *mux.RouterOf[T] {
-	r := mux.NewRouterOf(name, g.call, g.notFound, g.methodNotAllowedBuilder, g.optionsBuilder, o)
+func (g *GroupOf[T]) New(name string, matcher Matcher, o ...mux.Option) *mux.RouterOf[T] {
+	r := mux.NewRouterOf(name, g.call, g.notFound, g.methodNotAllowedBuilder, g.optionsBuilder, o...)
 	g.Add(matcher, r)
 	return r
 }

@@ -16,7 +16,7 @@ import (
 
 func newRouter(a *assert.Assertion, name string) *std.Router {
 	a.TB().Helper()
-	r := std.NewRouter(name, nil)
+	r := std.NewRouter(name)
 	a.NotNil(r)
 	return r
 }
@@ -37,7 +37,7 @@ func TestGroup_Add(t *testing.T) {
 		g.Add(&group.PathVersion{}, def)
 	}, "已经存在名为 host 的路由")
 	a.PanicString(func() {
-		g.New("host", &group.PathVersion{}, nil)
+		g.New("host", &group.PathVersion{})
 	}, "已经存在名为 host 的路由")
 
 	a.Nil(g.Router("not-exists"))
@@ -80,9 +80,7 @@ func TestGroup_ServeHTTP(t *testing.T) {
 
 	h := group.NewHosts(true, "{sub}.example.com")
 	a.NotNil(h)
-	def := rs.New("host", h, &mux.Options{Interceptors: map[string]mux.InterceptorFunc{
-		"digit": mux.InterceptorDigit,
-	}})
+	def := rs.New("host", h, mux.DigitInterceptor("digit"))
 	a.NotNil(def)
 
 	def.Get("/posts/{id:digit}.html", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
