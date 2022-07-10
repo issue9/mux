@@ -187,7 +187,7 @@ func TestRouterOf_ServeHTTP_Order(t *testing.T) {
 	rest.Get(a, "/tags.html").Do(r).Status(202)                  // f2
 }
 
-func TestRouter_Middleware(t *testing.T) {
+func TestRouterOf_Middleware(t *testing.T) {
 	a := assert.New(t, false)
 
 	def := std.NewRouter("")
@@ -205,7 +205,7 @@ func TestRouter_Middleware(t *testing.T) {
 	rest.Get(a, "/get").Do(def).Status(201).StringBody("m1m2m3m4m5m6")
 }
 
-func TestResource(t *testing.T) {
+func TestResourceOf(t *testing.T) {
 	a := assert.New(t, false)
 	r := std.NewRouter("")
 
@@ -247,7 +247,7 @@ func TestResource(t *testing.T) {
 	rest.Delete(a, "/f/any").Do(r).Status(404)
 }
 
-func TestRouter_Resource(t *testing.T) {
+func TestRouterOf_Resource(t *testing.T) {
 	a := assert.New(t, false)
 	def := std.NewRouter("")
 	a.NotNil(def)
@@ -281,7 +281,7 @@ func TestPrefix_Resource(t *testing.T) {
 	rest.Delete(a, "/p1/abc/1").Do(def).Status(201).StringBody("-201-p1p2r1r2")
 }
 
-func TestResource_URL(t *testing.T) {
+func TestResourceOf_URL(t *testing.T) {
 	a := assert.New(t, false)
 	def := std.NewRouter("", mux.AllowedCORS(3600))
 	a.NotNil(def)
@@ -332,7 +332,7 @@ func TestResource_URL(t *testing.T) {
 	a.NotError(err).Equal(url, "/api/blog/1")
 }
 
-func TestPrefix(t *testing.T) {
+func TestPrefixOf(t *testing.T) {
 	a := assert.New(t, false)
 	r := std.NewRouter("")
 	a.NotNil(r)
@@ -373,7 +373,7 @@ func TestPrefix(t *testing.T) {
 	rest.NewRequest(a, http.MethodOptions, "/p/h/any").Do(r).Status(404)
 }
 
-func TestRouter_Prefix(t *testing.T) {
+func TestRouterOf_Prefix(t *testing.T) {
 	a := assert.New(t, false)
 
 	a.Run("prefix", func(a *assert.Assertion) {
@@ -407,7 +407,7 @@ func TestRouter_Prefix(t *testing.T) {
 	})
 }
 
-func TestPrefix_Prefix(t *testing.T) {
+func TestPrefixOf_Prefix(t *testing.T) {
 	a := assert.New(t, false)
 	def := std.NewRouter("", mux.AllowedCORS(3600))
 	a.NotNil(def)
@@ -420,7 +420,7 @@ func TestPrefix_Prefix(t *testing.T) {
 	rest.Delete(a, "/abc/def").Do(def).Status(201).StringBody("-201-p1p2pp1pp2")
 }
 
-func TestPrefix_URL(t *testing.T) {
+func TestPrefixOf_URL(t *testing.T) {
 	a := assert.New(t, false)
 	def := std.NewRouter("", mux.AllowedCORS(3600), mux.URLDomain("https://example.com"))
 	a.NotNil(def)

@@ -114,7 +114,6 @@ func WordInterceptor(rule string) Option { return Interceptor(syntax.MatchWord, 
 //  - -1 表示禁用；
 //  - 其它 >= -1 的值正常输出数值；
 //
-//
 // allowCredentials 对应 Access-Control-Allow-Credentials；
 func CORS(origin []string, allowHeaders []string, exposedHeaders []string, maxAge int, allowCredentials bool) Option {
 	return func(o *options.Options) {

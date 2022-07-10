@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-package group_test
+package group
 
 import (
 	"net/http"
@@ -10,54 +10,89 @@ import (
 	"github.com/issue9/assert/v2/rest"
 
 	"github.com/issue9/mux/v7"
-	"github.com/issue9/mux/v7/examples/std"
-	"github.com/issue9/mux/v7/group"
+	"github.com/issue9/mux/v7/types"
 )
 
-func newRouter(a *assert.Assertion, name string) *std.Router {
+func call(w http.ResponseWriter, r *http.Request, ps types.Route, h http.Handler) {
+	h.ServeHTTP(w, r)
+}
+
+func methodNotAllowedBuilder(n types.Node) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	})
+}
+
+func optionsHandlerBuilder(n types.Node) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Allow", n.AllowHeader())
+	})
+}
+
+func newGroup(a *assert.Assertion, o ...mux.Option) *GroupOf[http.Handler] {
 	a.TB().Helper()
-	r := std.NewRouter(name)
+	g := NewGroupOf(call, http.NotFoundHandler(), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
+	a.NotNil(g)
+	return g
+}
+
+func newRouter(a *assert.Assertion, name string, o ...mux.Option) *mux.RouterOf[http.Handler] {
+	a.TB().Helper()
+	r := mux.NewRouterOf(name, call, http.NotFoundHandler(), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
 	a.NotNil(r)
 	return r
 }
 
-func TestGroup_Add(t *testing.T) {
+func TestGroupOf_mergeOption(t *testing.T) {
 	a := assert.New(t, false)
+	g := newGroup(a)
+	a.Equal(0, g.optionsLen).Equal(0, len(g.options))
+	o := g.mergeOption(mux.Lock(true))
+	a.Equal(1, len(o))
 
-	g := std.NewRouters()
+	g = newGroup(a, mux.Lock(true))
+	a.Equal(1, g.optionsLen).Equal(1, len(g.options))
+	o = g.mergeOption()
+	a.Equal(1, len(o))
+	o = g.mergeOption(mux.Lock(true), mux.Lock(false))
+	a.Equal(3, len(o))
+}
+
+func TestGroupOf_Add(t *testing.T) {
+	a := assert.New(t, false)
+	g := newGroup(a)
 
 	def := newRouter(a, "host")
-	g.Add(&group.PathVersion{}, def)
+	g.Add(&PathVersion{}, def)
 	r := g.Router("host")
 	a.Equal(r.Name(), "host")
 
 	// 同名添加不成功
 	def = newRouter(a, "host")
 	a.PanicString(func() {
-		g.Add(&group.PathVersion{}, def)
+		g.Add(&PathVersion{}, def)
 	}, "已经存在名为 host 的路由")
 	a.PanicString(func() {
-		g.New("host", &group.PathVersion{})
+		g.New("host", &PathVersion{})
 	}, "已经存在名为 host 的路由")
 
 	a.Nil(g.Router("not-exists"))
 }
 
-func TestGroup_Remove(t *testing.T) {
+func TestGroupOf_Remove(t *testing.T) {
 	a := assert.New(t, false)
-	g := std.NewRouters()
-	a.NotNil(g)
+	g := newGroup(a)
 
 	def := newRouter(a, "host")
-	g.Add(&group.PathVersion{}, def)
+	g.Add(&PathVersion{}, def)
 	def = newRouter(a, "host-2")
-	g.Add(&group.PathVersion{}, def)
+	g.Add(&PathVersion{}, def)
 
 	g.Remove("host")
 	g.Remove("host") // 已经删除，不存在了
 	a.Equal(1, len(g.Routers()))
 	def = newRouter(a, "host")
-	g.Add(&group.PathVersion{}, def)
+	g.Add(&PathVersion{}, def)
 	a.Equal(2, len(g.Routers()))
 
 	// 删除空名，不出错。
@@ -65,28 +100,23 @@ func TestGroup_Remove(t *testing.T) {
 	a.Equal(2, len(g.Routers()))
 }
 
-func TestGroup_empty(t *testing.T) {
+func TestGroupOf_empty(t *testing.T) {
 	a := assert.New(t, false)
-	g := std.NewRouters()
-	a.NotNil(g)
-
+	g := newGroup(a)
 	rest.NewRequest(a, http.MethodGet, "/path").Do(g).Status(http.StatusNotFound)
 }
 
-func TestGroup_ServeHTTP(t *testing.T) {
+func TestGroupOf_ServeHTTP(t *testing.T) {
 	a := assert.New(t, false)
-	rs := std.NewRouters()
+	rs := newGroup(a)
 	exit := make(chan bool, 1)
 
-	h := group.NewHosts(true, "{sub}.example.com")
+	h := NewHosts(true, "{sub}.example.com")
 	a.NotNil(h)
 	def := rs.New("host", h, mux.DigitInterceptor("digit"))
 	a.NotNil(def)
 
 	def.Get("/posts/{id:digit}.html", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ps := std.GetParams(r)
-		a.Equal(ps.Params().MustString("sub", "not-found"), "abc").
-			Equal(ps.Params().MustInt("id", -1), 5)
 		w.WriteHeader(http.StatusAccepted)
 		exit <- true
 	}))
@@ -97,13 +127,12 @@ func TestGroup_ServeHTTP(t *testing.T) {
 	<-exit
 }
 
-func TestGroup_routers(t *testing.T) {
+func TestGroupOf_routers(t *testing.T) {
 	a := assert.New(t, false)
-	h := group.NewHosts(false, "localhost")
+	h := NewHosts(false, "localhost")
 	a.NotNil(h)
 
-	g := std.NewRouters()
-	a.NotNil(g)
+	g := newGroup(a)
 	def := newRouter(a, "host")
 	g.Add(h, def)
 	def.Get("/t1", rest.BuildHandler(a, 201, "", nil))
@@ -119,8 +148,7 @@ func TestGroup_routers(t *testing.T) {
 
 	// resource
 
-	g = std.NewRouters()
-	a.NotNil(g)
+	g = newGroup(a)
 	def = newRouter(a, "def")
 	g.Add(h, def)
 	res := def.Resource("/r1")
@@ -129,8 +157,7 @@ func TestGroup_routers(t *testing.T) {
 	rest.NewRequest(a, http.MethodGet, "https://localhost/r1").Do(g).Status(202)
 
 	// prefix
-	g = std.NewRouters()
-	a.NotNil(g)
+	g = newGroup(a)
 	def = newRouter(a, "def")
 	g.Add(h, def)
 	p := def.Prefix("/prefix1")
@@ -139,8 +166,7 @@ func TestGroup_routers(t *testing.T) {
 	rest.NewRequest(a, http.MethodGet, "https://localhost:88/prefix1/p1").Do(g).Status(203)
 
 	// prefix prefix
-	g = std.NewRouters()
-	a.NotNil(g)
+	g = newGroup(a)
 	def = newRouter(a, "def")
 	g.Add(h, def)
 	p1 := def.Prefix("/prefix1")
@@ -151,7 +177,7 @@ func TestGroup_routers(t *testing.T) {
 	rest.NewRequest(a, http.MethodGet, "https://localhost/prefix1/prefix2/p2").Do(g).Status(204)
 
 	// 第二个 Prefix 为域名
-	g = std.NewRouters()
+	g = newGroup(a)
 	def = newRouter(a, "def")
 	g.Add(nil, def)
 	p1 = def.Prefix("/prefix1")
@@ -160,18 +186,16 @@ func TestGroup_routers(t *testing.T) {
 	rest.NewRequest(a, http.MethodGet, "/prefix1example.com/p2").Do(g).Status(205)
 }
 
-func TestGroup_routers_multiple(t *testing.T) {
+func TestGroupOf_routers_multiple(t *testing.T) {
 	a := assert.New(t, false)
-
-	g := std.NewRouters()
-	a.NotNil(g)
+	g := newGroup(a)
 
 	v1 := newRouter(a, "v1")
-	g.Add(group.NewPathVersion("", "v1"), v1)
+	g.Add(NewPathVersion("", "v1"), v1)
 	v1.Get("/path", rest.BuildHandler(a, 202, "", nil))
 
 	v2 := newRouter(a, "v2")
-	g.Add(group.NewPathVersion("", "v1", "v2"), v2)
+	g.Add(NewPathVersion("", "v1", "v2"), v2)
 	v2.Get("/path", rest.BuildHandler(a, 203, "", nil))
 
 	// def 匹配任意内容，放在最后。

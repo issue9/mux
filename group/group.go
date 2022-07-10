@@ -10,6 +10,7 @@ import (
 	"github.com/issue9/sliceutil"
 
 	"github.com/issue9/mux/v7"
+	"github.com/issue9/mux/v7/internal/options"
 	"github.com/issue9/mux/v7/types"
 )
 
@@ -22,6 +23,9 @@ type (
 		notFound T
 		methodNotAllowedBuilder,
 		optionsBuilder types.BuildNodeHandleOf[T]
+
+		options    []options.Option
+		optionsLen int
 	}
 
 	routerOf[T any] struct {
@@ -30,14 +34,17 @@ type (
 	}
 )
 
-func NewGroupOf[T any](call mux.CallOf[T], notFound T, methodNotAllowedBuilder, opt types.BuildNodeHandleOf[T]) *GroupOf[T] {
+func NewGroupOf[T any](call mux.CallOf[T], notFound T, methodNotAllowedBuilder, optionsBuilder types.BuildNodeHandleOf[T], o ...mux.Option) *GroupOf[T] {
 	return &GroupOf[T]{
 		routers: make([]*routerOf[T], 0, 1),
 
 		call:                    call,
 		notFound:                notFound,
 		methodNotAllowedBuilder: methodNotAllowedBuilder,
-		optionsBuilder:          opt,
+		optionsBuilder:          optionsBuilder,
+
+		options:    o,
+		optionsLen: len(o),
 	}
 }
 
@@ -55,10 +62,30 @@ func (g *GroupOf[T]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // New 声明新路由
+//
+// 新路由会继承 NewGroupOf 中指定的参数，其中的 o 可以覆盖由 NewGroupOf 中的相关参数；
 func (g *GroupOf[T]) New(name string, matcher Matcher, o ...mux.Option) *mux.RouterOf[T] {
+	o = g.mergeOption(o...)
 	r := mux.NewRouterOf(name, g.call, g.notFound, g.methodNotAllowedBuilder, g.optionsBuilder, o...)
 	g.Add(matcher, r)
 	return r
+}
+
+// 将 g.options 与 o 合并，保证 g.options 在前且不会被破坏
+func (g *GroupOf[T]) mergeOption(o ...mux.Option) []mux.Option {
+	if g.optionsLen == 0 {
+		return o
+	}
+
+	l := len(o)
+	if l == 0 {
+		return g.options
+	}
+
+	ret := make([]mux.Option, l+g.optionsLen)
+	size := copy(ret, g.options)
+	copy(ret[size:], o)
+	return ret
 }
 
 // Add 添加路由
