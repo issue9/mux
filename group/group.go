@@ -53,15 +53,17 @@ func NewGroupOf[T any](call mux.CallOf[T], notFound T, methodNotAllowedBuilder, 
 }
 
 func (g *GroupOf[T]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	for _, router := range g.routers {
-		ps := types.NewContext()
-		defer ps.Destroy()
+	ctx := types.NewContext()
+	defer ctx.Destroy()
 
-		if ok := router.m.Match(r, ps); ok {
-			router.r.ServeContext(w, r, ps)
+	for _, router := range g.routers {
+		if ok := router.m.Match(r, ctx); ok {
+			router.r.ServeContext(w, r, ctx)
 			return
 		}
+		ctx.Reset()
 	}
+
 	g.call(w, r, nil, g.notFound)
 }
 

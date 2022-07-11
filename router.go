@@ -179,9 +179,9 @@ func (r *RouterOf[T]) URL(strict bool, pattern string, params map[string]string)
 }
 
 func (r *RouterOf[T]) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	p := types.NewContext()
-	defer p.Destroy()
-	r.ServeContext(w, req, p)
+	ctx := types.NewContext()
+	defer ctx.Destroy()
+	r.ServeContext(w, req, ctx)
 }
 
 func (r *RouterOf[T]) ServeContext(w http.ResponseWriter, req *http.Request, ctx *types.Context) {
@@ -194,11 +194,11 @@ func (r *RouterOf[T]) ServeContext(w http.ResponseWriter, req *http.Request, ctx
 	}
 
 	ctx.Path = req.URL.Path
-	node, h, exists := r.tree.Handler(ctx, req.Method)
+	node, h, ok := r.tree.Handler(ctx, req.Method)
 	ctx.SetNode(node)
 	ctx.SetRouterName(r.Name())
 
-	if exists {
+	if ok { // !ok 即为 405 或是 404 状态
 		r.cors.Handle(node, w.Header(), req)
 		if req.Method == http.MethodHead {
 			w = &headResponse{ResponseWriter: w}

@@ -15,11 +15,11 @@ import (
 type Matcher interface {
 	// Match 验证请求是否符合当前对象的要求
 	//
-	// ok 表示是否匹配成功；
-	Match(*http.Request, *types.Context) (ok bool)
+	// 返回值表示是否匹配成功；
+	Match(*http.Request, *types.Context) bool
 }
 
-type MatcherFunc func(*http.Request, *types.Context) (ok bool)
+type MatcherFunc func(*http.Request, *types.Context) bool
 
 func (f MatcherFunc) Match(r *http.Request, p *types.Context) bool { return f(r, p) }
 
@@ -29,7 +29,7 @@ func anyRouter(*http.Request, *types.Context) bool { return true }
 //
 // 前一个对象返回的实例将作为下一个对象的输入参数。
 func AndMatcher(m ...Matcher) Matcher {
-	return MatcherFunc(func(r *http.Request, ctx *types.Context) (ok bool) {
+	return MatcherFunc(func(r *http.Request, ctx *types.Context) bool {
 		for _, mm := range m {
 			if !mm.Match(r, ctx) {
 				return false

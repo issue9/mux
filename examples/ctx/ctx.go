@@ -6,6 +6,8 @@ package ctx
 import (
 	"net/http"
 
+	"github.com/issue9/mux/v7"
+	"github.com/issue9/mux/v7/group"
 	"github.com/issue9/mux/v7/types"
 )
 
@@ -16,11 +18,15 @@ type (
 		P types.Route
 	}
 
+	Router = mux.RouterOf[Handler]
+
+	Routers = group.GroupOf[Handler]
+
 	Handler interface {
 		Handle(*CTX)
 	}
 
-	HandlerFunc func(ctx *CTX)
+	HandlerFunc func(*CTX)
 )
 
 func (f HandlerFunc) Handle(c *CTX) { f(c) }
@@ -44,4 +50,13 @@ func methodNotAllowedBuilder(p types.Node) Handler {
 
 func notFound(ctx *CTX) {
 	ctx.W.WriteHeader(http.StatusNotFound)
+}
+
+func NewRouters(o ...mux.Option) *Routers {
+	return group.NewGroupOf[Handler](call, HandlerFunc(notFound), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
+}
+
+// NewRouter 声明适用于官方 http.Handler 接口的路由
+func NewRouter(name string, o ...mux.Option) *Router {
+	return mux.NewRouterOf[Handler](name, call, HandlerFunc(notFound), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
 }
