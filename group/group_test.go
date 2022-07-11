@@ -10,8 +10,19 @@ import (
 	"github.com/issue9/assert/v2/rest"
 
 	"github.com/issue9/mux/v7"
+	"github.com/issue9/mux/v7/internal/options"
 	"github.com/issue9/mux/v7/types"
 )
+
+func buildMiddleware(a *assert.Assertion, text string) types.MiddlewareOf[http.Handler] {
+	return types.MiddlewareFuncOf[http.Handler](func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r) // 先输出被包含的内容
+			_, err := w.Write([]byte(text))
+			a.NotError(err)
+		})
+	})
+}
 
 func call(w http.ResponseWriter, r *http.Request, ps types.Route, h http.Handler) {
 	h.ServeHTTP(w, r)
@@ -46,16 +57,50 @@ func newRouter(a *assert.Assertion, name string, o ...mux.Option) *mux.RouterOf[
 func TestGroupOf_mergeOption(t *testing.T) {
 	a := assert.New(t, false)
 	g := newGroup(a)
-	a.Equal(0, len(g.options))
-	o := g.mergeOption(mux.Lock(true))
-	a.Equal(1, len(o))
+	oo, err := options.Build(g.mergeOption(mux.Lock(true))...)
+	a.NotError(err).True(oo.Lock).Empty(oo.URLDomain)
 
 	g = newGroup(a, mux.Lock(true))
-	a.Equal(1, len(g.options))
-	o = g.mergeOption()
-	a.Equal(1, len(o))
-	o = g.mergeOption(mux.Lock(true), mux.Lock(false))
-	a.Equal(3, len(o))
+	oo, err = options.Build(g.mergeOption()...)
+	a.NotError(err).True(oo.Lock).Empty(oo.URLDomain)
+	oo, err = options.Build(g.mergeOption(mux.Lock(false))...)
+	a.NotError(err).False(oo.Lock).Empty(oo.URLDomain)
+
+	oo, err = options.Build(g.mergeOption(mux.Lock(false), mux.URLDomain("https://example.com"))...)
+	a.NotError(err).False(oo.Lock).Equal(oo.URLDomain, "https://example.com")
+}
+
+func TestGroupOf_Use(t *testing.T) {
+	a := assert.New(t, false)
+	g := newGroup(a)
+
+	h1 := g.New("h1", NewHosts(false, "h1.example.com"))
+	h1.Get("/posts/5.html", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("h1")) }))
+	g.Use(buildMiddleware(a, "m1"))
+	h2 := g.New("h2", NewHosts(false, "h2.example.com"))
+	h2.Get("/posts/5.html", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("h2")) }))
+
+	rest.NewRequest(a, http.MethodGet, "https://h1.example.com/posts/5.html").
+		Do(g).
+		StringBody("h1m1")
+	rest.NewRequest(a, http.MethodGet, "https://h2.example.com/posts/5.html").
+		Do(g).
+		StringBody("h2m1")
+	rest.NewRequest(a, http.MethodGet, "https://not-match.example.com/posts/5.html").
+		Do(g).
+		BodyFunc(func(a *assert.Assertion, body []byte) { a.Contains(body, "m1") })
+
+	g.Use(buildMiddleware(a, "m2"))
+
+	rest.NewRequest(a, http.MethodGet, "https://h1.example.com/posts/5.html").
+		Do(g).
+		StringBody("h1m1m2")
+	rest.NewRequest(a, http.MethodGet, "https://h2.example.com/posts/5.html").
+		Do(g).
+		StringBody("h2m1m2")
+	rest.NewRequest(a, http.MethodGet, "https://not-match.example.com/posts/5.html").
+		Do(g).
+		BodyFunc(func(a *assert.Assertion, body []byte) { a.Contains(body, "m1m2") })
 }
 
 func TestGroupOf_Add(t *testing.T) {
@@ -108,23 +153,20 @@ func TestGroupOf_empty(t *testing.T) {
 
 func TestGroupOf_ServeHTTP(t *testing.T) {
 	a := assert.New(t, false)
-	rs := newGroup(a)
-	exit := make(chan bool, 1)
+	g := newGroup(a)
 
 	h := NewHosts(true, "{sub}.example.com")
 	a.NotNil(h)
-	def := rs.New("host", h, mux.DigitInterceptor("digit"))
+	def := g.New("host", h, mux.DigitInterceptor("digit"))
 	a.NotNil(def)
 
 	def.Get("/posts/{id:digit}.html", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusAccepted)
-		exit <- true
 	}))
 
 	rest.NewRequest(a, http.MethodGet, "https://abc.example.com/posts/5.html").
-		Do(rs).
+		Do(g).
 		Status(http.StatusAccepted)
-	<-exit
 }
 
 func TestGroupOf_routers(t *testing.T) {
