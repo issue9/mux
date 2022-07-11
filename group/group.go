@@ -11,6 +11,7 @@ import (
 
 	"github.com/issue9/mux/v7"
 	"github.com/issue9/mux/v7/internal/options"
+	"github.com/issue9/mux/v7/internal/tree"
 	"github.com/issue9/mux/v7/types"
 )
 
@@ -124,6 +125,7 @@ func (g *GroupOf[T]) Use(m ...types.MiddlewareOf[T]) {
 	for _, r := range g.routers {
 		r.r.Use(m...)
 	}
+	g.notFound = tree.ApplyMiddlewares(g.notFound, m...)
 }
 
 // Routers 返回路由列表
