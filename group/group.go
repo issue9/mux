@@ -24,8 +24,7 @@ type (
 		methodNotAllowedBuilder,
 		optionsBuilder types.BuildNodeHandleOf[T]
 
-		options    []options.Option
-		optionsLen int
+		options []options.Option
 	}
 
 	routerOf[T any] struct {
@@ -46,8 +45,7 @@ func NewGroupOf[T any](call mux.CallOf[T], notFound T, methodNotAllowedBuilder, 
 		methodNotAllowedBuilder: methodNotAllowedBuilder,
 		optionsBuilder:          optionsBuilder,
 
-		options:    o,
-		optionsLen: len(o),
+		options: o,
 	}
 }
 
@@ -76,16 +74,17 @@ func (g *GroupOf[T]) New(name string, matcher Matcher, o ...mux.Option) *mux.Rou
 
 // 将 g.options 与 o 合并，保证 g.options 在前且不会被破坏
 func (g *GroupOf[T]) mergeOption(o ...mux.Option) []mux.Option {
-	if g.optionsLen == 0 {
+	l1 := len(g.options)
+	if l1 == 0 {
 		return o
 	}
 
-	l := len(o)
-	if l == 0 {
+	l2 := len(o)
+	if l2 == 0 {
 		return g.options
 	}
 
-	ret := make([]mux.Option, l+g.optionsLen)
+	ret := make([]mux.Option, l1+l2)
 	size := copy(ret, g.options)
 	copy(ret[size:], o)
 	return ret

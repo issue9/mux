@@ -46,12 +46,12 @@ func newRouter(a *assert.Assertion, name string, o ...mux.Option) *mux.RouterOf[
 func TestGroupOf_mergeOption(t *testing.T) {
 	a := assert.New(t, false)
 	g := newGroup(a)
-	a.Equal(0, g.optionsLen).Equal(0, len(g.options))
+	a.Equal(0, len(g.options))
 	o := g.mergeOption(mux.Lock(true))
 	a.Equal(1, len(o))
 
 	g = newGroup(a, mux.Lock(true))
-	a.Equal(1, g.optionsLen).Equal(1, len(g.options))
+	a.Equal(1, len(g.options))
 	o = g.mergeOption()
 	a.Equal(1, len(o))
 	o = g.mergeOption(mux.Lock(true), mux.Lock(false))
