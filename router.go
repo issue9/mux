@@ -14,16 +14,13 @@ import (
 )
 
 type (
-	// RouterOf 路由
+	// RouterOf 可自定义处理函数类型的路由
 	//
-	// 可以对路径按正则或是请求方法进行匹配。用法如下：
 	//  router := NewRouterOf[http.Handler](...)
 	//  router.Get("/abc/h1", h1).
 	//      Post("/abc/h2", h2).
 	//      Handle("/api/{version:\\d+}",h3, http.MethodGet, http.MethodPost) // 只匹配 GET 和 POST
 	//  http.ListenAndServe(router)
-	//
-	// 如果需要同时对多个 RouterOf 实例进行路由，可以采用 RoutersOf 对象管理多个 RouterOf 实例。
 	RouterOf[T any] struct {
 		name string
 		tree *tree.Tree[T]

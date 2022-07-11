@@ -34,6 +34,9 @@ type (
 	}
 )
 
+// NewGroupOf 声明 GroupOf 对象
+//
+// 初始化参数与 mux.NewRouterOf 相同，这些参数最终也会被 GroupOf.New 传递给新对象。
 func NewGroupOf[T any](call mux.CallOf[T], notFound T, methodNotAllowedBuilder, optionsBuilder types.BuildNodeHandleOf[T], o ...mux.Option) *GroupOf[T] {
 	return &GroupOf[T]{
 		routers: make([]*routerOf[T], 0, 1),
