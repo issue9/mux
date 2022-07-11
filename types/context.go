@@ -12,6 +12,8 @@ var contextPool = &sync.Pool{
 }
 
 // Context 保存着路由匹配过程中的上下文关系
+//
+// Context 同时实现了 Route 接口。
 type Context struct {
 	Path        string  // 实际请求的路径信息
 	params      []param // 实际需要传递的参数

@@ -10,7 +10,7 @@ import (
 
 var _ Route = &Context{}
 
-func TestNew(t *testing.T) {
+func TestNewContext(t *testing.T) {
 	a := assert.New(t, false)
 
 	var p *Context
@@ -26,7 +26,7 @@ func TestNew(t *testing.T) {
 	a.Equal(p.Path, "/def")
 }
 
-func TestParams_String(t *testing.T) {
+func TestContext_String(t *testing.T) {
 	a := assert.New(t, false)
 
 	ps := &Context{params: []param{{K: "key1", V: "1"}}}
@@ -43,7 +43,7 @@ func TestParams_String(t *testing.T) {
 	a.Equal(ps.MustString("k5", "-10"), "-10")
 }
 
-func TestParams_Int(t *testing.T) {
+func TestContext_Int(t *testing.T) {
 	a := assert.New(t, false)
 
 	ps := &Context{params: []param{
@@ -66,7 +66,7 @@ func TestParams_Int(t *testing.T) {
 	a.Equal(ps.MustInt("k5", -10), -10)
 }
 
-func TestParams_Uint(t *testing.T) {
+func TestContext_Uint(t *testing.T) {
 	a := assert.New(t, false)
 
 	ps := &Context{params: []param{
@@ -95,7 +95,7 @@ func TestParams_Uint(t *testing.T) {
 	a.Equal(ps.MustUint("k5", 10), 10)
 }
 
-func TestParams_Bool(t *testing.T) {
+func TestContext_Bool(t *testing.T) {
 	a := assert.New(t, false)
 
 	ps := &Context{params: []param{
@@ -123,7 +123,7 @@ func TestParams_Bool(t *testing.T) {
 	a.True(ps.MustBool("k5", true))
 }
 
-func TestParams_Float(t *testing.T) {
+func TestContext_Float(t *testing.T) {
 	a := assert.New(t, false)
 
 	ps := &Context{params: []param{
@@ -155,7 +155,7 @@ func TestParams_Float(t *testing.T) {
 	a.Equal(err, ErrParamNotExists).Equal(val, 0.0)
 }
 
-func TestParams_Set(t *testing.T) {
+func TestContext_Set(t *testing.T) {
 	a := assert.New(t, false)
 
 	ps := NewContext()
@@ -171,7 +171,7 @@ func TestParams_Set(t *testing.T) {
 	a.Equal(ps.Count(), 2)
 }
 
-func TestParams_Get(t *testing.T) {
+func TestContext_Get(t *testing.T) {
 	a := assert.New(t, false)
 
 	var ps *Context
@@ -188,7 +188,7 @@ func TestParams_Get(t *testing.T) {
 
 }
 
-func TestParams_Delete(t *testing.T) {
+func TestContext_Delete(t *testing.T) {
 	a := assert.New(t, false)
 
 	var ps *Context
@@ -213,7 +213,7 @@ func TestParams_Delete(t *testing.T) {
 		Equal(2, len(ps.params))
 }
 
-func TestParams_Range(t *testing.T) {
+func TestContext_Range(t *testing.T) {
 	a := assert.New(t, false)
 	var size int
 

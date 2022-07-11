@@ -36,15 +36,15 @@ func (hs *Hosts) RegisterInterceptor(f mux.InterceptorFunc, name ...string) {
 }
 
 func (hs *Hosts) Match(r *http.Request, ctx *types.Context) bool {
-	host := r.Host // r.URL.Hostname() 可能为空，r.Host 一直有值！
-	if index := strings.LastIndexByte(host, ':'); index != -1 && validOptionalPort(host[index:]) {
-		host = host[:index]
+	h := r.Host // r.URL.Hostname() 可能为空，r.Host 一直有值！
+	if i := strings.LastIndexByte(h, ':'); i != -1 && validOptionalPort(h[i:]) {
+		h = h[:i]
 	}
-	if strings.HasPrefix(host, "[") && strings.HasSuffix(host, "]") { // ipv6
-		host = host[1 : len(host)-1]
+	if strings.HasPrefix(h, "[") && strings.HasSuffix(h, "]") { // ipv6
+		h = h[1 : len(h)-1]
 	}
 
-	ctx.Path = strings.ToLower(host)
+	ctx.Path = strings.ToLower(h)
 	_, _, exists := hs.tree.Handler(ctx, http.MethodGet)
 	return exists
 }
@@ -70,7 +70,7 @@ func validOptionalPort(port string) bool {
 // 域名的格式和路由的语法格式是一样的，比如：
 //  api.example.com
 //  {sub:[a-z]+}.example.com
-// 如果存在命名参数，也可以通过 syntax.GetParams 获取。
+// 如果存在命名参数，也可以通过也可通过 types.Params() 接口获取。
 // 当语法错误时，会触发 panic，可通过 CheckSyntax 检测语法的正确性。
 func (hs *Hosts) Add(domain ...string) {
 	for _, d := range domain {
@@ -81,7 +81,6 @@ func (hs *Hosts) Add(domain ...string) {
 	}
 }
 
-// Delete 删除域名
 func (hs *Hosts) Delete(domain string) { hs.tree.Remove(domain) }
 
 func (hs *Hosts) emptyHandlerFunc() {}

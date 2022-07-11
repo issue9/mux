@@ -64,7 +64,7 @@ func (g *GroupOf[T]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		ctx.Reset()
 	}
 
-	g.call(w, r, nil, g.notFound)
+	g.call(w, r, ctx, g.notFound)
 }
 
 // New 声明新路由
