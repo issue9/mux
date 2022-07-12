@@ -11,34 +11,17 @@ import (
 
 	"github.com/issue9/mux/v7"
 	"github.com/issue9/mux/v7/internal/options"
+	"github.com/issue9/mux/v7/internal/tree"
 	"github.com/issue9/mux/v7/types"
 )
-
-func buildMiddleware(a *assert.Assertion, text string) types.MiddlewareOf[http.Handler] {
-	return types.MiddlewareFuncOf[http.Handler](func(h http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			h.ServeHTTP(w, r) // 先输出被包含的内容
-			_, err := w.Write([]byte(text))
-			a.NotError(err)
-		})
-	})
-}
 
 func call(w http.ResponseWriter, r *http.Request, ps types.Route, h http.Handler) {
 	h.ServeHTTP(w, r)
 }
 
-func methodNotAllowedBuilder(n types.Node) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-	})
-}
+var methodNotAllowedBuilder = tree.BuildTestNodeHandlerFunc(http.StatusMethodNotAllowed)
 
-func optionsHandlerBuilder(n types.Node) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Allow", n.AllowHeader())
-	})
-}
+var optionsHandlerBuilder = tree.BuildTestNodeHandlerFunc(http.StatusOK)
 
 func newGroup(a *assert.Assertion, o ...mux.Option) *GroupOf[http.Handler] {
 	a.TB().Helper()
@@ -76,7 +59,7 @@ func TestGroupOf_Use(t *testing.T) {
 
 	h1 := g.New("h1", NewHosts(false, "h1.example.com"))
 	h1.Get("/posts/5.html", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("h1")) }))
-	g.Use(buildMiddleware(a, "m1"))
+	g.Use(tree.BuildTestMiddleware(a, "m1"))
 	h2 := g.New("h2", NewHosts(false, "h2.example.com"))
 	h2.Get("/posts/5.html", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("h2")) }))
 
@@ -90,7 +73,7 @@ func TestGroupOf_Use(t *testing.T) {
 		Do(g).
 		BodyFunc(func(a *assert.Assertion, body []byte) { a.Contains(body, "m1") })
 
-	g.Use(buildMiddleware(a, "m2"))
+	g.Use(tree.BuildTestMiddleware(a, "m2"))
 
 	rest.NewRequest(a, http.MethodGet, "https://h1.example.com/posts/5.html").
 		Do(g).

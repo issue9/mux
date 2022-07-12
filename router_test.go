@@ -11,17 +11,8 @@ import (
 
 	"github.com/issue9/mux/v7"
 	"github.com/issue9/mux/v7/examples/std"
+	"github.com/issue9/mux/v7/internal/tree"
 )
-
-func buildMiddleware(a *assert.Assertion, text string) std.Middleware {
-	return std.MiddlewareFunc(func(h http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			h.ServeHTTP(w, r) // 先输出被包含的内容
-			_, err := w.Write([]byte(text))
-			a.NotError(err)
-		})
-	})
-}
 
 func TestRouterOf(t *testing.T) {
 	a := assert.New(t, false)
@@ -192,7 +183,7 @@ func TestRouterOf_Middleware(t *testing.T) {
 
 	def := std.NewRouter("")
 	a.NotNil(def)
-	def.Use(buildMiddleware(a, "m1"), buildMiddleware(a, "m2"), buildMiddleware(a, "m3"), buildMiddleware(a, "m4"))
+	def.Use(tree.BuildTestMiddleware(a, "m1"), tree.BuildTestMiddleware(a, "m2"), tree.BuildTestMiddleware(a, "m3"), tree.BuildTestMiddleware(a, "m4"))
 	def.Get("/get", rest.BuildHandler(a, 201, "", nil))
 	def.Post("/get", rest.BuildHandler(a, 201, "", nil))
 
@@ -201,7 +192,7 @@ func TestRouterOf_Middleware(t *testing.T) {
 	rest.Get(a, "/get").Do(def).Status(201).StringBody("m1m2m3m4")
 	rest.Post(a, "/get", nil).Do(def).Status(201).StringBody("m1m2m3m4")
 
-	def.Use(buildMiddleware(a, "m5"), buildMiddleware(a, "m6"))
+	def.Use(tree.BuildTestMiddleware(a, "m5"), tree.BuildTestMiddleware(a, "m6"))
 	rest.Get(a, "/get").Do(def).Status(201).StringBody("m1m2m3m4m5m6")
 }
 
@@ -270,10 +261,10 @@ func TestPrefix_Resource(t *testing.T) {
 	def := std.NewRouter("")
 	a.NotNil(def)
 
-	p := def.Prefix("/p1", buildMiddleware(a, "p1"), buildMiddleware(a, "p2"))
+	p := def.Prefix("/p1", tree.BuildTestMiddleware(a, "p1"), tree.BuildTestMiddleware(a, "p2"))
 	a.NotNil(p)
 
-	r1 := p.Resource("/abc/1", buildMiddleware(a, "r1"), buildMiddleware(a, "r2"))
+	r1 := p.Resource("/abc/1", tree.BuildTestMiddleware(a, "r1"), tree.BuildTestMiddleware(a, "r2"))
 	a.NotNil(r1)
 
 	r1.Delete(rest.BuildHandler(a, 201, "-201-", nil))
@@ -401,7 +392,7 @@ func TestRouterOf_Prefix(t *testing.T) {
 		p := def.Prefix("/abc")
 		a.Equal(p.Router(), def)
 
-		pp := p.Prefix("", buildMiddleware(a, "p1"), buildMiddleware(a, "p2"))
+		pp := p.Prefix("", tree.BuildTestMiddleware(a, "p1"), tree.BuildTestMiddleware(a, "p2"))
 		pp.Delete("", rest.BuildHandler(a, 201, "-201-", nil))
 		rest.Delete(a, "/abc").Do(def).Status(201).StringBody("-201-p1p2")
 	})
@@ -412,8 +403,8 @@ func TestPrefixOf_Prefix(t *testing.T) {
 	def := std.NewRouter("", mux.AllowedCORS(3600))
 	a.NotNil(def)
 
-	p := def.Prefix("/abc", buildMiddleware(a, "p1"), buildMiddleware(a, "p2"))
-	pp := p.Prefix("/def", buildMiddleware(a, "pp1"), buildMiddleware(a, "pp2"))
+	p := def.Prefix("/abc", tree.BuildTestMiddleware(a, "p1"), tree.BuildTestMiddleware(a, "p2"))
+	pp := p.Prefix("/def", tree.BuildTestMiddleware(a, "pp1"), tree.BuildTestMiddleware(a, "pp2"))
 	a.Equal(p.Router(), def)
 	pp.Delete("", rest.BuildHandler(a, 201, "-201-", nil))
 

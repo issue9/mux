@@ -21,6 +21,16 @@ func NewTestTree(a *assert.Assertion, lock bool, i *syntax.Interceptors) *Tree[h
 	return t
 }
 
+func BuildTestMiddleware(a *assert.Assertion, text string) types.MiddlewareOf[http.Handler] {
+	return types.MiddlewareFuncOf[http.Handler](func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			next.ServeHTTP(w, r) // 先输出被包含的内容
+			_, err := w.Write([]byte(text))
+			a.NotError(err)
+		})
+	})
+}
+
 func BuildTestNodeHandlerFunc(status int) types.BuildNodeHandleOf[http.Handler] {
 	return func(n types.Node) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

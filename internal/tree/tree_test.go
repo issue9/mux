@@ -17,12 +17,6 @@ import (
 	"github.com/issue9/mux/v7/types"
 )
 
-func buildHandler(a *assert.Assertion, code int, body string, headers map[string]string) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		rest.BuildHandler(a, code, body, headers).ServeHTTP(w, r)
-	})
-}
-
 type tester struct {
 	tree *Tree[http.Handler]
 	a    *assert.Assertion
@@ -43,12 +37,12 @@ func newTester(a *assert.Assertion, lock bool) *tester {
 // 测试路由项的 code 需要唯一，之后也是通过此值来判断其命中的路由项。
 func (t *tester) add(method, pattern string, code int) {
 	t.a.TB().Helper()
-	t.a.NotError(t.tree.Add(pattern, buildHandler(t.a, code, "", nil), method))
+	t.a.NotError(t.tree.Add(pattern, rest.BuildHandler(t.a, code, "", nil), method))
 }
 
 func (t *tester) addAmbiguous(pattern string) {
 	t.a.TB().Helper()
-	b := buildHandler(t.a, http.StatusOK, "", nil)
+	b := rest.BuildHandler(t.a, http.StatusOK, "", nil)
 	t.a.ErrorString(t.tree.Add(pattern, b, http.MethodGet), "存在有歧义的节点")
 }
 
@@ -376,7 +370,7 @@ func TestTree_Clean(t *testing.T) {
 	tree := NewTestTree(a, true, syntax.NewInterceptors())
 
 	addNode := func(p string, code int, methods ...string) {
-		a.NotError(tree.Add(p, buildHandler(a, code, "", nil), methods...))
+		a.NotError(tree.Add(p, rest.BuildHandler(a, code, "", nil), methods...))
 	}
 
 	addNode("/", 201, http.MethodGet)
@@ -399,12 +393,12 @@ func TestTree_Add_Remove(t *testing.T) {
 
 	tree := NewTestTree(a, true, syntax.NewInterceptors())
 
-	a.NotError(tree.Add("/", buildHandler(a, http.StatusAccepted, "", nil), http.MethodGet))
-	a.NotError(tree.Add("/posts/{id}", buildHandler(a, http.StatusAccepted, "", nil), http.MethodGet))
-	a.NotError(tree.Add("/posts/{-id}/ignore-name", buildHandler(a, http.StatusAccepted, "", nil), http.MethodGet))
-	a.NotError(tree.Add("/posts/{id}/author", buildHandler(a, http.StatusAccepted, "", nil), http.MethodGet, http.MethodPut, http.MethodPost))
-	a.NotError(tree.Add("/posts/1/author", buildHandler(a, http.StatusAccepted, "", nil), http.MethodGet))
-	a.NotError(tree.Add("/posts/{id}/{author:\\w+}/profile", buildHandler(a, 1, "", nil), http.MethodGet))
+	a.NotError(tree.Add("/", rest.BuildHandler(a, http.StatusAccepted, "", nil), http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}", rest.BuildHandler(a, http.StatusAccepted, "", nil), http.MethodGet))
+	a.NotError(tree.Add("/posts/{-id}/ignore-name", rest.BuildHandler(a, http.StatusAccepted, "", nil), http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}/author", rest.BuildHandler(a, http.StatusAccepted, "", nil), http.MethodGet, http.MethodPut, http.MethodPost))
+	a.NotError(tree.Add("/posts/1/author", rest.BuildHandler(a, http.StatusAccepted, "", nil), http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}/{author:\\w+}/profile", rest.BuildHandler(a, 1, "", nil), http.MethodGet))
 
 	a.NotEmpty(tree.node.find("/posts/1/author").handlers)
 	a.NotEmpty(tree.node.find("/posts/{-id}/ignore-name").handlers)
@@ -420,7 +414,7 @@ func TestTree_Add_Remove(t *testing.T) {
 	// addAny
 
 	tree = NewTestTree(a, false, syntax.NewInterceptors())
-	a.NotError(tree.Add("/path", buildHandler(a, 201, "", nil)))
+	a.NotError(tree.Add("/path", rest.BuildHandler(a, 201, "", nil)))
 	node := tree.node.find("/path")
 	a.Equal(len(Methods)+1, len(node.handlers)) // 多了 methodNotAllowed
 	a.Equal(len(Methods), len(node.Methods()))  // methodNotAllowed 并不记入 node.Methods()
@@ -429,7 +423,7 @@ func TestTree_Add_Remove(t *testing.T) {
 	// OPTIONS
 
 	tree = NewTestTree(a, true, syntax.NewInterceptors())
-	a.NotError(tree.Add("/path", buildHandler(a, http.StatusAccepted, "", nil), http.MethodGet))
+	a.NotError(tree.Add("/path", rest.BuildHandler(a, http.StatusAccepted, "", nil), http.MethodGet))
 	node = tree.node.find("/path")
 	a.Equal(4, len(node.handlers)).
 		NotNil(node.handlers[http.MethodOptions])
@@ -440,22 +434,22 @@ func TestTree_Add_Remove(t *testing.T) {
 	// error
 
 	tree = NewTestTree(a, true, syntax.NewInterceptors())
-	a.ErrorString(tree.Add("/path", buildHandler(a, http.StatusAccepted, "", nil), "NOT-SUPPORTED"), "NOT-SUPPORTED")
-	a.NotError(tree.Add("/path", buildHandler(a, http.StatusAccepted, "", nil), http.MethodDelete))
-	a.ErrorString(tree.Add("/path", buildHandler(a, http.StatusAccepted, "", nil), http.MethodDelete), http.MethodDelete)
+	a.ErrorString(tree.Add("/path", rest.BuildHandler(a, http.StatusAccepted, "", nil), "NOT-SUPPORTED"), "NOT-SUPPORTED")
+	a.NotError(tree.Add("/path", rest.BuildHandler(a, http.StatusAccepted, "", nil), http.MethodDelete))
+	a.ErrorString(tree.Add("/path", rest.BuildHandler(a, http.StatusAccepted, "", nil), http.MethodDelete), http.MethodDelete)
 	tree.Remove("/path", http.MethodOptions) // remove options 不发生任何操作
 	a.Equal(tree.node.find("/path").AllowHeader(), "DELETE, OPTIONS")
 
-	a.ErrorString(tree.Add("/path/{id}/path/{id:\\d+}", buildHandler(a, 1, "", nil), http.MethodHead), "存在相同名称的路由参数")
-	a.ErrorString(tree.Add("/path/{id}{id2:\\d+}", buildHandler(a, 1, "", nil), http.MethodHead), "两个命名参数不能连续出现")
+	a.ErrorString(tree.Add("/path/{id}/path/{id:\\d+}", rest.BuildHandler(a, 1, "", nil), http.MethodHead), "存在相同名称的路由参数")
+	a.ErrorString(tree.Add("/path/{id}{id2:\\d+}", rest.BuildHandler(a, 1, "", nil), http.MethodHead), "两个命名参数不能连续出现")
 
 	// 多层节点的删除
 
 	tree = NewTestTree(a, true, syntax.NewInterceptors())
-	a.NotError(tree.Add("/posts", buildHandler(a, 201, "", nil), http.MethodGet, http.MethodPut))
-	a.NotError(tree.Add("/posts/{id}", buildHandler(a, 202, "", nil), http.MethodGet))
-	a.NotError(tree.Add("/posts/{id}/author", buildHandler(a, 203, "", nil), http.MethodGet))
-	a.NotError(tree.Add("/posts/{id}/author/email", buildHandler(a, 204, "", nil), http.MethodGet))
+	a.NotError(tree.Add("/posts", rest.BuildHandler(a, 201, "", nil), http.MethodGet, http.MethodPut))
+	a.NotError(tree.Add("/posts/{id}", rest.BuildHandler(a, 202, "", nil), http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}/author", rest.BuildHandler(a, 203, "", nil), http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}/author/email", rest.BuildHandler(a, 204, "", nil), http.MethodGet))
 
 	tree.Remove("/posts/{id}") // 删除 202
 	nn := tree.node.find("/posts/{id}")
@@ -476,10 +470,10 @@ func TestTree_Routes(t *testing.T) {
 	a := assert.New(t, false)
 	tree := NewTestTree(a, true, syntax.NewInterceptors())
 
-	a.NotError(tree.Add("/", buildHandler(a, http.StatusOK, "", nil), http.MethodGet))
-	a.NotError(tree.Add("/posts", buildHandler(a, http.StatusOK, "", nil), http.MethodGet, http.MethodPost))
-	a.NotError(tree.Add("/posts/{id}", buildHandler(a, http.StatusOK, "", nil), http.MethodGet, http.MethodPut))
-	a.NotError(tree.Add("/posts/{id}/author", buildHandler(a, http.StatusOK, "", nil), http.MethodGet))
+	a.NotError(tree.Add("/", rest.BuildHandler(a, http.StatusOK, "", nil), http.MethodGet))
+	a.NotError(tree.Add("/posts", rest.BuildHandler(a, http.StatusOK, "", nil), http.MethodGet, http.MethodPost))
+	a.NotError(tree.Add("/posts/{id}", rest.BuildHandler(a, http.StatusOK, "", nil), http.MethodGet, http.MethodPut))
+	a.NotError(tree.Add("/posts/{id}/author", rest.BuildHandler(a, http.StatusOK, "", nil), http.MethodGet))
 
 	routes := tree.Routes()
 	a.Equal(routes, map[string][]string{
@@ -493,7 +487,7 @@ func TestTree_Routes(t *testing.T) {
 
 func TestTree_find(t *testing.T) {
 	a := assert.New(t, false)
-	h := buildHandler(a, http.StatusCreated, "", nil)
+	h := rest.BuildHandler(a, http.StatusCreated, "", nil)
 	tree := NewTestTree(a, false, syntax.NewInterceptors())
 
 	a.NotError(tree.Add("/", h, http.MethodGet))
@@ -588,30 +582,18 @@ func TestTree_match(t *testing.T) {
 		Empty(w.Body.String())
 }
 
-func TestTree_ApplyMiddlewares(t *testing.T) {
+func TestTree_ApplyMiddleware(t *testing.T) {
 	a := assert.New(t, false)
 
 	tree := NewTestTree(a, false, syntax.NewInterceptors())
 
-	err := tree.Add("/m", buildHandler(a, http.StatusOK, "/m/", nil), http.MethodGet)
+	err := tree.Add("/m", rest.BuildHandler(a, http.StatusOK, "/m/", nil), http.MethodGet)
 	a.NotError(err)
 
-	err = tree.Add("/m/path", buildHandler(a, http.StatusOK, "/m/path/", nil), http.MethodGet)
+	err = tree.Add("/m/path", rest.BuildHandler(a, http.StatusOK, "/m/path/", nil), http.MethodGet)
 	a.NotError(err)
 
-	tree.ApplyMiddleware(types.MiddlewareFuncOf[http.Handler](func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			next.ServeHTTP(w, r)
-			w.Write([]byte("m1"))
-			w.Header().Add("m1", "m1")
-		})
-	}), types.MiddlewareFuncOf[http.Handler](func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			next.ServeHTTP(w, r)
-			w.Write([]byte("m2"))
-			w.Header().Add("m2", "m2")
-		})
-	}))
+	tree.ApplyMiddleware(BuildTestMiddleware(a, "m1"), BuildTestMiddleware(a, "m2"))
 
 	newCtx := func(path string) *types.Context {
 		ctx := types.NewContext()
@@ -625,9 +607,7 @@ func TestTree_ApplyMiddlewares(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := rest.Get(a, "/m").Request()
 	f.ServeHTTP(w, r)
-	a.Equal(w.Body.String(), "/m/m1m2").
-		Equal(w.Header().Get("m1"), "m1").
-		Equal(w.Header().Get("m2"), "m2")
+	a.Equal(w.Body.String(), "/m/m1m2")
 
 	// HEAD /m
 	_, f, exists = tree.Handler(newCtx("/m"), http.MethodHead)
@@ -635,9 +615,7 @@ func TestTree_ApplyMiddlewares(t *testing.T) {
 	w = httptest.NewRecorder()
 	r = rest.NewRequest(a, http.MethodHead, "/m").Request()
 	f.ServeHTTP(w, r)
-	a.Equal(w.Body.String(), "/m/m1m2").
-		Equal(w.Header().Get("m1"), "m1").
-		Equal(w.Header().Get("m2"), "m2")
+	a.Equal(w.Body.String(), "/m/m1m2")
 
 	// GET /m/path
 	_, f, exists = tree.Handler(newCtx("/m/path"), http.MethodGet)
@@ -645,9 +623,7 @@ func TestTree_ApplyMiddlewares(t *testing.T) {
 	w = httptest.NewRecorder()
 	r = rest.Get(a, "/m/path").Request()
 	f.ServeHTTP(w, r)
-	a.Equal(w.Body.String(), "/m/path/m1m2").
-		Equal(w.Header().Get("m1"), "m1").
-		Equal(w.Header().Get("m2"), "m2")
+	a.Equal(w.Body.String(), "/m/path/m1m2")
 
 	// OPTIONS /m/path
 	_, f, exists = tree.Handler(newCtx("/m/path"), http.MethodOptions)
@@ -656,9 +632,7 @@ func TestTree_ApplyMiddlewares(t *testing.T) {
 	r = rest.NewRequest(a, http.MethodOptions, "/m/path").Request()
 	f.ServeHTTP(w, r)
 	a.Equal(w.Body.String(), "m1m2"). // m1m2 由中间件产生
-						Equal(w.Header().Get("Allow"), "GET, HEAD, OPTIONS").
-						Equal(w.Header().Get("m1"), "m1").
-						Equal(w.Header().Get("m2"), "m2")
+						Equal(w.Header().Get("Allow"), "GET, HEAD, OPTIONS")
 
 	// DELETE /m/path  method not allowed
 	_, f, exists = tree.Handler(newCtx("/m/path"), http.MethodDelete)
@@ -667,9 +641,7 @@ func TestTree_ApplyMiddlewares(t *testing.T) {
 	r = rest.Get(a, "/m/path").Request()
 	f.ServeHTTP(w, r)
 	a.Equal(w.Body.String(), "m1m2"). // m1m2 由中间件产生
-						Equal(w.Result().StatusCode, http.StatusMethodNotAllowed).
-						Equal(w.Header().Get("m1"), "m1").
-						Equal(w.Header().Get("m2"), "m2")
+						Equal(w.Result().StatusCode, http.StatusMethodNotAllowed)
 
 	// DELETE /not-exists  not found
 	_, f, exists = tree.Handler(newCtx("/not-exists"), http.MethodDelete)
@@ -678,9 +650,7 @@ func TestTree_ApplyMiddlewares(t *testing.T) {
 	r = rest.Get(a, "/m/path").Request()
 	f.ServeHTTP(w, r)
 	a.Equal(w.Body.String(), "404 page not found\nm1m2"). // m1m2 由中间件产生
-								Equal(w.Result().StatusCode, http.StatusNotFound).
-								Equal(w.Header().Get("m1"), "m1").
-								Equal(w.Header().Get("m2"), "m2")
+								Equal(w.Result().StatusCode, http.StatusNotFound)
 }
 
 func TestTree_Handler(t *testing.T) {
