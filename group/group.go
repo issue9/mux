@@ -35,10 +35,10 @@ type (
 	}
 )
 
-// NewGroupOf 声明 GroupOf 对象
+// NewOf 声明 GroupOf 对象
 //
 // 初始化参数与 mux.NewRouterOf 相同，这些参数最终也会被 GroupOf.New 传递给新对象。
-func NewGroupOf[T any](call mux.CallOf[T], notFound T, methodNotAllowedBuilder, optionsBuilder types.BuildNodeHandleOf[T], o ...mux.Option) *GroupOf[T] {
+func NewOf[T any](call mux.CallOf[T], notFound T, methodNotAllowedBuilder, optionsBuilder types.BuildNodeHandleOf[T], o ...mux.Option) *GroupOf[T] {
 	return &GroupOf[T]{
 		routers: make([]*routerOf[T], 0, 1),
 
@@ -69,7 +69,7 @@ func (g *GroupOf[T]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // New 声明新路由
 //
-// 新路由会继承 NewGroupOf 中指定的参数，其中的 o 可以覆盖由 NewGroupOf 中的相关参数；
+// 新路由会继承 NewOf 中指定的参数，其中的 o 可以覆盖由 NewOf 中的相关参数；
 func (g *GroupOf[T]) New(name string, matcher Matcher, o ...mux.Option) *mux.RouterOf[T] {
 	o = g.mergeOption(o...)
 	r := mux.NewRouterOf(name, g.call, g.notFound, g.methodNotAllowedBuilder, g.optionsBuilder, o...)

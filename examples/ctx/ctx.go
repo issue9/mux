@@ -53,7 +53,7 @@ func notFound(ctx *CTX) {
 }
 
 func NewRouters(o ...mux.Option) *Routers {
-	return group.NewGroupOf[Handler](call, HandlerFunc(notFound), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
+	return group.NewOf[Handler](call, HandlerFunc(notFound), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
 }
 
 // NewRouter 声明适用于官方 http.Handler 接口的路由

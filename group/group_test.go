@@ -25,7 +25,7 @@ var optionsHandlerBuilder = tree.BuildTestNodeHandlerFunc(http.StatusOK)
 
 func newGroup(a *assert.Assertion, o ...mux.Option) *GroupOf[http.Handler] {
 	a.TB().Helper()
-	g := NewGroupOf(call, http.NotFoundHandler(), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
+	g := NewOf(call, http.NotFoundHandler(), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
 	a.NotNil(g)
 	return g
 }

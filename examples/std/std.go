@@ -44,7 +44,7 @@ func optionsHandlerBuilder(p types.Node) http.Handler {
 }
 
 func NewRouters(o ...mux.Option) *Routers {
-	return group.NewGroupOf(call, http.NotFoundHandler(), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
+	return group.NewOf(call, http.NotFoundHandler(), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
 }
 
 // NewRouter 声明适用于官方 http.Handler 接口的路由
