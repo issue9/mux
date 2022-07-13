@@ -30,7 +30,8 @@ type (
 		urlDomain   string
 		recoverFunc RecoverFunc
 
-		ms []types.MiddlewareOf[T]
+		middleware  []types.MiddlewareOf[T]
+		connections []ConnectionFunc
 	}
 
 	// CallOf 指定如何调用用户自定义的对象 T
@@ -38,16 +39,16 @@ type (
 
 	// ResourceOf 以资源地址为对象的路由
 	ResourceOf[T any] struct {
-		router  *RouterOf[T]
-		pattern string
-		ms      []types.MiddlewareOf[T]
+		router     *RouterOf[T]
+		pattern    string
+		middleware []types.MiddlewareOf[T]
 	}
 
 	// PrefixOf 操纵统一前缀的路由
 	PrefixOf[T any] struct {
-		router *RouterOf[T]
-		prefix string
-		ms     []types.MiddlewareOf[T]
+		router     *RouterOf[T]
+		prefix     string
+		middleware []types.MiddlewareOf[T]
 	}
 
 	headResponse struct {
@@ -74,6 +75,7 @@ func NewRouterOf[T any](name string, call CallOf[T], notFound T, methodNotAllowe
 		cors:        opt.CORS,
 		urlDomain:   opt.URLDomain,
 		recoverFunc: opt.RecoverFunc,
+		connections: opt.Connections,
 	}
 
 	return r
@@ -95,11 +97,9 @@ func (r *RouterOf[T]) Remove(pattern string, methods ...string) {
 	r.tree.Remove(pattern, methods...)
 }
 
-// Use 将中间件应用到所有匹配的路由项
-//
-// OPTIONS、404、405 等没有明确归属的请求只受此函数添加的中间件影响。
+// Use 使用中间件
 func (r *RouterOf[T]) Use(m ...types.MiddlewareOf[T]) {
-	r.ms = append(r.ms, m...)
+	r.middleware = append(r.middleware, m...)
 	r.tree.ApplyMiddleware(m...)
 }
 
@@ -115,7 +115,7 @@ func (r *RouterOf[T]) Handle(pattern string, h T, methods ...string) *RouterOf[T
 }
 
 func (r *RouterOf[T]) handle(pattern string, h T, methods ...string) {
-	h = tree.ApplyMiddlewares(h, r.ms...)
+	h = tree.ApplyMiddleware(h, r.middleware...)
 	if err := r.tree.Add(pattern, h, methods...); err != nil {
 		panic(err)
 	}
@@ -193,6 +193,10 @@ func (r *RouterOf[T]) ServeContext(w http.ResponseWriter, req *http.Request, ctx
 		}()
 	}
 
+	for _, f := range r.connections {
+		w, req = f(w, req)
+	}
+
 	ctx.Path = req.URL.Path
 	node, h, ok := r.tree.Handler(ctx, req.Method)
 	ctx.SetNode(node)
@@ -211,7 +215,7 @@ func (r *RouterOf[T]) ServeContext(w http.ResponseWriter, req *http.Request, ctx
 func (r *RouterOf[T]) Name() string { return r.name }
 
 func (p *PrefixOf[T]) Handle(pattern string, h T, methods ...string) *PrefixOf[T] {
-	p.router.handle(p.prefix+pattern, tree.ApplyMiddlewares(h, p.ms...), methods...)
+	p.router.handle(p.prefix+pattern, tree.ApplyMiddleware(h, p.middleware...), methods...)
 	return p
 }
 
@@ -262,8 +266,8 @@ func (p *PrefixOf[T]) URL(strict bool, pattern string, params map[string]string)
 //
 // m 中间件函数，按顺序调用，会继承 p 的中间件并按在 m 之前；
 func (p *PrefixOf[T]) Prefix(prefix string, m ...types.MiddlewareOf[T]) *PrefixOf[T] {
-	ms := make([]types.MiddlewareOf[T], 0, len(p.ms)+len(m))
-	ms = append(ms, p.ms...)
+	ms := make([]types.MiddlewareOf[T], 0, len(p.middleware)+len(m))
+	ms = append(ms, p.middleware...)
 	ms = append(ms, m...)
 	return p.router.Prefix(p.prefix+prefix, ms...)
 }
@@ -275,14 +279,14 @@ func (p *PrefixOf[T]) Prefix(prefix string, m ...types.MiddlewareOf[T]) *PrefixO
 func (r *RouterOf[T]) Prefix(prefix string, m ...types.MiddlewareOf[T]) *PrefixOf[T] {
 	ms := make([]types.MiddlewareOf[T], 0, len(m))
 	ms = append(ms, m...)
-	return &PrefixOf[T]{router: r, prefix: prefix, ms: ms}
+	return &PrefixOf[T]{router: r, prefix: prefix, middleware: ms}
 }
 
 // Router 返回与当前关联的 *Router 实例
 func (p *PrefixOf[T]) Router() *RouterOf[T] { return p.router }
 
 func (r *ResourceOf[T]) Handle(h T, methods ...string) *ResourceOf[T] {
-	r.router.handle(r.pattern, tree.ApplyMiddlewares(h, r.ms...), methods...)
+	r.router.handle(r.pattern, tree.ApplyMiddleware(h, r.middleware...), methods...)
 	return r
 }
 
@@ -324,7 +328,7 @@ func (r *ResourceOf[T]) URL(strict bool, params map[string]string) (string, erro
 func (r *RouterOf[T]) Resource(pattern string, m ...types.MiddlewareOf[T]) *ResourceOf[T] {
 	ms := make([]types.MiddlewareOf[T], 0, len(m))
 	ms = append(ms, m...)
-	return &ResourceOf[T]{router: r, pattern: pattern, ms: ms}
+	return &ResourceOf[T]{router: r, pattern: pattern, middleware: ms}
 }
 
 // Resource 创建一个资源路由项
@@ -332,8 +336,8 @@ func (r *RouterOf[T]) Resource(pattern string, m ...types.MiddlewareOf[T]) *Reso
 // pattern 资源地址；
 // m 中间件函数，按顺序调用，会继承 p 的中间件并按在 m 之前；
 func (p *PrefixOf[T]) Resource(pattern string, m ...types.MiddlewareOf[T]) *ResourceOf[T] {
-	ms := make([]types.MiddlewareOf[T], 0, len(p.ms)+len(m))
-	ms = append(ms, p.ms...)
+	ms := make([]types.MiddlewareOf[T], 0, len(p.middleware)+len(m))
+	ms = append(ms, p.middleware...)
 	ms = append(ms, m...)
 	return p.router.Resource(p.prefix+pattern, ms...)
 }

@@ -97,3 +97,33 @@ func TestRecovery(t *testing.T) {
 		a.Equal(w.Code, 406)
 	})
 }
+
+func TestClearPath(t *testing.T) {
+	a := assert.New(t, false)
+	r, err := http.NewRequest(http.MethodGet, "", nil)
+	a.NotError(err).NotNil(r)
+
+	eq := func(input, output string) {
+		a.TB().Helper()
+		r.URL.Path = input
+		_, r = CleanPath(httptest.NewRecorder(), r)
+		a.NotNil(r).Equal(r.URL.Path, output)
+	}
+
+	eq("", "/")
+	eq("{}", "/{}")
+
+	eq("/api//", "/api/")
+	eq("/{api}//", "/{api}/")
+	eq("/{api}/{}/", "/{api}/{}/")
+	eq("api/", "/api/")
+	eq("api/////", "/api/")
+	eq("//api/////1", "/api/1")
+
+	eq("/api/", "/api/")
+	eq("/api/./", "/api/./")
+
+	eq("/api/..", "/api/..")
+	eq("/api/../", "/api/../")
+	eq("/api/../../", "/api/../../")
+}

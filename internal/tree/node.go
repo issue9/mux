@@ -333,17 +333,17 @@ func (n *node[T]) checkAmbiguous(pattern string, hasNonString bool) (*node[T], b
 	return nil, false, nil
 }
 
-func (n *node[T]) applyMiddlewares(ms ...types.MiddlewareOf[T]) {
+func (n *node[T]) applyMiddleware(ms ...types.MiddlewareOf[T]) {
 	for m, h := range n.handlers {
-		n.handlers[m] = ApplyMiddlewares(h, ms...)
+		n.handlers[m] = ApplyMiddleware(h, ms...)
 	}
 
 	for _, c := range n.children {
-		c.applyMiddlewares(ms...)
+		c.applyMiddleware(ms...)
 	}
 }
 
-func ApplyMiddlewares[T any](h T, f ...types.MiddlewareOf[T]) T {
+func ApplyMiddleware[T any](h T, f ...types.MiddlewareOf[T]) T {
 	for _, ff := range f {
 		h = ff.Middleware(h)
 	}

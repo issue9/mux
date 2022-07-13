@@ -26,7 +26,7 @@ type (
 		optionsBuilder types.BuildNodeHandleOf[T]
 		options []options.Option
 
-		ms []types.MiddlewareOf[T]
+		middleware []types.MiddlewareOf[T]
 	}
 
 	routerOf[T any] struct {
@@ -48,7 +48,7 @@ func NewGroupOf[T any](call mux.CallOf[T], notFound T, methodNotAllowedBuilder, 
 		optionsBuilder:          optionsBuilder,
 		options:                 o,
 
-		ms: make([]types.MiddlewareOf[T], 0, 10),
+		middleware: make([]types.MiddlewareOf[T], 0, 10),
 	}
 }
 
@@ -111,7 +111,7 @@ func (g *GroupOf[T]) Add(matcher Matcher, r *mux.RouterOf[T]) {
 		panic(fmt.Sprintf("已经存在名为 %s 的路由", r.Name()))
 	}
 
-	r.Use(g.ms...)
+	r.Use(g.middleware...)
 
 	g.routers = append(g.routers, &routerOf[T]{r: r, m: matcher})
 }
@@ -131,9 +131,9 @@ func (g *GroupOf[T]) Use(m ...types.MiddlewareOf[T]) {
 	for _, r := range g.routers {
 		r.r.Use(m...)
 	}
-	g.notFound = tree.ApplyMiddlewares(g.notFound, m...)
+	g.notFound = tree.ApplyMiddleware(g.notFound, m...)
 
-	g.ms = append(g.ms, m...)
+	g.middleware = append(g.middleware, m...)
 }
 
 // Routers 返回路由列表

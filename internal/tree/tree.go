@@ -278,6 +278,6 @@ func (tree *Tree[T]) URL(buf *errwrap.StringBuilder, pattern string, ps map[stri
 }
 
 func (tree *Tree[T]) ApplyMiddleware(ms ...types.MiddlewareOf[T]) {
-	tree.notFound = ApplyMiddlewares(tree.notFound, ms...)
-	tree.node.applyMiddlewares(ms...)
+	tree.notFound = ApplyMiddleware(tree.notFound, ms...)
+	tree.node.applyMiddleware(ms...)
 }

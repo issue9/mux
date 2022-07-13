@@ -16,6 +16,9 @@ type Matcher interface {
 	// Match 验证请求是否符合当前对象的要求
 	//
 	// 返回值表示是否匹配成功；
+	//
+	// 如果 Match 返回 false，那么不应当对 *http.Request 和 *types.Context
+	// 所指向的内容作修改，否则可能影响后续的判断。
 	Match(*http.Request, *types.Context) bool
 }
 

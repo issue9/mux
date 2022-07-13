@@ -8,14 +8,19 @@ import (
 	"log"
 	"net/http"
 	"runtime/debug"
+	"strings"
 
 	"github.com/issue9/mux/v7/internal/options"
 	"github.com/issue9/mux/v7/internal/syntax"
 )
 
-type RecoverFunc = options.RecoverFunc
+type (
+	RecoverFunc = options.RecoverFunc
 
-type Option = options.Option
+	Option = options.Option
+
+	ConnectionFunc = options.ConnectionFunc
+)
 
 // Lock 是否加锁
 //
@@ -132,3 +137,64 @@ func DenyCORS() Option { return CORS(nil, nil, nil, 0, false) }
 
 // AllowedCORS 允许跨域请求
 func AllowedCORS(maxAge int) Option { return CORS([]string{"*"}, []string{"*"}, nil, maxAge, false) }
+
+// OnConnection 为用户提供修改 http.ResponseWriter 和 *http.Request 的方法
+//
+// 建议用户直接使用 OnConnection 处理，而不是在 RouterOf.ServeHTTP 外层套一个函数进行，
+// 由 OnConnection 添加的函数在 panic 时能正确被 RouterOf.recoverFunc 捕获并处理。
+//
+// OnConnection 部分功能是与 RouterOf.Use 重合的，如果该功能采用中间件也能实现，
+// 那么就应当采用 RouterOf.Use 进行处理。
+// 如非必要不应该在 OnConnection 中向客户端输出内容，这会造成过早地输出状态码，导致后续的一些操作失败。
+func OnConnection(f ...ConnectionFunc) Option {
+	return func(o *options.Options) {
+		o.Connections = append(o.Connections, f...)
+	}
+}
+
+// CleanPath 清除路径中的重复的 / 字符
+func CleanPath(w http.ResponseWriter, r *http.Request) (http.ResponseWriter, *http.Request) {
+	if r.URL.Path == "" {
+		r.URL.Path = "/"
+		return w, r
+	}
+
+	p := r.URL.Path
+	var b strings.Builder
+	b.Grow(len(p) + 1)
+
+	if p[0] != '/' {
+		b.WriteByte('/')
+	}
+
+	index := strings.Index(p, "//")
+	if index == -1 {
+		b.WriteString(p)
+		r.URL.Path = b.String()
+		return w, r
+	}
+
+	b.WriteString(p[:index+1])
+
+	slash := true
+	for i := index + 2; i < len(p); i++ {
+		if p[i] == '/' {
+			if slash {
+				continue
+			}
+			slash = true
+		} else {
+			slash = false
+		}
+		b.WriteByte(p[i])
+	}
+
+	r.URL.Path = b.String()
+	return w, r
+}
+
+// LowerPath 将 r.URL.Path 转换成小写
+func LowerPath(w http.ResponseWriter, r *http.Request) (http.ResponseWriter, *http.Request) {
+	r.URL.Path = strings.ToLower(r.URL.Path)
+	return w, r
+}
