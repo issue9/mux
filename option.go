@@ -147,9 +147,7 @@ func AllowedCORS(maxAge int) Option { return CORS([]string{"*"}, []string{"*"}, 
 // 那么就应当采用 RouterOf.Use 进行处理。
 // 如非必要不应该在 OnConnection 中向客户端输出内容，这会造成过早地输出状态码，导致后续的一些操作失败。
 func OnConnection(f ...ConnectionFunc) Option {
-	return func(o *options.Options) {
-		o.Connections = append(o.Connections, f...)
-	}
+	return func(o *options.Options) { o.Connections = append(o.Connections, f...) }
 }
 
 // CleanPath 清除路径中的重复的 / 字符
@@ -190,11 +188,5 @@ func CleanPath(w http.ResponseWriter, r *http.Request) (http.ResponseWriter, *ht
 	}
 
 	r.URL.Path = b.String()
-	return w, r
-}
-
-// LowerPath 将 r.URL.Path 转换成小写
-func LowerPath(w http.ResponseWriter, r *http.Request) (http.ResponseWriter, *http.Request) {
-	r.URL.Path = strings.ToLower(r.URL.Path)
 	return w, r
 }
