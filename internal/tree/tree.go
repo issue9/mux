@@ -73,7 +73,7 @@ func New[T any](lock bool, i *syntax.Interceptors, notFound T, methodNotAllowedB
 
 // Add 添加路由项
 //
-// methods 可以为空，表示添加除 OPTIONS 和 HEAD 之外所有支持的请求方法。
+// methods 可以为空，表示添所有支持的请求方法，其中的 HEAD 和 OPTIONS 不受控。
 func (tree *Tree[T]) Add(pattern string, h T, methods ...string) error {
 	if err := tree.checkAmbiguous(pattern); err != nil {
 		return err

@@ -183,23 +183,23 @@ func (n *node[T]) clean(prefix string) {
 }
 
 // 从子节点中查找与当前路径匹配的节点，若找不到，则返回 nil。
-func (n *node[T]) matchChildren(p *types.Context) *node[T] {
-	if len(n.indexes) > 0 && len(p.Path) > 0 { // 普通字符串的匹配
-		child := n.children[n.indexes[p.Path[0]]]
+func (n *node[T]) matchChildren(ctx *types.Context) *node[T] {
+	if len(n.indexes) > 0 && len(ctx.Path) > 0 { // 普通字符串的匹配
+		child := n.children[n.indexes[ctx.Path[0]]]
 		if child == nil {
 			goto LOOP
 		}
 
-		path := p.Path
+		path := ctx.Path
 
-		if !child.segment.Match(p) {
+		if !child.segment.Match(ctx) {
 			goto LOOP
 		}
-		if nn := child.matchChildren(p); nn != nil {
+		if nn := child.matchChildren(ctx); nn != nil {
 			return nn
 		}
 
-		p.Path = path
+		ctx.Path = path
 	}
 
 LOOP:
@@ -207,22 +207,22 @@ LOOP:
 	// 比如 /posts/{path:\\w*} 后面的 path 即为空节点。所以此处不判断 len(p.Path)
 	for i := len(n.indexes); i < len(n.children); i++ {
 		child := n.children[i]
-		path := p.Path
+		path := ctx.Path
 
-		if !child.segment.Match(p) { // 不匹配
+		if !child.segment.Match(ctx) { // 不匹配
 			continue
 		}
-		if nn := child.matchChildren(p); nn != nil {
+		if nn := child.matchChildren(ctx); nn != nil {
 			return nn
 		}
 
 		// 不匹配子元素，则恢复原有数据
-		p.Path = path
-		p.Delete(n.segment.Name)
+		ctx.Path = path
+		ctx.Delete(n.segment.Name)
 	}
 
 	// 没有子节点匹配，len(p.Path)==0，且子节点不为空，可以判定与当前节点匹配。
-	if len(p.Path) == 0 && n.size() > 0 {
+	if len(ctx.Path) == 0 && n.size() > 0 {
 		return n
 	}
 	return nil

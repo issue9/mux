@@ -107,8 +107,7 @@ func (r *RouterOf[T]) Use(m ...types.MiddlewareOf[T]) {
 //
 // pattern 为路由匹配模式，可以是正则匹配也可以是字符串匹配，
 // 若语法不正确，则直接 panic，可以通过 CheckSyntax 检测语法的有效性，其它接口也相同。
-// methods 该路由项对应的请求方法，如果未指定值，则表示所有支持的请求方法，
-// 但不包含 OPTIONS 和 HEAD。
+// methods 该路由项对应的请求方法，如果未指定值，则表示所有支持的请求方法，其中 OPTIONS 和 HEAD 不受控。
 func (r *RouterOf[T]) Handle(pattern string, h T, methods ...string) *RouterOf[T] {
 	r.handle(pattern, h, methods...)
 	return r
@@ -144,6 +143,7 @@ func (r *RouterOf[T]) Patch(pattern string, h T) *RouterOf[T] {
 	return r.Handle(pattern, h, http.MethodPatch)
 }
 
+// Any 添加一条包含全部请求方法的路由
 func (r *RouterOf[T]) Any(pattern string, h T) *RouterOf[T] {
 	return r.Handle(pattern, h)
 }
