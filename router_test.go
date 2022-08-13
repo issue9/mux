@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/issue9/assert/v2"
-	"github.com/issue9/assert/v2/rest"
+	"github.com/issue9/assert/v3"
+	"github.com/issue9/assert/v3/rest"
 
 	"github.com/issue9/mux/v7"
 	"github.com/issue9/mux/v7/examples/std"
@@ -365,9 +365,8 @@ func TestPrefixOf(t *testing.T) {
 }
 
 func TestRouterOf_Prefix(t *testing.T) {
-	a := assert.New(t, false)
-
-	a.Run("prefix", func(a *assert.Assertion) {
+	t.Run("prefix", func(t *testing.T) {
+		a := assert.New(t, false)
 		def := std.NewRouter("", mux.AllowedCORS(3600))
 		a.NotNil(def)
 
@@ -375,7 +374,10 @@ func TestRouterOf_Prefix(t *testing.T) {
 		a.Equal(p.Router(), def)
 
 		p = def.Prefix("")
-	}).Run("prefix with middleware", func(a *assert.Assertion) {
+	})
+
+	t.Run("prefix with middleware", func(t *testing.T) {
+		a := assert.New(t, false)
 		def := std.NewRouter("", mux.AllowedCORS(3600))
 		a.NotNil(def)
 
@@ -385,7 +387,10 @@ func TestRouterOf_Prefix(t *testing.T) {
 		pp := p.Prefix("")
 		pp.Delete("", rest.BuildHandler(a, 201, "", nil))
 		rest.Delete(a, "/abc").Do(def).Status(201)
-	}).Run("empty prefix with middleware", func(a *assert.Assertion) {
+	})
+
+	t.Run("empty prefix with middleware", func(t *testing.T) {
+		a := assert.New(t, false)
 		def := std.NewRouter("", mux.AllowedCORS(3600))
 		a.NotNil(def)
 

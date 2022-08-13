@@ -5,17 +5,17 @@ package ctx
 import (
 	"testing"
 
-	"github.com/issue9/assert/v2"
+	"github.com/issue9/assert/v3"
 
 	"github.com/issue9/mux/v7/routertest"
 	"github.com/issue9/mux/v7/types"
 )
 
 func TestContextRouter_Params(t *testing.T) {
-	a := assert.New(t, false)
 	tt := routertest.NewTester[Handler](call, HandlerFunc(notFound), methodNotAllowedBuilder, optionsHandlerBuilder)
 
-	a.Run("params", func(a *assert.Assertion) {
+	t.Run("params", func(t *testing.T) {
+		a := assert.New(t, false)
 		tt.Params(a, func(ctx *types.Context) Handler {
 			return HandlerFunc(func(c *CTX) {
 				if c.P != nil {
@@ -27,7 +27,8 @@ func TestContextRouter_Params(t *testing.T) {
 		})
 	})
 
-	a.Run("serve", func(a *assert.Assertion) {
+	t.Run("serve", func(t *testing.T) {
+		a := assert.New(t, false)
 		tt.Serve(a, func(status int) Handler {
 			return HandlerFunc(func(c *CTX) {
 				c.W.WriteHeader(status)

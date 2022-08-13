@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/issue9/assert/v2"
-	"github.com/issue9/assert/v2/rest"
+	"github.com/issue9/assert/v3"
+	"github.com/issue9/assert/v3/rest"
 
 	"github.com/issue9/mux/v7/routertest"
 	"github.com/issue9/mux/v7/types"
@@ -21,10 +21,10 @@ var (
 )
 
 func TestRouter(t *testing.T) {
-	a := assert.New(t, false)
 	tt := routertest.NewTester(call, http.NotFoundHandler(), methodNotAllowedBuilder, optionsHandlerBuilder)
 
-	a.Run("params", func(a *assert.Assertion) {
+	t.Run("params", func(t *testing.T) {
+		a := assert.New(t, false)
 		tt.Params(a, func(ctx *types.Context) http.Handler {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				p := GetParams(r)
@@ -37,7 +37,8 @@ func TestRouter(t *testing.T) {
 		})
 	})
 
-	a.Run("serve", func(a *assert.Assertion) {
+	t.Run("serve", func(t *testing.T) {
+		a := assert.New(t, false)
 		tt.Serve(a, func(status int) http.Handler {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(status)
