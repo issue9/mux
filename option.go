@@ -47,10 +47,10 @@ func StatusRecovery(status int) Option {
 	})
 }
 
-// WriterRecovery 向 io.Writer 输出错误信息
+// WriterRecovery 向 [io.Writer] 输出错误信息
 //
 // status 表示向客户端输出的状态码；
-// out 输出的 io.Writer，比如 os.Stderr 等；
+// out 表示输出通道，比如 [os.Stderr] 等；
 func WriterRecovery(status int, out io.Writer) Option {
 	return Recovery(func(w http.ResponseWriter, msg any) {
 		http.Error(w, http.StatusText(status), status)
@@ -81,8 +81,10 @@ type InterceptorFunc = syntax.InterceptorFunc
 //
 // 一旦正则表达式被拦截，则节点类型也将不再是正则表达式，
 // 其处理优先级会比正则表达式类型高。 在某些情况下，可能会造成处理结果不相同。比如：
-//  /authors/{id:\\d+}     // 1
-//  /authors/{id:[0-9]+}   // 2
+//
+//	/authors/{id:\\d+}     // 1
+//	/authors/{id:[0-9]+}   // 2
+//
 // 以上两条记录是相同的，但因为表达式不同，也能正常添加，
 // 处理流程，会按添加顺序优先比对第一条，所以第二条是永远无法匹配的。
 // 但是如果你此时添加了 (InterceptorDigit, "[0-9]+")，
@@ -102,9 +104,7 @@ func DigitInterceptor(rule string) Option { return Interceptor(syntax.MatchDigit
 // WordInterceptor 任意英文单词的拦截器
 func WordInterceptor(rule string) Option { return Interceptor(syntax.MatchWord, rule) }
 
-// CORS 自定义跨域请求设置项
-//
-// https://developer.mozilla.org/zh-CN/docs/Web/HTTP/cors
+// CORS 自定义[跨域请求]设置项
 //
 // origin 对应 Origin 报头。如果包含了 *，那么其它的设置将不再启作用。
 // 如果此值为空，表示不启用跨域的相关设置；
@@ -115,11 +115,13 @@ func WordInterceptor(rule string) Option { return Interceptor(syntax.MatchWord, 
 // exposedHeaders 对应 Access-Control-Expose-Headers；
 //
 // maxAge 对应 Access-Control-Max-Age 有以下几种取值：
-//  - 0 不输出该报头；
-//  - -1 表示禁用；
-//  - 其它 >= -1 的值正常输出数值；
+//   - 0 不输出该报头；
+//   - -1 表示禁用；
+//   - 其它 >= -1 的值正常输出数值；
 //
 // allowCredentials 对应 Access-Control-Allow-Credentials；
+//
+// [跨域请求]: https://developer.mozilla.org/zh-CN/docs/Web/HTTP/cors
 func CORS(origin []string, allowHeaders []string, exposedHeaders []string, maxAge int, allowCredentials bool) Option {
 	return func(o *options.Options) {
 		o.CORS = &options.CORS{
@@ -138,7 +140,7 @@ func DenyCORS() Option { return CORS(nil, nil, nil, 0, false) }
 // AllowedCORS 允许跨域请求
 func AllowedCORS(maxAge int) Option { return CORS([]string{"*"}, []string{"*"}, nil, maxAge, false) }
 
-// OnConnection 为用户提供修改 http.ResponseWriter 和 *http.Request 的方法
+// OnConnection 为用户提供修改 [http.ResponseWriter] 和 [http.Request] 的方法
 //
 // 建议用户直接使用 OnConnection 处理，而不是在 RouterOf.ServeHTTP 外层套一个函数进行，
 // 由 OnConnection 添加的函数在 panic 时能正确被 RouterOf.recoverFunc 捕获并处理。

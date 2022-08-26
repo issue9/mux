@@ -20,7 +20,7 @@ type Params interface {
 
 	// String 获取地址参数中的名为 key 的变量并将其转换成 string
 	//
-	// 当参数不存在时，返回 ErrParamNotExists 错误。
+	// 当参数不存在时，返回 [ErrParamNotExists] 错误。
 	String(key string) (string, error)
 
 	// MustString 获取地址参数中的名为 key 的变量并将其转换成 string
@@ -30,7 +30,7 @@ type Params interface {
 
 	// Int 获取地址参数中的名为 key 的变量并将其转换成 int64
 	//
-	// 当参数不存在时，返回 ErrParamNotExists 错误。
+	// 当参数不存在时，返回 [ErrParamNotExists] 错误。
 	Int(key string) (int64, error)
 
 	// MustInt 获取地址参数中的名为 key 的变量并将其转换成 int64
@@ -40,7 +40,7 @@ type Params interface {
 
 	// Uint 获取地址参数中的名为 key 的变量并将其转换成 uint64
 	//
-	// 当参数不存在时，返回 ErrParamNotExists 错误。
+	// 当参数不存在时，返回 [ErrParamNotExists] 错误。
 	Uint(key string) (uint64, error)
 
 	// MustUint 获取地址参数中的名为 key 的变量并将其转换成 uint64
@@ -50,7 +50,7 @@ type Params interface {
 
 	// Bool 获取地址参数中的名为 key 的变量并将其转换成 bool
 	//
-	// 当参数不存在时，返回 ErrParamNotExists 错误。
+	// 当参数不存在时，返回 [ErrParamNotExists] 错误。
 	Bool(key string) (bool, error)
 
 	// MustBool 获取地址参数中的名为 key 的变量并将其转换成 bool
@@ -60,7 +60,7 @@ type Params interface {
 
 	// Float 获取地址参数中的名为 key 的变量并将其转换成 Float64
 	//
-	// 当参数不存在时，返回 ErrParamNotExists 错误。
+	// 当参数不存在时，返回 [ErrParamNotExists] 错误。
 	Float(key string) (float64, error)
 
 	// MustFloat 获取地址参数中的名为 key 的变量并将其转换成 float64
@@ -85,7 +85,7 @@ type Route interface {
 	// 有可能返回 nil，比如请求到了 404。
 	Node() Node
 
-	// RouterName RouterOf[T].Name() 的值
+	// RouterName mux.RouterOf.Name 的值
 	RouterName() string
 }
 

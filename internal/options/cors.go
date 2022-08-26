@@ -8,8 +8,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/issue9/mux/v7/types"
 	"github.com/issue9/sliceutil"
+
+	"github.com/issue9/mux/v7/types"
 )
 
 type CORS struct {

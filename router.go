@@ -106,7 +106,7 @@ func (r *RouterOf[T]) Use(m ...types.MiddlewareOf[T]) {
 // Handle 添加一条路由数据
 //
 // pattern 为路由匹配模式，可以是正则匹配也可以是字符串匹配，
-// 若语法不正确，则直接 panic，可以通过 CheckSyntax 检测语法的有效性，其它接口也相同。
+// 若语法不正确，则直接 panic，可以通过 [CheckSyntax] 检测语法的有效性，其它接口也相同。
 // methods 该路由项对应的请求方法，如果未指定值，则表示所有支持的请求方法，其中 OPTIONS 和 HEAD 不受控。
 func (r *RouterOf[T]) Handle(pattern string, h T, methods ...string) *RouterOf[T] {
 	r.handle(pattern, h, methods...)
@@ -251,10 +251,11 @@ func (p *PrefixOf[T]) Remove(pattern string, methods ...string) {
 // Clean 清除所有以 PrefixOf.prefix 开头的路由项
 //
 // 当指定多个相同的 PrefixOf 时，调用其中的一个 Clean 也将会清除其它的：
-//  r := NewRouterOf(...)
-//  p1 := r.Prefix("prefix")
-//  p2 := r.Prefix("prefix")
-//  p2.Clean() 将同时清除 p1 的内容，因为有相同的前缀。
+//
+//	r := NewRouterOf(...)
+//	p1 := r.Prefix("prefix")
+//	p2 := r.Prefix("prefix")
+//	p2.Clean() 将同时清除 p1 的内容，因为有相同的前缀。
 func (p *PrefixOf[T]) Clean() { p.router.tree.Clean(p.prefix) }
 
 // URL 根据参数生成地址
@@ -282,7 +283,7 @@ func (r *RouterOf[T]) Prefix(prefix string, m ...types.MiddlewareOf[T]) *PrefixO
 	return &PrefixOf[T]{router: r, prefix: prefix, middleware: ms}
 }
 
-// Router 返回与当前关联的 *Router 实例
+// Router 返回与当前关联的 *RouterOf 实例
 func (p *PrefixOf[T]) Router() *RouterOf[T] { return p.router }
 
 func (r *ResourceOf[T]) Handle(h T, methods ...string) *ResourceOf[T] {
@@ -312,11 +313,12 @@ func (r *ResourceOf[T]) Clean() { r.router.Remove(r.pattern) }
 //
 // params 匹配路由参数中的同名参数，或是不存在路由参数，比如普通的字符串路由项，
 // 该参数不启作用；
-//  res, := m.Resource("/posts/{id}")
-//  res.URL(map[string]string{"id": "1"}, "") // /posts/1
 //
-//  res, := m.Resource("/posts/{id}/{path}")
-//  res.URL(map[string]string{"id": "1","path":"author/profile"}) // /posts/1/author/profile
+//	res, := m.Resource("/posts/{id}")
+//	res.URL(map[string]string{"id": "1"}, "") // /posts/1
+//
+//	res, := m.Resource("/posts/{id}/{path}")
+//	res.URL(map[string]string{"id": "1","path":"author/profile"}) // /posts/1/author/profile
 func (r *ResourceOf[T]) URL(strict bool, params map[string]string) (string, error) {
 	return r.router.URL(strict, r.pattern, params)
 }

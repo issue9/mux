@@ -372,8 +372,6 @@ func TestRouterOf_Prefix(t *testing.T) {
 
 		p := def.Prefix("/abc")
 		a.Equal(p.Router(), def)
-
-		p = def.Prefix("")
 	})
 
 	t.Run("prefix with middleware", func(t *testing.T) {

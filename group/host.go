@@ -68,10 +68,12 @@ func validOptionalPort(port string) bool {
 // Add 添加新的域名
 //
 // 域名的格式和路由的语法格式是一样的，比如：
-//  api.example.com
-//  {sub:[a-z]+}.example.com
-// 如果存在命名参数，也可以通过也可通过 types.Params() 接口获取。
-// 当语法错误时，会触发 panic，可通过 CheckSyntax 检测语法的正确性。
+//
+//	api.example.com
+//	{sub:[a-z]+}.example.com
+//
+// 如果存在命名参数，也可以通过也可通过 [types.Params] 接口获取。
+// 当语法错误时，会触发 panic，可通过 [mux.CheckSyntax] 检测语法的正确性。
 func (hs *Hosts) Add(domain ...string) {
 	for _, d := range domain {
 		err := hs.tree.Add(strings.ToLower(d), hs.emptyHandlerFunc, http.MethodGet)

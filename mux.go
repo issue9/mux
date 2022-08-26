@@ -12,10 +12,11 @@
 //
 // rule 表示对参数的约束，一般为正则或是空，为空表示匹配任意值，
 // 拦截器一栏中有关 rule 的高级用法。以下是一些常见的示例。
-//  /posts/{id}.html                  // 匹配 /posts/1.html
-//  /posts-{id}-{page}.html           // 匹配 /posts-1-10.html
-//  /posts/{path:\\w+}.html           // 匹配 /posts/2020/11/11/title.html
-//  /tags/{tag:\\w+}/{path}           // 匹配 /tags/abc/title.html
+//
+//	/posts/{id}.html                  // 匹配 /posts/1.html
+//	/posts-{id}-{page}.html           // 匹配 /posts-1-10.html
+//	/posts/{path:\\w+}.html           // 匹配 /posts/2020/11/11/title.html
+//	/tags/{tag:\\w+}/{path}           // 匹配 /tags/abc/title.html
 package mux
 
 import (
@@ -134,10 +135,12 @@ STAT:
 // Debug 输出调试信息
 //
 // p 是指路由中的参数名，比如以下示例中，p 的值为 debug：
-//  r.Get("/test{debug}", func(w http.ResponseWriter, r *http.Request) {
-//      p := mux.GetParams(r).String("debug")
-//      Debug(p, w, r)
-//  }
+//
+//	r.Get("/test{debug}", func(w http.ResponseWriter, r *http.Request) {
+//	    p := mux.GetParams(r).String("debug")
+//	    Debug(p, w, r)
+//	}
+//
 // p 所代表的路径包含了前缀的 /。
 func Debug(p string, w http.ResponseWriter, r *http.Request) error {
 	switch {
