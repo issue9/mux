@@ -21,7 +21,7 @@ type (
 		Connections  []ConnectionFunc
 	}
 
-	// OnConnection 每个新链接到来时对 http.ResponseWriter 和 *http.Request 的处理
+	// ConnectionFunc 每个新链接到来时对 http.ResponseWriter 和 *http.Request 的处理
 	ConnectionFunc func(http.ResponseWriter, *http.Request) (http.ResponseWriter, *http.Request)
 
 	RecoverFunc func(http.ResponseWriter, any)

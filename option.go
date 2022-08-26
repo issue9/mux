@@ -24,7 +24,7 @@ type (
 
 // Lock 是否加锁
 //
-// 在调用 RouterOf.Add 添加路由时，有可能会改变整个路由树的结构，
+// 在调用 [RouterOf.Add] 添加路由时，有可能会改变整个路由树的结构，
 // 如果需要频繁在运行时添加和删除路由项，那么应当添加此选项。
 func Lock(l bool) Option { return func(o *options.Options) { o.Lock = l } }
 
@@ -33,7 +33,7 @@ func URLDomain(prefix string) Option {
 	return func(o *options.Options) { o.URLDomain = prefix }
 }
 
-// Recover 用于指路由 panic 之后的处理方法
+// Recovery 用于指路由 panic 之后的处理方法
 //
 // 如果多次指定，则最后一次启作用。
 func Recovery(f RecoverFunc) Option {
