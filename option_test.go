@@ -88,7 +88,8 @@ func TestRecovery(t *testing.T) {
 		a.Equal(405, w.Code)
 		lines := strings.Split(out.String(), "\n")
 		a.Contains(lines[0], "panic test")                                 // 保证第一行是 panic 输出的信息
-		a.True(strings.HasSuffix(lines[1], "option_test.go:52"), lines[1]) // 保证第二行是 panic 的行号
+		a.Contains(lines[1], "TestRecovery.func1")                         // 保证第二行是 panic 函数名
+		a.True(strings.HasSuffix(lines[2], "option_test.go:52"), lines[2]) // 保证第三行是 panic 的行号
 	})
 
 	// StatusRecovery
