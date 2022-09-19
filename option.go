@@ -7,8 +7,11 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"runtime/debug"
+	"runtime"
+	"strconv"
 	"strings"
+
+	"github.com/issue9/errwrap"
 
 	"github.com/issue9/mux/v7/internal/options"
 	"github.com/issue9/mux/v7/internal/syntax"
@@ -24,11 +27,11 @@ type (
 
 // Lock 是否加锁
 //
-// 在调用 [RouterOf.Add] 添加路由时，有可能会改变整个路由树的结构，
+// 在调用 [RouterOf.Handle] 等添加路由时，有可能会改变整个路由树的结构，
 // 如果需要频繁在运行时添加和删除路由项，那么应当添加此选项。
 func Lock(l bool) Option { return func(o *options.Options) { o.Lock = l } }
 
-// URLDomain 为 RouterOf.URL 生成的地址带上域名
+// URLDomain 为 [RouterOf.URL] 生成的地址带上域名
 func URLDomain(prefix string) Option {
 	return func(o *options.Options) { o.URLDomain = prefix }
 }
@@ -54,7 +57,7 @@ func StatusRecovery(status int) Option {
 func WriterRecovery(status int, out io.Writer) Option {
 	return Recovery(func(w http.ResponseWriter, msg any) {
 		http.Error(w, http.StatusText(status), status)
-		if _, err := fmt.Fprint(out, msg, "\n", string(debug.Stack())); err != nil {
+		if _, err := fmt.Fprint(out, msg, "\n", stack(4)); err != nil {
 			panic(err)
 		}
 	})
@@ -67,7 +70,7 @@ func WriterRecovery(status int, out io.Writer) Option {
 func LogRecovery(status int, l *log.Logger) Option {
 	return Recovery(func(w http.ResponseWriter, msg any) {
 		http.Error(w, http.StatusText(status), status)
-		l.Println(msg, "\n", string(debug.Stack()))
+		l.Println(msg, "\n", stack(4))
 	})
 }
 
@@ -191,4 +194,31 @@ func CleanPath(w http.ResponseWriter, r *http.Request) (http.ResponseWriter, *ht
 
 	r.URL.Path = b.String()
 	return w, r
+}
+
+func stack(skip int) string {
+	pc := make([]uintptr, 10)
+	n := runtime.Callers(skip, pc)
+	if n == 0 {
+		return ""
+	}
+
+	pc = pc[:n]
+	frames := runtime.CallersFrames(pc)
+
+	buf := errwrap.Buffer{}
+	for {
+		frame, more := frames.Next()
+		if !more {
+			break
+		}
+
+		if strings.Contains(frame.File, "runtime/") {
+			continue
+		}
+
+		buf.WString(frame.Function).WByte('\n').
+			WByte('\t').WString(frame.File).WByte(':').WString(strconv.Itoa(frame.Line)).WByte('\n')
+	}
+	return buf.String()
 }

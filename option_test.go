@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/issue9/assert/v3"
@@ -48,7 +49,7 @@ func TestOption(t *testing.T) {
 func TestRecovery(t *testing.T) {
 	a := assert.New(t, false)
 
-	p := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { panic("test") })
+	p := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { panic("panic test") })
 
 	router := newRouter("")
 	a.NotNil(router).Nil(router.recoverFunc)
@@ -60,6 +61,7 @@ func TestRecovery(t *testing.T) {
 	})
 
 	// WriterRecovery
+
 	out := new(bytes.Buffer)
 	router = newRouter("", WriterRecovery(404, out))
 	a.NotNil(router).NotNil(router.recoverFunc)
@@ -68,13 +70,14 @@ func TestRecovery(t *testing.T) {
 		w := httptest.NewRecorder()
 		r := rest.Get(a, "/path").Request()
 		router.ServeHTTP(w, r)
-		a.Contains(out.String(), "test").
+		a.Contains(out.String(), "panic test").
 			Equal(w.Code, 404)
 	})
 
 	// LogRecovery
+
 	out = new(bytes.Buffer)
-	l := log.New(out, "test:", 0)
+	l := log.New(out, "log:", 0)
 	router = newRouter("", LogRecovery(405, l))
 	a.NotNil(router).NotNil(router.recoverFunc)
 	router.Get("/path", p)
@@ -82,11 +85,14 @@ func TestRecovery(t *testing.T) {
 		w := httptest.NewRecorder()
 		r := rest.Get(a, "/path").Request()
 		router.ServeHTTP(w, r)
-		a.Equal(405, w.Code).
-			Contains(out.String(), "test")
+		a.Equal(405, w.Code)
+		lines := strings.Split(out.String(), "\n")
+		a.Contains(lines[0], "panic test")                                 // 保证第一行是 panic 输出的信息
+		a.True(strings.HasSuffix(lines[1], "option_test.go:52"), lines[1]) // 保证第二行是 panic 的行号
 	})
 
 	// StatusRecovery
+
 	router = newRouter("", StatusRecovery(406))
 	a.NotNil(router).NotNil(router.recoverFunc)
 	router.Get("/path", p)
@@ -126,4 +132,12 @@ func TestClearPath(t *testing.T) {
 	eq("/api/..", "/api/..")
 	eq("/api/../", "/api/../")
 	eq("/api/../../", "/api/../../")
+}
+
+func TestStack(t *testing.T) {
+	a := assert.New(t, false)
+
+	s := stack(2)
+	a.NotEmpty(s)
+	t.Log(s)
 }
