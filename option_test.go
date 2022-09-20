@@ -134,11 +134,3 @@ func TestClearPath(t *testing.T) {
 	eq("/api/../", "/api/../")
 	eq("/api/../../", "/api/../../")
 }
-
-func TestStack(t *testing.T) {
-	a := assert.New(t, false)
-
-	s := stack(2)
-	a.NotEmpty(s)
-	t.Log(s)
-}
