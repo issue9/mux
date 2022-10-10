@@ -30,8 +30,7 @@ type (
 		urlDomain   string
 		recoverFunc RecoverFunc
 
-		middleware  []types.MiddlewareOf[T]
-		connections []ConnectionFunc
+		middleware []types.MiddlewareOf[T]
 	}
 
 	// CallOf 指定如何调用用户自定义的对象 T
@@ -75,7 +74,6 @@ func NewRouterOf[T any](name string, call CallOf[T], notFound T, methodNotAllowe
 		cors:        opt.CORS,
 		urlDomain:   opt.URLDomain,
 		recoverFunc: opt.RecoverFunc,
-		connections: opt.Connections,
 	}
 
 	return r
@@ -191,10 +189,6 @@ func (r *RouterOf[T]) ServeContext(w http.ResponseWriter, req *http.Request, ctx
 				r.recoverFunc(w, err)
 			}
 		}()
-	}
-
-	for _, f := range r.connections {
-		w, req = f(w, req)
 	}
 
 	ctx.Path = req.URL.Path
