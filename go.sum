@@ -2,7 +2,7 @@ github.com/issue9/assert/v3 v3.0.4 h1:WsYZQ6PQmM/pGFrbkn5GIXjWeVZHv+wcl2829UTX1Q
 github.com/issue9/assert/v3 v3.0.4/go.mod h1:yft/uaskRpwQTyBT3n1zRl91SR1wNlO4fLZHzOa4bdM=
 github.com/issue9/errwrap v0.3.1 h1:8g4lYJaGnoiXyZ1oZyH/7zPDGgw5RNiE9Q6ri9kE6Z8=
 github.com/issue9/errwrap v0.3.1/go.mod h1:HLR0e5iimd2aJXM9YrThOsRj3/6lMtk77lVp7zyvJ4E=
-github.com/issue9/sliceutil v0.11.0 h1:gAXOzApULwTV8MTHhu7oZm1QCClnmEIYvF3iZ6SotUg=
-github.com/issue9/sliceutil v0.11.0/go.mod h1:o6Th8chH+PTCVfqHksJvWZnmZhDa5bnufgQbtO1x7zI=
+github.com/issue9/sliceutil v0.12.0 h1:5SqNbNqiYrdYd4lfpYAVc5/3MBcB1JXMwDf1iAyViaI=
+github.com/issue9/sliceutil v0.12.0/go.mod h1:KdnaZI342DHMrS6AkN0SSxqpFkJ6/4FyPpKm5m6S6Mk=
 github.com/issue9/source v0.3.2 h1:q/0hP5fonfzp9SdAT0Y7JyHwVcoGB2b8q2UhnF/v6II=
 github.com/issue9/source v0.3.2/go.mod h1:DF2lscWGbauX94zuX6Qy5Wlcx0MMYfmtfXoHYmODcHM=

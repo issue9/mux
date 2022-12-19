@@ -6,7 +6,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"strings"
 
 	"github.com/issue9/source"
 
@@ -135,44 +134,3 @@ func DenyCORS() Option { return CORS(nil, nil, nil, 0, false) }
 
 // AllowedCORS 允许跨域请求
 func AllowedCORS(maxAge int) Option { return CORS([]string{"*"}, []string{"*"}, nil, maxAge, false) }
-
-// CleanPath 清除路径中的重复的 / 字符
-func CleanPath(w http.ResponseWriter, r *http.Request) (http.ResponseWriter, *http.Request) {
-	if r.URL.Path == "" {
-		r.URL.Path = "/"
-		return w, r
-	}
-
-	p := r.URL.Path
-	var b strings.Builder
-	b.Grow(len(p) + 1)
-
-	if p[0] != '/' {
-		b.WriteByte('/')
-	}
-
-	index := strings.Index(p, "//")
-	if index == -1 {
-		b.WriteString(p)
-		r.URL.Path = b.String()
-		return w, r
-	}
-
-	b.WriteString(p[:index+1])
-
-	slash := true
-	for i := index + 2; i < len(p); i++ {
-		if p[i] == '/' {
-			if slash {
-				continue
-			}
-			slash = true
-		} else {
-			slash = false
-		}
-		b.WriteByte(p[i])
-	}
-
-	r.URL.Path = b.String()
-	return w, r
-}
