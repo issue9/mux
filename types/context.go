@@ -7,6 +7,9 @@ import (
 	"sync"
 )
 
+// context.keys 的长度小于此值时才回收
+const destroyMaxSize = 30
+
 var contextPool = &sync.Pool{
 	New: func() any { return &Context{} },
 }
@@ -49,7 +52,7 @@ func (ctx *Context) Node() Node { return ctx.node }
 func (ctx *Context) RouterName() string { return ctx.routerName }
 
 func (ctx *Context) Destroy() {
-	if ctx != nil {
+	if ctx != nil && len(ctx.keys) <= destroyMaxSize {
 		contextPool.Put(ctx)
 	}
 }
