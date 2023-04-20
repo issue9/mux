@@ -63,7 +63,7 @@ func TestRecovery(t *testing.T) {
 	// WriterRecovery
 
 	out := new(bytes.Buffer)
-	router = newRouter("", WriterRecovery(404, out))
+	router = newRouter("", WriteRecovery(404, out))
 	a.NotNil(router).NotNil(router.recoverFunc)
 	router.Get("/path", p)
 	a.NotPanic(func() {

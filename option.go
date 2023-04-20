@@ -44,10 +44,18 @@ func StatusRecovery(status int) Option {
 	})
 }
 
-// WriterRecovery 向 [io.Writer] 输出错误信息
+// WriteRecovery 向 [io.Writer] 输出错误信息
 //
 // status 表示向客户端输出的状态码；
 // out 表示输出通道，比如 [os.Stderr] 等；
+func WriteRecovery(status int, out io.Writer) Option {
+	return Recovery(func(w http.ResponseWriter, msg any) {
+		http.Error(w, http.StatusText(status), status)
+		source.DumpStack(out, 4, msg)
+	})
+}
+
+// Deprecated: 使用 [WriteRecovery] 代替
 func WriterRecovery(status int, out io.Writer) Option {
 	return Recovery(func(w http.ResponseWriter, msg any) {
 		http.Error(w, http.StatusText(status), status)
