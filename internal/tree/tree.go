@@ -17,20 +17,23 @@ import (
 // Tree 以树节点的形式保存的路由
 //
 // 多段路由项，会提取其中的相同的内容组成树状结构的节点。比如以下路由项：
-//  /posts/{id}/author
-//  /posts/{id}/author/emails
-//  /posts/{id}/author/profile
-//  /posts/1/author
+//
+//	/posts/{id}/author
+//	/posts/{id}/author/emails
+//	/posts/{id}/author/profile
+//	/posts/1/author
+//
 // 会被转换成以下结构
-//  /posts
-//     |
-//     +---- 1/author
-//     |
-//     +---- {id}/author/
-//               |
-//               +---- profile
-//               |
-//               +---- emails
+//
+//	/posts
+//	   |
+//	   +---- 1/author
+//	   |
+//	   +---- {id}/author/
+//	             |
+//	             +---- profile
+//	             |
+//	             +---- emails
 type Tree[T any] struct {
 	methods map[string]int // 保存着每个请求方法在所有子节点上的数量。
 	node    *node[T]       // 空节点，正好用于处理 OPTIONS *。
@@ -229,7 +232,7 @@ func (tree *Tree[T]) Routes() map[string][]string {
 	routes := make(map[string][]string, 100)
 	routes["*"] = []string{http.MethodOptions}
 	for _, v := range tree.node.children {
-		v.routes("", routes)
+		v.routes(routes)
 	}
 
 	return routes

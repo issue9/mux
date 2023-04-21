@@ -278,15 +278,13 @@ func splitNode[T any](n *node[T], pos int) (*node[T], error) {
 }
 
 // 获取所有的路由地址列表
-func (n *node[T]) routes(parent string, routes map[string][]string) {
-	path := parent + n.segment.Value
-
+func (n *node[T]) routes(routes map[string][]string) {
 	if n.methodIndex > 0 {
-		routes[path] = n.Methods()
+		routes[n.Pattern()] = n.Methods()
 	}
 
 	for _, v := range n.children {
-		v.routes(path, routes)
+		v.routes(routes)
 	}
 }
 
