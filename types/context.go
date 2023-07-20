@@ -7,7 +7,7 @@ import (
 	"sync"
 )
 
-// context.keys 的长度小于此值时才回收
+// Context.Keys 的长度小于此值时才回收
 const destroyMaxSize = 30
 
 var contextPool = &sync.Pool{
