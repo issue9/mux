@@ -150,5 +150,5 @@ func (c *CORS) headerIsAllowed(r *http.Request) bool {
 }
 
 func inStrings(strs []string, s string) bool {
-	return sliceutil.Exists(strs, func(e string) bool { return e == s })
+	return sliceutil.Exists(strs, func(e string, _ int) bool { return e == s })
 }

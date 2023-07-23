@@ -20,7 +20,6 @@ jobs:
       - name: Set up Go ${{ matrix.go }}
         uses: actions/setup-go@v3
         with:
-          stable: '!contains(${{ matrix.go }}, "beta") && !contains(${{ matrix.go }}, "rc")'
           go-version: ${{ matrix.go }}
         id: go
 
