@@ -2,7 +2,7 @@
 
 // Package mux 适用第三方框架实现可定制的路由
 //
-// 语法
+// # 语法
 //
 // 路由参数采用大括号包含，内部包含名称和规则两部分：`{name:rule}`，
 // 其中的 name 表示参数的名称，rule 表示对参数的约束规则。
@@ -154,11 +154,24 @@ func Debug(p string, w http.ResponseWriter, r *http.Request) error {
 		pprof.Symbol(w, r)
 	case p == "/pprof/trace":
 		pprof.Trace(w, r)
+	case p == "/pprof/goroutine":
+		pprof.Handler("goroutine").ServeHTTP(w, r)
+	case p == "/pprof/threadcreate":
+		pprof.Handler("threadcreate").ServeHTTP(w, r)
+	case p == "/pprof/mutex":
+		pprof.Handler("mutex").ServeHTTP(w, r)
+	case p == "/pprof/heap":
+		pprof.Handler("heap").ServeHTTP(w, r)
+	case p == "/pprof/block":
+		pprof.Handler("block").ServeHTTP(w, r)
+	case p == "/pprof/allocs":
+		pprof.Handler("allocs").ServeHTTP(w, r)
 	case strings.HasPrefix(p, "/pprof/"):
 		// pprof.Index 写死了 /debug/pprof，所以直接替换这个变量
 		r.URL.Path = "/debug/pprof/" + strings.TrimPrefix(p, "/pprof/")
 		pprof.Index(w, r)
 	case p == "/":
+		w.Header().Set("Content-Type", "text/html")
 		_, err := w.Write(debugHtml)
 		return err
 	default:
@@ -180,6 +193,12 @@ var debugHtml = []byte(`
 		<a href="pprof/profile">pprof/profile</a><br />
 		<a href="pprof/symbol">pprof/symbol</a><br />
 		<a href="pprof/trace">pprof/trace</a><br />
+		<a href="pprof/goroutine">pprof/goroutine</a><br />
+		<a href="pprof/threadcreate">pprof/threadcreate</a><br />
+		<a href="pprof/mutex">pprof/mutex</a><br />
+		<a href="pprof/heap">pprof/heap</a><br />
+		<a href="pprof/block">pprof/block</a><br />
+		<a href="pprof/allocs">pprof/allocs</a><br />
 		<a href="pprof/">pprof/</a>
 	</body>
 </html>
