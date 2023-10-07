@@ -244,7 +244,7 @@ func (p *PrefixOf[T]) Remove(pattern string, methods ...string) {
 
 // Clean 清除所有以 PrefixOf.prefix 开头的路由项
 //
-// 当指定多个相同的 PrefixOf 时，调用其中的一个 Clean 也将会清除其它的：
+// 当指定多个相同的 PrefixOf 时，调用其中的一个 [PrefixOf.Clean] 也将会清除其它的：
 //
 //	r := NewRouterOf(...)
 //	p1 := r.Prefix("prefix")
@@ -267,7 +267,7 @@ func (p *PrefixOf[T]) Prefix(prefix string, m ...types.MiddlewareOf[T]) *PrefixO
 	return p.router.Prefix(p.prefix+prefix, ms...)
 }
 
-// Prefix 声明一个 Prefix 实例
+// Prefix 声明一个 [PrefixOf] 实例
 //
 // prefix 路由前缀字符串，可以为空；
 // m 中间件函数，按顺序调用，会继承 r 的中间件并按在 m 之前；
@@ -338,7 +338,7 @@ func (p *PrefixOf[T]) Resource(pattern string, m ...types.MiddlewareOf[T]) *Reso
 	return p.router.Resource(p.prefix+pattern, ms...)
 }
 
-// Router 返回与当前资源关联的 *Router 实例
+// Router 返回与当前资源关联的 [RouterOf] 实例
 func (r *ResourceOf[T]) Router() *RouterOf[T] { return r.router }
 
 func (resp *headResponse) Write(bs []byte) (int, error) {

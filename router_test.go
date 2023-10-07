@@ -4,10 +4,13 @@ package mux_test
 
 import (
 	"net/http"
+	"sort"
+	"strings"
 	"testing"
 
 	"github.com/issue9/assert/v3"
 	"github.com/issue9/assert/v3/rest"
+	"github.com/issue9/sliceutil"
 
 	"github.com/issue9/mux/v7"
 	"github.com/issue9/mux/v7/examples/std"
@@ -355,8 +358,12 @@ func TestPrefixOf(t *testing.T) {
 
 	// remove
 	p.Remove("/h/any", http.MethodPut, http.MethodGet)
-	rest.Get(a, "/p/h/any").Do(r).Status(405)    // 已经删除
-	rest.Delete(a, "/p/h/any").Do(r).Status(206) // 未删除
+	methods := sliceutil.Delete(mux.Methods(), func(s string, _ int) bool {
+		return s == http.MethodGet || s == http.MethodPut || s == http.MethodHead // 删除了 GET，HEAD 也会删除。
+	})
+	sort.Strings(methods)
+	rest.Get(a, "/p/h/any").Do(r).Status(405).Header("Allow", strings.Join(methods, ", ")) // 已经删除
+	rest.Delete(a, "/p/h/any").Do(r).Status(206)                                           // 未删除
 
 	// clean
 	p.Clean()
