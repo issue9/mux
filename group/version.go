@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2014-2024 caixw
+//
 // SPDX-License-Identifier: MIT
 
 package group
@@ -60,7 +62,7 @@ func NewPathVersion(param string, version ...string) *PathVersion {
 // NewHeaderVersion 声明 HeaderVersion 实例
 //
 // param 将版本号作为参数保存到上下文中时的名称，如果不需要保存参数，可以设置为空值；
-// errlog 错误日志输出通道，如果为空则采用 log.Default()；
+// errlog 错误日志输出通道，如果为空则采用 [log.Default]；
 // key 表示在 accept 报头中的表示版本号的参数名，如果为空则采用 version；
 // version 版本的值，可能为空，表示匹配任意值；
 func NewHeaderVersion(param, key string, errlog *log.Logger, version ...string) *HeaderVersion {

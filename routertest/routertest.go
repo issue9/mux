@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2014-2024 caixw
+//
 // SPDX-License-Identifier: MIT
 
 // Package routertest 提供针对路由的测试用例
@@ -7,8 +9,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	"github.com/issue9/assert/v3"
-	"github.com/issue9/assert/v3/rest"
+	"github.com/issue9/assert/v4"
+	"github.com/issue9/assert/v4/rest"
 
 	"github.com/issue9/mux/v7"
 	"github.com/issue9/mux/v7/types"

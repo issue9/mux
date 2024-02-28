@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2014-2024 caixw
+//
 // SPDX-License-Identifier: MIT
 
 package routertest
@@ -17,9 +19,10 @@ import (
 //
 // h 表示路由的处理函数，只要向终端输出 URL.Path 值即可，
 // 以 T 的类型为 http.HandlerFunc 为例：
-//  func(w http.ResponseWriter, r *http.Request) {
-//      w.Write([]byte(r.URL.Path))
-//  }
+//
+//	func(w http.ResponseWriter, r *http.Request) {
+//	    w.Write([]byte(r.URL.Path))
+//	}
 func (t *Tester[T]) Bench(b *testing.B, h T) {
 	allocs := t.calcMemStats(h)
 	fmt.Printf("\n加载 %d 条路由总共占用 %d KB\n", len(apis), allocs/1024)

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2014-2024 caixw
+//
 // SPDX-License-Identifier: MIT
 
 package tree
@@ -9,8 +11,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/issue9/assert/v3"
-	"github.com/issue9/assert/v3/rest"
+	"github.com/issue9/assert/v4"
+	"github.com/issue9/assert/v4/rest"
 	"github.com/issue9/errwrap"
 
 	"github.com/issue9/mux/v7/internal/syntax"

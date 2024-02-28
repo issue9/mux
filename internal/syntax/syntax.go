@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2014-2024 caixw
+//
 // SPDX-License-Identifier: MIT
 
 // Package syntax 负责处理路由语法
@@ -94,9 +96,10 @@ func (i *Interceptors) URL(buf *errwrap.StringBuilder, pattern string, ps map[st
 // Split 将字符串解析成 Segment 数组
 //
 // 以 { 为分界线进行分割。比如
-//  /posts/{id}/email ==> /posts/, {id}/email
-//  /posts/\{{id}/email ==> /posts/{, {id}/email
-//  /posts/{year}/{id}.html ==> /posts/, {year}/, {id}.html
+//
+//	/posts/{id}/email ==> /posts/, {id}/email
+//	/posts/\{{id}/email ==> /posts/{, {id}/email
+//	/posts/{year}/{id}.html ==> /posts/, {year}/, {id}.html
 func (i *Interceptors) Split(str string) ([]*Segment, error) {
 	if str == "" {
 		return nil, errors.New("参数 str 不能为空")

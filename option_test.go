@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2014-2024 caixw
+//
 // SPDX-License-Identifier: MIT
 
 package mux
@@ -10,8 +12,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/issue9/assert/v3"
-	"github.com/issue9/assert/v3/rest"
+	"github.com/issue9/assert/v4"
+	"github.com/issue9/assert/v4/rest"
 
 	"github.com/issue9/mux/v7/internal/tree"
 	"github.com/issue9/mux/v7/types"
@@ -89,7 +91,7 @@ func TestRecovery(t *testing.T) {
 		lines := strings.Split(out.String(), "\n")
 		a.Contains(lines[0], "panic test")                                 // 保证第一行是 panic 输出的信息
 		a.Contains(lines[1], "TestRecovery.func1")                         // 保证第二行是 panic 函数名
-		a.True(strings.HasSuffix(lines[2], "option_test.go:52"), lines[2]) // 保证第三行是 panic 的行号
+		a.True(strings.HasSuffix(lines[2], "option_test.go:54"), lines[2]) // 保证第三行是 panic 的行号
 	})
 
 	// StatusRecovery
