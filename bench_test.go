@@ -20,9 +20,6 @@ func BenchmarkServeFile(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest(http.MethodGet, "/assets/mux.go", nil)
-		err := ServeFile(fsys, "mux.go", "", w, r)
-		if err != nil {
-			b.Errorf("测试出错，返回了以下错误 %s", err)
-		}
+		ServeFile(fsys, "mux.go", "", w, r)
 	}
 }

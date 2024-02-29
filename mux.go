@@ -23,6 +23,7 @@ package mux
 
 import (
 	"bytes"
+	"errors"
 	"expvar"
 	"html"
 	"io"
@@ -95,7 +96,9 @@ func Trace(w http.ResponseWriter, r *http.Request, body bool) error {
 //
 // p 表示需要读取的文件名；
 // index 表示 p 为目录时，默认读取的文件，为空表示 index.html；
-func ServeFile(fsys fs.FS, p, index string, w http.ResponseWriter, r *http.Request) error {
+//
+// 如果不需要自定义 index 的功能，则可以直接使用 [http.ServeFile] 或是 [http.ServeFileFS]。
+func ServeFile(fsys fs.FS, p, index string, w http.ResponseWriter, r *http.Request) {
 	if index == "" {
 		index = "index.html"
 	}
@@ -107,13 +110,15 @@ func ServeFile(fsys fs.FS, p, index string, w http.ResponseWriter, r *http.Reque
 STAT:
 	f, err := fsys.Open(p)
 	if err != nil {
-		return err
+		toHTTPError(w, err) // 保持与 http.ServeContent 相同的处理方式
+		return
 	}
 	defer f.Close()
 
 	stat, err := f.Stat()
 	if err != nil {
-		return err
+		toHTTPError(w, err)
+		return
 	}
 	if stat.IsDir() {
 		p = path.Join(p, index)
@@ -125,13 +130,24 @@ STAT:
 		data := make([]byte, stat.Size())
 		size, err := f.Read(data)
 		if err != nil {
-			return err
+			toHTTPError(w, err)
+			return
 		}
 		rs = bytes.NewReader(data[:size])
 	}
 
 	http.ServeContent(w, r, filepath.Base(p), stat.ModTime(), rs)
-	return nil
+}
+
+func toHTTPError(w http.ResponseWriter, err error) {
+	switch {
+	case errors.Is(err, fs.ErrNotExist):
+		http.Error(w, err.Error(), http.StatusNotFound)
+	case errors.Is(err, fs.ErrPermission):
+		http.Error(w, err.Error(), http.StatusForbidden)
+	default:
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 // Debug 输出调试信息

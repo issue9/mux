@@ -5,7 +5,6 @@
 package mux
 
 import (
-	"io/fs"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -74,23 +73,23 @@ func TestServeFile(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	r := rest.Get(a, "/assets/").Request()
-	a.NotError(ServeFile(fsys, "", "go.mod", w, r))
+	ServeFile(fsys, "", "go.mod", w, r)
 	a.Contains(w.Body.String(), "module github.com/issue9/mux")
 
 	w = httptest.NewRecorder()
 	r = rest.Get(a, "/assets/").Request()
-	a.NotError(ServeFile(fsys, "types/types.go", "", w, r))
+	ServeFile(fsys, "types/types.go", "", w, r)
 	a.NotEmpty(w.Body.String())
 
 	w = httptest.NewRecorder()
 	r = rest.Get(a, "/assets/").Request()
-	a.ErrorIs(ServeFile(fsys, "types/", "", w, r), fs.ErrNotExist)
-	a.Empty(w.Body.String())
+	ServeFile(fsys, "types/", "", w, r)
+	a.Equal(w.Result().StatusCode, http.StatusNotFound)
 
 	w = httptest.NewRecorder()
 	r = rest.Get(a, "/assets/").Request()
-	a.ErrorIs(ServeFile(fsys, "not-exists", "", w, r), fs.ErrNotExist)
-	a.Empty(w.Body.String())
+	ServeFile(fsys, "not-exists", "", w, r)
+	a.Equal(w.Result().StatusCode, http.StatusNotFound)
 }
 
 func TestDebug(t *testing.T) {
