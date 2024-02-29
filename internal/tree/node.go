@@ -135,7 +135,7 @@ func (n *node[T]) newChild(s *syntax.Segment) *node[T] {
 }
 
 func (n *node[T]) sort() {
-	sort.SliceStable(n.children, func(i, j int) bool {
+	sort.SliceStable(n.children, func(i, j int) bool { // TODO(go1.21): slices.StableSliceFunc
 		return n.children[i].priority() < n.children[j].priority()
 	})
 	n.buildIndexes()

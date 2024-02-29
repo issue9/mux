@@ -363,7 +363,7 @@ func TestPrefixOf(t *testing.T) {
 	methods := sliceutil.Delete(mux.Methods(), func(s string, _ int) bool {
 		return s == http.MethodGet || s == http.MethodPut || s == http.MethodHead // 删除了 GET，HEAD 也会删除。
 	})
-	sort.Strings(methods)
+	sort.Strings(methods)                                                                  // TODO(go1.21): slices.Sort
 	rest.Get(a, "/p/h/any").Do(r).Status(405).Header("Allow", strings.Join(methods, ", ")) // 已经删除
 	rest.Delete(a, "/p/h/any").Do(r).Status(206)                                           // 未删除
 

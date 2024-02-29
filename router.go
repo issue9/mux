@@ -144,9 +144,7 @@ func (r *RouterOf[T]) Patch(pattern string, h T) *RouterOf[T] {
 }
 
 // Any 添加一条包含全部请求方法的路由
-func (r *RouterOf[T]) Any(pattern string, h T) *RouterOf[T] {
-	return r.Handle(pattern, h)
-}
+func (r *RouterOf[T]) Any(pattern string, h T) *RouterOf[T] { return r.Handle(pattern, h) }
 
 // URL 根据参数生成地址
 //
