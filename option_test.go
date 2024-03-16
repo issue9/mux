@@ -72,15 +72,15 @@ func TestRecovery(t *testing.T) {
 	a.NotNil(router).NotNil(router.recoverFunc)
 	router.Get("/path", p)
 
-	w := httptest.NewRecorder()
-	r := rest.Get(a, "/path").Request()
-	a.Go(func(a *assert.Assertion) {
+	a.NotPanic(func() {
+		w := httptest.NewRecorder()
+		r := rest.Get(a, "/path").Request()
 		router.ServeHTTP(w, r)
-	}).
-		Wait(time.Microsecond*500).
-		Contains(out.String(), "panic test", out.String()).
-		Contains(out.String(), "option_test.go:55", out.String()).
-		Equal(w.Code, 404)
+		a.Wait(time.Microsecond*500).
+			Contains(out.String(), "panic test", out.String()).
+			Contains(out.String(), "option_test.go:55", out.String()).
+			Equal(w.Code, 404)
+	})
 
 	// LogRecovery
 
