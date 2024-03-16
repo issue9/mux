@@ -9,12 +9,7 @@ import (
 	"sync"
 )
 
-// Context.Keys 的长度小于此值时才回收
-const destroyMaxSize = 30
-
-var contextPool = &sync.Pool{
-	New: func() any { return &Context{} },
-}
+var contextPool = &sync.Pool{New: func() any { return &Context{} }}
 
 // Context 保存着路由匹配过程中的上下文关系
 //
@@ -54,6 +49,7 @@ func (ctx *Context) Node() Node { return ctx.node }
 func (ctx *Context) RouterName() string { return ctx.routerName }
 
 func (ctx *Context) Destroy() {
+	const destroyMaxSize = 30
 	if ctx != nil && len(ctx.keys) <= destroyMaxSize {
 		contextPool.Put(ctx)
 	}
