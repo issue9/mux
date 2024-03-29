@@ -7,10 +7,9 @@ package options
 import (
 	"errors"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
-
-	"github.com/issue9/sliceutil"
 
 	"github.com/issue9/mux/v7/types"
 )
@@ -85,8 +84,7 @@ func (c *CORS) Handle(node types.Node, wh http.Header, r *http.Request) {
 
 	if preflight {
 		// Access-Control-Allow-Methods
-		methods := node.Methods()
-		if !inStrings(methods, reqMethod) {
+		if slices.Index(node.Methods(), reqMethod) < 0 {
 			return
 		}
 		wh.Set("Access-Control-Allow-Methods", node.AllowHeader())
@@ -111,7 +109,7 @@ func (c *CORS) Handle(node types.Node, wh http.Header, r *http.Request) {
 	allowOrigin := "*"
 	if !c.anyOrigins {
 		origin := r.Header.Get("Origin")
-		if !inStrings(c.Origins, origin) {
+		if slices.Index(c.Origins, origin) < 0 {
 			return
 		}
 		allowOrigin = origin
@@ -142,15 +140,10 @@ func (c *CORS) headerIsAllowed(r *http.Request) bool {
 
 	headers := strings.Split(h, ",")
 	for _, v := range headers {
-		v = strings.TrimSpace(v)
-		if !inStrings(c.AllowHeaders, v) {
+		if slices.Index(c.AllowHeaders, strings.TrimSpace(v)) < 0 {
 			return false
 		}
 	}
 
 	return true
-}
-
-func inStrings(strs []string, s string) bool {
-	return sliceutil.Exists(strs, func(e string, _ int) bool { return e == s })
 }

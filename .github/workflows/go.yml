@@ -6,12 +6,12 @@ jobs:
   test:
     name: Test
     runs-on: ${{ matrix.os }}
-    
+
     strategy:
       matrix:
         os: [ubuntu-latest, macOS-latest, windows-latest]
-        go: ['1.18.x', '1.22.x']
-        
+        go: ['1.21.x', '1.22.x']
+
     steps:
 
       - name: Check out code into the Go module directory
@@ -25,7 +25,7 @@ jobs:
 
       - name: Vet
         run: go vet -v ./...
-        
+
       - name: Test
         run: go test -race -v -coverprofile='coverage.txt' -covermode=atomic ./...
 

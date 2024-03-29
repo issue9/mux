@@ -8,8 +8,7 @@ package group
 import (
 	"fmt"
 	"net/http"
-
-	"github.com/issue9/sliceutil"
+	"slices"
 
 	"github.com/issue9/mux/v7"
 	"github.com/issue9/mux/v7/internal/options"
@@ -107,9 +106,7 @@ func (g *GroupOf[T]) Add(matcher Matcher, r *mux.RouterOf[T]) {
 	}
 
 	// 重名检测
-	if sliceutil.Exists(g.routers, func(rr *routerOf[T], _ int) bool {
-		return rr.r.Name() == r.Name()
-	}) {
+	if slices.IndexFunc(g.routers, func(rr *routerOf[T]) bool { return rr.r.Name() == r.Name() }) >= 0 {
 		panic(fmt.Sprintf("已经存在名为 %s 的路由", r.Name()))
 	}
 
@@ -148,9 +145,7 @@ func (g *GroupOf[T]) Routers() []*mux.RouterOf[T] {
 }
 
 func (g *GroupOf[T]) Remove(name string) {
-	g.routers = sliceutil.Delete(g.routers, func(r *routerOf[T], _ int) bool {
-		return r.r.Name() == name
-	})
+	g.routers = slices.DeleteFunc(g.routers, func(r *routerOf[T]) bool { return r.r.Name() == name })
 }
 
 func (g *GroupOf[T]) Routes() map[string]map[string][]string {

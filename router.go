@@ -257,7 +257,7 @@ func (p *PrefixOf[T]) URL(strict bool, pattern string, params map[string]string)
 	return p.router.URL(strict, p.prefix+pattern, params)
 }
 
-// Prefix 在现有 PrefixOf 的基础上声明一个新的 PrefixOf 实例
+// Prefix 在现有 PrefixOf 的基础上声明一个新的 [PrefixOf] 实例
 //
 // m 中间件函数，按顺序调用，会继承 p 的中间件并按在 m 之前；
 func (p *PrefixOf[T]) Prefix(prefix string, m ...types.MiddlewareOf[T]) *PrefixOf[T] {

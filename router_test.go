@@ -6,13 +6,13 @@ package mux_test
 
 import (
 	"net/http"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
 
 	"github.com/issue9/assert/v4"
 	"github.com/issue9/assert/v4/rest"
-	"github.com/issue9/sliceutil"
 
 	"github.com/issue9/mux/v7"
 	"github.com/issue9/mux/v7/examples/std"
@@ -360,7 +360,7 @@ func TestPrefixOf(t *testing.T) {
 
 	// remove
 	p.Remove("/h/any", http.MethodPut, http.MethodGet)
-	methods := sliceutil.Delete(mux.Methods(), func(s string, _ int) bool {
+	methods := slices.DeleteFunc(mux.Methods(), func(s string) bool {
 		return s == http.MethodGet || s == http.MethodPut || s == http.MethodHead // 删除了 GET，HEAD 也会删除。
 	})
 	sort.Strings(methods)                                                                  // TODO(go1.21): slices.Sort
