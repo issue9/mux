@@ -22,26 +22,15 @@
 package mux
 
 import (
-	"bytes"
-	"errors"
-	"expvar"
 	"html"
-	"io"
-	"io/fs"
 	"net/http"
 	"net/http/httputil"
-	"net/http/pprof"
-	"path"
-	"path/filepath"
-	"strings"
 
 	"github.com/issue9/errwrap"
 
 	"github.com/issue9/mux/v7/internal/syntax"
 	"github.com/issue9/mux/v7/internal/tree"
 )
-
-const traceContentType = "message/http"
 
 var emptyInterceptors = syntax.NewInterceptors()
 
@@ -77,10 +66,12 @@ func Methods() []string {
 	return methods
 }
 
+const traceContentType = "message/http"
+
 // Trace 简单的 Trace 请求方法实现
 //
-// NOTE: 并不是百分百原样返回，具体可参考 net/http/httputil.DumpRequest 的说明。
-// 如果内容包含特殊的 HTML 字符会被 html.EscapeString 转码。
+// NOTE: 并不是百分百原样返回，具体可参考 [httputil.DumpRequest] 的说明。
+// 如果内容包含特殊的 HTML 字符会被 [html.EscapeString] 转码。
 func Trace(w http.ResponseWriter, r *http.Request, body bool) error {
 	text, err := httputil.DumpRequest(r, body)
 	if err == nil {
@@ -91,134 +82,3 @@ func Trace(w http.ResponseWriter, r *http.Request, body bool) error {
 
 	return err
 }
-
-// ServeFile 提供对静态文件的服务
-//
-// p 表示需要读取的文件名；
-// index 表示 p 为目录时，默认读取的文件，为空表示 index.html；
-//
-// 如果不需要自定义 index 的功能，则可以直接使用 [http.ServeFile] 或是 [http.ServeFileFS]。
-func ServeFile(fsys fs.FS, p, index string, w http.ResponseWriter, r *http.Request) {
-	if index == "" {
-		index = "index.html"
-	}
-
-	if p == "" || p[len(p)-1] == '/' {
-		p += index
-	}
-
-STAT:
-	f, err := fsys.Open(p)
-	if err != nil {
-		toHTTPError(w, err) // 保持与 http.ServeContent 相同的处理方式
-		return
-	}
-	defer f.Close()
-
-	stat, err := f.Stat()
-	if err != nil {
-		toHTTPError(w, err)
-		return
-	}
-	if stat.IsDir() {
-		p = path.Join(p, index)
-		goto STAT
-	}
-
-	rs, ok := f.(io.ReadSeeker)
-	if !ok {
-		data := make([]byte, stat.Size())
-		size, err := f.Read(data)
-		if err != nil {
-			toHTTPError(w, err)
-			return
-		}
-		rs = bytes.NewReader(data[:size])
-	}
-
-	http.ServeContent(w, r, filepath.Base(p), stat.ModTime(), rs)
-}
-
-func toHTTPError(w http.ResponseWriter, err error) {
-	switch {
-	case errors.Is(err, fs.ErrNotExist):
-		http.Error(w, err.Error(), http.StatusNotFound)
-	case errors.Is(err, fs.ErrPermission):
-		http.Error(w, err.Error(), http.StatusForbidden)
-	default:
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-// Debug 输出调试信息
-//
-// p 是指路由中的参数名，比如以下示例中，p 的值为 debug：
-//
-//	r.Get("/test{debug}", func(w http.ResponseWriter, r *http.Request) {
-//	    p := mux.GetParams(r).String("debug")
-//	    Debug(p, w, r)
-//	}
-//
-// p 所代表的路径包含了前缀的 /。
-func Debug(p string, w http.ResponseWriter, r *http.Request) error {
-	switch {
-	case p == "/vars":
-		expvar.Handler().ServeHTTP(w, r)
-	case p == "/pprof/cmdline":
-		pprof.Cmdline(w, r)
-	case p == "/pprof/profile":
-		pprof.Profile(w, r)
-	case p == "/pprof/symbol":
-		pprof.Symbol(w, r)
-	case p == "/pprof/trace":
-		pprof.Trace(w, r)
-	case p == "/pprof/goroutine":
-		pprof.Handler("goroutine").ServeHTTP(w, r)
-	case p == "/pprof/threadcreate":
-		pprof.Handler("threadcreate").ServeHTTP(w, r)
-	case p == "/pprof/mutex":
-		pprof.Handler("mutex").ServeHTTP(w, r)
-	case p == "/pprof/heap":
-		pprof.Handler("heap").ServeHTTP(w, r)
-	case p == "/pprof/block":
-		pprof.Handler("block").ServeHTTP(w, r)
-	case p == "/pprof/allocs":
-		pprof.Handler("allocs").ServeHTTP(w, r)
-	case strings.HasPrefix(p, "/pprof/"):
-		// pprof.Index 写死了 /debug/pprof，所以直接替换这个变量
-		r.URL.Path = "/debug/pprof/" + strings.TrimPrefix(p, "/pprof/")
-		pprof.Index(w, r)
-	case p == "/":
-		w.Header().Set("Content-Type", "text/html")
-		_, err := w.Write(debugHtml)
-		return err
-	default:
-		http.NotFound(w, r)
-	}
-	return nil
-}
-
-var debugHtml = []byte(`
-<!DOCTYPE HTML>
-<html>
-	<head>
-		<title>Debug</title>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	</head>
-	<body>
-		<a href="vars">vars</a><br />
-		<a href="pprof/cmdline">pprof/cmdline</a><br />
-		<a href="pprof/profile">pprof/profile</a><br />
-		<a href="pprof/symbol">pprof/symbol</a><br />
-		<a href="pprof/trace">pprof/trace</a><br />
-		<a href="pprof/goroutine">pprof/goroutine</a><br />
-		<a href="pprof/threadcreate">pprof/threadcreate</a><br />
-		<a href="pprof/mutex">pprof/mutex</a><br />
-		<a href="pprof/heap">pprof/heap</a><br />
-		<a href="pprof/block">pprof/block</a><br />
-		<a href="pprof/allocs">pprof/allocs</a><br />
-		<a href="pprof/">pprof/</a>
-	</body>
-</html>
-`)
