@@ -28,6 +28,7 @@ import (
 
 	"github.com/issue9/errwrap"
 
+	"github.com/issue9/mux/v7/header"
 	"github.com/issue9/mux/v7/internal/syntax"
 	"github.com/issue9/mux/v7/internal/tree"
 )
@@ -76,7 +77,7 @@ func Trace(w http.ResponseWriter, r *http.Request, body bool) error {
 	text, err := httputil.DumpRequest(r, body)
 	if err == nil {
 		w.WriteHeader(http.StatusOK)
-		w.Header().Set("Content-Type", traceContentType)
+		w.Header().Set(header.ContentType, traceContentType)
 		_, err = w.Write([]byte(html.EscapeString(string(text))))
 	}
 

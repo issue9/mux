@@ -10,6 +10,7 @@ import (
 
 	"github.com/issue9/mux/v7"
 	"github.com/issue9/mux/v7/group"
+	"github.com/issue9/mux/v7/header"
 	"github.com/issue9/mux/v7/types"
 )
 
@@ -39,13 +40,13 @@ func call(w http.ResponseWriter, r *http.Request, ps types.Route, h Handler) {
 
 func optionsHandlerBuilder(p types.Node) Handler {
 	return HandlerFunc(func(ctx *CTX) {
-		ctx.W.Header().Set("allow", p.AllowHeader())
+		ctx.W.Header().Set(header.Allow, p.AllowHeader())
 	})
 }
 
 func methodNotAllowedBuilder(p types.Node) Handler {
 	return HandlerFunc(func(ctx *CTX) {
-		ctx.W.Header().Set("allow", p.AllowHeader())
+		ctx.W.Header().Set(header.Allow, p.AllowHeader())
 		ctx.W.WriteHeader(http.StatusMethodNotAllowed)
 	})
 }

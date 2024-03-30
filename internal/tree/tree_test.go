@@ -15,6 +15,7 @@ import (
 	"github.com/issue9/assert/v4/rest"
 	"github.com/issue9/errwrap"
 
+	"github.com/issue9/mux/v7/header"
 	"github.com/issue9/mux/v7/internal/syntax"
 	"github.com/issue9/mux/v7/types"
 )
@@ -133,7 +134,7 @@ func (t *tester) optionsTrue(path, options string) {
 	h.ServeHTTP(w, r)
 	t.a.Equal(w.Code, http.StatusOK)
 
-	t.a.Equal(w.Header().Get("Allow"), options)
+	t.a.Equal(w.Header().Get(header.Allow), options)
 }
 
 func TestTree_AmbiguousRoute(t *testing.T) {
@@ -557,7 +558,7 @@ func TestTree_match(t *testing.T) {
 	r := rest.NewRequest(a, http.MethodOptions, "/path1").Request()
 	node.handlers[http.MethodOptions].ServeHTTP(w, r)
 	a.Empty(w.Header().Get("h1")).
-		Equal(w.Header().Get("Allow"), "GET, HEAD, OPTIONS").
+		Equal(w.Header().Get(header.Allow), "GET, HEAD, OPTIONS").
 		Empty(w.Body.String())
 
 	// path2，不主动调用 WriteHeader
@@ -580,7 +581,7 @@ func TestTree_match(t *testing.T) {
 	r = rest.NewRequest(a, http.MethodOptions, "/path2").Request()
 	node.handlers[http.MethodOptions].ServeHTTP(w, r)
 	a.Empty(w.Header().Get("h1")).
-		Equal(w.Header().Get("Allow"), "GET, HEAD, OPTIONS").
+		Equal(w.Header().Get(header.Allow), "GET, HEAD, OPTIONS").
 		Empty(w.Body.String())
 }
 
@@ -634,7 +635,7 @@ func TestTree_ApplyMiddleware(t *testing.T) {
 	r = rest.NewRequest(a, http.MethodOptions, "/m/path").Request()
 	f.ServeHTTP(w, r)
 	a.Equal(w.Body.String(), "m1m2"). // m1m2 由中间件产生
-						Equal(w.Header().Get("Allow"), "GET, HEAD, OPTIONS")
+						Equal(w.Header().Get(header.Allow), "GET, HEAD, OPTIONS")
 
 	// DELETE /m/path  method not allowed
 	_, f, exists = tree.Handler(newCtx("/m/path"), http.MethodDelete)

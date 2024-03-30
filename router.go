@@ -13,6 +13,7 @@ import (
 	"github.com/issue9/mux/v7/internal/options"
 	"github.com/issue9/mux/v7/internal/tree"
 	"github.com/issue9/mux/v7/types"
+	"github.com/issue9/mux/v7/header"
 )
 
 type (
@@ -345,6 +346,6 @@ func (resp *headResponse) Write(bs []byte) (int, error) {
 	l := len(bs)
 	resp.size += l
 
-	resp.Header().Set("Content-Length", strconv.Itoa(resp.size))
+	resp.Header().Set(header.ContentLength, strconv.Itoa(resp.size))
 	return l, nil
 }

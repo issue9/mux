@@ -15,6 +15,7 @@ import (
 
 	"github.com/issue9/mux/v7"
 	"github.com/issue9/mux/v7/examples/std"
+	"github.com/issue9/mux/v7/header"
 	"github.com/issue9/mux/v7/internal/tree"
 )
 
@@ -31,14 +32,14 @@ func TestRouterOf(t *testing.T) {
 	rest.NewRequest(a, http.MethodHead, "/").Do(r).Status(201).BodyEmpty()
 	rest.Get(a, "/abc").Do(r).Status(http.StatusNotFound)
 	rest.NewRequest(a, http.MethodHead, "/200").Do(r).Status(200).BodyEmpty() // 不调用 WriteHeader
-	rest.NewRequest(a, http.MethodOptions, "*").Do(r).Status(200).Header("Allow", "GET, OPTIONS")
+	rest.NewRequest(a, http.MethodOptions, "*").Do(r).Status(200).Header(header.Allow, "GET, OPTIONS")
 
 	r.Get("/h/1", rest.BuildHandler(a, 201, "", nil))
 	rest.Get(a, "/h/1").Do(r).Status(201)
 
 	r.Post("/h/1", rest.BuildHandler(a, 202, "", nil))
 	rest.Post(a, "/h/1", nil).Do(r).Status(202)
-	rest.NewRequest(a, http.MethodOptions, "*").Do(r).Status(200).Header("Allow", "GET, OPTIONS, POST")
+	rest.NewRequest(a, http.MethodOptions, "*").Do(r).Status(200).Header(header.Allow, "GET, OPTIONS, POST")
 
 	r.Put("/h/1", rest.BuildHandler(a, 203, "", nil))
 	rest.Put(a, "/h/1", nil).Do(r).Status(203)
@@ -48,7 +49,7 @@ func TestRouterOf(t *testing.T) {
 
 	r.Delete("/h/1", rest.BuildHandler(a, 205, "", nil))
 	rest.Delete(a, "/h/1").Do(r).Status(205)
-	rest.NewRequest(a, http.MethodOptions, "*").Do(r).Status(200).Header("Allow", "DELETE, GET, OPTIONS, PATCH, POST, PUT")
+	rest.NewRequest(a, http.MethodOptions, "*").Do(r).Status(200).Header(header.Allow, "DELETE, GET, OPTIONS, PATCH, POST, PUT")
 
 	// Any
 	r.Any("/h/any", rest.BuildHandler(a, 206, "", nil))
@@ -363,8 +364,8 @@ func TestPrefixOf(t *testing.T) {
 		return s == http.MethodGet || s == http.MethodPut || s == http.MethodHead // 删除了 GET，HEAD 也会删除。
 	})
 	slices.Sort(methods)
-	rest.Get(a, "/p/h/any").Do(r).Status(405).Header("Allow", strings.Join(methods, ", ")) // 已经删除
-	rest.Delete(a, "/p/h/any").Do(r).Status(206)                                           // 未删除
+	rest.Get(a, "/p/h/any").Do(r).Status(405).Header(header.Allow, strings.Join(methods, ", ")) // 已经删除
+	rest.Delete(a, "/p/h/any").Do(r).Status(206)                                                // 未删除
 
 	// clean
 	p.Clean()

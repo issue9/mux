@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/issue9/mux/v7/header"
 	"github.com/issue9/mux/v7/types"
 )
 
@@ -77,7 +78,7 @@ func (c *CORS) Handle(node types.Node, wh http.Header, r *http.Request) {
 	}
 
 	// Origin 是可以为空的，所以采用 Access-Control-Request-Method 判断是否为预检。
-	reqMethod := r.Header.Get("Access-Control-Request-Method")
+	reqMethod := r.Header.Get(header.AccessControlRequestMethod)
 	preflight := r.Method == http.MethodOptions &&
 		reqMethod != "" &&
 		r.URL.Path != "*" // OPTIONS * 不算预检，也不存在其它的请求方法处理方式。
@@ -87,44 +88,44 @@ func (c *CORS) Handle(node types.Node, wh http.Header, r *http.Request) {
 		if slices.Index(node.Methods(), reqMethod) < 0 {
 			return
 		}
-		wh.Set("Access-Control-Allow-Methods", node.AllowHeader())
-		wh.Add("Vary", "Access-Control-Request-Method")
+		wh.Set(header.AccessControlAllowMethods, node.AllowHeader())
+		wh.Add(header.Vary, header.AccessControlRequestMethod)
 
 		// Access-Control-Allow-Headers
 		if !c.headerIsAllowed(r) {
 			return
 		}
 		if c.allowHeadersString != "" {
-			wh.Set("Access-Control-Allow-Headers", c.allowHeadersString)
-			wh.Add("Vary", "Access-Control-Request-Headers")
+			wh.Set(header.AccessControlAllowHeaders, c.allowHeadersString)
+			wh.Add(header.Vary, header.AccessControlAllowHeaders)
 		}
 
 		// Access-Control-Max-Age
 		if c.maxAgeString != "" {
-			wh.Set("Access-Control-Max-Age", c.maxAgeString)
+			wh.Set(header.AccessControlMaxAge, c.maxAgeString)
 		}
 	}
 
 	// Access-Control-Allow-Origin
 	allowOrigin := "*"
 	if !c.anyOrigins {
-		origin := r.Header.Get("Origin")
+		origin := r.Header.Get(header.Origin)
 		if slices.Index(c.Origins, origin) < 0 {
 			return
 		}
 		allowOrigin = origin
 	}
-	wh.Set("Access-Control-Allow-Origin", allowOrigin)
-	wh.Add("Vary", "Origin")
+	wh.Set(header.AccessControlAllowOrigin, allowOrigin)
+	wh.Add(header.Vary, header.Origin)
 
 	// Access-Control-Allow-Credentials
 	if c.AllowCredentials {
-		wh.Set("Access-Control-Allow-Credentials", "true")
+		wh.Set(header.AccessControlAllowCredentials, "true")
 	}
 
 	// Access-Control-Expose-Headers
 	if c.exposedHeadersString != "" {
-		wh.Set("Access-Control-Expose-Headers", c.exposedHeadersString)
+		wh.Set(header.AccessControlExposeHeaders, c.exposedHeadersString)
 	}
 }
 
@@ -133,7 +134,7 @@ func (c *CORS) headerIsAllowed(r *http.Request) bool {
 		return true
 	}
 
-	h := strings.TrimSpace(r.Header.Get("Access-Control-Request-Headers"))
+	h := strings.TrimSpace(r.Header.Get(header.AccessControlRequestHeaders))
 	if h == "" {
 		return true
 	}

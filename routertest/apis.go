@@ -31,8 +31,8 @@ func init() {
 			p = p[end+1:]
 		}
 
-		path := strings.Replace(api.pattern, "}", "", -1)
-		api.test = strings.Replace(path, "{", "", -1)
+		path := strings.ReplaceAll(api.pattern, "}", "")
+		api.test = strings.ReplaceAll(path, "{", "")
 		api.ps = ps
 	}
 }

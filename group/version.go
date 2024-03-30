@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/issue9/mux/v7/header"
 	"github.com/issue9/mux/v7/types"
 )
 
@@ -83,7 +84,7 @@ func NewHeaderVersion(param, key string, errlog *log.Logger, version ...string) 
 }
 
 func (v *HeaderVersion) Match(r *http.Request, ctx *types.Context) (ok bool) {
-	header := r.Header.Get("Accept")
+	header := r.Header.Get(header.Accept)
 	if header == "" {
 		return false
 	}

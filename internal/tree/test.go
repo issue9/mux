@@ -14,6 +14,7 @@ import (
 
 	"github.com/issue9/mux/v7/internal/syntax"
 	"github.com/issue9/mux/v7/types"
+	"github.com/issue9/mux/v7/header"
 )
 
 // NewTestTree 返回以 http.Handler 作为参数实例化的 Tree
@@ -36,7 +37,7 @@ func BuildTestMiddleware(a *assert.Assertion, text string) types.MiddlewareOf[ht
 func BuildTestNodeHandlerFunc(status int) types.BuildNodeHandleOf[http.Handler] {
 	return func(n types.Node) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Allow", n.AllowHeader())
+			w.Header().Set(header.Allow, n.AllowHeader())
 			w.WriteHeader(status)
 		})
 	}
