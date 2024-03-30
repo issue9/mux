@@ -7,7 +7,7 @@ package tree
 import (
 	"fmt"
 	"net/http"
-	"sort"
+	"slices"
 	"strings"
 )
 
@@ -57,7 +57,7 @@ func buildMethodIndexes(index int) {
 			methods = append(methods, method)
 		}
 	}
-	sort.Strings(methods) // TODO(go1.21): slices.Sort
+	slices.Sort(methods)
 
 	methodIndexes[index] = methodIndexEntity{
 		methods: methods,

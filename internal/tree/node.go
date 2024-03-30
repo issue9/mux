@@ -5,7 +5,7 @@
 package tree
 
 import (
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/issue9/mux/v7/internal/syntax"
@@ -135,9 +135,7 @@ func (n *node[T]) newChild(s *syntax.Segment) *node[T] {
 }
 
 func (n *node[T]) sort() {
-	sort.SliceStable(n.children, func(i, j int) bool { // TODO(go1.21): slices.StableSliceFunc
-		return n.children[i].priority() < n.children[j].priority()
-	})
+	slices.SortStableFunc(n.children, func(a, b *node[T]) int { return a.priority() - b.priority() })
 	n.buildIndexes()
 }
 
