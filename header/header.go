@@ -167,4 +167,7 @@ const (
 	XRequestID                    = "X-Request-ID"
 	XRobotsTag                    = "X-Robots-Tag"
 	XDownloadOptions              = "X-Download-Options"
+	XRateLimitLimit               = "X-Rate-Limit-Limit"
+	XRateLimitRemaining           = "X-Rate-Limit-Remaining"
+	XRateLimitReset               = "X-Rate-Limit-Reset"
 )
