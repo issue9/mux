@@ -12,6 +12,8 @@ import (
 
 	"github.com/issue9/assert/v4"
 	"github.com/issue9/assert/v4/rest"
+
+	"github.com/issue9/mux/v7/header"
 )
 
 func TestTrace(t *testing.T) {
@@ -24,7 +26,7 @@ func TestTrace(t *testing.T) {
 	a.Contains(body, "/path").
 		NotContains(body, "body").
 		True(strings.HasPrefix(body, http.MethodTrace)).
-		Equal(w.Header().Get("content-type"), traceContentType)
+		Equal(w.Header().Get(header.ContentType), header.MessageHTTP)
 
 	w = httptest.NewRecorder()
 	a.NotError(Trace(w, r, true))
@@ -32,5 +34,5 @@ func TestTrace(t *testing.T) {
 	a.Contains(body, "/path").
 		Contains(body, "&lt;body&gt;").
 		True(strings.HasPrefix(body, http.MethodTrace)).
-		Equal(w.Header().Get("content-type"), traceContentType)
+		Equal(w.Header().Get(header.ContentType), header.MessageHTTP)
 }
