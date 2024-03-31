@@ -35,7 +35,7 @@ func TestBuildMethodIndexes(t *testing.T) {
 
 func TestTree_buildMethods(t *testing.T) {
 	a := assert.New(t, false)
-	tree := NewTestTree(a, false, syntax.NewInterceptors())
+	tree := NewTestTree(a, false, false, syntax.NewInterceptors())
 
 	// delete=1
 	tree.buildMethods(1, http.MethodDelete)

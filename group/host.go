@@ -20,11 +20,11 @@ type Hosts struct {
 	tree *tree.Tree[any]
 }
 
-// NewHosts 声明新的 Hosts 实例
+// NewHosts 声明新的 [Hosts] 实例
 func NewHosts(lock bool, domain ...string) *Hosts {
 	i := syntax.NewInterceptors()
 	f := func(types.Node) any { return nil }
-	t := tree.New(lock, i, nil, f, f)
+	t := tree.New(lock, i, nil, false, f, f)
 	h := &Hosts{tree: t, i: i}
 	h.Add(domain...)
 	return h

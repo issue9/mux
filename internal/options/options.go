@@ -15,6 +15,7 @@ type (
 	Option func(*Options)
 
 	Options struct {
+		Trace        bool
 		Lock         bool
 		CORS         *CORS
 		Interceptors *syntax.Interceptors

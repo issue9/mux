@@ -21,6 +21,9 @@ type (
 	Option = options.Option
 )
 
+// Trace 是否启用 Trace 请求方法
+func Trace(enable bool) Option { return func(o *options.Options) { o.Trace = enable } }
+
 // Lock 是否加锁
 //
 // 在调用 [RouterOf.Handle] 等添加路由时，有可能会改变整个路由树的结构，
@@ -28,16 +31,12 @@ type (
 func Lock(l bool) Option { return func(o *options.Options) { o.Lock = l } }
 
 // URLDomain 为 [RouterOf.URL] 生成的地址带上域名
-func URLDomain(prefix string) Option {
-	return func(o *options.Options) { o.URLDomain = prefix }
-}
+func URLDomain(prefix string) Option { return func(o *options.Options) { o.URLDomain = prefix } }
 
 // Recovery 用于指路由 panic 之后的处理方法
 //
 // 如果多次指定，则最后一次启作用。
-func Recovery(f RecoverFunc) Option {
-	return func(o *options.Options) { o.RecoverFunc = f }
-}
+func Recovery(f RecoverFunc) Option { return func(o *options.Options) { o.RecoverFunc = f } }
 
 // StatusRecovery 仅向客户端输出 status 状态码
 func StatusRecovery(status int) Option {

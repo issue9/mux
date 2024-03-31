@@ -44,12 +44,13 @@ type Tree[T any] struct {
 	locker       *sync.RWMutex
 	interceptors *syntax.Interceptors
 
+	trace    bool
 	notFound T
 	optionsBuilder,
 	methodNotAllowedBuilder types.BuildNodeHandleOf[T]
 }
 
-func New[T any](lock bool, i *syntax.Interceptors, notFound T, methodNotAllowedBuilder, optionsBuilder types.BuildNodeHandleOf[T]) *Tree[T] {
+func New[T any](lock bool, i *syntax.Interceptors, notFound T, trace bool, methodNotAllowedBuilder, optionsBuilder types.BuildNodeHandleOf[T]) *Tree[T] {
 	s, err := i.NewSegment("")
 	if err != nil {
 		panic("发生了不该发生的错误，应该是 syntax.NewSegment 逻辑发生变化" + err.Error())
@@ -59,7 +60,9 @@ func New[T any](lock bool, i *syntax.Interceptors, notFound T, methodNotAllowedB
 		methods: make(map[string]int, len(Methods)),
 		node:    &node[T]{segment: s, methodIndex: methodIndexMap[http.MethodOptions]},
 
-		interceptors:            i,
+		interceptors: i,
+
+		trace:                   trace,
 		notFound:                notFound,
 		optionsBuilder:          optionsBuilder,
 		methodNotAllowedBuilder: methodNotAllowedBuilder,
@@ -232,7 +235,11 @@ func (tree *Tree[T]) Routes() map[string][]string {
 	}
 
 	routes := make(map[string][]string, 100)
-	routes["*"] = []string{http.MethodOptions}
+	ms := []string{http.MethodOptions}
+	if tree.trace {
+		ms = append(ms, http.MethodTrace)
+	}
+	routes["*"] = ms
 	for _, v := range tree.node.children {
 		v.routes(routes)
 	}

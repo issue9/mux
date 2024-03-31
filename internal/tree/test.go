@@ -12,14 +12,14 @@ import (
 
 	"github.com/issue9/assert/v4"
 
+	"github.com/issue9/mux/v7/header"
 	"github.com/issue9/mux/v7/internal/syntax"
 	"github.com/issue9/mux/v7/types"
-	"github.com/issue9/mux/v7/header"
 )
 
 // NewTestTree 返回以 http.Handler 作为参数实例化的 Tree
-func NewTestTree(a *assert.Assertion, lock bool, i *syntax.Interceptors) *Tree[http.Handler] {
-	t := New(lock, i, http.NotFoundHandler(), BuildTestNodeHandlerFunc(http.StatusMethodNotAllowed), BuildTestNodeHandlerFunc(http.StatusOK))
+func NewTestTree(a *assert.Assertion, lock, trace bool, i *syntax.Interceptors) *Tree[http.Handler] {
+	t := New(lock, i, http.NotFoundHandler(), trace, BuildTestNodeHandlerFunc(http.StatusMethodNotAllowed), BuildTestNodeHandlerFunc(http.StatusOK))
 	a.NotNil(t)
 	return t
 }

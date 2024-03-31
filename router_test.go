@@ -58,7 +58,7 @@ func TestRouterOf(t *testing.T) {
 	rest.Patch(a, "/h/any", nil).Do(r).Status(206)
 	rest.Put(a, "/h/any", nil).Do(r).Status(206)
 	rest.Post(a, "/h/any", nil).Do(r).Status(206)
-	rest.NewRequest(a, http.MethodTrace, "/h/any").Do(r).Status(206)
+	rest.NewRequest(a, http.MethodConnect, "/h/any").Do(r).Status(206)
 
 	// 不能主动添加 Head
 	a.PanicString(func() {
@@ -231,7 +231,7 @@ func TestResourceOf(t *testing.T) {
 	rest.Post(a, "/h/any", nil).Do(r).Status(206)
 	rest.Put(a, "/h/any", nil).Do(r).Status(206)
 	rest.Patch(a, "/h/any", nil).Do(r).Status(206)
-	rest.NewRequest(a, http.MethodTrace, "/h/any").Do(r).Status(206)
+	rest.NewRequest(a, http.MethodConnect, "/h/any").Do(r).Status(206)
 
 	// remove
 	h.Remove(http.MethodGet, http.MethodPut)
@@ -356,12 +356,13 @@ func TestPrefixOf(t *testing.T) {
 	rest.Patch(a, "/p/h/any", nil).Do(r).Status(206)
 	rest.Put(a, "/p/h/any", nil).Do(r).Status(206)
 	rest.Post(a, "/p/h/any", nil).Do(r).Status(206)
-	rest.NewRequest(a, http.MethodTrace, "/p/h/any").Do(r).Status(206)
+	rest.NewRequest(a, http.MethodConnect, "/p/h/any").Do(r).Status(206)
 
 	// remove
 	p.Remove("/h/any", http.MethodPut, http.MethodGet)
 	methods := slices.DeleteFunc(mux.Methods(), func(s string) bool {
-		return s == http.MethodGet || s == http.MethodPut || s == http.MethodHead // 删除了 GET，HEAD 也会删除。
+		return s == http.MethodGet || s == http.MethodTrace || // 并未启用 TRACE
+			s == http.MethodPut || s == http.MethodHead // 删除了 GET，HEAD 也会删除。
 	})
 	slices.Sort(methods)
 	rest.Get(a, "/p/h/any").Do(r).Status(405).Header(header.Allow, strings.Join(methods, ", ")) // 已经删除
@@ -406,13 +407,18 @@ func TestRouterOf_Prefix(t *testing.T) {
 
 		pp := p.Prefix("", tree.BuildTestMiddleware(a, "p1"), tree.BuildTestMiddleware(a, "p2"))
 		pp.Delete("", rest.BuildHandler(a, 201, "-201-", nil))
+
 		rest.Delete(a, "/abc").Do(def).Status(201).StringBody("-201-p1p2")
+
+		// Trace
+		rest.NewRequest(a, http.MethodTrace, "/abc").Do(def).Status(http.StatusMethodNotAllowed)
+		rest.NewRequest(a, http.MethodTrace, "/abc/not-exists").Do(def).Status(http.StatusNotFound)
 	})
 }
 
 func TestPrefixOf_Prefix(t *testing.T) {
 	a := assert.New(t, false)
-	def := std.NewRouter("", mux.AllowedCORS(3600))
+	def := std.NewRouter("", mux.AllowedCORS(3600), mux.Trace(true))
 	a.NotNil(def)
 
 	p := def.Prefix("/abc", tree.BuildTestMiddleware(a, "p1"), tree.BuildTestMiddleware(a, "p2"))
@@ -421,6 +427,10 @@ func TestPrefixOf_Prefix(t *testing.T) {
 	pp.Delete("", rest.BuildHandler(a, 201, "-201-", nil))
 
 	rest.Delete(a, "/abc/def").Do(def).Status(201).StringBody("-201-p1p2pp1pp2")
+
+	// Trace
+	rest.NewRequest(a, http.MethodTrace, "/abc/def").Do(def).Status(http.StatusOK)
+	rest.NewRequest(a, http.MethodTrace, "/abc/not-exists").Do(def).Status(http.StatusOK)
 }
 
 func TestPrefixOf_URL(t *testing.T) {

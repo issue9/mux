@@ -35,10 +35,10 @@ type HeaderVersion struct {
 	paramName string
 	acceptKey string
 	versions  []string
-	errlog    *log.Logger
+	errlog    func(error)
 }
 
-// NewPathVersion 声明 PathVersion 实例
+// NewPathVersion 声明 [PathVersion] 实例
 //
 // param 将版本号作为参数保存到上下文中是的名称，如果不需要保存参数，可以设置为空值；
 // version 版本的值，可以为空，表示匹配任意值；
@@ -60,19 +60,19 @@ func NewPathVersion(param string, version ...string) *PathVersion {
 	return &PathVersion{paramName: param, versions: version}
 }
 
-// NewHeaderVersion 声明 HeaderVersion 实例
+// NewHeaderVersion 声明 [HeaderVersion] 实例
 //
 // param 将版本号作为参数保存到上下文中时的名称，如果不需要保存参数，可以设置为空值；
 // errlog 错误日志输出通道，如果为空则采用 [log.Default]；
 // key 表示在 accept 报头中的表示版本号的参数名，如果为空则采用 version；
 // version 版本的值，可能为空，表示匹配任意值；
-func NewHeaderVersion(param, key string, errlog *log.Logger, version ...string) *HeaderVersion {
+func NewHeaderVersion(param, key string, errlog func(error), version ...string) *HeaderVersion {
 	if key == "" {
 		key = "version"
 	}
 
 	if errlog == nil {
-		errlog = log.Default()
+		errlog = func(err error) { log.Println(err) }
 	}
 
 	return &HeaderVersion{
@@ -91,9 +91,7 @@ func (v *HeaderVersion) Match(r *http.Request, ctx *types.Context) (ok bool) {
 
 	_, ps, err := mime.ParseMediaType(header)
 	if err != nil {
-		if v.errlog != nil {
-			v.errlog.Println(err)
-		}
+		v.errlog(err)
 		return false
 	}
 

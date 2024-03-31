@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	// Methods 所有支持请求方法
+	// Methods 支持的请求方法
 	Methods = []string{
 		http.MethodGet,
 		http.MethodPost,
@@ -20,12 +20,12 @@ var (
 		http.MethodPut,
 		http.MethodPatch,
 		http.MethodConnect,
-		http.MethodTrace,
-		http.MethodHead, // OPTIONS/HEAD 必须在最后，后面的 addAny 需要此规则。
+		http.MethodTrace, // OPTIONS/HEAD/TRACE 必须在最后，后面的 addAny 需要此规则。
+		http.MethodHead,
 		http.MethodOptions,
 	}
 
-	addAny = Methods[:len(Methods)-2] // 添加请求方法时，所采用的默认值。
+	addAny = Methods[:len(Methods)-3] // 添加请求方法时，所采用的默认值。
 
 	methodIndexMap map[string]int // 各个请求方法对应的数值
 
@@ -70,6 +70,9 @@ func (n *node[T]) buildMethods() {
 	for method := range n.handlers {
 		n.methodIndex += methodIndexMap[method]
 	}
+	if n.root.trace {
+		n.methodIndex += methodIndexMap[http.MethodTrace]
+	}
 	buildMethodIndexes(n.methodIndex)
 }
 
@@ -81,8 +84,8 @@ func (n *node[T]) Methods() []string { return methodIndexes[n.methodIndex].metho
 // 添加一个处理函数
 func (n *node[T]) addMethods(h T, methods ...string) error {
 	for _, m := range methods {
-		if m == http.MethodOptions || m == http.MethodHead {
-			return fmt.Errorf("无法手动添加 OPTIONS/HEAD 请求方法")
+		if m == http.MethodOptions || m == http.MethodHead || (n.root.trace && m == http.MethodTrace) {
+			return fmt.Errorf("无法手动添加 OPTIONS/HEAD/TRACE 请求方法")
 		}
 		if _, found := methodIndexMap[m]; !found {
 			return fmt.Errorf("该请求方法 %s 不被支持", m)
@@ -120,8 +123,12 @@ func (tree *Tree[T]) buildMethods(num int, methods ...string) {
 		tree.methods[m] += num
 	}
 
-	// 即使所有接口都没了，也有 OPTIONS * 存在，所以始终有 OPTIONS。
+	// 即使所有接口都没了，也有 OPTIONS * 存在，所以始终有 OPTIONS 和可能的 TRACE 存在。
 	tree.node.methodIndex = methodIndexMap[http.MethodOptions]
+	if tree.trace {
+		tree.node.methodIndex += methodIndexMap[http.MethodTrace]
+	}
+
 	for m, num := range tree.methods {
 		if num > 0 {
 			tree.node.methodIndex += methodIndexMap[m]

@@ -33,7 +33,7 @@ func (n *node[T]) len() int {
 func TestRemoveNodes(t *testing.T) {
 	a := assert.New(t, false)
 
-	tree := NewTestTree(a, false, syntax.NewInterceptors())
+	tree := NewTestTree(a, false,false, syntax.NewInterceptors())
 
 	newNode := func(str string) *node[http.Handler] {
 		s, err := tree.interceptors.NewSegment(str)
@@ -80,7 +80,7 @@ func TestRemoveNodes(t *testing.T) {
 
 func TestSplitNode(t *testing.T) {
 	a := assert.New(t, false)
-	tree := NewTestTree(a, false, syntax.NewInterceptors())
+	tree := NewTestTree(a, false,false, syntax.NewInterceptors())
 
 	newNode := func(str string) *node[http.Handler] {
 		s, err := tree.interceptors.NewSegment(str)

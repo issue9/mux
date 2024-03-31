@@ -10,10 +10,11 @@ import (
 
 	"github.com/issue9/errwrap"
 
+	"github.com/issue9/mux/v7/header"
 	"github.com/issue9/mux/v7/internal/options"
+	"github.com/issue9/mux/v7/internal/trace"
 	"github.com/issue9/mux/v7/internal/tree"
 	"github.com/issue9/mux/v7/types"
-	"github.com/issue9/mux/v7/header"
 )
 
 type (
@@ -32,6 +33,7 @@ type (
 		cors        *options.CORS
 		urlDomain   string
 		recoverFunc RecoverFunc
+		trace       bool
 
 		middleware []types.MiddlewareOf[T]
 	}
@@ -62,6 +64,7 @@ type (
 // NewRouterOf 声明路由
 //
 // name 路由名称，可以为空；
+// methodNotAllowedBuilder 和 optionsBuilder 可以自定义 405 和 OPTIONS 请求的处理方式；
 // T 表示用户用于处理路由项的方法。
 func NewRouterOf[T any](name string, call CallOf[T], notFound T, methodNotAllowedBuilder, optionsBuilder types.BuildNodeHandleOf[T], o ...Option) *RouterOf[T] {
 	opt, err := options.Build(o...)
@@ -71,12 +74,13 @@ func NewRouterOf[T any](name string, call CallOf[T], notFound T, methodNotAllowe
 
 	r := &RouterOf[T]{
 		name: name,
-		tree: tree.New(opt.Lock, opt.Interceptors, notFound, methodNotAllowedBuilder, optionsBuilder),
+		tree: tree.New(opt.Lock, opt.Interceptors, notFound, opt.Trace, methodNotAllowedBuilder, optionsBuilder),
 		call: call,
 
 		cors:        opt.CORS,
 		urlDomain:   opt.URLDomain,
 		recoverFunc: opt.RecoverFunc,
+		trace:       opt.Trace,
 	}
 
 	return r
@@ -179,8 +183,8 @@ func (r *RouterOf[T]) URL(strict bool, pattern string, params map[string]string)
 
 func (r *RouterOf[T]) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	ctx := types.NewContext()
-	defer ctx.Destroy()
 	r.ServeContext(w, req, ctx)
+	ctx.Destroy()
 }
 
 func (r *RouterOf[T]) ServeContext(w http.ResponseWriter, req *http.Request, ctx *types.Context) {
@@ -190,6 +194,11 @@ func (r *RouterOf[T]) ServeContext(w http.ResponseWriter, req *http.Request, ctx
 				r.recoverFunc(w, err)
 			}
 		}()
+	}
+
+	if r.trace && req.Method == http.MethodTrace {
+		trace.Trace(w, req, false)
+		return
 	}
 
 	ctx.Path = req.URL.Path
