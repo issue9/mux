@@ -12,7 +12,7 @@ import (
 	"runtime/metrics"
 	"testing"
 
-	"github.com/issue9/mux/v7"
+	"github.com/issue9/mux/v8"
 )
 
 // Bench 执行所有的性能测试

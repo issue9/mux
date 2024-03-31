@@ -11,8 +11,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/issue9/mux/v7/header"
-	"github.com/issue9/mux/v7/types"
+	"github.com/issue9/mux/v8/header"
+	"github.com/issue9/mux/v8/types"
 )
 
 type CORS struct {

@@ -12,9 +12,9 @@ import (
 	"github.com/issue9/assert/v4"
 	"github.com/issue9/assert/v4/rest"
 
-	"github.com/issue9/mux/v7/internal/syntax"
-	"github.com/issue9/mux/v7/internal/tree"
-	"github.com/issue9/mux/v7/types"
+	"github.com/issue9/mux/v8/internal/syntax"
+	"github.com/issue9/mux/v8/internal/tree"
+	"github.com/issue9/mux/v8/types"
 )
 
 func TestCORS_sanitize(t *testing.T) {

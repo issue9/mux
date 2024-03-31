@@ -13,10 +13,10 @@ import (
 	"github.com/issue9/assert/v4"
 	"github.com/issue9/assert/v4/rest"
 
-	"github.com/issue9/mux/v7"
-	"github.com/issue9/mux/v7/examples/std"
-	"github.com/issue9/mux/v7/header"
-	"github.com/issue9/mux/v7/internal/tree"
+	"github.com/issue9/mux/v8"
+	"github.com/issue9/mux/v8/examples/std"
+	"github.com/issue9/mux/v8/header"
+	"github.com/issue9/mux/v8/internal/tree"
 )
 
 func TestRouterOf(t *testing.T) {

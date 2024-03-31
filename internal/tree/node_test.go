@@ -10,8 +10,8 @@ import (
 
 	"github.com/issue9/assert/v4"
 
-	"github.com/issue9/mux/v7/internal/syntax"
-	"github.com/issue9/mux/v7/types"
+	"github.com/issue9/mux/v8/internal/syntax"
+	"github.com/issue9/mux/v8/types"
 )
 
 var _ types.Node = &node[http.Handler]{}
@@ -33,7 +33,7 @@ func (n *node[T]) len() int {
 func TestRemoveNodes(t *testing.T) {
 	a := assert.New(t, false)
 
-	tree := NewTestTree(a, false,false, syntax.NewInterceptors())
+	tree := NewTestTree(a, false, false, syntax.NewInterceptors())
 
 	newNode := func(str string) *node[http.Handler] {
 		s, err := tree.interceptors.NewSegment(str)
@@ -80,7 +80,7 @@ func TestRemoveNodes(t *testing.T) {
 
 func TestSplitNode(t *testing.T) {
 	a := assert.New(t, false)
-	tree := NewTestTree(a, false,false, syntax.NewInterceptors())
+	tree := NewTestTree(a, false, false, syntax.NewInterceptors())
 
 	newNode := func(str string) *node[http.Handler] {
 		s, err := tree.interceptors.NewSegment(str)

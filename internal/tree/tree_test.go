@@ -15,9 +15,9 @@ import (
 	"github.com/issue9/assert/v4/rest"
 	"github.com/issue9/errwrap"
 
-	"github.com/issue9/mux/v7/header"
-	"github.com/issue9/mux/v7/internal/syntax"
-	"github.com/issue9/mux/v7/types"
+	"github.com/issue9/mux/v8/header"
+	"github.com/issue9/mux/v8/internal/syntax"
+	"github.com/issue9/mux/v8/types"
 )
 
 type tester struct {

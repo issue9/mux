@@ -24,8 +24,8 @@ package mux
 import (
 	"github.com/issue9/errwrap"
 
-	"github.com/issue9/mux/v7/internal/syntax"
-	"github.com/issue9/mux/v7/internal/tree"
+	"github.com/issue9/mux/v8/internal/syntax"
+	"github.com/issue9/mux/v8/internal/tree"
 )
 
 var emptyInterceptors = syntax.NewInterceptors()

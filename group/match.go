@@ -7,7 +7,7 @@ package group
 import (
 	"net/http"
 
-	"github.com/issue9/mux/v7/types"
+	"github.com/issue9/mux/v8/types"
 )
 
 // Matcher 验证一个请求是否符合要求

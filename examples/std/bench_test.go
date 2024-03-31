@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/issue9/mux/v7/routertest"
+	"github.com/issue9/mux/v8/routertest"
 )
 
 func BenchmarkRouter(b *testing.B) {

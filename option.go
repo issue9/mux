@@ -11,8 +11,8 @@ import (
 
 	"github.com/issue9/source"
 
-	"github.com/issue9/mux/v7/internal/options"
-	"github.com/issue9/mux/v7/internal/syntax"
+	"github.com/issue9/mux/v8/internal/options"
+	"github.com/issue9/mux/v8/internal/syntax"
 )
 
 type (

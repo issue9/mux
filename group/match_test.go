@@ -10,7 +10,7 @@ import (
 	"github.com/issue9/assert/v4"
 	"github.com/issue9/assert/v4/rest"
 
-	"github.com/issue9/mux/v7/types"
+	"github.com/issue9/mux/v8/types"
 )
 
 func TestAndMatcherFunc(t *testing.T) {

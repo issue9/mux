@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 
-	"github.com/issue9/mux/v7/header"
+	"github.com/issue9/mux/v8/header"
 )
 
 // Trace 简单的 Trace 请求方法实现

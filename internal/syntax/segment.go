@@ -10,7 +10,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/issue9/mux/v7/types"
+	"github.com/issue9/mux/v8/types"
 )
 
 // Segment 路由项被拆分之后的分段内容

@@ -10,10 +10,10 @@ import (
 	"net/http"
 	"slices"
 
-	"github.com/issue9/mux/v7"
-	"github.com/issue9/mux/v7/internal/options"
-	"github.com/issue9/mux/v7/internal/tree"
-	"github.com/issue9/mux/v7/types"
+	"github.com/issue9/mux/v8"
+	"github.com/issue9/mux/v8/internal/options"
+	"github.com/issue9/mux/v8/internal/tree"
+	"github.com/issue9/mux/v8/types"
 )
 
 type (

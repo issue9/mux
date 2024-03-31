@@ -9,10 +9,10 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/issue9/mux/v7"
-	"github.com/issue9/mux/v7/group"
-	"github.com/issue9/mux/v7/header"
-	"github.com/issue9/mux/v7/types"
+	"github.com/issue9/mux/v8"
+	"github.com/issue9/mux/v8/group"
+	"github.com/issue9/mux/v8/header"
+	"github.com/issue9/mux/v8/types"
 )
 
 const contextKeyParams contextKey = 0
