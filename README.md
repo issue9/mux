@@ -178,11 +178,11 @@ r := mux.NewRouter("", opt)
 - InterceptorWord 相当于正则的 `[a-zA-Z0-9]`；
 - InterceptorAny 表示匹配任意非空内容；
 
-用户也可以自行实现 `InterceptorFunc` 作为拦截器。具体可参考 OptionsOf.Interceptors。
+用户也可以自行实现 `InterceptorFunc` 作为拦截器。具体可参考 `Interceptor` 的介绍。
 
 ### CORS
 
-CORS 不再是以中间件的形式提供，而是通过 NewRouter 直接传递有关 CORS 的配置信息，
+CORS 不再是以中间件的形式提供，而是通过 `NewRouter` 直接传递有关 CORS 的配置信息，
 这样可以更好地处理每个地址支持的请求方法。
 
 OPTIONS 请求方法由系统自动生成。
@@ -226,7 +226,7 @@ r.Get("/assets/{path}", func(w http.ResponseWriter, r *http.Request){
 
 ### 自定义路由
 
-官方提供的 http.Handler 未必是符合每个人的要求，通过 RouterOf 用户可以很方便地实现自定义格式的 http.Handler，
+官方提供的 `http.Handler` 未必是符合每个人的要求，通过 `RouterOf` 用户可以很方便地实现自定义格式的 `http.Handler`，
 只需要以下几个步骤：
 
 1. 定义一个专有的路由处理类型，可以是类也可以是函数；

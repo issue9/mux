@@ -64,7 +64,7 @@ func (ctx *Context) String(key string) (string, error) {
 	if v, found := ctx.Get(key); found {
 		return v, nil
 	}
-	return "", ErrParamNotExists
+	return "", ErrParamNotExists()
 }
 
 func (ctx *Context) MustString(key, def string) string {
@@ -78,7 +78,7 @@ func (ctx *Context) Int(key string) (int64, error) {
 	if str, found := ctx.Get(key); found {
 		return strconv.ParseInt(str, 10, 64)
 	}
-	return 0, ErrParamNotExists
+	return 0, ErrParamNotExists()
 }
 
 func (ctx *Context) MustInt(key string, def int64) int64 {
@@ -94,7 +94,7 @@ func (ctx *Context) Uint(key string) (uint64, error) {
 	if str, found := ctx.Get(key); found {
 		return strconv.ParseUint(str, 10, 64)
 	}
-	return 0, ErrParamNotExists
+	return 0, ErrParamNotExists()
 }
 
 func (ctx *Context) MustUint(key string, def uint64) uint64 {
@@ -110,7 +110,7 @@ func (ctx *Context) Bool(key string) (bool, error) {
 	if str, found := ctx.Get(key); found {
 		return strconv.ParseBool(str)
 	}
-	return false, ErrParamNotExists
+	return false, ErrParamNotExists()
 }
 
 func (ctx *Context) MustBool(key string, def bool) bool {
@@ -126,7 +126,7 @@ func (ctx *Context) Float(key string) (float64, error) {
 	if str, found := ctx.Get(key); found {
 		return strconv.ParseFloat(str, 64)
 	}
-	return 0, ErrParamNotExists
+	return 0, ErrParamNotExists()
 }
 
 func (ctx *Context) MustFloat(key string, def float64) float64 {

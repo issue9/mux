@@ -7,7 +7,10 @@ package types
 
 import "errors"
 
-var ErrParamNotExists = errors.New("不存在该参数")
+var errParamNotExists = errors.New("不存在该参数")
+
+// ErrParamNotExists 用于表示 [Params] 中参数不存在的错误
+func ErrParamNotExists() error { return errParamNotExists }
 
 // Params 表示路由中的参数操作接口
 type Params interface {

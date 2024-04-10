@@ -41,7 +41,7 @@ func TestContext_String(t *testing.T) {
 
 	// 不存在
 	val, err = ctx.String("k5")
-	a.ErrorIs(err, ErrParamNotExists).Equal(val, "")
+	a.ErrorIs(err, ErrParamNotExists()).Equal(val, "")
 	a.False(ctx.Exists("k5"))
 	a.Equal(ctx.MustString("k5", "-10"), "-10")
 }
@@ -64,7 +64,7 @@ func TestContext_Int(t *testing.T) {
 
 	// 不存在
 	val, err = ctx.Int("k5")
-	a.ErrorIs(err, ErrParamNotExists).Equal(val, 0)
+	a.ErrorIs(err, ErrParamNotExists()).Equal(val, 0)
 	a.Equal(ctx.MustInt("k5", -10), -10)
 }
 
@@ -92,7 +92,7 @@ func TestContext_Uint(t *testing.T) {
 
 	// 不存在
 	val, err = ctx.Uint("k5")
-	a.ErrorIs(err, ErrParamNotExists).Equal(val, 0)
+	a.ErrorIs(err, ErrParamNotExists()).Equal(val, 0)
 	a.Equal(ctx.MustUint("k5", 10), 10)
 }
 
@@ -119,7 +119,7 @@ func TestContext_Bool(t *testing.T) {
 
 	// 不存在
 	val, err = ctx.Bool("k5")
-	a.ErrorIs(err, ErrParamNotExists).False(val)
+	a.ErrorIs(err, ErrParamNotExists()).False(val)
 	a.True(ctx.MustBool("k5", true))
 }
 
@@ -146,12 +146,12 @@ func TestContext_Float(t *testing.T) {
 
 	// 不存在
 	val, err = ctx.Float("k5")
-	a.ErrorIs(err, ErrParamNotExists).Equal(val, 0.0)
+	a.ErrorIs(err, ErrParamNotExists()).Equal(val, 0.0)
 	a.Equal(ctx.MustFloat("k5", -10.0), -10.0)
 
 	var ps2 *Context
 	val, err = ps2.Float("key1")
-	a.Equal(err, ErrParamNotExists).Equal(val, 0.0)
+	a.Equal(err, ErrParamNotExists()).Equal(val, 0.0)
 }
 
 func TestContext_Set(t *testing.T) {
