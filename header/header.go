@@ -55,7 +55,7 @@ const (
 	AccessControlAllowCredentials      = "Access-Control-Allow-Credentials"
 	AccessControlAllowPrivateNetwork   = "Access-Control-Allow-Private-Network"
 	AccessControlRequestPrivateNetwork = "Access-Control-Request-Private-Network"
-	AcceptPost                         = ""
+	AcceptPost                         = "Accept-Post"
 	AcceptPatch                        = "Accept-Patch"              // 指定服务器支持的文件格式类型。	Accept-Patch: text/example;charset=utf-8
 	AcceptRanges                       = "Accept-Ranges"             // 这个服务器支持哪些种类的部分内容范围	Accept-Ranges: bytes
 	Age                                = "Age"                       // 这个对象在代理缓存中存在的时间，以秒为单位	Age: 12

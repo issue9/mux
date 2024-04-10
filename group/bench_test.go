@@ -10,6 +10,7 @@ import (
 	"github.com/issue9/assert/v4"
 	"github.com/issue9/assert/v4/rest"
 
+	"github.com/issue9/mux/v8/header"
 	"github.com/issue9/mux/v8/types"
 )
 
@@ -29,7 +30,7 @@ func BenchmarkHeaderVersionWithoutKey_Match(b *testing.B) {
 	a := assert.New(b, false)
 	h := NewHeaderVersion("", "version", nil, "3.0", "4.0", "1.0", "2.0")
 	r := rest.Get(a, "https://caixw.io/test").
-		Header("Accept", "application/json; version=1.0").
+		Header(header.Accept, "application/json; version=1.0").
 		Request()
 
 	ps := types.NewContext()
@@ -42,7 +43,7 @@ func BenchmarkHeaderVersionWithKey_Match(b *testing.B) {
 	a := assert.New(b, false)
 	h := NewHeaderVersion("version", "", nil, "3.0", "4.0", "1.0", "2.0")
 	r := rest.Get(a, "https://caixw.io/test").
-		Header("Accept", "application/json; version=1.0").
+		Header(header.Accept, "application/json; version=1.0").
 		Request()
 
 	ps := types.NewContext()
