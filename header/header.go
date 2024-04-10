@@ -137,8 +137,9 @@ const (
 	XForwardedFor       = "X-Forwarded-For"   // 一个事实标准 ，用于标识某个通过超文本传输协议代理或负载均衡连接到某个网页服务器的客户端的原始互联网地址	X-Forwarded-For: client1, proxy1, proxy2 X-Forwarded-For: 129.78.138.66, 129.78.64.103
 	XForwardedHost      = "X-Forwarded-Host"  // 一个事实标准 ，用于识别客户端原本发出的 Host 请求头部。	X-Forwarded-Host: zh.wikipedia.org:80 X-Forwarded-Host: zh.wikipedia.org
 	XForwardedProto     = "X-Forwarded-Proto" // 一个事实标准，用于标识某个超文本传输协议请求最初所使用的协议。	X-Forwarded-Proto: https
+	XRealIP             = "X-Real-IP"
 	XForwardedProtocol  = "X-Forwarded-Protocol"
-	XForwardedSsl       = "X-Forwarded-Ssl"
+	XForwardedSSL       = "X-Forwarded-Ssl"
 	XUrlScheme          = "X-Url-Scheme"
 	FrontEndHttps       = "Front-End-Https"        // 被微软的服务器和负载均衡器所使用的非标准头部字段。	Front-End-Https: on
 	XHttpMethodOverride = "X-Http-Method-Override" // 请求某个网页应用程序使用该协议头字段中指定的方法（一般是PUT或DELETE）来覆盖掉在请求中所指定的方法（一般是POST）。当某个浏览器或防火墙阻止直接发送PUT 或DELETE 方法时（注意，这可能是因为软件中的某个漏洞，因而需要修复，也可能是因为某个配置选项就是如此要求的，因而不应当设法绕过），可使用这种方式。	X-HTTP-Method-Override: DELETE

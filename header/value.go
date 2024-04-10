@@ -18,9 +18,11 @@ const (
 	// FormData 普通的表单上传
 	FormData = "application/x-www-form-urlencoded"
 
+	EventStream = "text/event-stream"
+	Plain       = "text/plain"
 	HTML        = "text/html"
 	JSON        = "application/json"
 	XML         = "application/xml"
-	EventStream = "text/event-stream"
+	Javascript  = "application/javascript"
 	OctetStream = "application/octet-stream"
 )
