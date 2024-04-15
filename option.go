@@ -56,14 +56,6 @@ func WriteRecovery(status int, out io.Writer) Option {
 	})
 }
 
-// Deprecated: 使用 [WriteRecovery] 代替
-func WriterRecovery(status int, out io.Writer) Option {
-	return Recovery(func(w http.ResponseWriter, msg any) {
-		http.Error(w, http.StatusText(status), status)
-		source.DumpStack(out, 4, msg)
-	})
-}
-
 // LogRecovery 将错误信息输出到日志
 //
 // status 表示向客户端输出的状态码；
