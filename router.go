@@ -6,6 +6,7 @@ package mux
 
 import (
 	"net/http"
+	"slices"
 	"strconv"
 
 	"github.com/issue9/errwrap"
@@ -271,6 +272,7 @@ func (p *PrefixOf[T]) URL(strict bool, pattern string, params map[string]string)
 //
 // m 中间件函数，按顺序调用，会继承 p 的中间件并按在 m 之前；
 func (p *PrefixOf[T]) Prefix(prefix string, m ...types.MiddlewareOf[T]) *PrefixOf[T] {
+	// TODO(go1.22): slices.Concat(p.middleware, m)
 	ms := make([]types.MiddlewareOf[T], 0, len(p.middleware)+len(m))
 	ms = append(ms, p.middleware...)
 	ms = append(ms, m...)
@@ -282,9 +284,7 @@ func (p *PrefixOf[T]) Prefix(prefix string, m ...types.MiddlewareOf[T]) *PrefixO
 // prefix 路由前缀字符串，可以为空；
 // m 中间件函数，按顺序调用，会继承 r 的中间件并按在 m 之前；
 func (r *RouterOf[T]) Prefix(prefix string, m ...types.MiddlewareOf[T]) *PrefixOf[T] {
-	ms := make([]types.MiddlewareOf[T], 0, len(m))
-	ms = append(ms, m...)
-	return &PrefixOf[T]{router: r, prefix: prefix, middleware: ms}
+	return &PrefixOf[T]{router: r, prefix: prefix, middleware: slices.Clone(m)}
 }
 
 // Router 返回与当前关联的 *RouterOf 实例
@@ -332,9 +332,7 @@ func (r *ResourceOf[T]) URL(strict bool, params map[string]string) (string, erro
 // pattern 资源地址；
 // m 中间件函数，按顺序调用，会继承 r 的中间件并按在 m 之前；
 func (r *RouterOf[T]) Resource(pattern string, m ...types.MiddlewareOf[T]) *ResourceOf[T] {
-	ms := make([]types.MiddlewareOf[T], 0, len(m))
-	ms = append(ms, m...)
-	return &ResourceOf[T]{router: r, pattern: pattern, middleware: ms}
+	return &ResourceOf[T]{router: r, pattern: pattern, middleware: slices.Clone(m)}
 }
 
 // Resource 创建一个资源路由项
@@ -342,6 +340,7 @@ func (r *RouterOf[T]) Resource(pattern string, m ...types.MiddlewareOf[T]) *Reso
 // pattern 资源地址；
 // m 中间件函数，按顺序调用，会继承 p 的中间件并按在 m 之前；
 func (p *PrefixOf[T]) Resource(pattern string, m ...types.MiddlewareOf[T]) *ResourceOf[T] {
+	// TODO(go1.22): slices.Concat(p.middleware, m)
 	ms := make([]types.MiddlewareOf[T], 0, len(p.middleware)+len(m))
 	ms = append(ms, p.middleware...)
 	ms = append(ms, m...)

@@ -70,7 +70,7 @@ func (g *GroupOf[T]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // New 声明新路由
 //
-// 新路由会继承 [NewOf] 中指定的参数，其中的 o 可以覆盖由 [NewOf] 中的相关参数；
+// 新路由会继承 [NewOf] 中指定的参数，其中的 o 可以覆盖由 [NewOf] 中指定的相关参数；
 func (g *GroupOf[T]) New(name string, matcher Matcher, o ...mux.Option) *mux.RouterOf[T] {
 	o = g.mergeOption(o...)
 	r := mux.NewRouterOf(name, g.call, g.notFound, g.methodNotAllowedBuilder, g.optionsBuilder, o...)
