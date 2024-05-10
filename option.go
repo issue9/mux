@@ -52,7 +52,7 @@ func StatusRecovery(status int) Option {
 func WriteRecovery(status int, out io.Writer) Option {
 	return Recovery(func(w http.ResponseWriter, msg any) {
 		http.Error(w, http.StatusText(status), status)
-		source.DumpStack(out, 4, msg)
+		source.DumpStack(out, 4, true, msg)
 	})
 }
 
@@ -63,7 +63,7 @@ func WriteRecovery(status int, out io.Writer) Option {
 func LogRecovery(status int, l *log.Logger) Option {
 	return Recovery(func(w http.ResponseWriter, msg any) {
 		http.Error(w, http.StatusText(status), status)
-		l.Println(source.Stack(4, msg))
+		l.Println(source.Stack(4, true, msg))
 	})
 }
 
