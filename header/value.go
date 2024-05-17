@@ -6,8 +6,9 @@ package header
 
 // 一些报头的常用值
 const (
-	UTF8    = "utf-8"
-	NoCache = "no-cache"
+	UTF8     = "utf-8"
+	NoCache  = "no-cache"
+	Identity = "identity"
 
 	// MessageHTTP TRACE 请求方法的 content-type 值
 	MessageHTTP = "message/http"

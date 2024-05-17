@@ -39,7 +39,7 @@ type (
 		middleware []types.MiddlewareOf[T]
 	}
 
-	// CallOf 指定如何调用用户自定义的对象 T
+	// CallOf 指定如何调用用户给定的类型 T
 	CallOf[T any] func(http.ResponseWriter, *http.Request, types.Route, T)
 
 	// ResourceOf 以资源地址为对象的路由
@@ -99,9 +99,7 @@ func (r *RouterOf[T]) Routes() map[string][]string { return r.tree.Routes() }
 //
 // 当未指定 methods 时，将删除所有 method 匹配的项。
 // 指定错误的 methods 值，将自动忽略该值。
-func (r *RouterOf[T]) Remove(pattern string, methods ...string) {
-	r.tree.Remove(pattern, methods...)
-}
+func (r *RouterOf[T]) Remove(pattern string, methods ...string) { r.tree.Remove(pattern, methods...) }
 
 // Use 使用中间件
 func (r *RouterOf[T]) Use(m ...types.MiddlewareOf[T]) {
