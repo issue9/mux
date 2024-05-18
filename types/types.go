@@ -80,7 +80,7 @@ type Params interface {
 	Range(func(key, val string))
 }
 
-// Route 当前请求生成的路由信息
+// Route 当前请求的路由信息
 type Route interface {
 	// Params 当前请求关联的参数
 	Params() Params
