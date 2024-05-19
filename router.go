@@ -52,7 +52,7 @@ type (
 	// PrefixOf 操纵统一前缀的路由
 	PrefixOf[T any] struct {
 		router     *RouterOf[T]
-		prefix     string
+		pattern    string
 		middleware []types.MiddlewareOf[T]
 	}
 
@@ -217,7 +217,7 @@ func (r *RouterOf[T]) ServeContext(w http.ResponseWriter, req *http.Request, ctx
 func (r *RouterOf[T]) Name() string { return r.name }
 
 func (p *PrefixOf[T]) Handle(pattern string, h T, methods ...string) *PrefixOf[T] {
-	p.router.handle(p.prefix+pattern, h, p.middleware, methods...)
+	p.router.handle(p.Pattern()+pattern, h, p.middleware, methods...)
 	return p
 }
 
@@ -245,12 +245,15 @@ func (p *PrefixOf[T]) Any(pattern string, h T) *PrefixOf[T] {
 	return p.Handle(pattern, h)
 }
 
+// Pattern 当前对象的路径
+func (p *PrefixOf[T]) Pattern() string { return p.pattern }
+
 // Remove 删除指定匹配模式的路由项
 func (p *PrefixOf[T]) Remove(pattern string, methods ...string) {
-	p.router.Remove(p.prefix+pattern, methods...)
+	p.router.Remove(p.Pattern()+pattern, methods...)
 }
 
-// Clean 清除所有以 PrefixOf.prefix 开头的路由项
+// Clean 清除所有以 [PrefixOf.Pattern] 开头的路由项
 //
 // 当指定多个相同的 PrefixOf 时，调用其中的一个 [PrefixOf.Clean] 也将会清除其它的：
 //
@@ -258,18 +261,18 @@ func (p *PrefixOf[T]) Remove(pattern string, methods ...string) {
 //	p1 := r.Prefix("prefix")
 //	p2 := r.Prefix("prefix")
 //	p2.Clean() 将同时清除 p1 的内容，因为有相同的前缀。
-func (p *PrefixOf[T]) Clean() { p.router.tree.Clean(p.prefix) }
+func (p *PrefixOf[T]) Clean() { p.router.tree.Clean(p.Pattern()) }
 
 // URL 根据参数生成地址
 func (p *PrefixOf[T]) URL(strict bool, pattern string, params map[string]string) (string, error) {
-	return p.router.URL(strict, p.prefix+pattern, params)
+	return p.router.URL(strict, p.Pattern()+pattern, params)
 }
 
 // Prefix 在现有 PrefixOf 的基础上声明一个新的 [PrefixOf] 实例
 //
 // m 中间件函数，按顺序调用，会继承 p 的中间件并按在 m 之前；
 func (p *PrefixOf[T]) Prefix(prefix string, m ...types.MiddlewareOf[T]) *PrefixOf[T] {
-	return p.router.Prefix(p.prefix+prefix, slices.Concat(p.middleware, m)...)
+	return p.router.Prefix(p.Pattern()+prefix, slices.Concat(p.middleware, m)...)
 }
 
 // Prefix 声明一个 [PrefixOf] 实例
@@ -277,7 +280,7 @@ func (p *PrefixOf[T]) Prefix(prefix string, m ...types.MiddlewareOf[T]) *PrefixO
 // prefix 路由前缀字符串，可以为空；
 // m 中间件函数，按顺序调用，会继承 r 的中间件并按在 m 之前；
 func (r *RouterOf[T]) Prefix(prefix string, m ...types.MiddlewareOf[T]) *PrefixOf[T] {
-	return &PrefixOf[T]{router: r, prefix: prefix, middleware: slices.Clone(m)}
+	return &PrefixOf[T]{router: r, pattern: prefix, middleware: slices.Clone(m)}
 }
 
 // Router 返回与当前关联的 *RouterOf 实例
@@ -317,8 +320,11 @@ func (r *ResourceOf[T]) Clean() { r.router.Remove(r.pattern) }
 //	res, := m.Resource("/posts/{id}/{path}")
 //	res.URL(map[string]string{"id": "1","path":"author/profile"}) // /posts/1/author/profile
 func (r *ResourceOf[T]) URL(strict bool, params map[string]string) (string, error) {
-	return r.router.URL(strict, r.pattern, params)
+	return r.router.URL(strict, r.Pattern(), params)
 }
+
+// Pattern 当前对象的路径
+func (r *ResourceOf[T]) Pattern() string { return r.pattern }
 
 // Resource 创建一个资源路由项
 //
@@ -333,7 +339,7 @@ func (r *RouterOf[T]) Resource(pattern string, m ...types.MiddlewareOf[T]) *Reso
 // pattern 资源地址；
 // m 中间件函数，按顺序调用，会继承 p 的中间件并按在 m 之前；
 func (p *PrefixOf[T]) Resource(pattern string, m ...types.MiddlewareOf[T]) *ResourceOf[T] {
-	return p.router.Resource(p.prefix+pattern, slices.Concat(p.middleware, m)...)
+	return p.router.Resource(p.Pattern()+pattern, slices.Concat(p.middleware, m)...)
 }
 
 // Router 返回与当前资源关联的 [RouterOf] 实例
