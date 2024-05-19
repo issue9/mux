@@ -78,7 +78,7 @@ func validOptionalPort(port string) bool {
 // 当语法错误时，会触发 panic，可通过 [mux.CheckSyntax] 检测语法的正确性。
 func (hs *Hosts) Add(domain ...string) {
 	for _, d := range domain {
-		err := hs.tree.Add(strings.ToLower(d), hs.emptyHandlerFunc, http.MethodGet)
+		err := hs.tree.Add(strings.ToLower(d), hs.emptyHandlerFunc, nil, http.MethodGet)
 		if err != nil {
 			panic(err)
 		}

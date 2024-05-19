@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"slices"
 	"strings"
+
+	"github.com/issue9/mux/v8/types"
 )
 
 var (
@@ -82,7 +84,7 @@ func (n *node[T]) AllowHeader() string { return methodIndexes[n.methodIndex].opt
 func (n *node[T]) Methods() []string { return methodIndexes[n.methodIndex].methods }
 
 // 添加一个处理函数
-func (n *node[T]) addMethods(h T, methods ...string) error {
+func (n *node[T]) addMethods(h T, pattern string, ms []types.MiddlewareOf[T], methods ...string) error {
 	for _, m := range methods {
 		if m == http.MethodOptions || m == http.MethodHead || (n.root.trace && m == http.MethodTrace) {
 			return fmt.Errorf("无法手动添加 OPTIONS/HEAD/TRACE 请求方法")
@@ -96,15 +98,15 @@ func (n *node[T]) addMethods(h T, methods ...string) error {
 		}
 
 		if m == http.MethodGet {
-			n.handlers[http.MethodHead] = h
+			n.handlers[http.MethodHead] = ApplyMiddleware(h, http.MethodHead, pattern, ms...)
 		}
 
-		n.handlers[m] = h
+		n.handlers[m] = ApplyMiddleware(h, m, pattern, ms...)
 	}
 
 	// 查看是否需要添加 OPTIONS
 	if _, found := n.handlers[http.MethodOptions]; !found {
-		n.handlers[http.MethodOptions] = n.root.optionsBuilder(n)
+		n.handlers[http.MethodOptions] = ApplyMiddleware(n.root.optionsBuilder(n), http.MethodOptions, pattern, ms...)
 	}
 
 	if _, found := n.handlers[methodNotAllowed]; !found {

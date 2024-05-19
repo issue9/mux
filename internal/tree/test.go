@@ -25,7 +25,7 @@ func NewTestTree(a *assert.Assertion, lock, trace bool, i *syntax.Interceptors) 
 }
 
 func BuildTestMiddleware(a *assert.Assertion, text string) types.MiddlewareOf[http.Handler] {
-	return types.MiddlewareFuncOf[http.Handler](func(next http.Handler) http.Handler {
+	return types.MiddlewareFuncOf[http.Handler](func(next http.Handler, _, _ string) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			next.ServeHTTP(w, r) // 先输出被包含的内容
 			_, err := w.Write([]byte(text))

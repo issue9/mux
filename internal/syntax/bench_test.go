@@ -20,7 +20,7 @@ func BenchmarkSegment_Match_Named(b *testing.B) {
 	seg, err := i.NewSegment("{id}/author")
 	a.NotError(err).NotNil(seg)
 
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		p := types.NewContext()
 		p.Path = "100000/author"
 		a.True(seg.Match(p)).Equal(p.MustString("id", "not-exits"), "100000")
@@ -36,7 +36,7 @@ func BenchmarkSegment_Match_Named_withMatcher(b *testing.B) {
 	seg, err := i.NewSegment("{id:digit}/author")
 	a.NotError(err).NotNil(seg)
 
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		p := types.NewContext()
 		p.Path = "100000/author"
 		a.True(seg.Match(p)).Equal(p.MustString("id", "not-exits"), "100000")
@@ -51,7 +51,7 @@ func BenchmarkSegment_Match_String(b *testing.B) {
 	seg, err := i.NewSegment("/posts/author")
 	a.NotError(err).NotNil(seg)
 
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		p := types.NewContext()
 		p.Path = "/posts/author"
 		a.True(seg.Match(p)).Zero(p.Count())
@@ -66,7 +66,7 @@ func BenchmarkSegment_Match_Regexp(b *testing.B) {
 	seg, err := i.NewSegment("{id:\\d+}/author")
 	a.NotError(err).NotNil(seg)
 
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		p := types.NewContext()
 		p.Path = "1/author"
 		a.True(seg.Match(p)).Equal(p.MustString("id", "not-exists"), "1")

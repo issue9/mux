@@ -82,7 +82,7 @@ func New[T any](lock bool, i *syntax.Interceptors, notFound T, trace bool, metho
 // Add 添加路由项
 //
 // methods 可以为空，表示添所有支持的请求方法，其中的 HEAD 和 OPTIONS 不受控。
-func (tree *Tree[T]) Add(pattern string, h T, methods ...string) error {
+func (tree *Tree[T]) Add(pattern string, h T, middlewares []types.MiddlewareOf[T], methods ...string) error {
 	if err := tree.checkAmbiguous(pattern); err != nil {
 		return err
 	}
@@ -104,7 +104,7 @@ func (tree *Tree[T]) Add(pattern string, h T, methods ...string) error {
 	if len(methods) == 0 {
 		methods = addAny
 	}
-	return n.addMethods(h, methods...)
+	return n.addMethods(h, pattern, middlewares, methods...)
 }
 
 func (tree *Tree[T]) checkAmbiguous(pattern string) error {
@@ -289,7 +289,8 @@ func (tree *Tree[T]) URL(buf *errwrap.StringBuilder, pattern string, ps map[stri
 	return nil
 }
 
+// ApplyMiddleware 为已有的路由项添加中间件
 func (tree *Tree[T]) ApplyMiddleware(ms ...types.MiddlewareOf[T]) {
-	tree.notFound = ApplyMiddleware(tree.notFound, ms...)
+	tree.notFound = ApplyMiddleware(tree.notFound, "", "", ms...)
 	tree.node.applyMiddleware(ms...)
 }

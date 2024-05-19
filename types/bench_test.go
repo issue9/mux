@@ -12,13 +12,13 @@ import (
 
 func BenchmarkContext(b *testing.B) {
 	b.Run("no destroy", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			NewContext()
 		}
 	})
 
 	b.Run("destroy", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			NewContext().Destroy()
 		}
 	})
@@ -30,7 +30,7 @@ func BenchmarkContext_Get(b *testing.B) {
 	b.Run("1 param", func(b *testing.B) {
 		ctx := NewContext()
 		ctx.Set("K1", "v1")
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			_, found := ctx.Get("K1")
 			a.True(found)
 		}
@@ -42,7 +42,7 @@ func BenchmarkContext_Get(b *testing.B) {
 		ctx.Set("K1", "v1")
 		ctx.Set("K2", "v2")
 		ctx.Set("K3", "v3")
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			_, found := ctx.Get("K3")
 			a.True(found)
 		}
@@ -56,7 +56,7 @@ func BenchmarkContext_Get(b *testing.B) {
 		ctx.Set("K3", "v3")
 		ctx.Set("K4", "v4")
 		ctx.Set("K5", "v5")
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			_, found := ctx.Get("K5")
 			a.True(found)
 		}
@@ -75,7 +75,7 @@ func BenchmarkContext_Get(b *testing.B) {
 		ctx.Set("K8", "v8")
 		ctx.Set("K9", "v9")
 		ctx.Set("K10", "v10")
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			_, found := ctx.Get("K10")
 			a.True(found)
 		}

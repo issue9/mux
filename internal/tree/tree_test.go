@@ -40,13 +40,13 @@ func newTester(a *assert.Assertion, lock, trace bool) *tester {
 // 测试路由项的 code 需要唯一，之后也是通过此值来判断其命中的路由项。
 func (t *tester) add(method, pattern string, code int) {
 	t.a.TB().Helper()
-	t.a.NotError(t.tree.Add(pattern, rest.BuildHandler(t.a, code, "", nil), method))
+	t.a.NotError(t.tree.Add(pattern, rest.BuildHandler(t.a, code, "", nil), nil, method))
 }
 
 func (t *tester) addAmbiguous(pattern string) {
 	t.a.TB().Helper()
 	b := rest.BuildHandler(t.a, http.StatusOK, "", nil)
-	t.a.ErrorString(t.tree.Add(pattern, b, http.MethodGet), "存在有歧义的节点")
+	t.a.ErrorString(t.tree.Add(pattern, b, nil, http.MethodGet), "存在有歧义的节点")
 }
 
 // 验证按照指定的 method 和 path 访问，是否会返回相同的 code 值，
@@ -388,7 +388,7 @@ func TestTree_Clean(t *testing.T) {
 	tree := NewTestTree(a, true, false, syntax.NewInterceptors())
 
 	addNode := func(p string, code int, methods ...string) {
-		a.NotError(tree.Add(p, rest.BuildHandler(a, code, "", nil), methods...))
+		a.NotError(tree.Add(p, rest.BuildHandler(a, code, "", nil), nil, methods...))
 	}
 
 	addNode("/", 201, http.MethodGet)
@@ -411,12 +411,12 @@ func TestTree_Add_Remove(t *testing.T) {
 
 	tree := NewTestTree(a, true, false, syntax.NewInterceptors())
 
-	a.NotError(tree.Add("/", rest.BuildHandler(a, http.StatusAccepted, "", nil), http.MethodGet))
-	a.NotError(tree.Add("/posts/{id}", rest.BuildHandler(a, http.StatusAccepted, "", nil), http.MethodGet))
-	a.NotError(tree.Add("/posts/{-id}/ignore-name", rest.BuildHandler(a, http.StatusAccepted, "", nil), http.MethodGet))
-	a.NotError(tree.Add("/posts/{id}/author", rest.BuildHandler(a, http.StatusAccepted, "", nil), http.MethodGet, http.MethodPut, http.MethodPost))
-	a.NotError(tree.Add("/posts/1/author", rest.BuildHandler(a, http.StatusAccepted, "", nil), http.MethodGet))
-	a.NotError(tree.Add("/posts/{id}/{author:\\w+}/profile", rest.BuildHandler(a, 1, "", nil), http.MethodGet))
+	a.NotError(tree.Add("/", rest.BuildHandler(a, http.StatusAccepted, "", nil), nil, http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}", rest.BuildHandler(a, http.StatusAccepted, "", nil), nil, http.MethodGet))
+	a.NotError(tree.Add("/posts/{-id}/ignore-name", rest.BuildHandler(a, http.StatusAccepted, "", nil), nil, http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}/author", rest.BuildHandler(a, http.StatusAccepted, "", nil), nil, http.MethodGet, http.MethodPut, http.MethodPost))
+	a.NotError(tree.Add("/posts/1/author", rest.BuildHandler(a, http.StatusAccepted, "", nil), nil, http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}/{author:\\w+}/profile", rest.BuildHandler(a, 1, "", nil), nil, http.MethodGet))
 
 	a.NotEmpty(tree.node.find("/posts/1/author").handlers)
 	a.NotEmpty(tree.node.find("/posts/{-id}/ignore-name").handlers)
@@ -432,7 +432,7 @@ func TestTree_Add_Remove(t *testing.T) {
 	// addAny
 
 	tree = NewTestTree(a, false, false, syntax.NewInterceptors())
-	a.NotError(tree.Add("/path", rest.BuildHandler(a, 201, "", nil)))
+	a.NotError(tree.Add("/path", rest.BuildHandler(a, 201, "", nil), nil))
 	node := tree.node.find("/path")
 	a.Equal(len(Methods), len(node.handlers))    // 多了 methodNotAllowed，但是 trace 并不保存在 handlers 中
 	a.Equal(len(Methods)-1, len(node.Methods())) // methodNotAllowed 和 trace 并不记入 node.Methods()
@@ -441,7 +441,7 @@ func TestTree_Add_Remove(t *testing.T) {
 	// OPTIONS
 
 	tree = NewTestTree(a, true, false, syntax.NewInterceptors())
-	a.NotError(tree.Add("/path", rest.BuildHandler(a, http.StatusAccepted, "", nil), http.MethodGet))
+	a.NotError(tree.Add("/path", rest.BuildHandler(a, http.StatusAccepted, "", nil), nil, http.MethodGet))
 	node = tree.node.find("/path")
 	a.Equal(4, len(node.handlers)).
 		NotNil(node.handlers[http.MethodOptions])
@@ -452,22 +452,22 @@ func TestTree_Add_Remove(t *testing.T) {
 	// error
 
 	tree = NewTestTree(a, true, false, syntax.NewInterceptors())
-	a.ErrorString(tree.Add("/path", rest.BuildHandler(a, http.StatusAccepted, "", nil), "NOT-SUPPORTED"), "NOT-SUPPORTED")
-	a.NotError(tree.Add("/path", rest.BuildHandler(a, http.StatusAccepted, "", nil), http.MethodDelete))
-	a.ErrorString(tree.Add("/path", rest.BuildHandler(a, http.StatusAccepted, "", nil), http.MethodDelete), http.MethodDelete)
+	a.ErrorString(tree.Add("/path", rest.BuildHandler(a, http.StatusAccepted, "", nil), nil, "NOT-SUPPORTED"), "NOT-SUPPORTED")
+	a.NotError(tree.Add("/path", rest.BuildHandler(a, http.StatusAccepted, "", nil), nil, http.MethodDelete))
+	a.ErrorString(tree.Add("/path", rest.BuildHandler(a, http.StatusAccepted, "", nil), nil, http.MethodDelete), http.MethodDelete)
 	tree.Remove("/path", http.MethodOptions) // remove options 不发生任何操作
 	a.Equal(tree.node.find("/path").AllowHeader(), "DELETE, OPTIONS")
 
-	a.ErrorString(tree.Add("/path/{id}/path/{id:\\d+}", rest.BuildHandler(a, 1, "", nil), http.MethodHead), "存在相同名称的路由参数")
-	a.ErrorString(tree.Add("/path/{id}{id2:\\d+}", rest.BuildHandler(a, 1, "", nil), http.MethodHead), "两个命名参数不能连续出现")
+	a.ErrorString(tree.Add("/path/{id}/path/{id:\\d+}", rest.BuildHandler(a, 1, "", nil), nil, http.MethodHead), "存在相同名称的路由参数")
+	a.ErrorString(tree.Add("/path/{id}{id2:\\d+}", rest.BuildHandler(a, 1, "", nil), nil, http.MethodHead), "两个命名参数不能连续出现")
 
 	// 多层节点的删除
 
 	tree = NewTestTree(a, true, false, syntax.NewInterceptors())
-	a.NotError(tree.Add("/posts", rest.BuildHandler(a, 201, "", nil), http.MethodGet, http.MethodPut))
-	a.NotError(tree.Add("/posts/{id}", rest.BuildHandler(a, 202, "", nil), http.MethodGet))
-	a.NotError(tree.Add("/posts/{id}/author", rest.BuildHandler(a, 203, "", nil), http.MethodGet))
-	a.NotError(tree.Add("/posts/{id}/author/email", rest.BuildHandler(a, 204, "", nil), http.MethodGet))
+	a.NotError(tree.Add("/posts", rest.BuildHandler(a, 201, "", nil), nil, http.MethodGet, http.MethodPut))
+	a.NotError(tree.Add("/posts/{id}", rest.BuildHandler(a, 202, "", nil), nil, http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}/author", rest.BuildHandler(a, 203, "", nil), nil, http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}/author/email", rest.BuildHandler(a, 204, "", nil), nil, http.MethodGet))
 
 	tree.Remove("/posts/{id}") // 删除 202
 	nn := tree.node.find("/posts/{id}")
@@ -490,10 +490,10 @@ func TestTree_Routes(t *testing.T) {
 	t.Run("trace=false", func(t *testing.T) {
 		tree := NewTestTree(a, true, false, syntax.NewInterceptors())
 
-		a.NotError(tree.Add("/", rest.BuildHandler(a, http.StatusOK, "", nil), http.MethodGet))
-		a.NotError(tree.Add("/posts", rest.BuildHandler(a, http.StatusOK, "", nil), http.MethodGet, http.MethodPost))
-		a.NotError(tree.Add("/posts/{id}", rest.BuildHandler(a, http.StatusOK, "", nil), http.MethodGet, http.MethodPut))
-		a.NotError(tree.Add("/posts/{id}/author", rest.BuildHandler(a, http.StatusOK, "", nil), http.MethodGet))
+		a.NotError(tree.Add("/", rest.BuildHandler(a, http.StatusOK, "", nil), nil, http.MethodGet))
+		a.NotError(tree.Add("/posts", rest.BuildHandler(a, http.StatusOK, "", nil), nil, http.MethodGet, http.MethodPost))
+		a.NotError(tree.Add("/posts/{id}", rest.BuildHandler(a, http.StatusOK, "", nil), nil, http.MethodGet, http.MethodPut))
+		a.NotError(tree.Add("/posts/{id}/author", rest.BuildHandler(a, http.StatusOK, "", nil), nil, http.MethodGet))
 
 		routes := tree.Routes()
 		a.Equal(routes, map[string][]string{
@@ -508,10 +508,10 @@ func TestTree_Routes(t *testing.T) {
 	t.Run("trace=true", func(t *testing.T) {
 		tree := NewTestTree(a, true, true, syntax.NewInterceptors())
 
-		a.NotError(tree.Add("/", rest.BuildHandler(a, http.StatusOK, "", nil), http.MethodGet))
-		a.NotError(tree.Add("/posts", rest.BuildHandler(a, http.StatusOK, "", nil), http.MethodGet, http.MethodPost))
-		a.NotError(tree.Add("/posts/{id}", rest.BuildHandler(a, http.StatusOK, "", nil), http.MethodGet, http.MethodPut))
-		a.NotError(tree.Add("/posts/{id}/author", rest.BuildHandler(a, http.StatusOK, "", nil), http.MethodGet))
+		a.NotError(tree.Add("/", rest.BuildHandler(a, http.StatusOK, "", nil), nil, http.MethodGet))
+		a.NotError(tree.Add("/posts", rest.BuildHandler(a, http.StatusOK, "", nil), nil, http.MethodGet, http.MethodPost))
+		a.NotError(tree.Add("/posts/{id}", rest.BuildHandler(a, http.StatusOK, "", nil), nil, http.MethodGet, http.MethodPut))
+		a.NotError(tree.Add("/posts/{id}/author", rest.BuildHandler(a, http.StatusOK, "", nil), nil, http.MethodGet))
 
 		routes := tree.Routes()
 		a.Equal(routes, map[string][]string{
@@ -529,12 +529,12 @@ func TestTree_find(t *testing.T) {
 	h := rest.BuildHandler(a, http.StatusCreated, "", nil)
 	tree := NewTestTree(a, false, false, syntax.NewInterceptors())
 
-	a.NotError(tree.Add("/", h, http.MethodGet))
-	a.NotError(tree.Add("/posts/{id}", h, http.MethodGet))
-	a.NotError(tree.Add("/posts/{id}/author", h, http.MethodGet))
-	a.NotError(tree.Add("/posts/{-id:\\d+}/authors", h, http.MethodGet))
-	a.NotError(tree.Add("/posts/1/author", h, http.MethodGet))
-	a.NotError(tree.Add("/posts/{id}/{author:\\w+}/profile", h, http.MethodGet))
+	a.NotError(tree.Add("/", h, nil, http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}", h, nil, http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}/author", h, nil, http.MethodGet))
+	a.NotError(tree.Add("/posts/{-id:\\d+}/authors", h, nil, http.MethodGet))
+	a.NotError(tree.Add("/posts/1/author", h, nil, http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}/{author:\\w+}/profile", h, nil, http.MethodGet))
 
 	a.Equal(tree.Find("/").segment.Value, "/")
 	a.Equal(tree.Find("/posts/{id}").segment.Value, "{id}")
@@ -583,7 +583,7 @@ func TestTree_match(t *testing.T) {
 		a.NotError(err)
 		_, err = w.Write([]byte("get"))
 		a.NotError(err)
-	}), http.MethodGet))
+	}), nil, http.MethodGet))
 
 	ctx := types.NewContext()
 	ctx.Path = "/path1"
@@ -606,7 +606,7 @@ func TestTree_match(t *testing.T) {
 		a.NotError(err)
 		_, err = w.Write([]byte("get"))
 		a.NotError(err)
-	}), http.MethodGet))
+	}), nil, http.MethodGet))
 
 	ctx = types.NewContext()
 	ctx.Path = "/path2"
@@ -626,10 +626,10 @@ func TestTree_ApplyMiddleware(t *testing.T) {
 
 	tree := NewTestTree(a, false, false, syntax.NewInterceptors())
 
-	err := tree.Add("/m", rest.BuildHandler(a, http.StatusOK, "/m/", nil), http.MethodGet)
+	err := tree.Add("/m", rest.BuildHandler(a, http.StatusOK, "/m/", nil), nil, http.MethodGet)
 	a.NotError(err)
 
-	err = tree.Add("/m/path", rest.BuildHandler(a, http.StatusOK, "/m/path/", nil), http.MethodGet)
+	err = tree.Add("/m/path", rest.BuildHandler(a, http.StatusOK, "/m/path/", nil), nil, http.MethodGet)
 	a.NotError(err)
 
 	tree.ApplyMiddleware(BuildTestMiddleware(a, "m1"), BuildTestMiddleware(a, "m2"))
@@ -698,7 +698,7 @@ func TestTree_Handler(t *testing.T) {
 
 	tree.Add("/path1", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("/path1"))
-	}), http.MethodDelete, http.MethodGet)
+	}), nil, http.MethodDelete, http.MethodGet)
 
 	// path 不存在
 	ctx := types.NewContext()

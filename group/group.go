@@ -130,7 +130,7 @@ func (g *GroupOf[T]) Use(m ...types.MiddlewareOf[T]) {
 	for _, r := range g.routers {
 		r.r.Use(m...)
 	}
-	g.notFound = tree.ApplyMiddleware(g.notFound, m...)
+	g.notFound = tree.ApplyMiddleware(g.notFound, "", "", m...)
 
 	g.middleware = append(g.middleware, m...)
 }

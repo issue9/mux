@@ -21,14 +21,14 @@ func BenchmarkTree_Match(b *testing.B) {
 	tree := NewTestTree(a, true, false, syntax.NewInterceptors())
 
 	// 添加路由项
-	a.NotError(tree.Add("/", rest.BuildHandler(a, 201, "", nil), http.MethodGet))
-	a.NotError(tree.Add("/posts/{id}", rest.BuildHandler(a, 202, "", nil), http.MethodGet))
-	a.NotError(tree.Add("/posts/{id}/author", rest.BuildHandler(a, 203, "", nil), http.MethodGet))
-	a.NotError(tree.Add("/posts/1/author", rest.BuildHandler(a, 204, "", nil), http.MethodGet))
-	a.NotError(tree.Add("/posts/{id:\\d+}", rest.BuildHandler(a, 205, "", nil), http.MethodGet))
-	a.NotError(tree.Add("/posts/{id:\\d+}/author", rest.BuildHandler(a, 206, "", nil), http.MethodGet))
-	a.NotError(tree.Add("/page/{page:\\d*}", rest.BuildHandler(a, 207, "", nil), http.MethodGet)) // 可选的正则节点
-	a.NotError(tree.Add("/posts/{id}/{page}/author", rest.BuildHandler(a, 208, "", nil), http.MethodGet))
+	a.NotError(tree.Add("/", rest.BuildHandler(a, 201, "", nil), nil, http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}", rest.BuildHandler(a, 202, "", nil), nil, http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}/author", rest.BuildHandler(a, 203, "", nil), nil, http.MethodGet))
+	a.NotError(tree.Add("/posts/1/author", rest.BuildHandler(a, 204, "", nil), nil, http.MethodGet))
+	a.NotError(tree.Add("/posts/{id:\\d+}", rest.BuildHandler(a, 205, "", nil), nil, http.MethodGet))
+	a.NotError(tree.Add("/posts/{id:\\d+}/author", rest.BuildHandler(a, 206, "", nil), nil, http.MethodGet))
+	a.NotError(tree.Add("/page/{page:\\d*}", rest.BuildHandler(a, 207, "", nil), nil, http.MethodGet)) // 可选的正则节点
+	a.NotError(tree.Add("/posts/{id}/{page}/author", rest.BuildHandler(a, 208, "", nil), nil, http.MethodGet))
 
 	paths := map[int]string{
 		0: "/",
@@ -56,14 +56,14 @@ func BenchmarkTree_ServeHTTP(b *testing.B) {
 	tree := NewTestTree(a, true, false, syntax.NewInterceptors())
 
 	// 添加路由项
-	a.NotError(tree.Add("/", rest.BuildHandler(a, 201, "", nil), http.MethodGet))
-	a.NotError(tree.Add("/posts/{id}", rest.BuildHandler(a, 202, "", nil), http.MethodGet))
-	a.NotError(tree.Add("/posts/{id}/author", rest.BuildHandler(a, 203, "", nil), http.MethodGet))
-	a.NotError(tree.Add("/posts/1/author", rest.BuildHandler(a, 204, "", nil), http.MethodGet))
-	a.NotError(tree.Add("/posts/{id:\\d+}", rest.BuildHandler(a, 205, "", nil), http.MethodGet))
-	a.NotError(tree.Add("/posts/{id:\\d+}/author", rest.BuildHandler(a, 206, "", nil), http.MethodGet))
-	a.NotError(tree.Add("/page/{page:\\d*}", rest.BuildHandler(a, 207, "", nil), http.MethodGet)) // 可选的正则节点
-	a.NotError(tree.Add("/posts/{id}/{page}/author", rest.BuildHandler(a, 208, "", nil), http.MethodGet))
+	a.NotError(tree.Add("/", rest.BuildHandler(a, 201, "", nil), nil, http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}", rest.BuildHandler(a, 202, "", nil), nil, http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}/author", rest.BuildHandler(a, 203, "", nil), nil, http.MethodGet))
+	a.NotError(tree.Add("/posts/1/author", rest.BuildHandler(a, 204, "", nil), nil, http.MethodGet))
+	a.NotError(tree.Add("/posts/{id:\\d+}", rest.BuildHandler(a, 205, "", nil), nil, http.MethodGet))
+	a.NotError(tree.Add("/posts/{id:\\d+}/author", rest.BuildHandler(a, 206, "", nil), nil, http.MethodGet))
+	a.NotError(tree.Add("/page/{page:\\d*}", rest.BuildHandler(a, 207, "", nil), nil, http.MethodGet)) // 可选的正则节点
+	a.NotError(tree.Add("/posts/{id}/{page}/author", rest.BuildHandler(a, 208, "", nil), nil, http.MethodGet))
 
 	// 与上面路路依次相对，其 键名+201 即为其返回的状态码。
 	paths := map[int]string{

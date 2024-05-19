@@ -21,7 +21,7 @@ func BenchmarkHost_Match(b *testing.B) {
 	r := rest.Get(a, "https://caixw.io/test").Request()
 
 	ps := types.NewContext()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		a.True(h.Match(r, ps))
 	}
 }
@@ -34,7 +34,7 @@ func BenchmarkHeaderVersionWithoutKey_Match(b *testing.B) {
 		Request()
 
 	ps := types.NewContext()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		a.True(h.Match(r, ps))
 	}
 }
@@ -47,7 +47,7 @@ func BenchmarkHeaderVersionWithKey_Match(b *testing.B) {
 		Request()
 
 	ps := types.NewContext()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		a.True(h.Match(r, ps))
 	}
 }
@@ -57,7 +57,7 @@ func BenchmarkPathVersionWithoutKey_Match(b *testing.B) {
 	h := NewPathVersion("", "v4", "v3", "v1/", "/v2")
 
 	ps := types.NewContext()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		r := rest.Get(a, "https://caixw.io/v1/test").Request()
 		a.True(h.Match(r, ps))
 	}
@@ -68,7 +68,7 @@ func BenchmarkPathVersionWithKey_Match(b *testing.B) {
 	h := NewPathVersion("version", "v4", "v3", "v1/", "/v2")
 
 	ps := types.NewContext()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		r := rest.Get(a, "https://caixw.io/v1/test").Request()
 		a.True(h.Match(r, ps))
 	}

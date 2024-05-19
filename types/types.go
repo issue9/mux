@@ -111,10 +111,19 @@ type BuildNodeHandleOf[T any] func(Node) T
 
 // MiddlewareOf 中间件对象需要实现的接口
 type MiddlewareOf[T any] interface {
-	Middleware(T) T
+	// Middleware 包装处理 next
+	//
+	// next 路由项的处理函数；
+	// method 当前路由的请求方法；
+	// pattern 当前路由的匹配项；
+	//
+	// 对于不存在的路由项，method 和 pattern 都为空。
+	Middleware(next T, method, pattern string) T
 }
 
 // MiddlewareFuncOf 中间件处理函数
-type MiddlewareFuncOf[T any] func(T) T
+type MiddlewareFuncOf[T any] func(T, string, string) T
 
-func (f MiddlewareFuncOf[T]) Middleware(next T) T { return f(next) }
+func (f MiddlewareFuncOf[T]) Middleware(next T, method, pattern string) T {
+	return f(next, method, pattern)
+}

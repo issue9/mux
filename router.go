@@ -113,13 +113,12 @@ func (r *RouterOf[T]) Use(m ...types.MiddlewareOf[T]) {
 // 若语法不正确，则直接 panic，可以通过 [CheckSyntax] 检测语法的有效性，其它接口也相同。
 // methods 该路由项对应的请求方法，如果未指定值，则表示所有支持的请求方法，其中 OPTIONS 和 HEAD 不受控。
 func (r *RouterOf[T]) Handle(pattern string, h T, methods ...string) *RouterOf[T] {
-	r.handle(pattern, h, methods...)
+	r.handle(pattern, h, nil, methods...)
 	return r
 }
 
-func (r *RouterOf[T]) handle(pattern string, h T, methods ...string) {
-	h = tree.ApplyMiddleware(h, r.middleware...)
-	if err := r.tree.Add(pattern, h, methods...); err != nil {
+func (r *RouterOf[T]) handle(pattern string, h T, ms []types.MiddlewareOf[T], methods ...string) {
+	if err := r.tree.Add(pattern, h, slices.Concat(ms, r.middleware), methods...); err != nil {
 		panic(err)
 	}
 }
@@ -218,7 +217,7 @@ func (r *RouterOf[T]) ServeContext(w http.ResponseWriter, req *http.Request, ctx
 func (r *RouterOf[T]) Name() string { return r.name }
 
 func (p *PrefixOf[T]) Handle(pattern string, h T, methods ...string) *PrefixOf[T] {
-	p.router.handle(p.prefix+pattern, tree.ApplyMiddleware(h, p.middleware...), methods...)
+	p.router.handle(p.prefix+pattern, h, p.middleware, methods...)
 	return p
 }
 
@@ -270,11 +269,7 @@ func (p *PrefixOf[T]) URL(strict bool, pattern string, params map[string]string)
 //
 // m 中间件函数，按顺序调用，会继承 p 的中间件并按在 m 之前；
 func (p *PrefixOf[T]) Prefix(prefix string, m ...types.MiddlewareOf[T]) *PrefixOf[T] {
-	// TODO(go1.22): slices.Concat(p.middleware, m)
-	ms := make([]types.MiddlewareOf[T], 0, len(p.middleware)+len(m))
-	ms = append(ms, p.middleware...)
-	ms = append(ms, m...)
-	return p.router.Prefix(p.prefix+prefix, ms...)
+	return p.router.Prefix(p.prefix+prefix, slices.Concat(p.middleware, m)...)
 }
 
 // Prefix 声明一个 [PrefixOf] 实例
@@ -289,7 +284,7 @@ func (r *RouterOf[T]) Prefix(prefix string, m ...types.MiddlewareOf[T]) *PrefixO
 func (p *PrefixOf[T]) Router() *RouterOf[T] { return p.router }
 
 func (r *ResourceOf[T]) Handle(h T, methods ...string) *ResourceOf[T] {
-	r.router.handle(r.pattern, tree.ApplyMiddleware(h, r.middleware...), methods...)
+	r.router.handle(r.pattern, h, r.middleware, methods...)
 	return r
 }
 
@@ -338,11 +333,7 @@ func (r *RouterOf[T]) Resource(pattern string, m ...types.MiddlewareOf[T]) *Reso
 // pattern 资源地址；
 // m 中间件函数，按顺序调用，会继承 p 的中间件并按在 m 之前；
 func (p *PrefixOf[T]) Resource(pattern string, m ...types.MiddlewareOf[T]) *ResourceOf[T] {
-	// TODO(go1.22): slices.Concat(p.middleware, m)
-	ms := make([]types.MiddlewareOf[T], 0, len(p.middleware)+len(m))
-	ms = append(ms, p.middleware...)
-	ms = append(ms, m...)
-	return p.router.Resource(p.prefix+pattern, ms...)
+	return p.router.Resource(p.prefix+pattern, slices.Concat(p.middleware, m)...)
 }
 
 // Router 返回与当前资源关联的 [RouterOf] 实例
