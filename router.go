@@ -110,44 +110,44 @@ func (r *RouterOf[T]) Use(m ...types.MiddlewareOf[T]) {
 // Handle 添加一条路由数据
 //
 // pattern 为路由匹配模式，可以是正则匹配也可以是字符串匹配，
-// 若语法不正确，则直接 panic，可以通过 [CheckSyntax] 检测语法的有效性，其它接口也相同。
-// methods 该路由项对应的请求方法，如果未指定值，则表示所有支持的请求方法，其中 OPTIONS 和 HEAD 不受控。
-func (r *RouterOf[T]) Handle(pattern string, h T, methods ...string) *RouterOf[T] {
-	r.handle(pattern, h, nil, methods...)
-	return r
-}
-
-func (r *RouterOf[T]) handle(pattern string, h T, ms []types.MiddlewareOf[T], methods ...string) {
-	if err := r.tree.Add(pattern, h, slices.Concat(ms, r.middleware), methods...); err != nil {
+// 若语法不正确，则直接 panic，可以通过 [CheckSyntax] 检测语法的有效性，其它接口也相同；
+// m 为应用于当前路由项的中间件；
+// methods 该路由项对应的请求方法，如果未指定值，则表示所有支持的请求方法，其中 OPTIONS 和 HEAD 不受控；
+func (r *RouterOf[T]) Handle(pattern string, h T, m []types.MiddlewareOf[T], methods ...string) *RouterOf[T] {
+	m = slices.Concat(m, r.middleware)
+	if err := r.tree.Add(pattern, h, m, methods...); err != nil {
 		panic(err)
 	}
+	return r
 }
 
 // Get 相当于 RouterOf.Handle(pattern, h, http.MethodGet) 的简易写法
 //
 // h 不应该主动调用 WriteHeader，否则会导致 HEAD 请求获取不到 Content-Length 报头。
-func (r *RouterOf[T]) Get(pattern string, h T) *RouterOf[T] {
-	return r.Handle(pattern, h, http.MethodGet)
+func (r *RouterOf[T]) Get(pattern string, h T, m ...types.MiddlewareOf[T]) *RouterOf[T] {
+	return r.Handle(pattern, h, m, http.MethodGet)
 }
 
-func (r *RouterOf[T]) Post(pattern string, h T) *RouterOf[T] {
-	return r.Handle(pattern, h, http.MethodPost)
+func (r *RouterOf[T]) Post(pattern string, h T, m ...types.MiddlewareOf[T]) *RouterOf[T] {
+	return r.Handle(pattern, h, m, http.MethodPost)
 }
 
-func (r *RouterOf[T]) Delete(pattern string, h T) *RouterOf[T] {
-	return r.Handle(pattern, h, http.MethodDelete)
+func (r *RouterOf[T]) Delete(pattern string, h T, m ...types.MiddlewareOf[T]) *RouterOf[T] {
+	return r.Handle(pattern, h, m, http.MethodDelete)
 }
 
-func (r *RouterOf[T]) Put(pattern string, h T) *RouterOf[T] {
-	return r.Handle(pattern, h, http.MethodPut)
+func (r *RouterOf[T]) Put(pattern string, h T, m ...types.MiddlewareOf[T]) *RouterOf[T] {
+	return r.Handle(pattern, h, m, http.MethodPut)
 }
 
-func (r *RouterOf[T]) Patch(pattern string, h T) *RouterOf[T] {
-	return r.Handle(pattern, h, http.MethodPatch)
+func (r *RouterOf[T]) Patch(pattern string, h T, m ...types.MiddlewareOf[T]) *RouterOf[T] {
+	return r.Handle(pattern, h, m, http.MethodPatch)
 }
 
 // Any 添加一条包含全部请求方法的路由
-func (r *RouterOf[T]) Any(pattern string, h T) *RouterOf[T] { return r.Handle(pattern, h) }
+func (r *RouterOf[T]) Any(pattern string, h T, m ...types.MiddlewareOf[T]) *RouterOf[T] {
+	return r.Handle(pattern, h, m)
+}
 
 // URL 根据参数生成地址
 //
@@ -216,33 +216,34 @@ func (r *RouterOf[T]) ServeContext(w http.ResponseWriter, req *http.Request, ctx
 // Name 路由名称
 func (r *RouterOf[T]) Name() string { return r.name }
 
-func (p *PrefixOf[T]) Handle(pattern string, h T, methods ...string) *PrefixOf[T] {
-	p.router.handle(p.Pattern()+pattern, h, p.middleware, methods...)
+func (p *PrefixOf[T]) Handle(pattern string, h T, m []types.MiddlewareOf[T], methods ...string) *PrefixOf[T] {
+	m = slices.Concat(m, p.middleware)
+	p.router.Handle(p.Pattern()+pattern, h, m, methods...)
 	return p
 }
 
-func (p *PrefixOf[T]) Get(pattern string, h T) *PrefixOf[T] {
-	return p.Handle(pattern, h, http.MethodGet)
+func (p *PrefixOf[T]) Get(pattern string, h T, m ...types.MiddlewareOf[T]) *PrefixOf[T] {
+	return p.Handle(pattern, h, m, http.MethodGet)
 }
 
-func (p *PrefixOf[T]) Post(pattern string, h T) *PrefixOf[T] {
-	return p.Handle(pattern, h, http.MethodPost)
+func (p *PrefixOf[T]) Post(pattern string, h T, m ...types.MiddlewareOf[T]) *PrefixOf[T] {
+	return p.Handle(pattern, h, m, http.MethodPost)
 }
 
-func (p *PrefixOf[T]) Delete(pattern string, h T) *PrefixOf[T] {
-	return p.Handle(pattern, h, http.MethodDelete)
+func (p *PrefixOf[T]) Delete(pattern string, h T, m ...types.MiddlewareOf[T]) *PrefixOf[T] {
+	return p.Handle(pattern, h, m, http.MethodDelete)
 }
 
-func (p *PrefixOf[T]) Put(pattern string, h T) *PrefixOf[T] {
-	return p.Handle(pattern, h, http.MethodPut)
+func (p *PrefixOf[T]) Put(pattern string, h T, m ...types.MiddlewareOf[T]) *PrefixOf[T] {
+	return p.Handle(pattern, h, m, http.MethodPut)
 }
 
-func (p *PrefixOf[T]) Patch(pattern string, h T) *PrefixOf[T] {
-	return p.Handle(pattern, h, http.MethodPatch)
+func (p *PrefixOf[T]) Patch(pattern string, h T, m ...types.MiddlewareOf[T]) *PrefixOf[T] {
+	return p.Handle(pattern, h, m, http.MethodPatch)
 }
 
-func (p *PrefixOf[T]) Any(pattern string, h T) *PrefixOf[T] {
-	return p.Handle(pattern, h)
+func (p *PrefixOf[T]) Any(pattern string, h T, m ...types.MiddlewareOf[T]) *PrefixOf[T] {
+	return p.Handle(pattern, h, m)
 }
 
 // Pattern 当前对象的路径
@@ -283,25 +284,36 @@ func (r *RouterOf[T]) Prefix(prefix string, m ...types.MiddlewareOf[T]) *PrefixO
 	return &PrefixOf[T]{router: r, pattern: prefix, middleware: slices.Clone(m)}
 }
 
-// Router 返回与当前关联的 *RouterOf 实例
+// Router 返回与当前关联的 [RouterOf] 实例
 func (p *PrefixOf[T]) Router() *RouterOf[T] { return p.router }
 
-func (r *ResourceOf[T]) Handle(h T, methods ...string) *ResourceOf[T] {
-	r.router.handle(r.pattern, h, r.middleware, methods...)
+func (r *ResourceOf[T]) Handle(h T, m []types.MiddlewareOf[T], methods ...string) *ResourceOf[T] {
+	m = slices.Concat(m, r.middleware)
+	r.router.Handle(r.pattern, h, m, methods...)
 	return r
 }
 
-func (r *ResourceOf[T]) Get(h T) *ResourceOf[T] { return r.Handle(h, http.MethodGet) }
+func (r *ResourceOf[T]) Get(h T, m ...types.MiddlewareOf[T]) *ResourceOf[T] {
+	return r.Handle(h, m, http.MethodGet)
+}
 
-func (r *ResourceOf[T]) Post(h T) *ResourceOf[T] { return r.Handle(h, http.MethodPost) }
+func (r *ResourceOf[T]) Post(h T, m ...types.MiddlewareOf[T]) *ResourceOf[T] {
+	return r.Handle(h, m, http.MethodPost)
+}
 
-func (r *ResourceOf[T]) Delete(h T) *ResourceOf[T] { return r.Handle(h, http.MethodDelete) }
+func (r *ResourceOf[T]) Delete(h T, m ...types.MiddlewareOf[T]) *ResourceOf[T] {
+	return r.Handle(h, m, http.MethodDelete)
+}
 
-func (r *ResourceOf[T]) Put(h T) *ResourceOf[T] { return r.Handle(h, http.MethodPut) }
+func (r *ResourceOf[T]) Put(h T, m ...types.MiddlewareOf[T]) *ResourceOf[T] {
+	return r.Handle(h, m, http.MethodPut)
+}
 
-func (r *ResourceOf[T]) Patch(h T) *ResourceOf[T] { return r.Handle(h, http.MethodPatch) }
+func (r *ResourceOf[T]) Patch(h T, m ...types.MiddlewareOf[T]) *ResourceOf[T] {
+	return r.Handle(h, m, http.MethodPatch)
+}
 
-func (r *ResourceOf[T]) Any(h T) *ResourceOf[T] { return r.Handle(h) }
+func (r *ResourceOf[T]) Any(h T, m ...types.MiddlewareOf[T]) *ResourceOf[T] { return r.Handle(h, m) }
 
 // Remove 删除指定匹配模式的路由项
 func (r *ResourceOf[T]) Remove(methods ...string) { r.router.Remove(r.pattern, methods...) }

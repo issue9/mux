@@ -97,14 +97,14 @@ func (t *Tester[T]) Serve(a *assert.Assertion, h func(status int) T) {
 	a.NotNil(router)
 	srv := rest.NewServer(a, router, nil)
 
-	router.Handle("/posts/{path}.html", h(201))
+	router.Handle("/posts/{path}.html", h(201), nil)
 	srv.Get("/posts/2017/1.html").Do(nil).Status(201)
 	srv.Get("/Posts/2017/1.html").Do(nil).Status(404) // 大小写不一样
 
-	router.Handle("/posts/{path:.+}.html", h(202))
+	router.Handle("/posts/{path:.+}.html", h(202), nil)
 	srv.Get("/posts/2017/1.html").Do(nil).Status(202)
 
-	router.Handle("/posts/{id:digit}123", h(203))
+	router.Handle("/posts/{id:digit}123", h(203), nil)
 	srv.Get("/posts/123123").Do(nil).Status(203)
 
 	router.Get("///", h(201))
@@ -131,6 +131,6 @@ func (t *Tester[T]) Serve(a *assert.Assertion, h func(status int) T) {
 	router = mux.NewRouterOf("test", t.c, t.notFound, t.m, t.o)
 	srv = rest.NewServer(a, router, nil)
 
-	router.Handle("/posts/{path}.html", h(201))
+	router.Handle("/posts/{path}.html", h(201), nil)
 	srv.Get("/posts/2017/1.html").Do(nil).Status(201)
 }

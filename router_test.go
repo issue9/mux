@@ -62,7 +62,7 @@ func TestRouterOf(t *testing.T) {
 
 	// 不能主动添加 Head
 	a.PanicString(func() {
-		r.Handle("/options", rest.BuildHandler(a, 202, "", nil), http.MethodOptions)
+		r.Handle("/options", rest.BuildHandler(a, 202, "", nil), nil, http.MethodOptions)
 	}, "OPTIONS")
 }
 
@@ -74,9 +74,9 @@ func TestRouterOf_Handle_Remove(t *testing.T) {
 	// 添加 GET /api/1
 	// 添加 PUT /api/1
 	// 添加 GET /api/2
-	r.Handle("/api/1", rest.BuildHandler(a, 201, "", nil), http.MethodGet)
-	r.Handle("/api/1", rest.BuildHandler(a, 201, "", nil), http.MethodPut)
-	r.Handle("/api/2", rest.BuildHandler(a, 202, "", nil), http.MethodGet)
+	r.Handle("/api/1", rest.BuildHandler(a, 201, "", nil), nil, http.MethodGet)
+	r.Handle("/api/1", rest.BuildHandler(a, 201, "", nil), nil, http.MethodPut)
+	r.Handle("/api/2", rest.BuildHandler(a, 202, "", nil), nil, http.MethodGet)
 
 	rest.Get(a, "/api/1").Do(r).Status(201)
 	rest.Put(a, "/api/1", nil).Do(r).Status(201)
@@ -96,7 +96,7 @@ func TestRouterOf_Handle_Remove(t *testing.T) {
 	rest.Get(a, "/api/2").Do(r).Status(http.StatusNotFound) // 整个节点被删除
 
 	// 添加 POST /api/1
-	r.Handle("/api/1", rest.BuildHandler(a, 201, "", nil), http.MethodPost)
+	r.Handle("/api/1", rest.BuildHandler(a, 201, "", nil), nil, http.MethodPost)
 	rest.Post(a, "/api/1", nil).Do(r).Status(201)
 
 	// 删除 ANY /api/1

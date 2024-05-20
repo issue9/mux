@@ -45,7 +45,7 @@ func (t *Tester[T]) benchURL(b *testing.B, h T) {
 
 	router := mux.NewRouterOf("test", t.c, t.notFound, t.m, t.o, mux.Lock(true), mux.URLDomain(domain))
 	for _, api := range apis {
-		router.Handle(api.pattern, h, api.method)
+		router.Handle(api.pattern, h, nil, api.method)
 	}
 
 	b.ReportAllocs()
@@ -76,7 +76,7 @@ func (t *Tester[T]) benchAddAndServeHTTP(b *testing.B, h T) {
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest(api.method, api.test, nil)
 
-		router.Handle(api.pattern, h, api.method)
+		router.Handle(api.pattern, h, nil, api.method)
 		router.ServeHTTP(w, r)
 		router.Remove(api.pattern, api.method)
 
@@ -89,7 +89,7 @@ func (t *Tester[T]) benchAddAndServeHTTP(b *testing.B, h T) {
 func (t *Tester[T]) benchServeHTTP(b *testing.B, h T) {
 	router := mux.NewRouterOf("test", t.c, t.notFound, t.m, t.o)
 	for _, api := range apis {
-		router.Handle(api.pattern, h, api.method)
+		router.Handle(api.pattern, h, nil, api.method)
 	}
 
 	b.ReportAllocs()
@@ -112,7 +112,7 @@ func (t *Tester[T]) calcMemStats(h T) uint64 {
 	return calcMemStats(func() {
 		r := mux.NewRouterOf("test", t.c, t.notFound, t.m, t.o, mux.Lock(true))
 		for _, api := range apis {
-			r.Handle(api.pattern, h, api.method)
+			r.Handle(api.pattern, h, nil, api.method)
 		}
 	})
 }
