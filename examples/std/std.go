@@ -50,7 +50,7 @@ func NewRouters(o ...mux.Option) *Routers {
 	return group.NewOf(call, http.NotFoundHandler(), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
 }
 
-// NewRouter 声明适用于官方 http.Handler 接口的路由
+// NewRouter 声明适用于官方 [http.Handler] 接口的路由
 func NewRouter(name string, o ...mux.Option) *Router {
 	return mux.NewRouterOf(name, call, http.NotFoundHandler(), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
 }

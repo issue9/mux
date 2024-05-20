@@ -108,6 +108,8 @@ func (r *RouterOf[T]) Remove(pattern string, methods ...string) { r.tree.Remove(
 //   - Get/Delete 等添加路由项的方法；
 //   - [RouterOf.Prefix]、[RouterOf.Resource]、[PrefixOf.Prefix]；
 //   - [Router.Use]；
+//
+// NOTE: 对于 404 路由项的只有通过 [RouterOf.Use] 应用的中间件有效。
 func (r *RouterOf[T]) Use(m ...types.MiddlewareOf[T]) {
 	r.middleware = append(r.middleware, m...)
 	r.tree.ApplyMiddleware(m...)

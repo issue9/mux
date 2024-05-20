@@ -14,9 +14,11 @@ import (
 	"github.com/issue9/assert/v4/rest"
 
 	"github.com/issue9/mux/v8"
+	"github.com/issue9/mux/v8/examples/ctx"
 	"github.com/issue9/mux/v8/examples/std"
 	"github.com/issue9/mux/v8/header"
 	"github.com/issue9/mux/v8/internal/tree"
+	"github.com/issue9/mux/v8/types"
 )
 
 func TestRouterOf(t *testing.T) {
@@ -262,18 +264,36 @@ func TestRouterOf_Resource(t *testing.T) {
 func TestPrefix_Resource(t *testing.T) {
 	a := assert.New(t, false)
 
-	def := std.NewRouter("")
+	def := ctx.NewRouter("def", mux.Trace(true))
 	a.NotNil(def)
 
-	p := def.Prefix("/p1", tree.BuildTestMiddleware(a, "p1"), tree.BuildTestMiddleware(a, "p2"))
+	buildTestMiddleware := func(a *assert.Assertion, text string) types.MiddlewareOf[ctx.Handler] {
+		return types.MiddlewareFuncOf[ctx.Handler](func(next ctx.Handler, _, _ string) ctx.Handler {
+			return ctx.HandlerFunc(func(ctx *ctx.CTX) {
+				next.Handle(ctx) // 先输出被包含的内容
+				_, err := ctx.W.Write([]byte(text))
+				a.NotError(err)
+			})
+		})
+	}
+
+	def.Use(buildTestMiddleware(a, "r"))
+
+	p := def.Prefix("/p1", buildTestMiddleware(a, "p1"), buildTestMiddleware(a, "p2"))
 	a.NotNil(p)
 
-	r1 := p.Resource("/abc/1", tree.BuildTestMiddleware(a, "r1"), tree.BuildTestMiddleware(a, "r2"))
+	r1 := p.Resource("/abc/1", buildTestMiddleware(a, "r1"), buildTestMiddleware(a, "r2"))
 	a.NotNil(r1)
 
-	r1.Delete(rest.BuildHandler(a, 201, "-201-", nil), tree.BuildTestMiddleware(a, "m1"))
-	rest.Delete(a, "/p1/abc/1").Do(def).Status(201).StringBody("-201-m1r1r2p1p2")
-	rest.Delete(a, "/p1/abc/1").Do(def).Status(201).StringBody("-201-m1r1r2p1p2")
+	r1.Delete(ctx.HandlerFunc(func(c *ctx.CTX) {
+		c.W.WriteHeader(http.StatusCreated)
+		_, err := c.W.Write([]byte("-201-"))
+		a.NotError(err)
+	}), buildTestMiddleware(a, "m1"))
+	rest.Delete(a, "/p1/abc/1").Do(def).Status(201).StringBody("-201-m1r1r2p1p2r")
+	rest.Delete(a, "/p1/abc/1").Do(def).Status(201).StringBody("-201-m1r1r2p1p2r")
+	rest.Post(a, "/p1/abc/1", nil).Do(def).Status(405).StringBody("m1r1r2p1p2r") // 405 中间件正常使用
+	rest.Get(a, "/p1/abc/not-exist").Do(def).Status(404).StringBody("r")         // 404 只有通过 [RouterOf.Use] 添加的中间件有效
 }
 
 func TestResourceOf_URL(t *testing.T) {
