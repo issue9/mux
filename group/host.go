@@ -24,7 +24,7 @@ type Hosts struct {
 func NewHosts(lock bool, domain ...string) *Hosts {
 	i := syntax.NewInterceptors()
 	f := func(types.Node) any { return nil }
-	t := tree.New(lock, i, nil, false, f, f)
+	t := tree.New("", lock, i, nil, false, f, f)
 	h := &Hosts{tree: t, i: i}
 	h.Add(domain...)
 	return h

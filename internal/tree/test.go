@@ -19,13 +19,13 @@ import (
 
 // NewTestTree 返回以 http.Handler 作为参数实例化的 Tree
 func NewTestTree(a *assert.Assertion, lock, trace bool, i *syntax.Interceptors) *Tree[http.Handler] {
-	t := New(lock, i, http.NotFoundHandler(), trace, BuildTestNodeHandlerFunc(http.StatusMethodNotAllowed), BuildTestNodeHandlerFunc(http.StatusOK))
+	t := New("", lock, i, http.NotFoundHandler(), trace, BuildTestNodeHandlerFunc(http.StatusMethodNotAllowed), BuildTestNodeHandlerFunc(http.StatusOK))
 	a.NotNil(t)
 	return t
 }
 
 func BuildTestMiddleware(a *assert.Assertion, text string) types.MiddlewareOf[http.Handler] {
-	return types.MiddlewareFuncOf[http.Handler](func(next http.Handler, _, _ string) http.Handler {
+	return types.MiddlewareFuncOf[http.Handler](func(next http.Handler, _, _, _ string) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			next.ServeHTTP(w, r) // 先输出被包含的内容
 			_, err := w.Write([]byte(text))

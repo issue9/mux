@@ -268,7 +268,7 @@ func TestPrefix_Resource(t *testing.T) {
 	a.NotNil(def)
 
 	buildTestMiddleware := func(a *assert.Assertion, text string) types.MiddlewareOf[ctx.Handler] {
-		return types.MiddlewareFuncOf[ctx.Handler](func(next ctx.Handler, _, _ string) ctx.Handler {
+		return types.MiddlewareFuncOf[ctx.Handler](func(next ctx.Handler, _, _, _ string) ctx.Handler {
 			return ctx.HandlerFunc(func(ctx *ctx.CTX) {
 				next.Handle(ctx) // 先输出被包含的内容
 				_, err := ctx.W.Write([]byte(text))

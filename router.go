@@ -27,7 +27,6 @@ type (
 	//      Handle("/api/{version:\\d+}",h3, http.MethodGet, http.MethodPost) // 只匹配 GET 和 POST
 	//  http.ListenAndServe(router)
 	RouterOf[T any] struct {
-		name string
 		tree *tree.Tree[T]
 		call CallOf[T]
 
@@ -74,8 +73,7 @@ func NewRouterOf[T any](name string, call CallOf[T], notFound T, methodNotAllowe
 	}
 
 	r := &RouterOf[T]{
-		name: name,
-		tree: tree.New(opt.Lock, opt.Interceptors, notFound, opt.Trace, methodNotAllowedBuilder, optionsBuilder),
+		tree: tree.New(name, opt.Lock, opt.Interceptors, notFound, opt.Trace, methodNotAllowedBuilder, optionsBuilder),
 		call: call,
 
 		cors:        opt.CORS,
@@ -222,7 +220,7 @@ func (r *RouterOf[T]) ServeContext(w http.ResponseWriter, req *http.Request, ctx
 }
 
 // Name 路由名称
-func (r *RouterOf[T]) Name() string { return r.name }
+func (r *RouterOf[T]) Name() string { return r.tree.Name() }
 
 func (p *PrefixOf[T]) Handle(pattern string, h T, m []types.MiddlewareOf[T], methods ...string) *PrefixOf[T] {
 	m = slices.Concat(m, p.middleware)

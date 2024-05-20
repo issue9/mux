@@ -19,7 +19,7 @@ import (
 var (
 	_ http.Handler = &Router{}
 	_ http.Handler = &Routers{}
-	_ Middleware   = MiddlewareFunc(func(http.Handler, string, string) http.Handler { return nil })
+	_ Middleware   = MiddlewareFunc(func(_ http.Handler, _, _, _ string) http.Handler { return nil })
 )
 
 func TestRouter(t *testing.T) {

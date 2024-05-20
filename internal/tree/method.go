@@ -98,19 +98,19 @@ func (n *node[T]) addMethods(h T, pattern string, ms []types.MiddlewareOf[T], me
 		}
 
 		if m == http.MethodGet {
-			n.handlers[http.MethodHead] = ApplyMiddleware(h, http.MethodHead, pattern, ms...)
+			n.handlers[http.MethodHead] = ApplyMiddleware(h, http.MethodHead, pattern, n.root.Name(), ms...)
 		}
 
-		n.handlers[m] = ApplyMiddleware(h, m, pattern, ms...)
+		n.handlers[m] = ApplyMiddleware(h, m, pattern, n.root.Name(), ms...)
 	}
 
 	// 查看是否需要添加 OPTIONS
 	if _, found := n.handlers[http.MethodOptions]; !found {
-		n.handlers[http.MethodOptions] = ApplyMiddleware(n.root.optionsBuilder(n), http.MethodOptions, pattern, ms...)
+		n.handlers[http.MethodOptions] = ApplyMiddleware(n.root.optionsBuilder(n), http.MethodOptions, pattern, n.root.Name(), ms...)
 	}
 
 	if _, found := n.handlers[methodNotAllowed]; !found {
-		n.handlers[methodNotAllowed] = ApplyMiddleware(n.root.methodNotAllowedBuilder(n), "", pattern, ms...)
+		n.handlers[methodNotAllowed] = ApplyMiddleware(n.root.methodNotAllowedBuilder(n), "", pattern, n.root.Name(), ms...)
 	}
 
 	n.buildMethods()

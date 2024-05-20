@@ -37,6 +37,8 @@ import (
 //	             |
 //	             +---- emails
 type Tree[T any] struct {
+	name string // 名称
+
 	methods map[string]int // 保存着每个请求方法在所有子节点上的数量。
 	node    *node[T]       // 空节点，正好用于处理 OPTIONS *。
 
@@ -50,13 +52,22 @@ type Tree[T any] struct {
 	methodNotAllowedBuilder types.BuildNodeHandleOf[T]
 }
 
-func New[T any](lock bool, i *syntax.Interceptors, notFound T, trace bool, methodNotAllowedBuilder, optionsBuilder types.BuildNodeHandleOf[T]) *Tree[T] {
+func New[T any](
+	name string,
+	lock bool,
+	i *syntax.Interceptors,
+	notFound T,
+	trace bool,
+	methodNotAllowedBuilder,
+	optionsBuilder types.BuildNodeHandleOf[T],
+) *Tree[T] {
 	s, err := i.NewSegment("")
 	if err != nil {
 		panic("发生了不该发生的错误，应该是 syntax.NewSegment 逻辑发生变化" + err.Error())
 	}
 
 	t := &Tree[T]{
+		name:    name,
 		methods: make(map[string]int, len(Methods)),
 		node:    &node[T]{segment: s, methodIndex: methodIndexMap[http.MethodOptions]},
 
@@ -78,6 +89,8 @@ func New[T any](lock bool, i *syntax.Interceptors, notFound T, trace bool, metho
 
 	return t
 }
+
+func (tree *Tree[T]) Name() string { return tree.name }
 
 // Add 添加路由项
 //
@@ -291,6 +304,6 @@ func (tree *Tree[T]) URL(buf *errwrap.StringBuilder, pattern string, ps map[stri
 
 // ApplyMiddleware 为已有的路由项添加中间件
 func (tree *Tree[T]) ApplyMiddleware(ms ...types.MiddlewareOf[T]) {
-	tree.notFound = ApplyMiddleware(tree.notFound, "", "", ms...)
+	tree.notFound = ApplyMiddleware(tree.notFound, "", "", tree.Name(), ms...)
 	tree.node.applyMiddleware(ms...)
 }

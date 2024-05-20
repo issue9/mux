@@ -116,16 +116,17 @@ type MiddlewareOf[T any] interface {
 	// next 路由项的处理函数；
 	// method 当前路由的请求方法；
 	// pattern 当前路由的匹配项；
+	// router 路由名称，即 [mux.RouterOf.Name] 的值；
 	//
 	// NOTE: method 和 pattern 在某些特殊的路由项中会有特殊的值：
 	//  - 404 method 和 pattern 均为空；
 	//  - 405 method 为空，pattern 正常；
-	Middleware(next T, method, pattern string) T
+	Middleware(next T, method, pattern, router string) T
 }
 
 // MiddlewareFuncOf 中间件处理函数
-type MiddlewareFuncOf[T any] func(T, string, string) T
+type MiddlewareFuncOf[T any] func(next T, method, pattern, router string) T
 
-func (f MiddlewareFuncOf[T]) Middleware(next T, method, pattern string) T {
-	return f(next, method, pattern)
+func (f MiddlewareFuncOf[T]) Middleware(next T, method, pattern, router string) T {
+	return f(next, method, pattern, router)
 }
