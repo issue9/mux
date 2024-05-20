@@ -110,7 +110,7 @@ func (n *node[T]) addMethods(h T, pattern string, ms []types.MiddlewareOf[T], me
 	}
 
 	if _, found := n.handlers[methodNotAllowed]; !found {
-		n.handlers[methodNotAllowed] = n.root.methodNotAllowedBuilder(n)
+		n.handlers[methodNotAllowed] = ApplyMiddleware(n.root.methodNotAllowedBuilder(n), "", pattern, ms...)
 	}
 
 	n.buildMethods()

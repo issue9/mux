@@ -117,7 +117,9 @@ type MiddlewareOf[T any] interface {
 	// method 当前路由的请求方法；
 	// pattern 当前路由的匹配项；
 	//
-	// 对于不存在的路由项，method 和 pattern 都为空。
+	// NOTE: method 和 pattern 在某些特殊的路由项中会有特殊的值：
+	//  - 404 method 和 pattern 均为空；
+	//  - 405 method 为空，pattern 正常；
 	Middleware(next T, method, pattern string) T
 }
 

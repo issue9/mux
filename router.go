@@ -102,6 +102,12 @@ func (r *RouterOf[T]) Routes() map[string][]string { return r.tree.Routes() }
 func (r *RouterOf[T]) Remove(pattern string, methods ...string) { r.tree.Remove(pattern, methods...) }
 
 // Use 使用中间件
+//
+// 对于中间件的使用，除了此方法，还可以 [RouterOf.Prefix]、[RouterOf.Resource]、[PrefixOf.Prefix]
+// 以及添加路由项时指定。调用顺序如下：
+//   - Get/Delete 等添加路由项的方法；
+//   - [RouterOf.Prefix]、[RouterOf.Resource]、[PrefixOf.Prefix]；
+//   - [Router.Use]；
 func (r *RouterOf[T]) Use(m ...types.MiddlewareOf[T]) {
 	r.middleware = append(r.middleware, m...)
 	r.tree.ApplyMiddleware(m...)
@@ -112,7 +118,7 @@ func (r *RouterOf[T]) Use(m ...types.MiddlewareOf[T]) {
 // pattern 为路由匹配模式，可以是正则匹配也可以是字符串匹配，
 // 若语法不正确，则直接 panic，可以通过 [CheckSyntax] 检测语法的有效性，其它接口也相同；
 // m 为应用于当前路由项的中间件；
-// methods 该路由项对应的请求方法，如果未指定值，则表示所有支持的请求方法，其中 OPTIONS 和 HEAD 不受控；
+// methods 该路由项对应的请求方法，如果未指定值，则表示所有支持的请求方法，其中 OPTIONS、TRACE 和 HEAD 不受控；
 func (r *RouterOf[T]) Handle(pattern string, h T, m []types.MiddlewareOf[T], methods ...string) *RouterOf[T] {
 	m = slices.Concat(m, r.middleware)
 	if err := r.tree.Add(pattern, h, m, methods...); err != nil {
@@ -273,7 +279,7 @@ func (p *PrefixOf[T]) URL(strict bool, pattern string, params map[string]string)
 //
 // m 中间件函数，按顺序调用，会继承 p 的中间件并按在 m 之前；
 func (p *PrefixOf[T]) Prefix(prefix string, m ...types.MiddlewareOf[T]) *PrefixOf[T] {
-	return p.router.Prefix(p.Pattern()+prefix, slices.Concat(p.middleware, m)...)
+	return p.router.Prefix(p.Pattern()+prefix, slices.Concat(m, p.middleware)...)
 }
 
 // Prefix 声明一个 [PrefixOf] 实例
@@ -351,7 +357,7 @@ func (r *RouterOf[T]) Resource(pattern string, m ...types.MiddlewareOf[T]) *Reso
 // pattern 资源地址；
 // m 中间件函数，按顺序调用，会继承 p 的中间件并按在 m 之前；
 func (p *PrefixOf[T]) Resource(pattern string, m ...types.MiddlewareOf[T]) *ResourceOf[T] {
-	return p.router.Resource(p.Pattern()+pattern, slices.Concat(p.middleware, m)...)
+	return p.router.Resource(p.Pattern()+pattern, slices.Concat(m, p.middleware)...)
 }
 
 // Router 返回与当前资源关联的 [RouterOf] 实例
