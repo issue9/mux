@@ -10,20 +10,14 @@ const (
 	NoCache  = "no-cache"
 	Identity = "identity"
 
-	// MessageHTTP TRACE 请求方法的 content-type 值
-	MessageHTTP = "message/http"
-
-	// MultipartFormData 表单提交类型
-	MultipartFormData = "multipart/form-data"
-
-	// FormData 普通的表单上传
-	FormData = "application/x-www-form-urlencoded"
-
-	EventStream = "text/event-stream"
-	Plain       = "text/plain"
-	HTML        = "text/html"
-	JSON        = "application/json"
-	XML         = "application/xml"
-	Javascript  = "application/javascript"
-	OctetStream = "application/octet-stream"
+	MessageHTTP       = "message/http"                      // MessageHTTP TRACE 请求方法的 content-type 值
+	MultipartFormData = "multipart/form-data"               // MultipartFormData 表单提交类型
+	FormData          = "application/x-www-form-urlencoded" // FormData 普通的表单上传
+	EventStream       = "text/event-stream"
+	Plain             = "text/plain"
+	HTML              = "text/html"
+	JSON              = "application/json"
+	XML               = "application/xml"
+	Javascript        = "application/javascript"
+	OctetStream       = "application/octet-stream"
 )

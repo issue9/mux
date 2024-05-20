@@ -277,7 +277,7 @@ func (p *PrefixOf[T]) URL(strict bool, pattern string, params map[string]string)
 
 // Prefix 在现有 PrefixOf 的基础上声明一个新的 [PrefixOf] 实例
 //
-// m 中间件函数，按顺序调用，会继承 p 的中间件并按在 m 之前；
+// m 中间件函数，按顺序调用可参考 [Router.Use] 的说明；
 func (p *PrefixOf[T]) Prefix(prefix string, m ...types.MiddlewareOf[T]) *PrefixOf[T] {
 	return p.router.Prefix(p.Pattern()+prefix, slices.Concat(m, p.middleware)...)
 }
@@ -285,7 +285,7 @@ func (p *PrefixOf[T]) Prefix(prefix string, m ...types.MiddlewareOf[T]) *PrefixO
 // Prefix 声明一个 [PrefixOf] 实例
 //
 // prefix 路由前缀字符串，可以为空；
-// m 中间件函数，按顺序调用，会继承 r 的中间件并按在 m 之前；
+// m 中间件函数，按顺序调用可参考 [Router.Use] 的说明；
 func (r *RouterOf[T]) Prefix(prefix string, m ...types.MiddlewareOf[T]) *PrefixOf[T] {
 	return &PrefixOf[T]{router: r, pattern: prefix, middleware: slices.Clone(m)}
 }
@@ -355,7 +355,7 @@ func (r *RouterOf[T]) Resource(pattern string, m ...types.MiddlewareOf[T]) *Reso
 // Resource 创建一个资源路由项
 //
 // pattern 资源地址；
-// m 中间件函数，按顺序调用，会继承 p 的中间件并按在 m 之前；
+// m 中间件函数，按顺序调用可参考 [Router.Use] 的说明；
 func (p *PrefixOf[T]) Resource(pattern string, m ...types.MiddlewareOf[T]) *ResourceOf[T] {
 	return p.router.Resource(p.Pattern()+pattern, slices.Concat(m, p.middleware)...)
 }

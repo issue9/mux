@@ -24,7 +24,7 @@ const (
 	WantContentDigest                  = "Want-Content-Digest"
 	ReprDigest                         = "Repr-Digest"
 	WantReprDigest                     = "Want-Repr-Digest"
-	ContentType                        = "Content-Type"                // 请求体的 MIME类型 （用于POST和PUT请求中）	Content-Type: application/x-www-form-urlencoded
+	ContentType                        = "Content-Type"                // 请求体的 MIME 类型 （用于 POST 和 PUT 请求中）	Content-Type: application/x-www-form-urlencoded
 	Date                               = "Date"                        // 发送该消息的日期和时间(按照 RFC7231 中定义的"超文本传输协议日期"格式来发送)	Date: Tue, 15 Nov 1994 08:12:31 GMT
 	Expect                             = "Expect"                      // 表明客户端要求服务器做出特定的行为	Expect: 100-continue
 	From                               = "From"                        // 发起此请求的用户的邮件地址	From: user@example.com
