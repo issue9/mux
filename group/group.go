@@ -21,8 +21,9 @@ type (
 	GroupOf[T any] struct {
 		routers []*routerOf[T]
 
-		call     mux.CallOf[T]
-		notFound T
+		call           mux.CallOf[T]
+		notFound       T // 所有路由都找不差时调用的方法，该方法应用的中间件中 router 参数是为空的。
+		originNotFound T // 这是应用中间件的 notFound
 		methodNotAllowedBuilder,
 		optionsBuilder types.BuildNodeHandleOf[T]
 		options []options.Option
@@ -45,6 +46,7 @@ func NewOf[T any](call mux.CallOf[T], notFound T, methodNotAllowedBuilder, optio
 
 		call:                    call,
 		notFound:                notFound,
+		originNotFound:          notFound,
 		methodNotAllowedBuilder: methodNotAllowedBuilder,
 		optionsBuilder:          optionsBuilder,
 		options:                 o,
@@ -73,7 +75,7 @@ func (g *GroupOf[T]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // 新路由会继承 [NewOf] 中指定的参数，其中的 o 可以覆盖由 [NewOf] 中指定的相关参数；
 func (g *GroupOf[T]) New(name string, matcher Matcher, o ...mux.Option) *mux.RouterOf[T] {
 	o = g.mergeOption(o...)
-	r := mux.NewRouterOf(name, g.call, g.notFound, g.methodNotAllowedBuilder, g.optionsBuilder, o...)
+	r := mux.NewRouterOf(name, g.call, g.originNotFound, g.methodNotAllowedBuilder, g.optionsBuilder, o...)
 	g.Add(matcher, r)
 	return r
 }
@@ -130,8 +132,8 @@ func (g *GroupOf[T]) Use(m ...types.MiddlewareOf[T]) {
 	for _, r := range g.routers {
 		r.r.Use(m...)
 	}
-	g.notFound = tree.ApplyMiddleware(g.notFound, "", "", "", m...)
 
+	g.notFound = tree.ApplyMiddleware(g.notFound, "", "", "", m...)
 	g.middleware = append(g.middleware, m...)
 }
 

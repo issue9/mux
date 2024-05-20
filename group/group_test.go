@@ -61,31 +61,54 @@ func TestGroupOf_Use(t *testing.T) {
 
 	h1 := g.New("h1", NewHosts(false, "h1.example.com"))
 	h1.Get("/posts/5.html", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("h1")) }))
+
 	g.Use(tree.BuildTestMiddleware(a, "m1"))
 	h2 := g.New("h2", NewHosts(false, "h2.example.com"))
 	h2.Get("/posts/5.html", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("h2")) }))
 
 	rest.NewRequest(a, http.MethodGet, "https://h1.example.com/posts/5.html").
 		Do(g).
+		Status(http.StatusOK).
 		StringBody("h1m1")
 	rest.NewRequest(a, http.MethodGet, "https://h2.example.com/posts/5.html").
 		Do(g).
+		Status(http.StatusOK).
 		StringBody("h2m1")
+
+	// h2 中的 notFound
+	rest.NewRequest(a, http.MethodGet, "https://h2.example.com/not-exists").
+		Do(g).
+		Status(http.StatusNotFound).
+		StringBody("404 page not found\nm1")
+	// group.notFound
 	rest.NewRequest(a, http.MethodGet, "https://not-match.example.com/posts/5.html").
 		Do(g).
-		BodyFunc(func(a *assert.Assertion, body []byte) { a.Contains(body, "m1") })
+		Status(http.StatusNotFound).
+		StringBody("404 page not found\nm1")
+
+	// 添加了新的中间件
 
 	g.Use(tree.BuildTestMiddleware(a, "m2"))
 
 	rest.NewRequest(a, http.MethodGet, "https://h1.example.com/posts/5.html").
 		Do(g).
+		Status(http.StatusOK).
 		StringBody("h1m1m2")
 	rest.NewRequest(a, http.MethodGet, "https://h2.example.com/posts/5.html").
 		Do(g).
+		Status(http.StatusOK).
 		StringBody("h2m1m2")
+
+	// h2 中的 notFound
+	rest.NewRequest(a, http.MethodGet, "https://h2.example.com/not-exists").
+		Do(g).
+		Status(http.StatusNotFound).
+		StringBody("404 page not found\nm1m2")
+	// group.notFound
 	rest.NewRequest(a, http.MethodGet, "https://not-match.example.com/posts/5.html").
 		Do(g).
-		BodyFunc(func(a *assert.Assertion, body []byte) { a.Contains(body, "m1m2") })
+		Status(http.StatusNotFound).
+		StringBody("404 page not found\nm1m2")
 }
 
 func TestGroupOf_Add(t *testing.T) {
