@@ -18,7 +18,7 @@ import (
 
 func BenchmarkTree_Match(b *testing.B) {
 	a := assert.New(b, false)
-	tree := NewTestTree(a, true, false, syntax.NewInterceptors())
+	tree := NewTestTree(a, true, nil, syntax.NewInterceptors())
 
 	// 添加路由项
 	a.NotError(tree.Add("/", rest.BuildHandler(a, 201, "", nil), nil, http.MethodGet))
@@ -53,7 +53,7 @@ func BenchmarkTree_Match(b *testing.B) {
 
 func BenchmarkTree_ServeHTTP(b *testing.B) {
 	a := assert.New(b, false)
-	tree := NewTestTree(a, true, false, syntax.NewInterceptors())
+	tree := NewTestTree(a, true, nil, syntax.NewInterceptors())
 
 	// 添加路由项
 	a.NotError(tree.Add("/", rest.BuildHandler(a, 201, "", nil), nil, http.MethodGet))

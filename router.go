@@ -12,7 +12,6 @@ import (
 	"github.com/issue9/errwrap"
 
 	"github.com/issue9/mux/v9/header"
-	"github.com/issue9/mux/v9/internal/trace"
 	"github.com/issue9/mux/v9/internal/tree"
 	"github.com/issue9/mux/v9/types"
 )
@@ -33,7 +32,6 @@ type (
 		cors        *cors
 		urlDomain   string
 		recoverFunc RecoverFunc
-		trace       bool
 		matcher     Matcher
 	}
 
@@ -86,7 +84,6 @@ func NewRouter[T any](
 		cors:        opt.cors,
 		urlDomain:   opt.urlDomain,
 		recoverFunc: opt.recoverFunc,
-		trace:       opt.trace,
 	}
 
 	return r
@@ -206,15 +203,9 @@ func (r *Router[T]) serveContext(w http.ResponseWriter, req *http.Request, ctx *
 		}()
 	}
 
-	if r.trace && req.Method == http.MethodTrace {
-		trace.Trace(w, req, false)
-		return
-	}
-
 	ctx.Path = req.URL.Path
 	node, h, ok := r.tree.Handler(ctx, req.Method)
 	ctx.SetNode(node)
-	ctx.SetRouterName(r.Name())
 
 	if ok { // !ok 即为 405 或是 404 状态
 		r.cors.handle(node, w.Header(), req)

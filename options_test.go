@@ -155,7 +155,7 @@ func TestCORS_sanitize(t *testing.T) {
 
 func TestCORS_Handle(t *testing.T) {
 	a := assert.New(t, false)
-	tr := tree.NewTestTree(a, false, false, syntax.NewInterceptors())
+	tr := tree.NewTestTree(a, false, nil, syntax.NewInterceptors())
 	a.NotError(tr.Add("/path", nil, nil, http.MethodGet, http.MethodDelete))
 	ctx := types.NewContext()
 	ctx.Path = "/path"

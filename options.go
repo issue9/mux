@@ -18,6 +18,7 @@ import (
 
 	"github.com/issue9/mux/v9/header"
 	"github.com/issue9/mux/v9/internal/syntax"
+	"github.com/issue9/mux/v9/internal/trace"
 	"github.com/issue9/mux/v9/types"
 )
 
@@ -25,7 +26,7 @@ type (
 	Option func(*options)
 
 	options struct {
-		trace        bool
+		trace        any // 应该同 Router 的类型参数 T，为了不全局泛型化，用 any 代替。
 		lock         bool
 		cors         *cors
 		interceptors *syntax.Interceptors
@@ -56,8 +57,15 @@ type (
 	InterceptorFunc = syntax.InterceptorFunc
 )
 
-// WithTrace 是否启用 WithTrace 请求方法
-func WithTrace(enable bool) Option { return func(o *options) { o.trace = enable } }
+// Trace 一种简单的处理 TRACE 请求的方法
+//
+// 可以结合 [WithTrace] 处理。
+func Trace(w http.ResponseWriter, r *http.Request, body bool) { trace.Trace(w, r, body) }
+
+// WithTrace 指定用于处理 TRACE 请求的方法
+//
+// T 的类型应该同 [NewRouter] 中的类型参数 T，否则会 panic。
+func WithTrace[T any](v T) Option { return func(o *options) { o.trace = v } }
 
 // WithLock 是否加锁
 //

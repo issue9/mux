@@ -277,7 +277,7 @@ func TestRouter_Resource(t *testing.T) {
 func TestPrefix_Resource(t *testing.T) {
 	a := assert.New(t, false)
 
-	def := newRouter(a, "def", WithTrace(true))
+	def := newRouter(a, "def", WithTrace(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { Trace(w, r, true) })))
 	a.NotNil(def)
 
 	def.Use(tree.BuildTestMiddleware(a, "r"))
@@ -293,6 +293,12 @@ func TestPrefix_Resource(t *testing.T) {
 	rest.Delete(a, "/p1/abc/1").Do(def).Status(201).StringBody("-201-m1r1r2p1p2r")
 	rest.Post(a, "/p1/abc/1", nil).Do(def).Status(405).StringBody("m1r1r2p1p2r")             // 405 中间件正常使用
 	rest.Get(a, "/p1/abc/not-exist").Do(def).Status(404).StringBody("404 page not found\nr") // 404 只有通过 [Router.Use] 添加的中间件有效
+	rest.NewRequest(a, http.MethodTrace, "/p1/abc/not-exists").
+		Do(def).
+		Status(http.StatusOK).BodyFunc(func(a *assert.Assertion, body []byte) {
+		a.Contains(string(body), "TRACE /p1/abc/not-exists").
+			Contains(string(body), "\nr") // TRACE 只有 [Router.Use] 的中间件有效
+	})
 }
 
 func TestResource_URL(t *testing.T) {

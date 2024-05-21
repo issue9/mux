@@ -14,11 +14,14 @@ import (
 
 	"github.com/issue9/mux/v9/header"
 	"github.com/issue9/mux/v9/internal/syntax"
+	"github.com/issue9/mux/v9/internal/trace"
 	"github.com/issue9/mux/v9/types"
 )
 
+func TestTrace(w http.ResponseWriter, r *http.Request) { trace.Trace(w, r, true) }
+
 // NewTestTree 返回以 http.Handler 作为参数实例化的 Tree
-func NewTestTree(a *assert.Assertion, lock, trace bool, i *syntax.Interceptors) *Tree[http.Handler] {
+func NewTestTree(a *assert.Assertion, lock bool, trace http.Handler, i *syntax.Interceptors) *Tree[http.Handler] {
 	t := New("", lock, i, http.NotFoundHandler(), trace, BuildTestNodeHandlerFunc(http.StatusMethodNotAllowed), BuildTestNodeHandlerFunc(http.StatusOK))
 	a.NotNil(t)
 	return t

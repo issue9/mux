@@ -121,6 +121,7 @@ type Middleware[T any] interface {
 	// NOTE: method 和 pattern 在某些特殊的路由项中会有特殊的值：
 	//  - 404 method 和 pattern 均为空；
 	//  - 405 method 为空，pattern 正常；
+	//  - TRACE 请求则 pattern 为空；
 	Middleware(next T, method, pattern, router string) T
 }
 

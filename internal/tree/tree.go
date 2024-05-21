@@ -38,15 +38,16 @@ import (
 //	             +---- emails
 type Tree[T any] struct {
 	methods map[string]int // 保存着每个请求方法在所有子节点上的数量。
-	node    *node[T]       // 空节点，正好用于处理 OPTIONS *。
+	node    *node[T]       // 空节点，正好用于处理 OPTIONS * 以及 TRACE 请求。
 
 	// 由 New 负责初始化的内容
 
 	locker       *sync.RWMutex
 	interceptors *syntax.Interceptors
 	name         string
-	trace        bool
-	notFound     T
+	notFound,
+	trace T
+	hasTrace bool
 	optionsBuilder,
 	methodNotAllowedBuilder types.BuildNodeHandler[T]
 }
@@ -56,7 +57,7 @@ func New[T any](
 	lock bool,
 	i *syntax.Interceptors,
 	notFound T,
-	trace bool,
+	trace any, // 处理 TRACE 请求的方法。如果为空表示不需要处理 TRACE 请求，否则应该是 T 类型。
 	methodNotAllowedBuilder, optionsBuilder types.BuildNodeHandler[T],
 ) *Tree[T] {
 	s, err := i.NewSegment("")
@@ -64,27 +65,34 @@ func New[T any](
 		panic("发生了不该发生的错误，应该是 syntax.NewSegment 逻辑发生变化：" + err.Error())
 	}
 
-	t := &Tree[T]{
+	hasTrace := trace != nil
+	var t T
+	if hasTrace {
+		t = trace.(T)
+	}
+
+	tree := &Tree[T]{
 		methods: make(map[string]int, len(Methods)),
 		node:    &node[T]{segment: s, methodIndex: methodIndexMap[http.MethodOptions]},
 
 		interceptors:            i,
 		name:                    name,
-		trace:                   trace,
+		trace:                   t,
+		hasTrace:                hasTrace,
 		notFound:                notFound,
 		optionsBuilder:          optionsBuilder,
 		methodNotAllowedBuilder: methodNotAllowedBuilder,
 	}
-	t.node.root = t
-	t.node.handlers = map[string]T{
-		http.MethodOptions: t.optionsBuilder(t.node),
+	tree.node.root = tree
+	tree.node.handlers = map[string]T{
+		http.MethodOptions: tree.optionsBuilder(tree.node),
 	}
 
 	if lock {
-		t.locker = &sync.RWMutex{}
+		tree.locker = &sync.RWMutex{}
 	}
 
-	return t
+	return tree
 }
 
 func (tree *Tree[T]) Name() string { return tree.name }
@@ -220,13 +228,19 @@ func (tree *Tree[T]) match(p *types.Context) *node[T] {
 // Handler 查找与参数匹配的处理对象
 //
 // 如果未找到，也会返回相应在的处理对象，比如 tree.notFound 或是相应的 methodNotAllowed 方法。
-func (tree *Tree[T]) Handler(p *types.Context, method string) (types.Node, T, bool) {
+func (tree *Tree[T]) Handler(ctx *types.Context, method string) (types.Node, T, bool) {
+	ctx.SetRouterName(tree.Name())
+
+	if tree.hasTrace && method == http.MethodTrace {
+		return tree.node, tree.trace, true
+	}
+
 	if tree.locker != nil {
 		tree.locker.RLock()
 		defer tree.locker.RUnlock()
 	}
 
-	node := tree.match(p)
+	node := tree.match(ctx)
 	if node == nil {
 		return nil, tree.notFound, false
 	}
@@ -246,7 +260,7 @@ func (tree *Tree[T]) Routes() map[string][]string {
 
 	routes := make(map[string][]string, 100)
 	ms := []string{http.MethodOptions}
-	if tree.trace {
+	if tree.hasTrace {
 		ms = append(ms, http.MethodTrace)
 	}
 	routes["*"] = ms
@@ -302,5 +316,8 @@ func (tree *Tree[T]) URL(buf *errwrap.StringBuilder, pattern string, ps map[stri
 // ApplyMiddleware 为已有的路由项添加中间件
 func (tree *Tree[T]) ApplyMiddleware(ms ...types.Middleware[T]) {
 	tree.notFound = ApplyMiddleware(tree.notFound, "", "", tree.Name(), ms...)
+	if tree.hasTrace {
+		tree.trace = ApplyMiddleware(tree.trace, http.MethodTrace, "", tree.Name(), ms...)
+	}
 	tree.node.applyMiddleware(ms...)
 }

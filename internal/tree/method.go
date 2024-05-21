@@ -72,7 +72,7 @@ func (n *node[T]) buildMethods() {
 	for method := range n.handlers {
 		n.methodIndex += methodIndexMap[method]
 	}
-	if n.root.trace {
+	if n.root.hasTrace {
 		n.methodIndex += methodIndexMap[http.MethodTrace]
 	}
 	buildMethodIndexes(n.methodIndex)
@@ -86,7 +86,7 @@ func (n *node[T]) Methods() []string { return methodIndexes[n.methodIndex].metho
 // 添加一个处理函数
 func (n *node[T]) addMethods(h T, pattern string, ms []types.Middleware[T], methods ...string) error {
 	for _, m := range methods {
-		if m == http.MethodOptions || m == http.MethodHead || (n.root.trace && m == http.MethodTrace) {
+		if m == http.MethodOptions || m == http.MethodHead || (n.root.hasTrace && m == http.MethodTrace) {
 			return fmt.Errorf("无法手动添加 OPTIONS/HEAD/TRACE 请求方法")
 		}
 		if _, found := methodIndexMap[m]; !found {
@@ -127,7 +127,7 @@ func (tree *Tree[T]) buildMethods(num int, methods ...string) {
 
 	// 即使所有接口都没了，也有 OPTIONS * 存在，所以始终有 OPTIONS 和可能的 TRACE 存在。
 	tree.node.methodIndex = methodIndexMap[http.MethodOptions]
-	if tree.trace {
+	if tree.hasTrace {
 		tree.node.methodIndex += methodIndexMap[http.MethodTrace]
 	}
 
