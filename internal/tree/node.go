@@ -8,8 +8,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/issue9/mux/v8/internal/syntax"
-	"github.com/issue9/mux/v8/types"
+	"github.com/issue9/mux/v9/internal/syntax"
+	"github.com/issue9/mux/v9/types"
 )
 
 const (

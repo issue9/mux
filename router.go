@@ -11,10 +11,10 @@ import (
 
 	"github.com/issue9/errwrap"
 
-	"github.com/issue9/mux/v8/header"
-	"github.com/issue9/mux/v8/internal/trace"
-	"github.com/issue9/mux/v8/internal/tree"
-	"github.com/issue9/mux/v8/types"
+	"github.com/issue9/mux/v9/header"
+	"github.com/issue9/mux/v9/internal/trace"
+	"github.com/issue9/mux/v9/internal/tree"
+	"github.com/issue9/mux/v9/types"
 )
 
 type (
@@ -35,7 +35,7 @@ type (
 		trace       bool
 		matcher     Matcher
 
-		middleware []types.Middleware[T]
+		ms []types.Middleware[T]
 	}
 
 	// CallFunc 指定如何调用用户给定的类型 T
@@ -43,16 +43,16 @@ type (
 
 	// Resource 以资源地址为对象的路由
 	Resource[T any] struct {
-		router     *Router[T]
-		pattern    string
-		middleware []types.Middleware[T]
+		router  *Router[T]
+		pattern string
+		ms      []types.Middleware[T]
 	}
 
 	// Prefix 操纵统一前缀的路由
 	Prefix[T any] struct {
-		router     *Router[T]
-		pattern    string
-		middleware []types.Middleware[T]
+		router  *Router[T]
+		pattern string
+		ms      []types.Middleware[T]
 	}
 
 	headResponse struct {
@@ -117,7 +117,7 @@ func (r *Router[T]) Remove(pattern string, methods ...string) { r.tree.Remove(pa
 //
 // NOTE: 对于 404 路由项的只有通过 [Router.Use] 应用的中间件有效。
 func (r *Router[T]) Use(m ...types.Middleware[T]) {
-	r.middleware = append(r.middleware, m...)
+	r.ms = append(r.ms, m...)
 	r.tree.ApplyMiddleware(m...)
 }
 
@@ -128,8 +128,7 @@ func (r *Router[T]) Use(m ...types.Middleware[T]) {
 // m 为应用于当前路由项的中间件；
 // methods 该路由项对应的请求方法，如果未指定值，则表示所有支持的请求方法，其中 OPTIONS、TRACE 和 HEAD 不受控；
 func (r *Router[T]) Handle(pattern string, h T, m []types.Middleware[T], methods ...string) *Router[T] {
-	m = slices.Concat(m, r.middleware)
-	if err := r.tree.Add(pattern, h, m, methods...); err != nil {
+	if err := r.tree.Add(pattern, h, slices.Concat(m, r.ms), methods...); err != nil {
 		panic(err)
 	}
 	return r
@@ -231,8 +230,7 @@ func (r *Router[T]) serveContext(w http.ResponseWriter, req *http.Request, ctx *
 func (r *Router[T]) Name() string { return r.tree.Name() }
 
 func (p *Prefix[T]) Handle(pattern string, h T, m []types.Middleware[T], methods ...string) *Prefix[T] {
-	m = slices.Concat(m, p.middleware)
-	p.router.Handle(p.Pattern()+pattern, h, m, methods...)
+	p.router.Handle(p.Pattern()+pattern, h, slices.Concat(m, p.ms), methods...)
 	return p
 }
 
@@ -287,7 +285,7 @@ func (p *Prefix[T]) URL(strict bool, pattern string, params map[string]string) (
 //
 // m 中间件函数，按顺序调用可参考 [Router.Use] 的说明；
 func (p *Prefix[T]) Prefix(prefix string, m ...types.Middleware[T]) *Prefix[T] {
-	return p.router.Prefix(p.Pattern()+prefix, slices.Concat(m, p.middleware)...)
+	return p.router.Prefix(p.Pattern()+prefix, slices.Concat(m, p.ms)...)
 }
 
 // Prefix 声明一个 [Prefix] 实例
@@ -295,15 +293,14 @@ func (p *Prefix[T]) Prefix(prefix string, m ...types.Middleware[T]) *Prefix[T] {
 // prefix 路由前缀字符串，可以为空；
 // m 中间件函数，按顺序调用可参考 [Router.Use] 的说明；
 func (r *Router[T]) Prefix(prefix string, m ...types.Middleware[T]) *Prefix[T] {
-	return &Prefix[T]{router: r, pattern: prefix, middleware: slices.Clone(m)}
+	return &Prefix[T]{router: r, pattern: prefix, ms: slices.Clone(m)}
 }
 
 // Router 返回与当前关联的 [Router] 实例
 func (p *Prefix[T]) Router() *Router[T] { return p.router }
 
 func (r *Resource[T]) Handle(h T, m []types.Middleware[T], methods ...string) *Resource[T] {
-	m = slices.Concat(m, r.middleware)
-	r.router.Handle(r.pattern, h, m, methods...)
+	r.router.Handle(r.pattern, h, slices.Concat(m, r.ms), methods...)
 	return r
 }
 
@@ -357,7 +354,7 @@ func (r *Resource[T]) Pattern() string { return r.pattern }
 // pattern 资源地址；
 // m 中间件函数，按顺序调用，会继承 r 的中间件并按在 m 之前；
 func (r *Router[T]) Resource(pattern string, m ...types.Middleware[T]) *Resource[T] {
-	return &Resource[T]{router: r, pattern: pattern, middleware: slices.Clone(m)}
+	return &Resource[T]{router: r, pattern: pattern, ms: slices.Clone(m)}
 }
 
 // Resource 创建一个资源路由项
@@ -365,7 +362,7 @@ func (r *Router[T]) Resource(pattern string, m ...types.Middleware[T]) *Resource
 // pattern 资源地址；
 // m 中间件函数，按顺序调用可参考 [Router.Use] 的说明；
 func (p *Prefix[T]) Resource(pattern string, m ...types.Middleware[T]) *Resource[T] {
-	return p.router.Resource(p.Pattern()+pattern, slices.Concat(m, p.middleware)...)
+	return p.router.Resource(p.Pattern()+pattern, slices.Concat(m, p.ms)...)
 }
 
 // Router 返回与当前资源关联的 [Router] 实例

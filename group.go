@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"slices"
 
-	"github.com/issue9/mux/v8/internal/tree"
-	"github.com/issue9/mux/v8/types"
+	"github.com/issue9/mux/v9/internal/tree"
+	"github.com/issue9/mux/v9/types"
 )
 
 type (

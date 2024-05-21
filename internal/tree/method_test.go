@@ -10,7 +10,7 @@ import (
 
 	"github.com/issue9/assert/v4"
 
-	"github.com/issue9/mux/v8/internal/syntax"
+	"github.com/issue9/mux/v9/internal/syntax"
 )
 
 func TestBuildMethodIndexes(t *testing.T) {
