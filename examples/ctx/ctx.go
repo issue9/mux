@@ -9,7 +9,6 @@ import (
 	"net/http"
 
 	"github.com/issue9/mux/v8"
-	"github.com/issue9/mux/v8/group"
 	"github.com/issue9/mux/v8/header"
 	"github.com/issue9/mux/v8/types"
 )
@@ -23,7 +22,7 @@ type (
 
 	Router = mux.RouterOf[Handler]
 
-	Routers = group.GroupOf[Handler]
+	Routers = mux.GroupOf[Handler]
 
 	Handler interface {
 		Handle(*CTX)
@@ -54,7 +53,7 @@ func methodNotAllowedBuilder(p types.Node) Handler {
 func notFound(ctx *CTX) { ctx.W.WriteHeader(http.StatusNotFound) }
 
 func NewRouters(o ...mux.Option) *Routers {
-	return group.NewOf[Handler](call, HandlerFunc(notFound), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
+	return mux.NewGroupOf[Handler](call, HandlerFunc(notFound), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
 }
 
 // NewRouter 声明适用于官方 http.Handler 接口的路由

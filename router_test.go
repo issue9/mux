@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-package mux_test
+package mux
 
 import (
 	"net/http"
@@ -13,17 +13,30 @@ import (
 	"github.com/issue9/assert/v4"
 	"github.com/issue9/assert/v4/rest"
 
-	"github.com/issue9/mux/v8"
-	"github.com/issue9/mux/v8/examples/ctx"
-	"github.com/issue9/mux/v8/examples/std"
 	"github.com/issue9/mux/v8/header"
 	"github.com/issue9/mux/v8/internal/tree"
 	"github.com/issue9/mux/v8/types"
 )
 
+func call(w http.ResponseWriter, r *http.Request, ps types.Route, h http.Handler) {
+	h.ServeHTTP(w, r)
+}
+
+var (
+	methodNotAllowedBuilder = tree.BuildTestNodeHandlerFunc(http.StatusMethodNotAllowed)
+	optionsHandlerBuilder   = tree.BuildTestNodeHandlerFunc(http.StatusOK)
+)
+
+func newRouter(a *assert.Assertion, name string, o ...Option) *RouterOf[http.Handler] {
+	a.TB().Helper()
+	r := NewRouterOf(name, call, http.NotFoundHandler(), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
+	a.NotNil(r)
+	return r
+}
+
 func TestRouterOf(t *testing.T) {
 	a := assert.New(t, false)
-	r := std.NewRouter("def", mux.Lock(true))
+	r := newRouter(a, "def", Lock(true))
 
 	r.Get("/", rest.BuildHandler(a, 201, "201", nil))
 	r.Get("/200", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -70,7 +83,7 @@ func TestRouterOf(t *testing.T) {
 
 func TestRouterOf_Handle_Remove(t *testing.T) {
 	a := assert.New(t, false)
-	r := std.NewRouter("")
+	r := newRouter(a, "")
 	a.NotNil(r)
 
 	// 添加 GET /api/1
@@ -109,7 +122,7 @@ func TestRouterOf_Handle_Remove(t *testing.T) {
 func TestRouter_Routes(t *testing.T) {
 	a := assert.New(t, false)
 
-	def := std.NewRouter("")
+	def := newRouter(a, "")
 	a.NotNil(def)
 	def.Get("/m", rest.BuildHandler(a, 1, "", nil))
 	def.Post("/m", rest.BuildHandler(a, 1, "", nil))
@@ -119,7 +132,7 @@ func TestRouter_Routes(t *testing.T) {
 func TestRouter_Clean(t *testing.T) {
 	a := assert.New(t, false)
 
-	def := std.NewRouter("")
+	def := newRouter(a, "")
 	a.NotNil(def)
 	def.Get("/m1", rest.BuildHandler(a, 200, "", nil)).
 		Post("/m1", rest.BuildHandler(a, 201, "", nil))
@@ -133,7 +146,7 @@ func TestRouter_Clean(t *testing.T) {
 // 测试匹配顺序是否正确
 func TestRouterOf_ServeHTTP_Order(t *testing.T) {
 	a := assert.New(t, false)
-	r := std.NewRouter("def", mux.AnyInterceptor("any"))
+	r := newRouter(a, "def", AnyInterceptor("any"))
 	a.NotNil(r)
 
 	r.Get("/posts/{id}", rest.BuildHandler(a, 203, "", nil))
@@ -150,7 +163,7 @@ func TestRouterOf_ServeHTTP_Order(t *testing.T) {
 	rest.Get(a, "/posts-").Do(r).Status(205)    // 204 只匹配非空
 
 	// interceptor
-	r = std.NewRouter("def", mux.DigitInterceptor("[0-9]+"))
+	r = newRouter(a, "def", DigitInterceptor("[0-9]+"))
 	a.NotNil(r)
 	r.Get("/posts/{id}", rest.BuildHandler(a, 203, "", nil))        // f3
 	r.Get("/posts/{id:\\d+}", rest.BuildHandler(a, 202, "", nil))   // f2 永远匹配不到
@@ -161,21 +174,21 @@ func TestRouterOf_ServeHTTP_Order(t *testing.T) {
 	rest.Get(a, "/posts/abc").Do(r).Status(203)                     // f3 命名路由
 	rest.Get(a, "/posts/").Do(r).Status(203)                        // f3
 
-	r = std.NewRouter("def")
+	r = newRouter(a, "def")
 	a.NotNil(r)
 	r.Get("/p1/{p1}/p2/{p2:\\d+}", rest.BuildHandler(a, 201, "", nil)) // f1
 	r.Get("/p1/{p1}/p2/{p2:\\w+}", rest.BuildHandler(a, 202, "", nil)) // f2
 	rest.Get(a, "/p1/1/p2/1").Do(r).Status(201)                        // f1
 	rest.Get(a, "/p1/2/p2/s").Do(r).Status(202)                        // f2
 
-	r = std.NewRouter("def")
+	r = newRouter(a, "def")
 	a.NotNil(r)
 	r.Get("/posts/{id}/{page}", rest.BuildHandler(a, 202, "", nil)) // f2
 	r.Get("/posts/{id}/1", rest.BuildHandler(a, 201, "", nil))      // f1
 	rest.Get(a, "/posts/1/1").Do(r).Status(201)                     // f1 普通路由项完全匹配
 	rest.Get(a, "/posts/2/5").Do(r).Status(202)                     // f2 命名完全匹配
 
-	r = std.NewRouter("def")
+	r = newRouter(a, "def")
 	a.NotNil(r)
 	r.Get("/tags/{id}.html", rest.BuildHandler(a, 201, "", nil)) // f1
 	r.Get("/tags.html", rest.BuildHandler(a, 202, "", nil))      // f2
@@ -188,7 +201,7 @@ func TestRouterOf_ServeHTTP_Order(t *testing.T) {
 func TestRouterOf_Middleware(t *testing.T) {
 	a := assert.New(t, false)
 
-	def := std.NewRouter("")
+	def := newRouter(a, "")
 	a.NotNil(def)
 	def.Use(tree.BuildTestMiddleware(a, "m1"), tree.BuildTestMiddleware(a, "m2"), tree.BuildTestMiddleware(a, "m3"), tree.BuildTestMiddleware(a, "m4"))
 	def.Get("/get", rest.BuildHandler(a, 201, "", nil), tree.BuildTestMiddleware(a, "m0"))
@@ -203,7 +216,7 @@ func TestRouterOf_Middleware(t *testing.T) {
 
 func TestResourceOf(t *testing.T) {
 	a := assert.New(t, false)
-	r := std.NewRouter("")
+	r := newRouter(a, "")
 
 	h := r.Resource("/h/1")
 	a.NotNil(h)
@@ -245,7 +258,7 @@ func TestResourceOf(t *testing.T) {
 
 func TestRouterOf_Resource(t *testing.T) {
 	a := assert.New(t, false)
-	def := std.NewRouter("")
+	def := newRouter(a, "")
 	a.NotNil(def)
 	def.Use(tree.BuildTestMiddleware(a, "d1"))
 
@@ -264,41 +277,27 @@ func TestRouterOf_Resource(t *testing.T) {
 func TestPrefix_Resource(t *testing.T) {
 	a := assert.New(t, false)
 
-	def := ctx.NewRouter("def", mux.Trace(true))
+	def := newRouter(a, "def", Trace(true))
 	a.NotNil(def)
 
-	buildTestMiddleware := func(a *assert.Assertion, text string) types.MiddlewareOf[ctx.Handler] {
-		return types.MiddlewareFuncOf[ctx.Handler](func(next ctx.Handler, _, _, _ string) ctx.Handler {
-			return ctx.HandlerFunc(func(ctx *ctx.CTX) {
-				next.Handle(ctx) // 先输出被包含的内容
-				_, err := ctx.W.Write([]byte(text))
-				a.NotError(err)
-			})
-		})
-	}
+	def.Use(tree.BuildTestMiddleware(a, "r"))
 
-	def.Use(buildTestMiddleware(a, "r"))
-
-	p := def.Prefix("/p1", buildTestMiddleware(a, "p1"), buildTestMiddleware(a, "p2"))
+	p := def.Prefix("/p1", tree.BuildTestMiddleware(a, "p1"), tree.BuildTestMiddleware(a, "p2"))
 	a.NotNil(p)
 
-	r1 := p.Resource("/abc/1", buildTestMiddleware(a, "r1"), buildTestMiddleware(a, "r2"))
+	r1 := p.Resource("/abc/1", tree.BuildTestMiddleware(a, "r1"), tree.BuildTestMiddleware(a, "r2"))
 	a.NotNil(r1)
 
-	r1.Delete(ctx.HandlerFunc(func(c *ctx.CTX) {
-		c.W.WriteHeader(http.StatusCreated)
-		_, err := c.W.Write([]byte("-201-"))
-		a.NotError(err)
-	}), buildTestMiddleware(a, "m1"))
+	r1.Delete(rest.BuildHandler(a, 201, "-201-", nil), tree.BuildTestMiddleware(a, "m1"))
 	rest.Delete(a, "/p1/abc/1").Do(def).Status(201).StringBody("-201-m1r1r2p1p2r")
 	rest.Delete(a, "/p1/abc/1").Do(def).Status(201).StringBody("-201-m1r1r2p1p2r")
-	rest.Post(a, "/p1/abc/1", nil).Do(def).Status(405).StringBody("m1r1r2p1p2r") // 405 中间件正常使用
-	rest.Get(a, "/p1/abc/not-exist").Do(def).Status(404).StringBody("r")         // 404 只有通过 [RouterOf.Use] 添加的中间件有效
+	rest.Post(a, "/p1/abc/1", nil).Do(def).Status(405).StringBody("m1r1r2p1p2r")             // 405 中间件正常使用
+	rest.Get(a, "/p1/abc/not-exist").Do(def).Status(404).StringBody("404 page not found\nr") // 404 只有通过 [RouterOf.Use] 添加的中间件有效
 }
 
 func TestResourceOf_URL(t *testing.T) {
 	a := assert.New(t, false)
-	def := std.NewRouter("", mux.AllowedCORS(3600))
+	def := newRouter(a, "", AllowedCORS(3600))
 	a.NotNil(def)
 
 	// 非正则
@@ -349,7 +348,7 @@ func TestResourceOf_URL(t *testing.T) {
 
 func TestPrefixOf(t *testing.T) {
 	a := assert.New(t, false)
-	r := std.NewRouter("")
+	r := newRouter(a, "")
 	a.NotNil(r)
 	p := r.Prefix("/p")
 
@@ -379,7 +378,7 @@ func TestPrefixOf(t *testing.T) {
 
 	// remove
 	p.Remove("/h/any", http.MethodPut, http.MethodGet)
-	methods := slices.DeleteFunc(mux.Methods(), func(s string) bool {
+	methods := slices.DeleteFunc(Methods(), func(s string) bool {
 		return s == http.MethodGet || s == http.MethodTrace || // 并未启用 TRACE
 			s == http.MethodPut || s == http.MethodHead // 删除了 GET，HEAD 也会删除。
 	})
@@ -396,7 +395,7 @@ func TestPrefixOf(t *testing.T) {
 func TestPrefixOf_Prefix(t *testing.T) {
 	t.Run("prefix", func(t *testing.T) {
 		a := assert.New(t, false)
-		def := std.NewRouter("", mux.AllowedCORS(3600))
+		def := newRouter(a, "", AllowedCORS(3600))
 		a.NotNil(def)
 
 		p := def.Prefix("/abc")
@@ -405,7 +404,7 @@ func TestPrefixOf_Prefix(t *testing.T) {
 
 	t.Run("empty prefix", func(t *testing.T) {
 		a := assert.New(t, false)
-		def := std.NewRouter("", mux.AllowedCORS(3600))
+		def := newRouter(a, "", AllowedCORS(3600))
 		a.NotNil(def)
 
 		p := def.Prefix("/abc")
@@ -419,7 +418,7 @@ func TestPrefixOf_Prefix(t *testing.T) {
 	//
 	t.Run("prefix 的中间调用顺序", func(t *testing.T) {
 		a := assert.New(t, false)
-		def := std.NewRouter("", mux.AllowedCORS(3600))
+		def := newRouter(a, "", AllowedCORS(3600))
 		a.NotNil(def)
 		def.Use(tree.BuildTestMiddleware(a, "r0"))
 
@@ -439,7 +438,7 @@ func TestPrefixOf_Prefix(t *testing.T) {
 
 func TestPrefixOf_URL(t *testing.T) {
 	a := assert.New(t, false)
-	def := std.NewRouter("", mux.AllowedCORS(3600), mux.URLDomain("https://example.com"))
+	def := newRouter(a, "", AllowedCORS(3600), URLDomain("https://example.com"))
 	a.NotNil(def)
 
 	// 非正则

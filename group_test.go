@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-package group
+package mux
 
 import (
 	"net/http"
@@ -11,31 +11,14 @@ import (
 	"github.com/issue9/assert/v4"
 	"github.com/issue9/assert/v4/rest"
 
-	"github.com/issue9/mux/v8"
 	"github.com/issue9/mux/v8/internal/tree"
-	"github.com/issue9/mux/v8/types"
 )
 
-func call(w http.ResponseWriter, r *http.Request, ps types.Route, h http.Handler) {
-	h.ServeHTTP(w, r)
-}
-
-var methodNotAllowedBuilder = tree.BuildTestNodeHandlerFunc(http.StatusMethodNotAllowed)
-
-var optionsHandlerBuilder = tree.BuildTestNodeHandlerFunc(http.StatusOK)
-
-func newGroup(a *assert.Assertion, o ...mux.Option) *GroupOf[http.Handler] {
+func newGroup(a *assert.Assertion, o ...Option) *GroupOf[http.Handler] {
 	a.TB().Helper()
-	g := NewOf(call, http.NotFoundHandler(), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
+	g := NewGroupOf(call, http.NotFoundHandler(), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
 	a.NotNil(g)
 	return g
-}
-
-func newRouter(a *assert.Assertion, name string, o ...mux.Option) *mux.RouterOf[http.Handler] {
-	a.TB().Helper()
-	r := mux.NewRouterOf(name, call, http.NotFoundHandler(), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
-	a.NotNil(r)
-	return r
 }
 
 func TestGroupOf_Use(t *testing.T) {
@@ -99,17 +82,17 @@ func TestGroupOf_Add(t *testing.T) {
 	g := newGroup(a)
 
 	def := newRouter(a, "host")
-	g.Add(&PathVersion{}, def)
+	g.Add(&pathVersion{}, def)
 	r := g.Router("host")
 	a.Equal(r.Name(), "host")
 
 	// 同名添加不成功
 	def = newRouter(a, "host")
 	a.PanicString(func() {
-		g.Add(&PathVersion{}, def)
+		g.Add(&pathVersion{}, def)
 	}, "已经存在名为 host 的路由")
 	a.PanicString(func() {
-		g.New("host", &PathVersion{})
+		g.New("host", &pathVersion{})
 	}, "已经存在名为 host 的路由")
 
 	a.Nil(g.Router("not-exists"))
@@ -120,15 +103,15 @@ func TestGroupOf_Remove(t *testing.T) {
 	g := newGroup(a)
 
 	def := newRouter(a, "host")
-	g.Add(&PathVersion{}, def)
+	g.Add(&pathVersion{}, def)
 	def = newRouter(a, "host-2")
-	g.Add(&PathVersion{}, def)
+	g.Add(&pathVersion{}, def)
 
 	g.Remove("host")
 	g.Remove("host") // 已经删除，不存在了
 	a.Equal(1, len(g.Routers()))
 	def = newRouter(a, "host")
-	g.Add(&PathVersion{}, def)
+	g.Add(&pathVersion{}, def)
 	a.Equal(2, len(g.Routers()))
 
 	// 删除空名，不出错。
@@ -148,7 +131,7 @@ func TestGroupOf_ServeHTTP(t *testing.T) {
 
 	h := NewHosts(true, "{sub}.example.com")
 	a.NotNil(h)
-	def := g.New("host", h, mux.DigitInterceptor("digit"))
+	def := g.New("host", h, DigitInterceptor("digit"))
 	a.NotNil(def)
 
 	def.Get("/posts/{id:digit}.html", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

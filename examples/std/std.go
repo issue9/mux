@@ -10,7 +10,6 @@ import (
 	"net/http"
 
 	"github.com/issue9/mux/v8"
-	"github.com/issue9/mux/v8/group"
 	"github.com/issue9/mux/v8/header"
 	"github.com/issue9/mux/v8/types"
 )
@@ -18,7 +17,7 @@ import (
 const contextKeyParams contextKey = 0
 
 type (
-	Routers         = group.GroupOf[http.Handler]
+	Routers         = mux.GroupOf[http.Handler]
 	Router          = mux.RouterOf[http.Handler]
 	Prefix          = mux.PrefixOf[http.Handler]
 	Resource        = mux.ResourceOf[http.Handler]
@@ -47,7 +46,7 @@ func optionsHandlerBuilder(p types.Node) http.Handler {
 }
 
 func NewRouters(o ...mux.Option) *Routers {
-	return group.NewOf(call, http.NotFoundHandler(), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
+	return mux.NewGroupOf(call, http.NotFoundHandler(), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
 }
 
 // NewRouter 声明适用于官方 [http.Handler] 接口的路由

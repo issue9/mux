@@ -2,12 +2,16 @@
 //
 // SPDX-License-Identifier: MIT
 
-package options
+package mux
 
 import (
+	"bytes"
+	"log"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/issue9/assert/v4"
 	"github.com/issue9/assert/v4/rest"
@@ -18,10 +22,94 @@ import (
 	"github.com/issue9/mux/v8/types"
 )
 
+func TestOption(t *testing.T) {
+	a := assert.New(t, false)
+
+	r := newRouter(a, "")
+	a.NotNil(r)
+
+	r = newRouter(a, "", CORS([]string{"https://example.com"}, nil, nil, 3600, false))
+	a.NotNil(r).
+		Equal(r.cors.Origins, []string{"https://example.com"}).
+		Nil(r.cors.AllowHeaders).
+		Equal(r.cors.MaxAge, 3600)
+
+	r = newRouter(a, "", CORS([]string{"https://example.com"}, nil, nil, 0, true))
+	a.NotNil(r)
+
+	a.Panic(func() {
+		r = newRouter(a, "", CORS([]string{"*"}, nil, nil, 0, true))
+	})
+}
+
+func TestRecovery(t *testing.T) {
+	a := assert.New(t, false)
+
+	p := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { panic("panic test") })
+
+	// 未指定 Recovery
+
+	router := newRouter(a, "")
+	a.NotNil(router).Nil(router.recoverFunc)
+	router.Get("/path", p)
+	a.Panic(func() {
+		w := httptest.NewRecorder()
+		r := rest.Get(a, "/path").Request()
+		router.ServeHTTP(w, r)
+	})
+
+	// WriterRecovery
+
+	out := new(bytes.Buffer)
+	router = newRouter(a, "", WriteRecovery(404, out))
+	a.NotNil(router).NotNil(router.recoverFunc)
+	router.Get("/path", p)
+
+	a.NotPanic(func() {
+		w := httptest.NewRecorder()
+		r := rest.Get(a, "/path").Request()
+		router.ServeHTTP(w, r)
+		a.Wait(time.Microsecond*500).
+			Contains(out.String(), "panic test", out.String()).
+			Contains(out.String(), "options_test.go:48", out.String()).
+			Equal(w.Code, 404)
+	})
+
+	// LogRecovery
+
+	out = new(bytes.Buffer)
+	l := log.New(out, "log:", 0)
+	router = newRouter(a, "", LogRecovery(405, l))
+	a.NotNil(router).NotNil(router.recoverFunc)
+	router.Get("/path", p)
+	a.NotPanic(func() {
+		w := httptest.NewRecorder()
+		r := rest.Get(a, "/path").Request()
+		router.ServeHTTP(w, r)
+		a.Equal(405, w.Code)
+		lines := strings.Split(out.String(), "\n")
+		a.Contains(lines[0], "panic test")                                  // 保证第一行是 panic 输出的信息
+		a.Contains(lines[1], "TestRecovery.func1")                          // 保证第二行是 panic 函数名
+		a.True(strings.HasSuffix(lines[2], "options_test.go:48"), lines[2]) // 保证第三行是 panic 的行号
+	})
+
+	// StatusRecovery
+
+	router = newRouter(a, "", StatusRecovery(406))
+	a.NotNil(router).NotNil(router.recoverFunc)
+	router.Get("/path", p)
+	a.NotPanic(func() {
+		w := httptest.NewRecorder()
+		r := rest.Get(a, "/path").Request()
+		router.ServeHTTP(w, r)
+		a.Equal(w.Code, 406)
+	})
+}
+
 func TestCORS_sanitize(t *testing.T) {
 	a := assert.New(t, false)
 
-	c := &CORS{}
+	c := &cors{}
 	a.NotError(c.sanitize())
 	a.True(c.deny).
 		False(c.anyHeaders).
@@ -30,32 +118,32 @@ func TestCORS_sanitize(t *testing.T) {
 		Empty(c.exposedHeadersString).
 		Empty(c.maxAgeString)
 
-	c = &CORS{
+	c = &cors{
 		Origins: []string{"*"},
 		MaxAge:  50,
 	}
 	a.NotError(c.sanitize())
 	a.True(c.anyOrigins).Equal(c.maxAgeString, "50")
 
-	c = &CORS{
+	c = &cors{
 		Origins: []string{"*"},
 		MaxAge:  -1,
 	}
 	a.NotError(c.sanitize())
 	a.True(c.anyOrigins).Equal(c.maxAgeString, "-1")
 
-	c = &CORS{
+	c = &cors{
 		MaxAge: -2,
 	}
 	a.ErrorString(c.sanitize(), "maxAge 的值只能是 >= -1")
 
-	c = &CORS{
+	c = &cors{
 		Origins:          []string{"*"},
 		AllowCredentials: true,
 	}
 	a.ErrorString(c.sanitize(), "不能同时成立")
 
-	c = &CORS{
+	c = &cors{
 		AllowHeaders:   []string{"*"},
 		ExposedHeaders: []string{"h1", "h2"},
 	}
@@ -76,7 +164,7 @@ func TestCORS_Handle(t *testing.T) {
 
 	// deny
 
-	c := &CORS{}
+	c := &cors{}
 	a.NotError(c.sanitize())
 	w := httptest.NewRecorder()
 	r := rest.Get(a, "/path").Request()
@@ -85,7 +173,7 @@ func TestCORS_Handle(t *testing.T) {
 
 	// allowed
 
-	c = allowedCORS()
+	c = &cors{MaxAge: 3600, Origins: []string{"*"}, AllowHeaders: []string{"*"}}
 	a.NotError(c.sanitize())
 	w = httptest.NewRecorder()
 	r = rest.Get(a, "/path").Request()
@@ -137,7 +225,7 @@ func TestCORS_Handle(t *testing.T) {
 	a.Equal(w.Header().Get(header.AccessControlAllowMethods), "")
 
 	// custom cors
-	c = &CORS{
+	c = &cors{
 		Origins:          []string{"https://example.com/"},
 		ExposedHeaders:   []string{"h1"},
 		MaxAge:           50,
@@ -194,7 +282,7 @@ func TestCORS_Handle(t *testing.T) {
 
 	// deny
 
-	c = &CORS{}
+	c = &cors{}
 	a.NotError(c.sanitize())
 	w = httptest.NewRecorder()
 	r = rest.Get(a, "/path").Request()
@@ -207,7 +295,7 @@ func TestCORS_headerIsAllowed(t *testing.T) {
 
 	// Deny
 
-	c := &CORS{}
+	c := &cors{}
 	a.NotError(c.sanitize())
 
 	r := rest.Get(a, "/").Request()
@@ -218,7 +306,7 @@ func TestCORS_headerIsAllowed(t *testing.T) {
 
 	// Allowed
 
-	c = allowedCORS()
+	c = &cors{MaxAge: 3600, Origins: []string{"*"}, AllowHeaders: []string{"*"}}
 	a.NotNil(c).NotError(c.sanitize())
 
 	r = rest.Get(a, "/").Request()
@@ -228,7 +316,7 @@ func TestCORS_headerIsAllowed(t *testing.T) {
 	a.True(c.headerIsAllowed(r))
 
 	// 自定义
-	c = &CORS{AllowHeaders: []string{"h1", "h2"}}
+	c = &cors{AllowHeaders: []string{"h1", "h2"}}
 	a.NotError(c.sanitize())
 
 	r = rest.Get(a, "/").Request()
@@ -245,10 +333,22 @@ func TestCORS_headerIsAllowed(t *testing.T) {
 	a.False(c.headerIsAllowed(r))
 }
 
-func allowedCORS() *CORS {
-	return &CORS{
-		Origins:      []string{"*"},
-		AllowHeaders: []string{"*"},
-		MaxAge:       3600,
-	}
+func TestOptions_sanitize(t *testing.T) {
+	a := assert.New(t, false)
+
+	o, err := buildOption()
+	a.NotError(err).
+		NotNil(o).
+		NotNil(o.cors)
+
+	// URLDomain
+
+	o, err = buildOption(func(o *options) { o.urlDomain = "https://example.com" })
+	a.NotError(err).NotNil(o).Equal(o.urlDomain, "https://example.com")
+
+	o, err = buildOption(func(o *options) { o.urlDomain = "https://example.com/" })
+	a.NotError(err).NotNil(o).Equal(o.urlDomain, "https://example.com")
+
+	o, err = buildOption(func(o *options) { o.cors = &cors{AllowCredentials: true, Origins: []string{"*"}} })
+	a.Error(err).Nil(o)
 }

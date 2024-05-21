@@ -12,7 +12,6 @@ import (
 	"github.com/issue9/errwrap"
 
 	"github.com/issue9/mux/v8/header"
-	"github.com/issue9/mux/v8/internal/options"
 	"github.com/issue9/mux/v8/internal/trace"
 	"github.com/issue9/mux/v8/internal/tree"
 	"github.com/issue9/mux/v8/types"
@@ -30,10 +29,11 @@ type (
 		tree *tree.Tree[T]
 		call CallOf[T]
 
-		cors        *options.CORS
+		cors        *cors
 		urlDomain   string
 		recoverFunc RecoverFunc
 		trace       bool
+		matcher     Matcher
 
 		middleware []types.MiddlewareOf[T]
 	}
@@ -75,19 +75,19 @@ func NewRouterOf[T any](
 	methodNotAllowedBuilder, optionsBuilder types.BuildNodeHandleOf[T],
 	o ...Option,
 ) *RouterOf[T] {
-	opt, err := options.Build(o...)
+	opt, err := buildOption(o...)
 	if err != nil {
 		panic(err)
 	}
 
 	r := &RouterOf[T]{
-		tree: tree.New(name, opt.Lock, opt.Interceptors, notFound, opt.Trace, methodNotAllowedBuilder, optionsBuilder),
+		tree: tree.New(name, opt.lock, opt.interceptors, notFound, opt.trace, methodNotAllowedBuilder, optionsBuilder),
 		call: call,
 
-		cors:        opt.CORS,
-		urlDomain:   opt.URLDomain,
-		recoverFunc: opt.RecoverFunc,
-		trace:       opt.Trace,
+		cors:        opt.cors,
+		urlDomain:   opt.urlDomain,
+		recoverFunc: opt.recoverFunc,
+		trace:       opt.trace,
 	}
 
 	return r
@@ -195,11 +195,11 @@ func (r *RouterOf[T]) URL(strict bool, pattern string, params map[string]string)
 
 func (r *RouterOf[T]) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	ctx := types.NewContext()
-	r.ServeContext(w, req, ctx)
+	r.serveContext(w, req, ctx)
 	ctx.Destroy()
 }
 
-func (r *RouterOf[T]) ServeContext(w http.ResponseWriter, req *http.Request, ctx *types.Context) {
+func (r *RouterOf[T]) serveContext(w http.ResponseWriter, req *http.Request, ctx *types.Context) {
 	if r.recoverFunc != nil {
 		defer func() {
 			if err := recover(); err != nil {

@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-package group
+package mux
 
 import (
 	"testing"
@@ -14,7 +14,7 @@ import (
 	"github.com/issue9/mux/v8/types"
 )
 
-func BenchmarkHost_Match(b *testing.B) {
+func BenchmarkHosts_Match(b *testing.B) {
 	a := assert.New(b, false)
 	h := NewHosts(true, "caixw.io", "caixw.oi", "*.example.com")
 	a.NotNil(h)
