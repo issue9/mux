@@ -159,8 +159,8 @@ func digit(path string) bool {
 }
 
 // 路由中的 \d+ 和 [0-9]+ 均采用 digit 函数进行处理，不再是正则表达式。
-opt := mux.Options{Interceptors: map[string]mux.InterceptorFunc{"\\d+": digit, "[0-9]+": digit}
-r := mux.NewRouter("", opt)
+interceptor := mux.Interceptor(digit, "\\d+", "[0-9]+")
+r := mux.NewRouter(..., interceptor)
 ```
 
 这样在所有路由项中的 `[0-9]+` 和 `\\d+` 将由 `digit` 函数处理，
@@ -174,9 +174,9 @@ r := mux.NewRouter("", opt)
 如果不拦截，最终传递给正则表达式，可能会出现编译错误，通过拦截器可以将 digit 合法化。
 目前提供了以下几个拦截器：
 
-- InterceptorDigit 限定为数字字符，相当于正则的 `[0-9]`；
-- InterceptorWord 相当于正则的 `[a-zA-Z0-9]`；
-- InterceptorAny 表示匹配任意非空内容；
+- DigitInterceptor 限定为数字字符，相当于正则的 `[0-9]`；
+- WordInterceptor 相当于正则的 `[a-zA-Z0-9]`；
+- AnyInterceptor 表示匹配任意非空内容；
 
 用户也可以自行实现 `InterceptorFunc` 作为拦截器。具体可参考 `Interceptor` 的介绍。
 
@@ -190,10 +190,8 @@ OPTIONS 请求方法由系统自动生成。
 ```go
 import "github.com/issue9/mux/v9"
 
-r := mux.NewRouter("name" ,&mux.Options{CORS: AllowedCORS}) // 任意跨域请求
-
+r := mux.NewRouter(... ,mux.CORS(...)) // 任意跨域请求
 r.Get("/posts/{id}", nil)     // 默认情况下， OPTIONS 的报头为 GET, OPTIONS
-
 http.ListenAndServe(":8080", m)
 
 // client.go
@@ -210,20 +208,6 @@ r.Header.Set("Access-Control-Request-Method", "GET")
 r.Do() // 预检请求，可以正常访问
 ```
 
-### 静态文件
-
-可以使用 `ServeFile` 与命名参数相结合的方式实现静态文件的访问：
-
-```go
-r := NewRouter("")
-r.Get("/assets/{path}", func(w http.ResponseWriter, r *http.Request){
-    err := muxutil.ServeFile(os.DirFS("/static/"), "path", "index.html", w, r)
-    if err!= nil {
-        http.Error(err.Error(), http.StatusInternalServerError)
-    }
-})
-```
-
 ### 自定义路由
 
 官方提供的 `http.Handler` 未必是符合每个人的要求，通过 `Router` 用户可以很方便地实现自定义格式的 `http.Handler`，
@@ -231,8 +215,8 @@ r.Get("/assets/{path}", func(w http.ResponseWriter, r *http.Request){
 
 1. 定义一个专有的路由处理类型，可以是类也可以是函数；
 2. 根据此类型，生成对应的 Router、Prefix、Resource、MiddlewareFunc 等类型；
-3. 定义 Call 函数；
-4. 将 Call 传递给 NewRouter；
+3. 定义 CallFunc 函数；
+4. 将 CallFunc 传递给 NewRouter；
 
 ```go
 type Context struct {

@@ -28,14 +28,13 @@ type (
 	Router[T any] struct {
 		tree *tree.Tree[T]
 		call CallFunc[T]
+		ms   []types.Middleware[T]
 
 		cors        *cors
 		urlDomain   string
 		recoverFunc RecoverFunc
 		trace       bool
 		matcher     Matcher
-
-		ms []types.Middleware[T]
 	}
 
 	// CallFunc 指定如何调用用户给定的类型 T

@@ -14,24 +14,35 @@ import (
 )
 
 type (
-	// Group 一组路由的集合
+	// Group 管理一组 [Router]
 	Group[T any] struct {
 		routers []*Router[T]
 		ms      []types.Middleware[T]
 
 		call           CallFunc[T]
-		notFound       T // 所有路由都找不差时调用的方法，该方法应用的中间件中 router 参数是为空的。
-		originNotFound T // 这是应用中间件的 notFound
+		notFound       T // 所有路由都找不着时调用的方法，该方法应用的中间件中 router 参数是为空的。
+		originNotFound T // 这是未应用中间件的 notFound
 		methodNotAllowedBuilder,
 		optionsBuilder types.BuildNodeHandler[T]
-		options []Option
+		options     []Option
+		recoverFunc RecoverFunc
 	}
 )
 
-// NewGroup 声明 Group 对象
+// NewGroup 声明 [Group] 对象
 //
 // 初始化参数与 [NewRouter] 相同，这些参数最终也会被 [Group.New] 传递给新对象。
-func NewGroup[T any](call CallFunc[T], notFound T, methodNotAllowedBuilder, optionsBuilder types.BuildNodeHandler[T], o ...Option) *Group[T] {
+func NewGroup[T any](
+	call CallFunc[T],
+	notFound T,
+	methodNotAllowedBuilder, optionsBuilder types.BuildNodeHandler[T],
+	o ...Option,
+) *Group[T] {
+	opt, err := buildOption(o...)
+	if err != nil {
+		panic(err)
+	}
+
 	return &Group[T]{
 		routers: make([]*Router[T], 0, 1),
 		ms:      make([]types.Middleware[T], 0, 10),
@@ -42,6 +53,7 @@ func NewGroup[T any](call CallFunc[T], notFound T, methodNotAllowedBuilder, opti
 		methodNotAllowedBuilder: methodNotAllowedBuilder,
 		optionsBuilder:          optionsBuilder,
 		options:                 o,
+		recoverFunc:             opt.recoverFunc,
 	}
 }
 
@@ -60,7 +72,13 @@ func (g *Group[T]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		ctx.Reset()
 	}
 
-	// BUG 可能 panic，应该根据参数 recovery
+	if g.recoverFunc != nil { // g.notFound 可能 panic
+		defer func() {
+			if err := recover(); err != nil {
+				g.recoverFunc(w, err)
+			}
+		}()
+	}
 	g.call(w, r, ctx, g.notFound)
 }
 
