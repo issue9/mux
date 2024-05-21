@@ -51,9 +51,7 @@ func methodNotAllowedBuilder(p types.Node) Handler {
 	})
 }
 
-func notFound(ctx *CTX) {
-	ctx.W.WriteHeader(http.StatusNotFound)
-}
+func notFound(ctx *CTX) { ctx.W.WriteHeader(http.StatusNotFound) }
 
 func NewRouters(o ...mux.Option) *Routers {
 	return group.NewOf[Handler](call, HandlerFunc(notFound), methodNotAllowedBuilder, optionsHandlerBuilder, o...)

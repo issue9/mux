@@ -12,7 +12,6 @@ import (
 	"github.com/issue9/assert/v4/rest"
 
 	"github.com/issue9/mux/v8"
-	"github.com/issue9/mux/v8/internal/options"
 	"github.com/issue9/mux/v8/internal/tree"
 	"github.com/issue9/mux/v8/types"
 )
@@ -37,22 +36,6 @@ func newRouter(a *assert.Assertion, name string, o ...mux.Option) *mux.RouterOf[
 	r := mux.NewRouterOf(name, call, http.NotFoundHandler(), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
 	a.NotNil(r)
 	return r
-}
-
-func TestGroupOf_mergeOption(t *testing.T) {
-	a := assert.New(t, false)
-	g := newGroup(a)
-	oo, err := options.Build(g.mergeOption(mux.Lock(true))...)
-	a.NotError(err).True(oo.Lock).Empty(oo.URLDomain)
-
-	g = newGroup(a, mux.Lock(true))
-	oo, err = options.Build(g.mergeOption()...)
-	a.NotError(err).True(oo.Lock).Empty(oo.URLDomain)
-	oo, err = options.Build(g.mergeOption(mux.Lock(false))...)
-	a.NotError(err).False(oo.Lock).Empty(oo.URLDomain)
-
-	oo, err = options.Build(g.mergeOption(mux.Lock(false), mux.URLDomain("https://example.com"))...)
-	a.NotError(err).False(oo.Lock).Equal(oo.URLDomain, "https://example.com")
 }
 
 func TestGroupOf_Use(t *testing.T) {

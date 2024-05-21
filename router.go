@@ -65,8 +65,16 @@ type (
 //
 // name 路由名称，可以为空；
 // methodNotAllowedBuilder 和 optionsBuilder 可以自定义 405 和 OPTIONS 请求的处理方式；
+// o 用于指定一些可选的参数；
+//
 // T 表示用户用于处理路由项的方法。
-func NewRouterOf[T any](name string, call CallOf[T], notFound T, methodNotAllowedBuilder, optionsBuilder types.BuildNodeHandleOf[T], o ...Option) *RouterOf[T] {
+func NewRouterOf[T any](
+	name string,
+	call CallOf[T],
+	notFound T,
+	methodNotAllowedBuilder, optionsBuilder types.BuildNodeHandleOf[T],
+	o ...Option,
+) *RouterOf[T] {
 	opt, err := options.Build(o...)
 	if err != nil {
 		panic(err)

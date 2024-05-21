@@ -74,28 +74,10 @@ func (g *GroupOf[T]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 //
 // 新路由会继承 [NewOf] 中指定的参数，其中的 o 可以覆盖由 [NewOf] 中指定的相关参数；
 func (g *GroupOf[T]) New(name string, matcher Matcher, o ...mux.Option) *mux.RouterOf[T] {
-	o = g.mergeOption(o...)
+	o = slices.Concat(g.options, o)
 	r := mux.NewRouterOf(name, g.call, g.originNotFound, g.methodNotAllowedBuilder, g.optionsBuilder, o...)
 	g.Add(matcher, r)
 	return r
-}
-
-// 将 g.options 与 o 合并，保证 g.options 在前且不会被破坏
-func (g *GroupOf[T]) mergeOption(o ...mux.Option) []mux.Option {
-	l1 := len(g.options)
-	if l1 == 0 {
-		return o
-	}
-
-	l2 := len(o)
-	if l2 == 0 {
-		return g.options
-	}
-
-	ret := make([]mux.Option, l1+l2)
-	size := copy(ret, g.options)
-	copy(ret[size:], o)
-	return ret
 }
 
 // Add 添加路由

@@ -58,12 +58,11 @@ func New[T any](
 	i *syntax.Interceptors,
 	notFound T,
 	trace bool,
-	methodNotAllowedBuilder,
-	optionsBuilder types.BuildNodeHandleOf[T],
+	methodNotAllowedBuilder, optionsBuilder types.BuildNodeHandleOf[T],
 ) *Tree[T] {
 	s, err := i.NewSegment("")
 	if err != nil {
-		panic("发生了不该发生的错误，应该是 syntax.NewSegment 逻辑发生变化" + err.Error())
+		panic("发生了不该发生的错误，应该是 syntax.NewSegment 逻辑发生变化：" + err.Error())
 	}
 
 	t := &Tree[T]{
