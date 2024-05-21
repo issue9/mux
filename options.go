@@ -56,64 +56,64 @@ type (
 	InterceptorFunc = syntax.InterceptorFunc
 )
 
-// Trace 是否启用 Trace 请求方法
-func Trace(enable bool) Option { return func(o *options) { o.trace = enable } }
+// WithTrace 是否启用 WithTrace 请求方法
+func WithTrace(enable bool) Option { return func(o *options) { o.trace = enable } }
 
-// Lock 是否加锁
+// WithLock 是否加锁
 //
 // 在调用 [Router.Handle] 等添加路由时，有可能会改变整个路由树的结构，
 // 如果需要频繁在运行时添加和删除路由项，那么应当添加此选项。
-func Lock(l bool) Option { return func(o *options) { o.lock = l } }
+func WithLock(l bool) Option { return func(o *options) { o.lock = l } }
 
-// URLDomain 为 [Router.URL] 生成的地址带上域名
-func URLDomain(prefix string) Option { return func(o *options) { o.urlDomain = prefix } }
+// WithURLDomain 为 [Router.URL] 生成的地址带上域名
+func WithURLDomain(prefix string) Option { return func(o *options) { o.urlDomain = prefix } }
 
-// Recovery 用于指定路由 panic 之后的处理方法
+// WithRecovery 用于指定路由 panic 之后的处理方法
 //
 // 如果多次指定，则最后一次启作用。
-func Recovery(f RecoverFunc) Option { return func(o *options) { o.recoverFunc = f } }
+func WithRecovery(f RecoverFunc) Option { return func(o *options) { o.recoverFunc = f } }
 
-// StatusRecovery 仅向客户端输出 status 状态码
-func StatusRecovery(status int) Option {
-	return Recovery(func(w http.ResponseWriter, msg any) {
+// WithStatusRecovery 仅向客户端输出 status 状态码
+func WithStatusRecovery(status int) Option {
+	return WithRecovery(func(w http.ResponseWriter, msg any) {
 		http.Error(w, http.StatusText(status), status)
 	})
 }
 
-// WriteRecovery 向 [io.Writer] 输出错误信息
+// WithWriteRecovery 向 [io.Writer] 输出错误信息
 //
 // status 表示向客户端输出的状态码；
 // out 表示输出通道，比如 [os.Stderr] 等；
-func WriteRecovery(status int, out io.Writer) Option {
-	return Recovery(func(w http.ResponseWriter, msg any) {
+func WithWriteRecovery(status int, out io.Writer) Option {
+	return WithRecovery(func(w http.ResponseWriter, msg any) {
 		http.Error(w, http.StatusText(status), status)
 		source.DumpStack(out, 4, true, msg)
 	})
 }
 
-// LogRecovery 将错误信息输出到日志
+// WithLogRecovery 将错误信息输出到日志
 //
 // status 表示向客户端输出的状态码；
 // l 为输出的日志；
-func LogRecovery(status int, l *log.Logger) Option {
-	return Recovery(func(w http.ResponseWriter, msg any) {
+func WithLogRecovery(status int, l *log.Logger) Option {
+	return WithRecovery(func(w http.ResponseWriter, msg any) {
 		http.Error(w, http.StatusText(status), status)
 		l.Println(source.Stack(4, true, msg))
 	})
 }
 
-// SLogRecovery 将错误信息输出到日志
+// WithSLogRecovery 将错误信息输出到日志
 //
 // status 表示向客户端输出的状态码；
 // l 为输出的日志；
-func SLogRecovery(status int, l *slog.Logger) Option {
-	return Recovery(func(w http.ResponseWriter, msg any) {
+func WithSLogRecovery(status int, l *slog.Logger) Option {
+	return WithRecovery(func(w http.ResponseWriter, msg any) {
 		http.Error(w, http.StatusText(status), status)
 		l.Error(source.Stack(4, true, msg))
 	})
 }
 
-// Interceptor 针对带参数类型路由的拦截处理
+// WithInterceptor 针对带参数类型路由的拦截处理
 //
 // 在解析诸如 /authors/{id:\\d+} 带参数的路由项时，
 // 用户可以通过拦截并自定义对参数部分 {id:\\d+} 的解析，
@@ -131,20 +131,20 @@ func SLogRecovery(status int, l *slog.Logger) Option {
 // 使第二个记录的优先级提升，会使第一条永远无法匹配到数据。
 //
 // 可多次调用，表示同时指定了多个。
-func Interceptor(f InterceptorFunc, rule ...string) Option {
+func WithInterceptor(f InterceptorFunc, rule ...string) Option {
 	return func(o *options) { o.interceptors.Add(f, rule...) }
 }
 
-// AnyInterceptor 任意非空字符的拦截器
-func AnyInterceptor(rule string) Option { return Interceptor(syntax.MatchAny, rule) }
+// WithAnyInterceptor 任意非空字符的拦截器
+func WithAnyInterceptor(rule string) Option { return WithInterceptor(syntax.MatchAny, rule) }
 
-// DigitInterceptor 任意数字字符的拦截器
-func DigitInterceptor(rule string) Option { return Interceptor(syntax.MatchDigit, rule) }
+// WithDigitInterceptor 任意数字字符的拦截器
+func WithDigitInterceptor(rule string) Option { return WithInterceptor(syntax.MatchDigit, rule) }
 
-// WordInterceptor 任意英文单词的拦截器
-func WordInterceptor(rule string) Option { return Interceptor(syntax.MatchWord, rule) }
+// WithWordInterceptor 任意英文单词的拦截器
+func WithWordInterceptor(rule string) Option { return WithInterceptor(syntax.MatchWord, rule) }
 
-// CORS 自定义[跨域请求]设置项
+// WithCORS 自定义[跨域请求]设置项
 //
 // origin 对应 Origin 报头。如果包含了 *，那么其它的设置将不再启作用。
 // 如果此值为空，表示不启用跨域的相关设置；
@@ -162,7 +162,7 @@ func WordInterceptor(rule string) Option { return Interceptor(syntax.MatchWord, 
 // allowCredentials 对应 Access-Control-Allow-Credentials；
 //
 // [跨域请求]: https://developer.mozilla.org/zh-CN/docs/Web/HTTP/cors
-func CORS(origin []string, allowHeaders []string, exposedHeaders []string, maxAge int, allowCredentials bool) Option {
+func WithCORS(origin []string, allowHeaders []string, exposedHeaders []string, maxAge int, allowCredentials bool) Option {
 	return func(o *options) {
 		o.cors = &cors{
 			Origins:          origin,
@@ -174,11 +174,13 @@ func CORS(origin []string, allowHeaders []string, exposedHeaders []string, maxAg
 	}
 }
 
-// DenyCORS 禁用跨域请求
-func DenyCORS() Option { return CORS(nil, nil, nil, 0, false) }
+// WithDenyCORS 禁用跨域请求
+func WithDenyCORS() Option { return WithCORS(nil, nil, nil, 0, false) }
 
-// AllowedCORS 允许跨域请求
-func AllowedCORS(maxAge int) Option { return CORS([]string{"*"}, []string{"*"}, nil, maxAge, false) }
+// WithAllowedCORS 允许跨域请求
+func WithAllowedCORS(maxAge int) Option {
+	return WithCORS([]string{"*"}, []string{"*"}, nil, maxAge, false)
+}
 
 func buildOption(o ...Option) (*options, error) {
 	ret := &options{interceptors: syntax.NewInterceptors()}
@@ -247,7 +249,7 @@ func (c *cors) sanitize() error {
 	return nil
 }
 
-func (c *cors) Handle(node types.Node, wh http.Header, r *http.Request) {
+func (c *cors) handle(node types.Node, wh http.Header, r *http.Request) {
 	if c.deny {
 		return
 	}
@@ -314,8 +316,7 @@ func (c *cors) headerIsAllowed(r *http.Request) bool {
 		return true
 	}
 
-	headers := strings.Split(h, ",")
-	for _, v := range headers {
+	for _, v := range strings.Split(h, ",") {
 		if slices.Index(c.AllowHeaders, strings.TrimSpace(v)) < 0 {
 			return false
 		}

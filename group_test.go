@@ -131,7 +131,7 @@ func TestGroup_ServeHTTP(t *testing.T) {
 
 	h := NewHosts(true, "{sub}.example.com")
 	a.NotNil(h)
-	def := g.New("host", h, DigitInterceptor("digit"))
+	def := g.New("host", h, WithDigitInterceptor("digit"))
 	a.NotNil(def)
 
 	def.Get("/posts/{id:digit}.html", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

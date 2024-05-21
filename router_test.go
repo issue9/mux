@@ -36,7 +36,7 @@ func newRouter(a *assert.Assertion, name string, o ...Option) *Router[http.Handl
 
 func TestRouter(t *testing.T) {
 	a := assert.New(t, false)
-	r := newRouter(a, "def", Lock(true))
+	r := newRouter(a, "def", WithLock(true))
 
 	r.Get("/", rest.BuildHandler(a, 201, "201", nil))
 	r.Get("/200", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -146,7 +146,7 @@ func TestRouter_Clean(t *testing.T) {
 // 测试匹配顺序是否正确
 func TestRouter_ServeHTTP_Order(t *testing.T) {
 	a := assert.New(t, false)
-	r := newRouter(a, "def", AnyInterceptor("any"))
+	r := newRouter(a, "def", WithAnyInterceptor("any"))
 	a.NotNil(r)
 
 	r.Get("/posts/{id}", rest.BuildHandler(a, 203, "", nil))
@@ -163,7 +163,7 @@ func TestRouter_ServeHTTP_Order(t *testing.T) {
 	rest.Get(a, "/posts-").Do(r).Status(205)    // 204 只匹配非空
 
 	// interceptor
-	r = newRouter(a, "def", DigitInterceptor("[0-9]+"))
+	r = newRouter(a, "def", WithDigitInterceptor("[0-9]+"))
 	a.NotNil(r)
 	r.Get("/posts/{id}", rest.BuildHandler(a, 203, "", nil))        // f3
 	r.Get("/posts/{id:\\d+}", rest.BuildHandler(a, 202, "", nil))   // f2 永远匹配不到
@@ -277,7 +277,7 @@ func TestRouter_Resource(t *testing.T) {
 func TestPrefix_Resource(t *testing.T) {
 	a := assert.New(t, false)
 
-	def := newRouter(a, "def", Trace(true))
+	def := newRouter(a, "def", WithTrace(true))
 	a.NotNil(def)
 
 	def.Use(tree.BuildTestMiddleware(a, "r"))
@@ -297,7 +297,7 @@ func TestPrefix_Resource(t *testing.T) {
 
 func TestResource_URL(t *testing.T) {
 	a := assert.New(t, false)
-	def := newRouter(a, "", AllowedCORS(3600))
+	def := newRouter(a, "", WithAllowedCORS(3600))
 	a.NotNil(def)
 
 	// 非正则
@@ -395,7 +395,7 @@ func TestPrefix(t *testing.T) {
 func TestPrefix_Prefix(t *testing.T) {
 	t.Run("prefix", func(t *testing.T) {
 		a := assert.New(t, false)
-		def := newRouter(a, "", AllowedCORS(3600))
+		def := newRouter(a, "", WithAllowedCORS(3600))
 		a.NotNil(def)
 
 		p := def.Prefix("/abc")
@@ -404,7 +404,7 @@ func TestPrefix_Prefix(t *testing.T) {
 
 	t.Run("empty prefix", func(t *testing.T) {
 		a := assert.New(t, false)
-		def := newRouter(a, "", AllowedCORS(3600))
+		def := newRouter(a, "", WithAllowedCORS(3600))
 		a.NotNil(def)
 
 		p := def.Prefix("/abc")
@@ -418,7 +418,7 @@ func TestPrefix_Prefix(t *testing.T) {
 	//
 	t.Run("prefix 的中间调用顺序", func(t *testing.T) {
 		a := assert.New(t, false)
-		def := newRouter(a, "", AllowedCORS(3600))
+		def := newRouter(a, "", WithAllowedCORS(3600))
 		a.NotNil(def)
 		def.Use(tree.BuildTestMiddleware(a, "r0"))
 
@@ -438,7 +438,7 @@ func TestPrefix_Prefix(t *testing.T) {
 
 func TestPrefix_URL(t *testing.T) {
 	a := assert.New(t, false)
-	def := newRouter(a, "", AllowedCORS(3600), URLDomain("https://example.com"))
+	def := newRouter(a, "", WithAllowedCORS(3600), WithURLDomain("https://example.com"))
 	a.NotNil(def)
 
 	// 非正则

@@ -217,7 +217,7 @@ func (r *Router[T]) serveContext(w http.ResponseWriter, req *http.Request, ctx *
 	ctx.SetRouterName(r.Name())
 
 	if ok { // !ok 即为 405 或是 404 状态
-		r.cors.Handle(node, w.Header(), req)
+		r.cors.handle(node, w.Header(), req)
 		if req.Method == http.MethodHead {
 			w = &headResponse{ResponseWriter: w}
 		}

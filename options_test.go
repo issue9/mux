@@ -28,17 +28,17 @@ func TestOption(t *testing.T) {
 	r := newRouter(a, "")
 	a.NotNil(r)
 
-	r = newRouter(a, "", CORS([]string{"https://example.com"}, nil, nil, 3600, false))
+	r = newRouter(a, "", WithCORS([]string{"https://example.com"}, nil, nil, 3600, false))
 	a.NotNil(r).
 		Equal(r.cors.Origins, []string{"https://example.com"}).
 		Nil(r.cors.AllowHeaders).
 		Equal(r.cors.MaxAge, 3600)
 
-	r = newRouter(a, "", CORS([]string{"https://example.com"}, nil, nil, 0, true))
+	r = newRouter(a, "", WithCORS([]string{"https://example.com"}, nil, nil, 0, true))
 	a.NotNil(r)
 
 	a.Panic(func() {
-		r = newRouter(a, "", CORS([]string{"*"}, nil, nil, 0, true))
+		r = newRouter(a, "", WithCORS([]string{"*"}, nil, nil, 0, true))
 	})
 }
 
@@ -61,7 +61,7 @@ func TestRecovery(t *testing.T) {
 	// WriterRecovery
 
 	out := new(bytes.Buffer)
-	router = newRouter(a, "", WriteRecovery(404, out))
+	router = newRouter(a, "", WithWriteRecovery(404, out))
 	a.NotNil(router).NotNil(router.recoverFunc)
 	router.Get("/path", p)
 
@@ -79,7 +79,7 @@ func TestRecovery(t *testing.T) {
 
 	out = new(bytes.Buffer)
 	l := log.New(out, "log:", 0)
-	router = newRouter(a, "", LogRecovery(405, l))
+	router = newRouter(a, "", WithLogRecovery(405, l))
 	a.NotNil(router).NotNil(router.recoverFunc)
 	router.Get("/path", p)
 	a.NotPanic(func() {
@@ -95,7 +95,7 @@ func TestRecovery(t *testing.T) {
 
 	// StatusRecovery
 
-	router = newRouter(a, "", StatusRecovery(406))
+	router = newRouter(a, "", WithStatusRecovery(406))
 	a.NotNil(router).NotNil(router.recoverFunc)
 	router.Get("/path", p)
 	a.NotPanic(func() {
@@ -168,7 +168,7 @@ func TestCORS_Handle(t *testing.T) {
 	a.NotError(c.sanitize())
 	w := httptest.NewRecorder()
 	r := rest.Get(a, "/path").Request()
-	c.Handle(node, w.Header(), r)
+	c.handle(node, w.Header(), r)
 	a.Empty(w.Header().Get(header.AccessControlAllowOrigin))
 
 	// allowed
@@ -177,7 +177,7 @@ func TestCORS_Handle(t *testing.T) {
 	a.NotError(c.sanitize())
 	w = httptest.NewRecorder()
 	r = rest.Get(a, "/path").Request()
-	c.Handle(node, w.Header(), r)
+	c.handle(node, w.Header(), r)
 	a.Equal(w.Header().Get(header.AccessControlAllowOrigin), "*")
 	// 非预检，没有此报头
 	a.Empty(w.Header().Get(header.AccessControlAllowMethods)).
@@ -187,7 +187,7 @@ func TestCORS_Handle(t *testing.T) {
 	w = httptest.NewRecorder()
 	r = rest.Get(a, "/path").Header(header.Origin, "http://example.com").Request()
 
-	c.Handle(node, w.Header(), r)
+	c.handle(node, w.Header(), r)
 	a.Equal(w.Header().Get(header.AccessControlAllowOrigin), "*")
 	// 非预检，没有此报头
 	a.Empty(w.Header().Get(header.AccessControlAllowMethods)).
@@ -197,7 +197,7 @@ func TestCORS_Handle(t *testing.T) {
 	w = httptest.NewRecorder()
 	r = rest.NewRequest(a, http.MethodOptions, "/path").Header(header.Origin, "http://example.com").Request()
 
-	c.Handle(node, w.Header(), r)
+	c.handle(node, w.Header(), r)
 	a.Equal(w.Header().Get(header.AccessControlAllowOrigin), "*")
 	// 非预检，没有此报头
 	a.Empty(w.Header().Get(header.AccessControlAllowMethods)).
@@ -210,7 +210,7 @@ func TestCORS_Handle(t *testing.T) {
 		Header(header.Origin, "http://example.com").
 		Header(header.AccessControlRequestMethod, "GET").
 		Request()
-	c.Handle(node, w.Header(), r)
+	c.handle(node, w.Header(), r)
 	a.Equal(w.Header().Get(header.AccessControlAllowOrigin), "*")
 	a.Equal(w.Header().Get(header.AccessControlAllowMethods), "DELETE, GET, HEAD, OPTIONS")
 
@@ -220,7 +220,7 @@ func TestCORS_Handle(t *testing.T) {
 		Header(header.Origin, "http://example.com").
 		Header(header.AccessControlRequestMethod, "PATCH").
 		Request()
-	c.Handle(node, w.Header(), r)
+	c.handle(node, w.Header(), r)
 	a.Equal(w.Header().Get(header.AccessControlAllowOrigin), "")
 	a.Equal(w.Header().Get(header.AccessControlAllowMethods), "")
 
@@ -237,7 +237,7 @@ func TestCORS_Handle(t *testing.T) {
 	r = rest.Get(a, "/path").
 		Header(header.Origin, "https://example.com/").
 		Request()
-	c.Handle(node, w.Header(), r)
+	c.handle(node, w.Header(), r)
 	a.Equal(w.Header().Get(header.AccessControlAllowOrigin), "https://example.com/")
 	// 非预检，没有此报头
 	a.Empty(w.Header().Get(header.AccessControlAllowMethods)).
@@ -250,7 +250,7 @@ func TestCORS_Handle(t *testing.T) {
 		Header(header.Origin, "https://example.com/").
 		Header(header.AccessControlRequestHeaders, "h1").
 		Request()
-	c.Handle(node, w.Header(), r)
+	c.handle(node, w.Header(), r)
 	a.Equal(w.Header().Get(header.AccessControlAllowOrigin), "https://example.com/")
 	a.Equal(w.Header().Get(header.AccessControlAllowHeaders), "")
 	a.Equal(w.Header().Get(header.AccessControlAllowCredentials), "true")
@@ -264,7 +264,7 @@ func TestCORS_Handle(t *testing.T) {
 		Header(header.AccessControlRequestMethod, "GET").
 		Header(header.AccessControlRequestHeaders, "deny").
 		Request()
-	c.Handle(node, w.Header(), r)
+	c.handle(node, w.Header(), r)
 	a.Equal(w.Header().Get(header.AccessControlAllowOrigin), "")
 	a.Equal(w.Header().Get(header.AccessControlAllowHeaders), "")
 	a.Equal(w.Header().Get(header.AccessControlAllowCredentials), "")
@@ -275,7 +275,7 @@ func TestCORS_Handle(t *testing.T) {
 		Header(header.Origin, "https://deny.com/").
 		Header(header.AccessControlRequestMethod, "GET").
 		Request()
-	c.Handle(node, w.Header(), r)
+	c.handle(node, w.Header(), r)
 	a.Equal(w.Header().Get(header.AccessControlAllowOrigin), "")
 	a.Equal(w.Header().Get(header.AccessControlAllowHeaders), "")
 	a.Equal(w.Header().Get(header.AccessControlAllowCredentials), "")
@@ -286,7 +286,7 @@ func TestCORS_Handle(t *testing.T) {
 	a.NotError(c.sanitize())
 	w = httptest.NewRecorder()
 	r = rest.Get(a, "/path").Request()
-	c.Handle(node, w.Header(), r)
+	c.handle(node, w.Header(), r)
 	a.Empty(w.Header().Get(header.AccessControlAllowOrigin))
 }
 
