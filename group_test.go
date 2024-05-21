@@ -14,14 +14,14 @@ import (
 	"github.com/issue9/mux/v8/internal/tree"
 )
 
-func newGroup(a *assert.Assertion, o ...Option) *GroupOf[http.Handler] {
+func newGroup(a *assert.Assertion, o ...Option) *Group[http.Handler] {
 	a.TB().Helper()
-	g := NewGroupOf(call, http.NotFoundHandler(), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
+	g := NewGroup(call, http.NotFoundHandler(), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
 	a.NotNil(g)
 	return g
 }
 
-func TestGroupOf_Use(t *testing.T) {
+func TestGroup_Use(t *testing.T) {
 	a := assert.New(t, false)
 	g := newGroup(a)
 
@@ -77,7 +77,7 @@ func TestGroupOf_Use(t *testing.T) {
 		StringBody("404 page not found\nm1m2")
 }
 
-func TestGroupOf_Add(t *testing.T) {
+func TestGroup_Add(t *testing.T) {
 	a := assert.New(t, false)
 	g := newGroup(a)
 
@@ -98,7 +98,7 @@ func TestGroupOf_Add(t *testing.T) {
 	a.Nil(g.Router("not-exists"))
 }
 
-func TestGroupOf_Remove(t *testing.T) {
+func TestGroup_Remove(t *testing.T) {
 	a := assert.New(t, false)
 	g := newGroup(a)
 
@@ -119,13 +119,13 @@ func TestGroupOf_Remove(t *testing.T) {
 	a.Equal(2, len(g.Routers()))
 }
 
-func TestGroupOf_empty(t *testing.T) {
+func TestGroup_empty(t *testing.T) {
 	a := assert.New(t, false)
 	g := newGroup(a)
 	rest.NewRequest(a, http.MethodGet, "/path").Do(g).Status(http.StatusNotFound)
 }
 
-func TestGroupOf_ServeHTTP(t *testing.T) {
+func TestGroup_ServeHTTP(t *testing.T) {
 	a := assert.New(t, false)
 	g := newGroup(a)
 
@@ -143,7 +143,7 @@ func TestGroupOf_ServeHTTP(t *testing.T) {
 		Status(http.StatusAccepted)
 }
 
-func TestGroupOf_routers(t *testing.T) {
+func TestGroup_routers(t *testing.T) {
 	a := assert.New(t, false)
 	h := NewHosts(false, "localhost")
 	a.NotNil(h)
@@ -202,7 +202,7 @@ func TestGroupOf_routers(t *testing.T) {
 	rest.NewRequest(a, http.MethodGet, "/prefix1example.com/p2").Do(g).Status(205)
 }
 
-func TestGroupOf_routers_multiple(t *testing.T) {
+func TestGroup_routers_multiple(t *testing.T) {
 	a := assert.New(t, false)
 	g := newGroup(a)
 

@@ -24,8 +24,8 @@ func NewTestTree(a *assert.Assertion, lock, trace bool, i *syntax.Interceptors) 
 	return t
 }
 
-func BuildTestMiddleware(a *assert.Assertion, text string) types.MiddlewareOf[http.Handler] {
-	return types.MiddlewareFuncOf[http.Handler](func(next http.Handler, _, _, _ string) http.Handler {
+func BuildTestMiddleware(a *assert.Assertion, text string) types.Middleware[http.Handler] {
+	return types.MiddlewareFunc[http.Handler](func(next http.Handler, _, _, _ string) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			next.ServeHTTP(w, r) // 先输出被包含的内容
 			_, err := w.Write([]byte(text))
@@ -34,7 +34,7 @@ func BuildTestMiddleware(a *assert.Assertion, text string) types.MiddlewareOf[ht
 	})
 }
 
-func BuildTestNodeHandlerFunc(status int) types.BuildNodeHandleOf[http.Handler] {
+func BuildTestNodeHandlerFunc(status int) types.BuildNodeHandler[http.Handler] {
 	return func(n types.Node) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set(header.Allow, n.AllowHeader())

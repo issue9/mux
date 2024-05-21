@@ -17,12 +17,12 @@ import (
 )
 
 type Tester[T any] struct {
-	c        mux.CallOf[T]
+	c        mux.CallFunc[T]
 	notFound T
-	m, o     types.BuildNodeHandleOf[T]
+	m, o     types.BuildNodeHandler[T]
 }
 
-func NewTester[T any](c mux.CallOf[T], notFound T, m, o types.BuildNodeHandleOf[T]) *Tester[T] {
+func NewTester[T any](c mux.CallFunc[T], notFound T, m, o types.BuildNodeHandler[T]) *Tester[T] {
 	return &Tester[T]{
 		c:        c,
 		notFound: notFound,
@@ -35,7 +35,7 @@ func NewTester[T any](c mux.CallOf[T], notFound T, m, o types.BuildNodeHandleOf[
 //
 // f 返回一个路由处理函数，该函数必须要将获得的参数写入 ctx。
 func (t *Tester[T]) Params(a *assert.Assertion, f func(ctx *types.Context) T) {
-	router := mux.NewRouterOf("test", t.c, t.notFound, t.m, t.o, mux.DigitInterceptor("digit"))
+	router := mux.NewRouter("test", t.c, t.notFound, t.m, t.o, mux.DigitInterceptor("digit"))
 	a.NotNil(router)
 
 	globalParams := types.NewContext()
@@ -93,7 +93,7 @@ func (t *Tester[T]) Params(a *assert.Assertion, f func(ctx *types.Context) T) {
 //
 // h 返回路由处理函数，该函数只要输出 status 作为其状态码即可。
 func (t *Tester[T]) Serve(a *assert.Assertion, h func(status int) T) {
-	router := mux.NewRouterOf("test", t.c, t.notFound, t.m, t.o, mux.DigitInterceptor("digit"), mux.AnyInterceptor("any"))
+	router := mux.NewRouter("test", t.c, t.notFound, t.m, t.o, mux.DigitInterceptor("digit"), mux.AnyInterceptor("any"))
 	a.NotNil(router)
 	srv := rest.NewServer(a, router, nil)
 
@@ -128,7 +128,7 @@ func (t *Tester[T]) Serve(a *assert.Assertion, h func(status int) T) {
 
 	// 忽略大小写测试
 
-	router = mux.NewRouterOf("test", t.c, t.notFound, t.m, t.o)
+	router = mux.NewRouter("test", t.c, t.notFound, t.m, t.o)
 	srv = rest.NewServer(a, router, nil)
 
 	router.Handle("/posts/{path}.html", h(201), nil)

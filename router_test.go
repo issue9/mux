@@ -27,14 +27,14 @@ var (
 	optionsHandlerBuilder   = tree.BuildTestNodeHandlerFunc(http.StatusOK)
 )
 
-func newRouter(a *assert.Assertion, name string, o ...Option) *RouterOf[http.Handler] {
+func newRouter(a *assert.Assertion, name string, o ...Option) *Router[http.Handler] {
 	a.TB().Helper()
-	r := NewRouterOf(name, call, http.NotFoundHandler(), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
+	r := NewRouter(name, call, http.NotFoundHandler(), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
 	a.NotNil(r)
 	return r
 }
 
-func TestRouterOf(t *testing.T) {
+func TestRouter(t *testing.T) {
 	a := assert.New(t, false)
 	r := newRouter(a, "def", Lock(true))
 
@@ -81,7 +81,7 @@ func TestRouterOf(t *testing.T) {
 	}, "OPTIONS")
 }
 
-func TestRouterOf_Handle_Remove(t *testing.T) {
+func TestRouter_Handle_Remove(t *testing.T) {
 	a := assert.New(t, false)
 	r := newRouter(a, "")
 	a.NotNil(r)
@@ -144,7 +144,7 @@ func TestRouter_Clean(t *testing.T) {
 }
 
 // 测试匹配顺序是否正确
-func TestRouterOf_ServeHTTP_Order(t *testing.T) {
+func TestRouter_ServeHTTP_Order(t *testing.T) {
 	a := assert.New(t, false)
 	r := newRouter(a, "def", AnyInterceptor("any"))
 	a.NotNil(r)
@@ -198,7 +198,7 @@ func TestRouterOf_ServeHTTP_Order(t *testing.T) {
 	rest.Get(a, "/tags.html").Do(r).Status(202)                  // f2
 }
 
-func TestRouterOf_Middleware(t *testing.T) {
+func TestRouter_Middleware(t *testing.T) {
 	a := assert.New(t, false)
 
 	def := newRouter(a, "")
@@ -214,7 +214,7 @@ func TestRouterOf_Middleware(t *testing.T) {
 	rest.Get(a, "/get").Do(def).Status(201).StringBody("m0m1m2m3m4m5m6")
 }
 
-func TestResourceOf(t *testing.T) {
+func TestResource(t *testing.T) {
 	a := assert.New(t, false)
 	r := newRouter(a, "")
 
@@ -256,7 +256,7 @@ func TestResourceOf(t *testing.T) {
 	rest.Delete(a, "/f/any").Do(r).Status(404)
 }
 
-func TestRouterOf_Resource(t *testing.T) {
+func TestRouter_Resource(t *testing.T) {
 	a := assert.New(t, false)
 	def := newRouter(a, "")
 	a.NotNil(def)
@@ -292,10 +292,10 @@ func TestPrefix_Resource(t *testing.T) {
 	rest.Delete(a, "/p1/abc/1").Do(def).Status(201).StringBody("-201-m1r1r2p1p2r")
 	rest.Delete(a, "/p1/abc/1").Do(def).Status(201).StringBody("-201-m1r1r2p1p2r")
 	rest.Post(a, "/p1/abc/1", nil).Do(def).Status(405).StringBody("m1r1r2p1p2r")             // 405 中间件正常使用
-	rest.Get(a, "/p1/abc/not-exist").Do(def).Status(404).StringBody("404 page not found\nr") // 404 只有通过 [RouterOf.Use] 添加的中间件有效
+	rest.Get(a, "/p1/abc/not-exist").Do(def).Status(404).StringBody("404 page not found\nr") // 404 只有通过 [Router.Use] 添加的中间件有效
 }
 
-func TestResourceOf_URL(t *testing.T) {
+func TestResource_URL(t *testing.T) {
 	a := assert.New(t, false)
 	def := newRouter(a, "", AllowedCORS(3600))
 	a.NotNil(def)
@@ -346,7 +346,7 @@ func TestResourceOf_URL(t *testing.T) {
 	a.NotError(err).Equal(url, "/api/blog/1")
 }
 
-func TestPrefixOf(t *testing.T) {
+func TestPrefix(t *testing.T) {
 	a := assert.New(t, false)
 	r := newRouter(a, "")
 	a.NotNil(r)
@@ -392,7 +392,7 @@ func TestPrefixOf(t *testing.T) {
 	rest.NewRequest(a, http.MethodOptions, "/p/h/any").Do(r).Status(404)
 }
 
-func TestPrefixOf_Prefix(t *testing.T) {
+func TestPrefix_Prefix(t *testing.T) {
 	t.Run("prefix", func(t *testing.T) {
 		a := assert.New(t, false)
 		def := newRouter(a, "", AllowedCORS(3600))
@@ -436,7 +436,7 @@ func TestPrefixOf_Prefix(t *testing.T) {
 	})
 }
 
-func TestPrefixOf_URL(t *testing.T) {
+func TestPrefix_URL(t *testing.T) {
 	a := assert.New(t, false)
 	def := newRouter(a, "", AllowedCORS(3600), URLDomain("https://example.com"))
 	a.NotNil(def)

@@ -61,11 +61,11 @@ func Trace(enable bool) Option { return func(o *options) { o.trace = enable } }
 
 // Lock 是否加锁
 //
-// 在调用 [RouterOf.Handle] 等添加路由时，有可能会改变整个路由树的结构，
+// 在调用 [Router.Handle] 等添加路由时，有可能会改变整个路由树的结构，
 // 如果需要频繁在运行时添加和删除路由项，那么应当添加此选项。
 func Lock(l bool) Option { return func(o *options) { o.lock = l } }
 
-// URLDomain 为 [RouterOf.URL] 生成的地址带上域名
+// URLDomain 为 [Router.URL] 生成的地址带上域名
 func URLDomain(prefix string) Option { return func(o *options) { o.urlDomain = prefix } }
 
 // Recovery 用于指定路由 panic 之后的处理方法

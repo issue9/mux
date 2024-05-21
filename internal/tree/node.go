@@ -331,7 +331,7 @@ func (n *node[T]) checkAmbiguous(pattern string, hasNonString bool) (*node[T], b
 	return nil, false, nil
 }
 
-func (n *node[T]) applyMiddleware(ms ...types.MiddlewareOf[T]) {
+func (n *node[T]) applyMiddleware(ms ...types.Middleware[T]) {
 	for m, h := range n.handlers {
 		n.handlers[m] = ApplyMiddleware(h, m, n.Pattern(), n.root.Name(), ms...)
 	}
@@ -341,7 +341,7 @@ func (n *node[T]) applyMiddleware(ms ...types.MiddlewareOf[T]) {
 	}
 }
 
-func ApplyMiddleware[T any](h T, method, pattern, router string, f ...types.MiddlewareOf[T]) T {
+func ApplyMiddleware[T any](h T, method, pattern, router string, f ...types.Middleware[T]) T {
 	for _, ff := range f {
 		h = ff.Middleware(h, method, pattern, router)
 	}

@@ -14,27 +14,27 @@ import (
 )
 
 type (
-	// GroupOf 一组路由的集合
-	GroupOf[T any] struct {
-		routers []*RouterOf[T]
+	// Group 一组路由的集合
+	Group[T any] struct {
+		routers []*Router[T]
+		ms      []types.Middleware[T]
 
-		call           CallOf[T]
+		call           CallFunc[T]
 		notFound       T // 所有路由都找不差时调用的方法，该方法应用的中间件中 router 参数是为空的。
 		originNotFound T // 这是应用中间件的 notFound
 		methodNotAllowedBuilder,
-		optionsBuilder types.BuildNodeHandleOf[T]
+		optionsBuilder types.BuildNodeHandler[T]
 		options []Option
-
-		middleware []types.MiddlewareOf[T]
 	}
 )
 
-// NewGroupOf 声明 GroupOf 对象
+// NewGroup 声明 Group 对象
 //
-// 初始化参数与 [NewRouterOf] 相同，这些参数最终也会被 [GroupOf.New] 传递给新对象。
-func NewGroupOf[T any](call CallOf[T], notFound T, methodNotAllowedBuilder, optionsBuilder types.BuildNodeHandleOf[T], o ...Option) *GroupOf[T] {
-	return &GroupOf[T]{
-		routers: make([]*RouterOf[T], 0, 1),
+// 初始化参数与 [NewRouter] 相同，这些参数最终也会被 [Group.New] 传递给新对象。
+func NewGroup[T any](call CallFunc[T], notFound T, methodNotAllowedBuilder, optionsBuilder types.BuildNodeHandler[T], o ...Option) *Group[T] {
+	return &Group[T]{
+		routers: make([]*Router[T], 0, 1),
+		ms:      make([]types.Middleware[T], 0, 10),
 
 		call:                    call,
 		notFound:                notFound,
@@ -42,16 +42,14 @@ func NewGroupOf[T any](call CallOf[T], notFound T, methodNotAllowedBuilder, opti
 		methodNotAllowedBuilder: methodNotAllowedBuilder,
 		optionsBuilder:          optionsBuilder,
 		options:                 o,
-
-		middleware: make([]types.MiddlewareOf[T], 0, 10),
 	}
 }
 
-func (g *GroupOf[T]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (g *Group[T]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := types.NewContext()
 	defer ctx.Destroy()
 
-	// 如果已经在 [NewGroupOf] 中指定了 Recovery 的相关参数，那么在初始化 g.routers
+	// 如果已经在 [NewGroup] 中指定了 Recovery 的相关参数，那么在初始化 g.routers
 	// 时会自动为各个路由添加，无需在此处再次添加 Recovery 的处理。
 
 	for _, router := range g.routers {
@@ -68,10 +66,10 @@ func (g *GroupOf[T]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // New 声明新路由
 //
-// 新路由会继承 [NewGroupOf] 中指定的参数，其中的 o 可以覆盖由 [NewOf] 中指定的相关参数；
-func (g *GroupOf[T]) New(name string, matcher Matcher, o ...Option) *RouterOf[T] {
+// 新路由会继承 [NewGroup] 中指定的参数，其中的 o 可以覆盖由 [NewGroup] 中指定的相关参数；
+func (g *Group[T]) New(name string, matcher Matcher, o ...Option) *Router[T] {
 	o = slices.Concat(g.options, o)
-	r := NewRouterOf(name, g.call, g.originNotFound, g.methodNotAllowedBuilder, g.optionsBuilder, o...)
+	r := NewRouter(name, g.call, g.originNotFound, g.methodNotAllowedBuilder, g.optionsBuilder, o...)
 	g.Add(matcher, r)
 	return r
 }
@@ -80,23 +78,23 @@ func (g *GroupOf[T]) New(name string, matcher Matcher, o ...Option) *RouterOf[T]
 //
 // matcher 用于判断进入 r 的条件，如果为空，则表示不作判断。
 // 如果有多个 matcher 都符合条件，第一个符合条件的 r 获得优胜；
-func (g *GroupOf[T]) Add(matcher Matcher, r *RouterOf[T]) {
+func (g *Group[T]) Add(matcher Matcher, r *Router[T]) {
 	if matcher == nil {
 		matcher = MatcherFunc(anyRouter)
 	}
 
 	// 重名检测
-	if slices.IndexFunc(g.routers, func(rr *RouterOf[T]) bool { return rr.Name() == r.Name() }) >= 0 {
+	if slices.IndexFunc(g.routers, func(rr *Router[T]) bool { return rr.Name() == r.Name() }) >= 0 {
 		panic(fmt.Sprintf("已经存在名为 %s 的路由", r.Name()))
 	}
 
-	r.Use(g.middleware...)
+	r.Use(g.ms...)
 	r.matcher = matcher
 	g.routers = append(g.routers, r)
 }
 
 // Router 返回指定名称的路由
-func (g *GroupOf[T]) Router(name string) *RouterOf[T] {
+func (g *Group[T]) Router(name string) *Router[T] {
 	for _, r := range g.routers {
 		if r.Name() == name {
 			return r
@@ -106,23 +104,23 @@ func (g *GroupOf[T]) Router(name string) *RouterOf[T] {
 }
 
 // Use 为所有已经注册的路由添加中间件
-func (g *GroupOf[T]) Use(m ...types.MiddlewareOf[T]) {
+func (g *Group[T]) Use(m ...types.Middleware[T]) {
 	for _, r := range g.routers {
 		r.Use(m...)
 	}
 
 	g.notFound = tree.ApplyMiddleware(g.notFound, "", "", "", m...)
-	g.middleware = append(g.middleware, m...)
+	g.ms = append(g.ms, m...)
 }
 
 // Routers 返回路由列表
-func (g *GroupOf[T]) Routers() []*RouterOf[T] { return g.routers }
+func (g *Group[T]) Routers() []*Router[T] { return g.routers }
 
-func (g *GroupOf[T]) Remove(name string) {
-	g.routers = slices.DeleteFunc(g.routers, func(r *RouterOf[T]) bool { return r.Name() == name })
+func (g *Group[T]) Remove(name string) {
+	g.routers = slices.DeleteFunc(g.routers, func(r *Router[T]) bool { return r.Name() == name })
 }
 
-func (g *GroupOf[T]) Routes() map[string]map[string][]string {
+func (g *Group[T]) Routes() map[string]map[string][]string {
 	routers := g.Routers()
 
 	routes := make(map[string]map[string][]string, len(routers))

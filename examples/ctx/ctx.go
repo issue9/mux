@@ -20,9 +20,9 @@ type (
 		P types.Route
 	}
 
-	Router = mux.RouterOf[Handler]
+	Router = mux.Router[Handler]
 
-	Routers = mux.GroupOf[Handler]
+	Routers = mux.Group[Handler]
 
 	Handler interface {
 		Handle(*CTX)
@@ -53,10 +53,10 @@ func methodNotAllowedBuilder(p types.Node) Handler {
 func notFound(ctx *CTX) { ctx.W.WriteHeader(http.StatusNotFound) }
 
 func NewRouters(o ...mux.Option) *Routers {
-	return mux.NewGroupOf[Handler](call, HandlerFunc(notFound), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
+	return mux.NewGroup[Handler](call, HandlerFunc(notFound), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
 }
 
 // NewRouter 声明适用于官方 http.Handler 接口的路由
 func NewRouter(name string, o ...mux.Option) *Router {
-	return mux.NewRouterOf[Handler](name, call, HandlerFunc(notFound), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
+	return mux.NewRouter[Handler](name, call, HandlerFunc(notFound), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
 }

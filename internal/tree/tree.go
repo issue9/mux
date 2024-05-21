@@ -48,7 +48,7 @@ type Tree[T any] struct {
 	trace        bool
 	notFound     T
 	optionsBuilder,
-	methodNotAllowedBuilder types.BuildNodeHandleOf[T]
+	methodNotAllowedBuilder types.BuildNodeHandler[T]
 }
 
 func New[T any](
@@ -57,7 +57,7 @@ func New[T any](
 	i *syntax.Interceptors,
 	notFound T,
 	trace bool,
-	methodNotAllowedBuilder, optionsBuilder types.BuildNodeHandleOf[T],
+	methodNotAllowedBuilder, optionsBuilder types.BuildNodeHandler[T],
 ) *Tree[T] {
 	s, err := i.NewSegment("")
 	if err != nil {
@@ -92,7 +92,7 @@ func (tree *Tree[T]) Name() string { return tree.name }
 // Add 添加路由项
 //
 // methods 可以为空，表示添所有支持的请求方法，其中的 HEAD 和 OPTIONS 不受控。
-func (tree *Tree[T]) Add(pattern string, h T, ms []types.MiddlewareOf[T], methods ...string) error {
+func (tree *Tree[T]) Add(pattern string, h T, ms []types.Middleware[T], methods ...string) error {
 	if err := tree.checkAmbiguous(pattern); err != nil {
 		return err
 	}
@@ -300,7 +300,7 @@ func (tree *Tree[T]) URL(buf *errwrap.StringBuilder, pattern string, ps map[stri
 }
 
 // ApplyMiddleware 为已有的路由项添加中间件
-func (tree *Tree[T]) ApplyMiddleware(ms ...types.MiddlewareOf[T]) {
+func (tree *Tree[T]) ApplyMiddleware(ms ...types.Middleware[T]) {
 	tree.notFound = ApplyMiddleware(tree.notFound, "", "", tree.Name(), ms...)
 	tree.node.applyMiddleware(ms...)
 }

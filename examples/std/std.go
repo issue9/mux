@@ -17,13 +17,13 @@ import (
 const contextKeyParams contextKey = 0
 
 type (
-	Routers         = mux.GroupOf[http.Handler]
-	Router          = mux.RouterOf[http.Handler]
-	Prefix          = mux.PrefixOf[http.Handler]
-	Resource        = mux.ResourceOf[http.Handler]
-	Middleware      = types.MiddlewareOf[http.Handler]
-	MiddlewareFunc  = types.MiddlewareFuncOf[http.Handler]
-	BuildNodeHandle = types.BuildNodeHandleOf[http.Handler]
+	Routers         = mux.Group[http.Handler]
+	Router          = mux.Router[http.Handler]
+	Prefix          = mux.Prefix[http.Handler]
+	Resource        = mux.Resource[http.Handler]
+	Middleware      = types.Middleware[http.Handler]
+	MiddlewareFunc  = types.MiddlewareFunc[http.Handler]
+	BuildNodeHandle = types.BuildNodeHandler[http.Handler]
 
 	contextKey int
 )
@@ -46,12 +46,12 @@ func optionsHandlerBuilder(p types.Node) http.Handler {
 }
 
 func NewRouters(o ...mux.Option) *Routers {
-	return mux.NewGroupOf(call, http.NotFoundHandler(), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
+	return mux.NewGroup(call, http.NotFoundHandler(), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
 }
 
 // NewRouter 声明适用于官方 [http.Handler] 接口的路由
 func NewRouter(name string, o ...mux.Option) *Router {
-	return mux.NewRouterOf(name, call, http.NotFoundHandler(), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
+	return mux.NewRouter(name, call, http.NotFoundHandler(), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
 }
 
 // GetParams 获取当前请求实例上的参数列表

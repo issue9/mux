@@ -90,7 +90,7 @@ type Route interface {
 	// 有可能返回 nil，比如请求到了 404。
 	Node() Node
 
-	// RouterName mux.RouterOf.Name 的值
+	// RouterName [mux.Router.Name] 的值
 	RouterName() string
 }
 
@@ -106,17 +106,17 @@ type Node interface {
 	AllowHeader() string
 }
 
-// BuildNodeHandleOf 为节点生成处理方法
-type BuildNodeHandleOf[T any] func(Node) T
+// BuildNodeHandler 为节点生成处理方法
+type BuildNodeHandler[T any] func(Node) T
 
-// MiddlewareOf 中间件对象需要实现的接口
-type MiddlewareOf[T any] interface {
+// Middleware 中间件对象需要实现的接口
+type Middleware[T any] interface {
 	// Middleware 包装处理 next
 	//
 	// next 路由项的处理函数；
 	// method 当前路由的请求方法；
 	// pattern 当前路由的匹配项；
-	// router 路由名称，即 [mux.RouterOf.Name] 的值；
+	// router 路由名称，即 [mux.Router.Name] 的值；
 	//
 	// NOTE: method 和 pattern 在某些特殊的路由项中会有特殊的值：
 	//  - 404 method 和 pattern 均为空；
@@ -124,9 +124,9 @@ type MiddlewareOf[T any] interface {
 	Middleware(next T, method, pattern, router string) T
 }
 
-// MiddlewareFuncOf 中间件处理函数
-type MiddlewareFuncOf[T any] func(next T, method, pattern, router string) T
+// MiddlewareFunc 中间件处理函数
+type MiddlewareFunc[T any] func(next T, method, pattern, router string) T
 
-func (f MiddlewareFuncOf[T]) Middleware(next T, method, pattern, router string) T {
+func (f MiddlewareFunc[T]) Middleware(next T, method, pattern, router string) T {
 	return f(next, method, pattern, router)
 }
