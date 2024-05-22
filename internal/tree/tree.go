@@ -212,17 +212,13 @@ func (tree *Tree[T]) getNode(pattern string) (*node[T], error) {
 	return tree.node.getNode(segs)
 }
 
-// match 找到与路径 p.Path 匹配的 node 实例
-func (tree *Tree[T]) match(p *types.Context) *node[T] {
-	if p.Path == "*" || p.Path == "" {
-		return tree.node
+// 此方法主要用于将 locker 的使用范围减至最小。
+func (tree *Tree[T]) match(ctx *types.Context) *node[T] {
+	if tree.locker != nil {
+		tree.locker.RLock()
+		defer tree.locker.RUnlock()
 	}
-
-	node := tree.node.matchChildren(p)
-	if node == nil || node.size() == 0 {
-		return nil
-	}
-	return node
+	return tree.node.matchChildren(ctx)
 }
 
 // Handler 查找与参数匹配的处理对象
@@ -235,16 +231,16 @@ func (tree *Tree[T]) Handler(ctx *types.Context, method string) (types.Node, T, 
 		return tree.node, tree.trace, true
 	}
 
-	if tree.locker != nil {
-		tree.locker.RLock()
-		defer tree.locker.RUnlock()
+	var node *node[T]
+	if ctx.Path == "*" || ctx.Path == "" {
+		node = tree.node
+	} else {
+		node = tree.match(ctx)
 	}
 
-	node := tree.match(ctx)
-	if node == nil {
+	if node == nil || node.size() == 0 {
 		return nil, tree.notFound, false
 	}
-
 	if h, exists := node.handlers[method]; exists {
 		return node, h, true
 	}

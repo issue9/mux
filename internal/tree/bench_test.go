@@ -16,7 +16,7 @@ import (
 	"github.com/issue9/mux/v9/types"
 )
 
-func BenchmarkTree_Match(b *testing.B) {
+func BenchmarkTree_Handler(b *testing.B) {
 	a := assert.New(b, false)
 	tree := NewTestTree(a, true, nil, syntax.NewInterceptors())
 
@@ -46,8 +46,10 @@ func BenchmarkTree_Match(b *testing.B) {
 		index := i % len(paths)
 		p := types.NewContext()
 		p.Path = paths[index]
-		h := tree.match(p)
-		a.True(len(h.handlers) > 0)
+		node, h, ok := tree.Handler(p, http.MethodGet)
+		a.True(ok).
+			NotNil(node).
+			NotNil(h)
 	}
 }
 
@@ -81,13 +83,15 @@ func BenchmarkTree_ServeHTTP(b *testing.B) {
 		index := i % len(paths)
 		p := types.NewContext()
 		p.Path = paths[index]
-		h := tree.match(p)
-		hh := h.handlers[http.MethodGet]
+		node, h, ok := tree.Handler(p, http.MethodGet)
+		a.True(ok).
+			NotNil(node).
+			NotNil(h)
 
 		w := httptest.NewRecorder()
 		r, err := http.NewRequest(http.MethodGet, paths[index], nil)
 		a.NotError(err).NotNil(r)
-		hh.ServeHTTP(w, r)
+		h.ServeHTTP(w, r)
 		a.Equal(w.Result().StatusCode, index+201)
 	}
 }

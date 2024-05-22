@@ -80,8 +80,8 @@ func (t *tester) notFound(path string) {
 
 	ctx := types.NewContext()
 	ctx.Path = path
-	hs := t.tree.match(ctx)
-	t.a.Nil(hs).Zero(ctx.Count())
+	_, _, ok := t.tree.Handler(ctx, http.MethodOptions)
+	t.a.False(ok)
 }
 
 // 验证指定的路径返回的参数是否正确
@@ -121,11 +121,10 @@ func (t *tester) optionsTrue(path, options string) {
 
 	ctx := types.NewContext()
 	ctx.Path = path
-	hs := t.tree.match(ctx)
-	t.a.NotNil(hs)
-
-	h, exists := hs.handlers[http.MethodOptions]
-	t.a.NotNil(h).True(exists)
+	node, h, ok := t.tree.Handler(ctx, http.MethodOptions)
+	t.a.True(ok).
+		NotNil(node).
+		NotNil(h)
 
 	w := httptest.NewRecorder()
 	u, err := url.Parse(path)
@@ -587,12 +586,15 @@ func TestTree_match(t *testing.T) {
 
 	ctx := types.NewContext()
 	ctx.Path = "/path1"
-	node := tree.match(ctx)
-	a.Zero(ctx.Count()).NotNil(node)
+	node, h, ok := tree.Handler(ctx, http.MethodOptions)
+	a.True(ok).
+		NotNil(node).
+		NotNil(h).
+		Zero(ctx.Count())
 
 	w := httptest.NewRecorder()
 	r := rest.NewRequest(a, http.MethodOptions, "/path1").Request()
-	node.handlers[http.MethodOptions].ServeHTTP(w, r)
+	h.ServeHTTP(w, r)
 	a.Empty(w.Header().Get("h1")).
 		Equal(w.Header().Get(header.Allow), "GET, HEAD, OPTIONS").
 		Empty(w.Body.String())
@@ -610,12 +612,15 @@ func TestTree_match(t *testing.T) {
 
 	ctx = types.NewContext()
 	ctx.Path = "/path2"
-	node = tree.match(ctx)
-	a.Zero(ctx.Count()).NotNil(node)
+	node, h, ok = tree.Handler(ctx, http.MethodOptions)
+	a.True(ok).
+		NotNil(node).
+		NotNil(h).
+		Zero(ctx.Count())
 
 	w = httptest.NewRecorder()
 	r = rest.NewRequest(a, http.MethodOptions, "/path2").Request()
-	node.handlers[http.MethodOptions].ServeHTTP(w, r)
+	h.ServeHTTP(w, r)
 	a.Empty(w.Header().Get("h1")).
 		Equal(w.Header().Get(header.Allow), "GET, HEAD, OPTIONS").
 		Empty(w.Body.String())
