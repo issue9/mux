@@ -148,10 +148,6 @@ func TestContext_Float(t *testing.T) {
 	val, err = ctx.Float("k5")
 	a.ErrorIs(err, ErrParamNotExists()).Equal(val, 0.0)
 	a.Equal(ctx.MustFloat("k5", -10.0), -10.0)
-
-	var ps2 *Context
-	val, err = ps2.Float("key1")
-	a.Equal(err, ErrParamNotExists()).Equal(val, 0.0)
 }
 
 func TestContext_Set(t *testing.T) {
@@ -162,27 +158,20 @@ func TestContext_Set(t *testing.T) {
 	a.Equal(ctx.Count(), 1)
 
 	ctx.Set("k1", "v2")
-	a.Equal(ctx.Count(), 1)
-	a.Equal(ctx.keys, []string{"k1"})
-	a.Equal(ctx.vals, []string{"v2"})
+	a.Equal(ctx.Count(), 1).
+		Equal(ctx.params, map[string]string{"k1": "v2"})
 
 	ctx.Set("k2", "v2")
-	a.Equal(ctx.keys, []string{"k1", "k2"})
-	a.Equal(ctx.vals, []string{"v2", "v2"})
-	a.Equal(ctx.Count(), 2)
+	a.Equal(ctx.params, map[string]string{"k1": "v2", "k2": "v2"}).
+		Equal(ctx.Count(), 2)
 }
 
 func TestContext_Get(t *testing.T) {
 	a := assert.New(t, false)
 
-	var ctx *Context
-	a.Zero(ctx.Count())
-	v, found := ctx.Get("not-exists")
-	a.False(found).Zero(v)
-
-	ctx = NewContext()
+	ctx := NewContext()
 	ctx.Set("k1", "v1")
-	v, found = ctx.Get("k1")
+	v, found := ctx.Get("k1")
 	a.True(found).Equal(v, "v1")
 
 	v, found = ctx.Get("not-exists")
@@ -193,10 +182,7 @@ func TestContext_Get(t *testing.T) {
 func TestContext_Delete(t *testing.T) {
 	a := assert.New(t, false)
 
-	var ctx *Context
-	ctx.Delete("k1")
-
-	ctx = NewContext()
+	ctx := NewContext()
 	ctx.Path = "/path"
 	ctx.Set("k1", "v1")
 	ctx.Set("k2", "v2")
@@ -207,12 +193,10 @@ func TestContext_Delete(t *testing.T) {
 	a.Equal(1, ctx.Count())
 
 	ctx.Delete("k2")
-	a.Equal(0, ctx.Count()).
-		Equal(2, len(ctx.keys))
+	a.Equal(0, ctx.Count())
 
 	ctx.Set("k3", "v3")
-	a.Equal(1, ctx.Count()).
-		Equal(2, len(ctx.keys))
+	a.Equal(1, ctx.Count())
 }
 
 func TestContext_Range(t *testing.T) {

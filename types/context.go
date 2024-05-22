@@ -15,12 +15,10 @@ var contextPool = &sync.Pool{New: func() any { return &Context{} }}
 //
 // Context 同时实现了 [Route] 接口。
 type Context struct {
-	Path        string // 实际请求的路径信息
-	keys        []string
-	vals        []string
-	paramsCount int
-	routerName  string
-	node        Node
+	Path       string // 实际请求的路径信息
+	params     map[string]string
+	routerName string
+	node       Node
 }
 
 func NewContext() *Context {
@@ -31,9 +29,7 @@ func NewContext() *Context {
 
 func (ctx *Context) Reset() {
 	ctx.Path = ""
-	ctx.keys = ctx.keys[:0]
-	ctx.vals = ctx.vals[:0]
-	ctx.paramsCount = 0
+	clear(ctx.params)
 	ctx.routerName = ""
 	ctx.node = nil
 }
@@ -50,7 +46,7 @@ func (ctx *Context) RouterName() string { return ctx.routerName }
 
 func (ctx *Context) Destroy() {
 	const destroyMaxSize = 30
-	if ctx != nil && len(ctx.keys) <= destroyMaxSize {
+	if ctx != nil && len(ctx.params) <= destroyMaxSize {
 		contextPool.Put(ctx)
 	}
 }
@@ -139,67 +135,31 @@ func (ctx *Context) MustFloat(key string, def float64) float64 {
 }
 
 func (ctx *Context) Get(key string) (string, bool) {
-	if ctx == nil {
+	if ctx.params == nil {
 		return "", false
 	}
-
-	for i, k := range ctx.keys {
-		if k == key {
-			return ctx.vals[i], true
-		}
-	}
-	return "", false
+	v, f := ctx.params[key]
+	return v, f
 }
 
-func (ctx *Context) Count() (cnt int) {
-	if ctx == nil {
-		return 0
-	}
-	return ctx.paramsCount
-}
+func (ctx *Context) Count() int { return len(ctx.params) }
 
 func (ctx *Context) Set(k, v string) {
-	deletedIndex := -1
-
-	for i, key := range ctx.keys {
-		if key == k {
-			ctx.vals[i] = v
-			return
-		}
-		if key == "" && deletedIndex == -1 {
-			deletedIndex = i
-		}
+	if ctx.params == nil {
+		ctx.params = map[string]string{k: v}
+		return
 	}
-
-	// 没有需要修改的项
-	ctx.paramsCount++
-	if deletedIndex != -1 { // 优先考虑被标记为删除的项作为添加
-		ctx.keys[deletedIndex] = k
-		ctx.vals[deletedIndex] = v
-	} else {
-		ctx.keys = append(ctx.keys, k)
-		ctx.vals = append(ctx.vals, v)
-	}
+	ctx.params[k] = v
 }
 
 func (ctx *Context) Delete(k string) {
-	if ctx == nil {
-		return
-	}
-
-	for i, key := range ctx.keys {
-		if key == k {
-			ctx.keys[i] = ""
-			ctx.paramsCount--
-			return
-		}
+	if ctx.params != nil {
+		delete(ctx.params, k)
 	}
 }
 
 func (ctx *Context) Range(f func(key, val string)) {
-	for i, k := range ctx.keys {
-		if k != "" {
-			f(k, ctx.vals[i])
-		}
+	for k, v := range ctx.params {
+		f(k, v)
 	}
 }

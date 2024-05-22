@@ -10,9 +10,9 @@ const (
 	NoCache  = "no-cache"
 	Identity = "identity"
 
-	MessageHTTP       = "message/http"                      // MessageHTTP TRACE 请求方法的 content-type 值
-	MultipartFormData = "multipart/form-data"               // MultipartFormData 表单提交类型
-	FormData          = "application/x-www-form-urlencoded" // FormData 普通的表单上传
+	MessageHTTP       = "message/http"                      // SSE 的 content-type 值
+	MultipartFormData = "multipart/form-data"               // 表单提交类型
+	FormData          = "application/x-www-form-urlencoded" // 普通的表单上传
 	EventStream       = "text/event-stream"
 	Plain             = "text/plain"
 	HTML              = "text/html"

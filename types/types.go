@@ -109,9 +109,11 @@ type Node interface {
 // BuildNodeHandler 为节点生成处理方法
 type BuildNodeHandler[T any] func(Node) T
 
-// Middleware 中间件对象需要实现的接口
+// Middleware 中间件
+//
+// 中间件用于改变一个路由项的行为，运行于在路由项的初始化阶段。
 type Middleware[T any] interface {
-	// Middleware 包装处理 next
+	// Middleware 调整路由项 next 的行为
 	//
 	// next 路由项的处理函数；
 	// method 当前路由的请求方法；
@@ -125,7 +127,7 @@ type Middleware[T any] interface {
 	Middleware(next T, method, pattern, router string) T
 }
 
-// MiddlewareFunc 中间件处理函数
+// MiddlewareFunc 中间件
 type MiddlewareFunc[T any] func(next T, method, pattern, router string) T
 
 func (f MiddlewareFunc[T]) Middleware(next T, method, pattern, router string) T {
