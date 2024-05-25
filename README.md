@@ -144,7 +144,7 @@ r.Do()
 ### 拦截器
 
 正常情况下，`/posts/{id:\d+}` 或是 `/posts/{id:[0-9]+}` 会被当作正则表达式处理，
-但是正则表达式的性能并不是很好，这个时候我们可以通过在 `NewRouter` 传递 `Interceptor` 进行拦截：
+但是正则表达式的性能并不是很好，这个时候我们可以通过在 `NewRouter` 传递 `WithInterceptor` 进行拦截：
 
 ```go
 import "github.com/issue9/mux/v9"
@@ -159,7 +159,7 @@ func digit(path string) bool {
 }
 
 // 路由中的 \d+ 和 [0-9]+ 均采用 digit 函数进行处理，不再是正则表达式。
-interceptor := mux.Interceptor(digit, "\\d+", "[0-9]+")
+interceptor := mux.WithInterceptor(digit, "\\d+", "[0-9]+")
 r := mux.NewRouter(..., interceptor)
 ```
 

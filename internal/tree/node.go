@@ -14,7 +14,7 @@ import (
 
 const (
 	indexesSize  = 5 // Node.children 的数量只有达到此值时，才会为其建立 indexes 索引表。
-	handlersSize = 7 // Node.handlers 的初始容量
+	handlersSize = 3 // Node.handlers 的初始容量
 )
 
 type node[T any] struct {
@@ -26,7 +26,7 @@ type node[T any] struct {
 	methodIndex int // 在 methodIndexes 中的索引值
 	handlers    map[string]T
 
-	// 保存着 *Node 实例在 children 中的下标。
+	// 保存着 node 实例在 children 中的下标。
 	//
 	// 所有节点类型为字符串的子节点，其首字符必定是不同的（相同的都提升到父节点中），
 	// 根据此特性，可以将所有字符串类型的首字符做个索引，这样字符串类型节点的比较，
@@ -192,7 +192,7 @@ func (n *node[T]) matchChildren(ctx *types.Context) *node[T] {
 
 		path := ctx.Path
 
-		if !child.segment.Match(ctx) {
+		if !child.segment.Match(ctx) { // 这会修改 ctx.Path 的值
 			goto LOOP
 		}
 		if nn := child.matchChildren(ctx); nn != nil {

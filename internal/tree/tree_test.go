@@ -17,6 +17,7 @@ import (
 
 	"github.com/issue9/mux/v9/header"
 	"github.com/issue9/mux/v9/internal/syntax"
+	"github.com/issue9/mux/v9/internal/trace"
 	"github.com/issue9/mux/v9/types"
 )
 
@@ -35,6 +36,8 @@ func newTester(a *assert.Assertion, lock bool, trace http.Handler) *tester {
 		a:    a,
 	}
 }
+
+func testTrace(w http.ResponseWriter, r *http.Request) { trace.Trace(w, r, true) }
 
 // 添加一条路由项。code 表示该路由项返回的报头，
 // 测试路由项的 code 需要唯一，之后也是通过此值来判断其命中的路由项。
@@ -320,7 +323,7 @@ func TestTree_Route(t *testing.T) {
 
 	// OPTIONS trace=true
 
-	test = newTester(a, false, http.HandlerFunc(TestTrace))
+	test = newTester(a, false, http.HandlerFunc(testTrace))
 	test.add(http.MethodGet, "/admin/1", 201)
 	test.matchTrue(http.MethodGet, "/admin/1", 201, "/admin/1")
 	test.optionsTrue("/admin/1", "GET, HEAD, OPTIONS, TRACE")
@@ -505,7 +508,7 @@ func TestTree_Routes(t *testing.T) {
 	})
 
 	t.Run("trace=true", func(t *testing.T) {
-		tree := NewTestTree(a, true, http.HandlerFunc(TestTrace), syntax.NewInterceptors())
+		tree := NewTestTree(a, true, http.HandlerFunc(testTrace), syntax.NewInterceptors())
 
 		a.NotError(tree.Add("/", rest.BuildHandler(a, http.StatusOK, "", nil), nil, http.MethodGet))
 		a.NotError(tree.Add("/posts", rest.BuildHandler(a, http.StatusOK, "", nil), nil, http.MethodGet, http.MethodPost))

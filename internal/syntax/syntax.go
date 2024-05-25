@@ -93,7 +93,7 @@ func (i *Interceptors) URL(buf *errwrap.StringBuilder, pattern string, ps map[st
 	return nil
 }
 
-// Split 将字符串解析成 Segment 数组
+// Split 将字符串解析成 [Segment] 数组
 //
 // 以 { 为分界线进行分割。比如
 //

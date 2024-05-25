@@ -42,11 +42,12 @@ func BenchmarkTree_Handler(b *testing.B) {
 		8: "/posts/2.html/2/author",
 	}
 
-	for i := 0; i < b.N; i++ {
+	ctx := types.NewContext()
+	for i := range b.N {
+		ctx.Reset()
 		index := i % len(paths)
-		p := types.NewContext()
-		p.Path = paths[index]
-		node, h, ok := tree.Handler(p, http.MethodGet)
+		ctx.Path = paths[index]
+		node, h, ok := tree.Handler(ctx, http.MethodGet)
 		a.True(ok).
 			NotNil(node).
 			NotNil(h)
@@ -79,11 +80,12 @@ func BenchmarkTree_ServeHTTP(b *testing.B) {
 		7: "/posts/2.html/2/author",
 	}
 
-	for i := 0; i < b.N; i++ {
+	ctx := types.NewContext()
+	for i := range b.N {
+		ctx.Reset()
 		index := i % len(paths)
-		p := types.NewContext()
-		p.Path = paths[index]
-		node, h, ok := tree.Handler(p, http.MethodGet)
+		ctx.Path = paths[index]
+		node, h, ok := tree.Handler(ctx, http.MethodGet)
 		a.True(ok).
 			NotNil(node).
 			NotNil(h)

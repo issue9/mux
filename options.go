@@ -65,6 +65,8 @@ func Trace(w http.ResponseWriter, r *http.Request, body bool) { trace.Trace(w, r
 // WithTrace 指定用于处理 TRACE 请求的方法
 //
 // T 的类型应该同 [NewRouter] 中的类型参数 T，否则会 panic。
+//
+// NOTE: [Trace] 提供了一种简单的 TRACE 处理方式。
 func WithTrace[T any](v T) Option { return func(o *options) { o.trace = v } }
 
 // WithLock 是否加锁
