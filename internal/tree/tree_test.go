@@ -49,7 +49,7 @@ func (t *tester) add(method, pattern string, code int) {
 func (t *tester) addAmbiguous(pattern string) {
 	t.a.TB().Helper()
 	b := rest.BuildHandler(t.a, http.StatusOK, "", nil)
-	t.a.ErrorString(t.tree.Add(pattern, b, nil, http.MethodGet), "存在有歧义的节点")
+	t.a.ErrorString(t.tree.Add(pattern, b, nil, http.MethodGet), pattern+" 与已有的节点")
 }
 
 // 验证按照指定的 method 和 path 访问，是否会返回相同的 code 值，

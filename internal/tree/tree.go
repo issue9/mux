@@ -140,8 +140,7 @@ func (tree *Tree[T]) checkAmbiguous(pattern string) error {
 		s = n.segment.Value + s
 		n = n.parent
 	}
-
-	return fmt.Errorf("存在有歧义的节点：%s", s)
+	return fmt.Errorf("%s 与已有的节点 %s 存在歧义", pattern, s)
 }
 
 // Clean 清除路由项

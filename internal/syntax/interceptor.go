@@ -26,7 +26,7 @@ func (i *Interceptors) Add(f InterceptorFunc, name ...string) {
 
 	for _, n := range name {
 		if _, found := i.funcs[n]; found {
-			panic(fmt.Errorf("%s 已经存在", n))
+			panic(fmt.Sprintf("%s 已经存在", n))
 		}
 		i.funcs[n] = f
 	}

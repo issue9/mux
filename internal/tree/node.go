@@ -70,7 +70,7 @@ func (n *node[T]) priority() int {
 }
 
 // 获取指定路径下的节点，若节点不存在，则添加。
-// segments 为被 syntax.Split 拆分之后的字符串数组。
+// segments 为被 [syntax.Split] 拆分之后的字符串数组。
 func (n *node[T]) getNode(segments []*syntax.Segment) (*node[T], error) {
 	child, err := n.addSegment(segments[0])
 	if err != nil {
