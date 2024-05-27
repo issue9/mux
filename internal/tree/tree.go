@@ -38,7 +38,7 @@ import (
 //	             +---- emails
 type Tree[T any] struct {
 	methods map[string]int // 保存着每个请求方法在所有子节点上的数量。
-	node    *node[T]       // 空节点，正好用于处理 OPTIONS * 以及 TRACE 请求。
+	node    *node[T]       // 空节点，正好用于处理 OPTIONS * 请求。
 
 	// 由 New 负责初始化的内容
 

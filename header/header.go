@@ -61,23 +61,23 @@ const (
 	Age                                = "Age"                       // 这个对象在代理缓存中存在的时间，以秒为单位	Age: 12
 	Allow                              = "Allow"                     // 对于特定资源有效的动作。针对 HTTP/405 这一错误代码而使用	Allow: GET, HEAD
 	ContentDisposition                 = "Content-Disposition"       // 一个可以让客户端下载文件并建议文件名的头部。文件名需要用双引号包裹。	Content-Disposition: attachment; filename="fname.ext"
-	ContentEncoding                    = "Content-Encoding"          // 在数据上使用的编码类型。参考 超文本传输协议压缩 。	Content-Encoding: gzip
+	ContentEncoding                    = "Content-Encoding"          // 在数据上使用的编码类型。参考超文本传输协议压缩。	Content-Encoding: gzip
 	ContentLanguage                    = "Content-Language"          // 内容所使用的语言	Content-Language: da
 	ContentLocation                    = "Content-Location"          // 所返回的数据的一个候选位置	Content-Location: /index.htm
 	ContentRange                       = "Content-Range"             // 这条部分消息是属于某条完整消息的哪个部分	Content-Range: bytes 21010-47021/47022
 	ETag                               = "ETag"                      // 对于某个资源的某个特定版本的一个标识符，通常是一个 消息散列	ETag: "737060cd8c284d8af7ad3082f209582d"
 	Expires                            = "Expires"                   // 指定一个日期/时间，超过该时间则认为此回应已经过期	Expires: Thu, 01 Dec 1994 16:00:00 GMT
 	LastModified                       = "Last-Modified"             // 所请求的对象的最后修改日期(按照 RFC 7231 中定义的“超文本传输协议日期”格式来表示)	Last-Modified: Tue, 15 Nov 1994 12:45:26 GMT
-	Link                               = "Link"                      // 用来表达与另一个资源之间的类型关系，此处所说的类型关系是在 RFC 5988 中定义的	Link: </feed>; rel="alternate"[31]
+	Link                               = "Link"                      // 用来表达与另一个资源之间的类型关系，此处所说的类型关系是在 RFC5988 中定义的	Link: </feed>; rel="alternate"[31]
 	Location                           = "Location"                  // 用来进行重定向，或者在创建了某个新资源时使用。	Location: http://www.w3.org/pub/WWW/People.html
 	P3P                                = "P3P"                       // 用于支持设置P3P策略，标准格式为“P3P:CP="your_compact_policy"”。然而P3P规范并不成功，[32]大部分现代浏览器没有完整实现该功能，而大量网站也将该值设为假值，从而足以用来欺骗浏览器的P3P插件功能并授权给第三方Cookies。	P3P: CP="This is not a P3P policy! See http://www.google.com/support/accounts/bin/answer.py?hl=en&answer=151657 for more info."
 	ProxyAuthenticate                  = "Proxy-Authenticate"        // 要求在访问代理时提供身份认证信息。	Proxy-Authenticate: Basic
 	PublicKeyPins                      = "Public-Key-Pins"           // 用于缓解中间人攻击，声明网站认证使用的传输层安全协议证书的散列值	Public-Key-Pins: max-age=2592000; pin-sha256="E9CZ9INDbd+2eRQozYqqbQ2yXLVKB9+xcprMF+44U1g=";
 	Refresh                            = "Refresh"                   // 用于设定可定时的重定向跳转。右边例子设定了5秒后跳转至“http://www.w3.org/pub/WWW/People.html”。	Refresh: 5; url=http://www.w3.org/pub/WWW/People.html。
-	RetryAfter                         = "Retry-After"               // 如果某个实体临时不可用，则，此协议头用来告知客户端日后重试。其值可以是一个特定的时间段(以秒为单位)或一个超文本传输协议日期。 	Example 1: Retry-After: 120 Example 2: Retry-After: Fri, 07 Nov 2014 23:59:59 GMT
+	RetryAfter                         = "Retry-After"               // 如果某个实体临时不可用，则此协议头用来告知客户端日后重试。其值可以是一个特定的时间段(以秒为单位)或一个超文本传输协议日期。 	Example 1: Retry-After: 120 Example 2: Retry-After: Fri, 07 Nov 2014 23:59:59 GMT
 	Server                             = "Server"                    // 服务器的名字	Server: Apache/2.4.1 (Unix)
 	SetCookie                          = "Set-Cookie"                // HTTP cookie	Set-Cookie: UserID=JohnDoe; Max-Age=3600; Version=1
-	Status                             = "Status"                    // 通用网关接口协议头字段，用来说明当前这个超文本传输协议回应的状态。普通的超文本传输协议回应，会使用单独的“状态行”（"Status-Line"）作为替代，这一点是在 RFC 7230 中定义的。 [35]	Status: 200 OK	Not listed as a registered field name（页面存档备份，存于互联网档案馆）
+	Status                             = "Status"                    // 通用网关接口协议头字段，用来说明当前这个超文本传输协议回应的状态。普通的超文本传输协议回应，会使用单独的“状态行”（"Status-Line"）作为替代，这一点是在 RFC7230 中定义的。 [35]	Status: 200 OK	Not listed as a registered field name（页面存档备份，存于互联网档案馆）
 	StrictTransportSecurity            = "Strict-Transport-Security" // HTTP 严格传输安全这一头部告知客户端缓存这一强制 HTTPS 策略的时间，以及这一策略是否适用于其子域名。	Strict-Transport-Security: max-age=16070400; includeSubDomains
 	Trailer                            = "Trailer"                   // 这个头部数值指示了在这一系列头部信息由由分块传输编码编码。	Trailer: Max-Forwards
 	TransferEncoding                   = "Transfer-Encoding"         // 用来将实体安全地传输给用户的编码形式。当前定义的方法包括：分块（chunked）、compress、deflate、gzip和identity。	Transfer-Encoding: chunked
@@ -132,21 +132,21 @@ const (
 
 	// 非标准报头
 
-	XRequestedWith      = "X-Requested-With"  // 主要用于标识 Ajax 及可扩展标记语言 请求。大部分的 JavaScript 框架会发送这个字段，且将其值设置为 XMLHttpRequest	X-Requested-With: XMLHttpRequest
-	DNT                 = "DNT"               // 请求某个网页应用程序停止跟踪某个用户。在火狐浏览器中，相当于 X-Do-Not-Track 协议头字段（自 Firefox/4.0 Beta 11 版开始支持）。Safari 和 Internet Explorer 9 也支持这个字段。2011年3月7日，草案提交IETF。 万维网协会的跟踪保护工作组正在就此制作一项规范。	DNT: 1 (DNT启用)	DNT: 0 (DNT被禁用)
-	XForwardedFor       = "X-Forwarded-For"   // 一个事实标准 ，用于标识某个通过超文本传输协议代理或负载均衡连接到某个网页服务器的客户端的原始互联网地址	X-Forwarded-For: client1, proxy1, proxy2 X-Forwarded-For: 129.78.138.66, 129.78.64.103
-	XForwardedHost      = "X-Forwarded-Host"  // 一个事实标准 ，用于识别客户端原本发出的 Host 请求头部。	X-Forwarded-Host: zh.wikipedia.org:80 X-Forwarded-Host: zh.wikipedia.org
+	XRequestedWith      = "X-Requested-With"  // 主要用于标识 Ajax 及可扩展标记语言请求。大部分的 JavaScript 框架会发送这个字段，且将其值设置为 XMLHttpRequest	X-Requested-With: XMLHttpRequest
+	DNT                 = "DNT"               // 请求某个网页应用程序停止跟踪某个用户。在火狐浏览器中，相当于 X-Do-Not-Track 协议头字段（自 Firefox/4.0 Beta 11 版开始支持）。Safari 和 Internet Explorer 9 也支持这个字段。2011 年 3 月 7 日，草案提交 IETF。 万维网协会的跟踪保护工作组正在就此制作一项规范。	DNT: 1 (DNT 启用)	DNT: 0 (DNT 被禁用)
+	XForwardedFor       = "X-Forwarded-For"   // 一个事实标准，用于标识某个通过超文本传输协议代理或负载均衡连接到某个网页服务器的客户端的原始互联网地址	X-Forwarded-For: client1, proxy1, proxy2 X-Forwarded-For: 129.78.138.66, 129.78.64.103
+	XForwardedHost      = "X-Forwarded-Host"  // 一个事实标准，用于识别客户端原本发出的 Host 请求头部。	X-Forwarded-Host: zh.wikipedia.org:80 X-Forwarded-Host: zh.wikipedia.org
 	XForwardedProto     = "X-Forwarded-Proto" // 一个事实标准，用于标识某个超文本传输协议请求最初所使用的协议。	X-Forwarded-Proto: https
 	XRealIP             = "X-Real-IP"
 	XForwardedProtocol  = "X-Forwarded-Protocol"
 	XForwardedSSL       = "X-Forwarded-Ssl"
 	XUrlScheme          = "X-Url-Scheme"
 	FrontEndHttps       = "Front-End-Https"        // 被微软的服务器和负载均衡器所使用的非标准头部字段。	Front-End-Https: on
-	XHttpMethodOverride = "X-Http-Method-Override" // 请求某个网页应用程序使用该协议头字段中指定的方法（一般是PUT或DELETE）来覆盖掉在请求中所指定的方法（一般是 POST）。当某个浏览器或防火墙阻止直接发送PUT 或DELETE 方法时（注意，这可能是因为软件中的某个漏洞，因而需要修复，也可能是因为某个配置选项就是如此要求的，因而不应当设法绕过），可使用这种方式。	X-HTTP-Method-Override: DELETE
+	XHttpMethodOverride = "X-Http-Method-Override" // 请求某个网页应用程序使用该协议头字段中指定的方法（一般是PUT或DELETE）来覆盖掉在请求中所指定的方法（一般是 POST）。当某个浏览器或防火墙阻止直接发送 PUT 或 DELETE 方法时（注意，这可能是因为软件中的某个漏洞，因而需要修复，也可能是因为某个配置选项就是如此要求的，因而不应当设法绕过），可使用这种方式。	X-HTTP-Method-Override: DELETE
 	XATTDeviceId        = "X-ATT-Deviceid"         // 使服务器更容易解读 AT&T 设备 User-Agent 字段中常见的设备型号、固件信息。	X-Att-Deviceid: GT-P7320/P7320XXLPG
 	XWapProfile         = "X-Wap-Profile"          // 链接到互联网上的一个 XML 文件，其完整、仔细地描述了正在连接的设备。右侧以为 AT&T Samsung Galaxy S2 提供的 XML 文件为例。	x-wap-profile: http://wap.samsungmobile.com/uaprof/SGH-I777.xml
 	ProxyConnection     = "Proxy-Connection"       // 该字段源于早期超文本传输协议版本实现中的错误。与标准的连接（Connection）字段的功能完全相同。	Proxy-Connection: keep-alive
-	XCsrfToken          = "X-Csrf-Token"           // 用于防止 跨站请求伪造。 辅助用的头部有 X-CSRFToken 或 X-XSRF-TOKEN	X-Csrf-Token: i8XNjC4b8KVok4uw5RftR38Wgp2BFwql
+	XCsrfToken          = "X-Csrf-Token"           // 用于防止跨站请求伪造。辅助用的头部有 X-CSRFToken 或 X-XSRF-TOKEN	X-Csrf-Token: i8XNjC4b8KVok4uw5RftR38Wgp2BFwql
 	XXSSProtection      = "X-XSS-Protection"       // 跨站脚本攻击 （XSS）过滤器	X-XSS-Protection: 1; mode=block
 
 	// 内容安全策略定义。	X-WebKit-CSP: default-src 'self'
@@ -159,7 +159,7 @@ const (
 	XUACompatible                 = "X-UA-Compatible"                   // 推荐指定的渲染引擎（通常是向后兼容模式）来显示内容。也用于激活 Internet Explorer 中的 Chrome Frame。	X-UA-Compatible: IE=EmulateIE7	X-UA-Compatible: IE=edge X-UA-Compatible: Chrome=1
 	XContentDuration              = "X-Content-Duration"                // 指出音视频的长度，单位为秒。只受 Gecko 内核浏览器支持。	X-Content-Duration: 42.666
 	FeaturePolicy                 = "Feature-Policy"                    // 管控特定应用程序接口	Feature-Policy: vibrate 'none'; geolocation 'none'
-	PermissionsPolicy             = "Permissions-Policy"                // 管控特定应用程序接口为 W3C 标准 替代 Feature-Policy	Permissions-Policy: microphone=(),geolocation=(),camera=()
+	PermissionsPolicy             = "Permissions-Policy"                // 管控特定应用程序接口为 W3C 标准替代 Feature-Policy	Permissions-Policy: microphone=(),geolocation=(),camera=()
 	XPermittedCrossDomainPolicies = "X-Permitted-Cross-Domain-Policies" // Flash 的跨网站攻击防御	X-Permitted-Cross-Domain-Policies: none
 	ReferrerPolicy                = "Referrer-Policy"                   // 保护信息泄漏	//Referrer-Policy: origin-when-cross-origin
 	ExpectCT                      = "Expect-CT"                         // 防止欺骗 SSL，单位为秒	Expect-CT: max-age=31536000, enforce
