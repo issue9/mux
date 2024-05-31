@@ -22,7 +22,7 @@ var (
 		http.MethodPut,
 		http.MethodPatch,
 		http.MethodConnect,
-		http.MethodTrace, // OPTIONS/HEAD/TRACE 必须在最后，后面的 addAny 需要此规则。
+		http.MethodTrace, // OPTIONS/HEAD/TRACE 必须在最后，AnyMethods 从此处分割。
 		http.MethodHead,
 		http.MethodOptions,
 	}

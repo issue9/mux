@@ -153,7 +153,7 @@ func (r *Router[T]) Patch(pattern string, h T, m ...types.Middleware[T]) *Router
 	return r.Handle(pattern, h, m, http.MethodPatch)
 }
 
-// Any 添加一条包含全部请求方法的路由
+// Any 添加一条包含 [AnyMethods] 中请求方法的路由
 func (r *Router[T]) Any(pattern string, h T, m ...types.Middleware[T]) *Router[T] {
 	return r.Handle(pattern, h, m)
 }

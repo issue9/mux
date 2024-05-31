@@ -14,7 +14,9 @@ import (
 
 func TestMethods(t *testing.T) {
 	a := assert.New(t, false)
-	a.Equal(Methods(), tree.Methods)
+	a.Equal(Methods(), tree.Methods).
+		Equal(AnyMethods(), tree.AnyMethods).
+		Contains(Methods(), AnyMethods())
 }
 
 func TestCheckSyntax(t *testing.T) {
