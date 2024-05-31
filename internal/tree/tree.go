@@ -120,7 +120,7 @@ func (tree *Tree[T]) Add(pattern string, h T, ms []types.Middleware[T], methods 
 	}
 
 	if len(methods) == 0 {
-		methods = addAny
+		methods = AnyMethods
 	}
 	return n.addMethods(h, pattern, ms, methods...)
 }

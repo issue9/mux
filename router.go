@@ -122,7 +122,7 @@ func (r *Router[T]) Use(m ...types.Middleware[T]) {
 // pattern 为路由匹配模式，可以是正则匹配也可以是字符串匹配，
 // 若语法不正确，则直接 panic，可以通过 [CheckSyntax] 检测语法的有效性，其它接口也相同；
 // m 为应用于当前路由项的中间件；
-// methods 该路由项对应的请求方法，如果未指定值，则表示所有支持的请求方法，其中 OPTIONS、TRACE 和 HEAD 不受控；
+// methods 该路由项对应的请求方法，如果未指定值，则采用 [AnyMethods] 返回的方法；
 func (r *Router[T]) Handle(pattern string, h T, m []types.Middleware[T], methods ...string) *Router[T] {
 	if err := r.tree.Add(pattern, h, slices.Concat(m, r.ms), methods...); err != nil {
 		panic(err)

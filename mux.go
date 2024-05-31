@@ -22,6 +22,8 @@
 package mux
 
 import (
+	"slices"
+
 	"github.com/issue9/errwrap"
 
 	"github.com/issue9/mux/v9/internal/syntax"
@@ -55,9 +57,8 @@ func URL(pattern string, params map[string]string) (string, error) {
 	return buf.String(), buf.Err
 }
 
-// Methods 返回所有支持的请求方法
-func Methods() []string {
-	methods := make([]string, len(tree.Methods))
-	copy(methods, tree.Methods)
-	return methods
-}
+// Methods 返回库支持的请求方法
+func Methods() []string { return slices.Clone(tree.Methods) }
+
+// AnyMethods 返回 [Router.Any] 中添加的请求方法
+func AnyMethods() []string { return slices.Clone(tree.AnyMethods) }

@@ -27,7 +27,7 @@ var (
 		http.MethodOptions,
 	}
 
-	addAny = Methods[:len(Methods)-3] // 添加请求方法时，所采用的默认值。
+	AnyMethods = Methods[:len(Methods)-3] // 添加请求方法时，所采用的默认值。
 
 	methodIndexMap map[string]int // 各个请求方法对应的数值
 
