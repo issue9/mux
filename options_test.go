@@ -25,20 +25,20 @@ import (
 func TestOption(t *testing.T) {
 	a := assert.New(t, false)
 
-	r := newRouter(a, "")
+	r := newRouter(a, "def")
 	a.NotNil(r)
 
-	r = newRouter(a, "", WithCORS([]string{"https://example.com"}, nil, nil, 3600, false))
+	r = newRouter(a, "def2", WithCORS([]string{"https://example.com"}, nil, nil, 3600, false))
 	a.NotNil(r).
 		Equal(r.cors.Origins, []string{"https://example.com"}).
 		Nil(r.cors.AllowHeaders).
 		Equal(r.cors.MaxAge, 3600)
 
-	r = newRouter(a, "", WithCORS([]string{"https://example.com"}, nil, nil, 0, true))
+	r = newRouter(a, "def3", WithCORS([]string{"https://example.com"}, nil, nil, 0, true))
 	a.NotNil(r)
 
 	a.Panic(func() {
-		r = newRouter(a, "", WithCORS([]string{"*"}, nil, nil, 0, true))
+		r = newRouter(a, "def4", WithCORS([]string{"*"}, nil, nil, 0, true))
 	})
 }
 
@@ -49,7 +49,7 @@ func TestRecovery(t *testing.T) {
 
 	// 未指定 Recovery
 
-	router := newRouter(a, "")
+	router := newRouter(a, "def")
 	a.NotNil(router).Nil(router.recoverFunc)
 	router.Get("/path", p)
 	a.Panic(func() {
@@ -61,7 +61,7 @@ func TestRecovery(t *testing.T) {
 	// WriterRecovery
 
 	out := new(bytes.Buffer)
-	router = newRouter(a, "", WithWriteRecovery(404, out))
+	router = newRouter(a, "def2", WithWriteRecovery(404, out))
 	a.NotNil(router).NotNil(router.recoverFunc)
 	router.Get("/path", p)
 
@@ -79,7 +79,7 @@ func TestRecovery(t *testing.T) {
 
 	out = new(bytes.Buffer)
 	l := log.New(out, "log:", 0)
-	router = newRouter(a, "", WithLogRecovery(405, l))
+	router = newRouter(a, "def3", WithLogRecovery(405, l))
 	a.NotNil(router).NotNil(router.recoverFunc)
 	router.Get("/path", p)
 	a.NotPanic(func() {
@@ -95,7 +95,7 @@ func TestRecovery(t *testing.T) {
 
 	// StatusRecovery
 
-	router = newRouter(a, "", WithStatusRecovery(406))
+	router = newRouter(a, "def4", WithStatusRecovery(406))
 	a.NotNil(router).NotNil(router.recoverFunc)
 	router.Get("/path", p)
 	a.NotPanic(func() {

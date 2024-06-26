@@ -83,7 +83,7 @@ func TestRouter(t *testing.T) {
 
 func TestRouter_Handle_Remove(t *testing.T) {
 	a := assert.New(t, false)
-	r := newRouter(a, "")
+	r := newRouter(a, "def")
 	a.NotNil(r)
 
 	// 添加 GET /api/1
@@ -122,7 +122,7 @@ func TestRouter_Handle_Remove(t *testing.T) {
 func TestRouter_Routes(t *testing.T) {
 	a := assert.New(t, false)
 
-	def := newRouter(a, "")
+	def := newRouter(a, "def")
 	a.NotNil(def)
 	def.Get("/m", rest.BuildHandler(a, 1, "", nil))
 	def.Post("/m", rest.BuildHandler(a, 1, "", nil))
@@ -132,7 +132,7 @@ func TestRouter_Routes(t *testing.T) {
 func TestRouter_Clean(t *testing.T) {
 	a := assert.New(t, false)
 
-	def := newRouter(a, "")
+	def := newRouter(a, "def")
 	a.NotNil(def)
 	def.Get("/m1", rest.BuildHandler(a, 200, "", nil)).
 		Post("/m1", rest.BuildHandler(a, 201, "", nil))
@@ -201,7 +201,7 @@ func TestRouter_ServeHTTP_Order(t *testing.T) {
 func TestRouter_Middleware(t *testing.T) {
 	a := assert.New(t, false)
 
-	def := newRouter(a, "")
+	def := newRouter(a, "def")
 	a.NotNil(def)
 	def.Use(tree.BuildTestMiddleware(a, "m1"), tree.BuildTestMiddleware(a, "m2"), tree.BuildTestMiddleware(a, "m3"), tree.BuildTestMiddleware(a, "m4"))
 	def.Get("/get", rest.BuildHandler(a, 201, "", nil), tree.BuildTestMiddleware(a, "m0"))
@@ -216,7 +216,7 @@ func TestRouter_Middleware(t *testing.T) {
 
 func TestResource(t *testing.T) {
 	a := assert.New(t, false)
-	r := newRouter(a, "")
+	r := newRouter(a, "def")
 
 	h := r.Resource("/h/1")
 	a.NotNil(h)
@@ -258,7 +258,7 @@ func TestResource(t *testing.T) {
 
 func TestRouter_Resource(t *testing.T) {
 	a := assert.New(t, false)
-	def := newRouter(a, "")
+	def := newRouter(a, "def")
 	a.NotNil(def)
 	def.Use(tree.BuildTestMiddleware(a, "d1"))
 
@@ -303,7 +303,7 @@ func TestPrefix_Resource(t *testing.T) {
 
 func TestResource_URL(t *testing.T) {
 	a := assert.New(t, false)
-	def := newRouter(a, "", WithAllowedCORS(3600))
+	def := newRouter(a, "def", WithAllowedCORS(3600))
 	a.NotNil(def)
 
 	// 非正则
@@ -354,7 +354,7 @@ func TestResource_URL(t *testing.T) {
 
 func TestPrefix(t *testing.T) {
 	a := assert.New(t, false)
-	r := newRouter(a, "")
+	r := newRouter(a, "def")
 	a.NotNil(r)
 	p := r.Prefix("/p")
 
@@ -401,7 +401,7 @@ func TestPrefix(t *testing.T) {
 func TestPrefix_Prefix(t *testing.T) {
 	t.Run("prefix", func(t *testing.T) {
 		a := assert.New(t, false)
-		def := newRouter(a, "", WithAllowedCORS(3600))
+		def := newRouter(a, "def", WithAllowedCORS(3600))
 		a.NotNil(def)
 
 		p := def.Prefix("/abc")
@@ -410,7 +410,7 @@ func TestPrefix_Prefix(t *testing.T) {
 
 	t.Run("empty prefix", func(t *testing.T) {
 		a := assert.New(t, false)
-		def := newRouter(a, "", WithAllowedCORS(3600))
+		def := newRouter(a, "def2", WithAllowedCORS(3600))
 		a.NotNil(def)
 
 		p := def.Prefix("/abc")
@@ -424,7 +424,7 @@ func TestPrefix_Prefix(t *testing.T) {
 	//
 	t.Run("prefix 的中间调用顺序", func(t *testing.T) {
 		a := assert.New(t, false)
-		def := newRouter(a, "", WithAllowedCORS(3600))
+		def := newRouter(a, "def3", WithAllowedCORS(3600))
 		a.NotNil(def)
 		def.Use(tree.BuildTestMiddleware(a, "r0"))
 
@@ -444,7 +444,7 @@ func TestPrefix_Prefix(t *testing.T) {
 
 func TestPrefix_URL(t *testing.T) {
 	a := assert.New(t, false)
-	def := newRouter(a, "", WithAllowedCORS(3600), WithURLDomain("https://example.com"))
+	def := newRouter(a, "def", WithAllowedCORS(3600), WithURLDomain("https://example.com"))
 	a.NotNil(def)
 
 	// 非正则

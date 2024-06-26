@@ -19,7 +19,7 @@ import (
 
 // NewTestTree 返回以 [http.Handler] 作为参数实例化的 [Tree]
 func NewTestTree(a *assert.Assertion, lock bool, trace http.Handler, i *syntax.Interceptors) *Tree[http.Handler] {
-	t := New("", lock, i, http.NotFoundHandler(), trace, BuildTestNodeHandlerFunc(http.StatusMethodNotAllowed), BuildTestNodeHandlerFunc(http.StatusOK))
+	t := New("def", lock, i, http.NotFoundHandler(), trace, BuildTestNodeHandlerFunc(http.StatusMethodNotAllowed), BuildTestNodeHandlerFunc(http.StatusOK))
 	a.NotNil(t)
 	return t
 }

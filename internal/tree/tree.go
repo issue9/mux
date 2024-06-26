@@ -65,6 +65,10 @@ func New[T any](
 		panic("发生了不该发生的错误，应该是 syntax.NewSegment 逻辑发生变化：" + err.Error())
 	}
 
+	if name == "" {
+		panic("参数 name 不能为空")
+	}
+
 	hasTrace := trace != nil
 	var t T
 	if hasTrace {
