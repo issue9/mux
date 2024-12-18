@@ -241,6 +241,9 @@ func TestSegment_Similarity(t *testing.T) {
 
 	s1, err = i.NewSegment("{id}/author/profile")
 	a.NotError(err).Equal(11, seg.Similarity(s1))
+
+	s1, err = i.NewSegment("{id:digit}/author/profile")
+	a.NotError(err).Zero(seg.Similarity(s1))
 }
 
 func TestSegment_Split(t *testing.T) {

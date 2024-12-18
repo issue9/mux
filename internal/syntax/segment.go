@@ -155,13 +155,17 @@ func (seg *Segment) AmbiguousLen() int16 {
 	return seg.ambiguousLength + int16(len(seg.Name))
 }
 
-// Similarity 与 s1 的相似度，-1 表示完全相同，
+// Similarity 与 s1 的相似度，-1 表示完全相同，0 表示完全不同，
 // 其它大于等于零的值，越大，表示相似度越高。
 func (seg *Segment) Similarity(s1 *Segment) int {
-	if s1.Value == seg.Value { // 有完全相同的节点
+	switch {
+	case s1.Value == seg.Value: // 有完全相同的节点
 		return -1
+	case s1.Type != seg.Type: // 完全不同的节点
+		return 0
+	default:
+		return longestPrefix(s1.Value, seg.Value)
 	}
-	return longestPrefix(s1.Value, seg.Value)
 }
 
 // Split 从 pos 位置拆分为两个

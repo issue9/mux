@@ -110,8 +110,6 @@ type Node interface {
 type BuildNodeHandler[T any] func(Node) T
 
 // Middleware 中间件
-//
-// 中间件用于改变一个路由项的行为，运行于在路由项的初始化阶段。
 type Middleware[T any] interface {
 	// Middleware 调整路由项 next 的行为
 	//
@@ -124,6 +122,8 @@ type Middleware[T any] interface {
 	//  - 404 method 和 pattern 均为空；
 	//  - 405 method 为空，pattern 正常；
 	//  - TRACE 请求则 pattern 为空；
+	//
+	// NOTE: 此方法本身仅执行一次，返回的对象才会在每次请求时都执行。
 	Middleware(next T, method, pattern, router string) T
 }
 

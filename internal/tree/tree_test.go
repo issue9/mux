@@ -60,7 +60,7 @@ func (t *tester) handler(method, path string, code int) (types.Node, http.Handle
 	ctx := types.NewContext()
 	ctx.Path = path
 	n, h, exists := t.tree.Handler(ctx, method)
-	t.a.NotNil(h).True(exists).NotNil(n)
+	t.a.NotNil(n).True(exists).NotNil(h)
 
 	w := httptest.NewRecorder()
 	r := rest.NewRequest(t.a, method, path).Request()
@@ -223,8 +223,9 @@ func TestTree_Route(t *testing.T) {
 
 	// 测试 digit 和 named 是否正常
 	test = newTester(a, false, nil)
-	test.add(http.MethodGet, "/posts/{id}/author", 201)
 	test.add(http.MethodGet, "/posts/{id:digit}/author", 202)
+	test.add(http.MethodGet, "/posts/{id}/author", 201)
+	test.matchTrue(http.MethodGet, "/posts/xxx/author", 201, "/posts/{id}/author")
 	test.matchTrue(http.MethodGet, "/posts/1/author", 202, "/posts/{id:digit}/author")
 
 	// 测试 digit 和 \\d 和 named 三者顺序是否正常
