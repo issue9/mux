@@ -19,6 +19,7 @@ const (
 	Plain             = "text/plain"
 	HTML              = "text/html"
 	JSON              = "application/json"
+	YAML              = "application/yaml"
 	XML               = "application/xml"
 	Javascript        = "application/javascript"
 	OctetStream       = "application/octet-stream"

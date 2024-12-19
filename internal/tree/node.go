@@ -235,7 +235,7 @@ LOOP:
 func removeNodes[T any](nodes []*node[T], pattern string) []*node[T] {
 	for index, n := range nodes {
 		if n.segment.Value == pattern {
-			return append(nodes[:index], nodes[index+1:]...)
+			return slices.Delete(nodes, index, index+1)
 		}
 	}
 	return nodes
@@ -277,7 +277,7 @@ func splitNode[T any](n *node[T], pos int) (*node[T], error) {
 	return ret, nil
 }
 
-// 获取所有的路由地址列表
+// 将所有的路由地址列表写入 routes
 func (n *node[T]) routes(routes map[string][]string) {
 	if n.methodIndex > 0 {
 		routes[n.Pattern()] = n.Methods()

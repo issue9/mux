@@ -258,11 +258,13 @@ func (tree *Tree[T]) Routes() map[string][]string {
 	}
 
 	routes := make(map[string][]string, 100)
+
 	ms := []string{http.MethodOptions}
 	if tree.hasTrace {
 		ms = append(ms, http.MethodTrace)
 	}
 	routes["*"] = ms
+
 	for _, v := range tree.node.children {
 		v.routes(routes)
 	}

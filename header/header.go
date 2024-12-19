@@ -18,7 +18,7 @@ const (
 	CacheControl                       = "Cache-Control"   // 用来指定在这次的请求/响应链中的所有缓存机制 都必须遵守的指令	Cache-Control: no-cache
 	Connection                         = "Connection"      // 该浏览器想要优先使用的连接类型	Connection: keep-alive Connection: Upgrade
 	Cookie                             = "Cookie"          // 之前由服务器通过 Set-Cookie （下文详述）发送的一个超文本传输协议Cookie	Cookie: $Version=1; Skin=new;
-	ContentLength                      = "Content-Length"  // 以八位字节数组 （8位的字节）表示的请求体的长度	Content-Length: 348
+	ContentLength                      = "Content-Length"  // 以八位字节数组 （8 位的字节）表示的请求体的长度	Content-Length: 348
 	ContentMD5                         = "Content-MD5"     // 请求体的内容的二进制 MD5 散列值，以 Base64 编码的结果	Content-MD5: Q2hlY2sgSW50ZWdyaXR5IQ==	过时的
 	ContentDigest                      = "Content-Digest"
 	WantContentDigest                  = "Want-Content-Digest"
@@ -28,7 +28,7 @@ const (
 	Date                               = "Date"                        // 发送该消息的日期和时间(按照 RFC7231 中定义的"超文本传输协议日期"格式来发送)	Date: Tue, 15 Nov 1994 08:12:31 GMT
 	Expect                             = "Expect"                      // 表明客户端要求服务器做出特定的行为	Expect: 100-continue
 	From                               = "From"                        // 发起此请求的用户的邮件地址	From: user@example.com
-	Host                               = "Host"                        // 服务器的域名(用于虚拟主机)，以及服务器所监听的传输控制协议端口号。如果所请求的端口是对应的服务的标准端口，则端口号可被省略。自超文件传输协议版本1.1（HTTP/1.1）开始便是必需字段。	Host: zh.wikipedia.org:80 Host: zh.wikipedia.org
+	Host                               = "Host"                        // 服务器的域名(用于虚拟主机)，以及服务器所监听的传输控制协议端口号。如果所请求的端口是对应的服务的标准端口，则端口号可被省略。自超文件传输协议版本 1.1（HTTP/1.1）开始便是必需字段。	Host: zh.wikipedia.org:80 Host: zh.wikipedia.org
 	IfMatch                            = "If-Match"                    // 仅当客户端提供的实体与服务器上对应的实体相匹配时，才进行对应的操作。主要作用时，用作像 PUT 这样的方法中，仅当从用户上次更新某个资源以来，该资源未被修改的情况下，才更新该资源。	If-Match: "737060cd8c284d8af7ad3082f209582d"
 	IfModifiedSince                    = "If-Modified-Since"           // 允许在对应的内容未被修改的情况下返回 304 未修改（ 304 Not Modified ）	If-Modified-Since: Sat, 29 Oct 1994 19:43:31 GMT
 	IfNoneMatch                        = "If-None-Match"               // 允许在对应的内容未被修改的情况下返回 304 未修改（ 304 Not Modified ），参考 超文本传输协议 的实体标记	If-None-Match: "737060cd8c284d8af7ad3082f209582d"
@@ -38,9 +38,9 @@ const (
 	Origin                             = "Origin"                      // 发起一个针对跨域源资源共享的请求（要求服务器在回应中加入一个‘访问控制-允许来源’（'Access-Control-Allow-Origin'）字段）。	Origin: http://www.example-social-network.com
 	Pragma                             = "Pragma"                      // 与具体的实现相关，这些字段可能在请求/回应链中的任何时候产生多种效果。	Pragma: no-cache	常设但不常用
 	ProxyAuthorization                 = "Proxy-Authorization"         // 用来向代理进行认证的认证信息。	Proxy-Authorization: Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==
-	Range                              = "Range"                       // 仅请求某个实体的一部分。字节偏移以0开始。	Range: bytes=500-999
+	Range                              = "Range"                       // 仅请求某个实体的一部分。字节偏移以 0 开始。	Range: bytes=500-999
 	Referer                            = "Referer"                     // 表示浏览器所访问的前一个页面，正是那个页面上的某个链接将浏览器带到了当前所请求的这个页面。	Referer: http://zh.wikipedia.org/wiki/Main_Page
-	TE                                 = "TE"                          // 浏览器预期接受的传输编码方式：可使用回应协议头 Transfer-Encoding 字段中的值；另外还可用"trailers"（与"分块 "传输方式相关）这个值来表明浏览器希望在最后一个尺寸为0的块之后还接收到一些额外的字段。	TE: trailers, deflate
+	TE                                 = "TE"                          // 浏览器预期接受的传输编码方式：可使用回应协议头 Transfer-Encoding 字段中的值；另外还可用 "trailers"（与"分块 "传输方式相关）这个值来表明浏览器希望在最后一个尺寸为0的块之后还接收到一些额外的字段。	TE: trailers, deflate
 	UserAgent                          = "User-Agent"                  // 浏览器的浏览器身份标识字符串	User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:12.0) Gecko/20100101 Firefox/21.0
 	Upgrade                            = "Upgrade"                     // 要求服务器升级到另一个协议。	Upgrade: HTTP/2.0, SHTTP/1.3, IRC/6.9, RTA/x11
 	Via                                = "Via"                         // 向服务器告知，这个请求是由哪些代理发出的。	Via: 1.0 fred, 1.1 example.com (Apache/1.1)
@@ -70,10 +70,10 @@ const (
 	LastModified                       = "Last-Modified"             // 所请求的对象的最后修改日期(按照 RFC 7231 中定义的“超文本传输协议日期”格式来表示)	Last-Modified: Tue, 15 Nov 1994 12:45:26 GMT
 	Link                               = "Link"                      // 用来表达与另一个资源之间的类型关系，此处所说的类型关系是在 RFC5988 中定义的	Link: </feed>; rel="alternate"[31]
 	Location                           = "Location"                  // 用来进行重定向，或者在创建了某个新资源时使用。	Location: http://www.w3.org/pub/WWW/People.html
-	P3P                                = "P3P"                       // 用于支持设置P3P策略，标准格式为“P3P:CP="your_compact_policy"”。然而P3P规范并不成功，[32]大部分现代浏览器没有完整实现该功能，而大量网站也将该值设为假值，从而足以用来欺骗浏览器的P3P插件功能并授权给第三方Cookies。	P3P: CP="This is not a P3P policy! See http://www.google.com/support/accounts/bin/answer.py?hl=en&answer=151657 for more info."
+	P3P                                = "P3P"                       // 用于支持设置 P3P 策略，标准格式为 “P3P:CP="your_compact_policy"”。然而 P3P 规范并不成功，[32]大部分现代浏览器没有完整实现该功能，而大量网站也将该值设为假值，从而足以用来欺骗浏览器的 P3P 插件功能并授权给第三方 Cookies。	P3P: CP="This is not a P3P policy! See http://www.google.com/support/accounts/bin/answer.py?hl=en&answer=151657 for more info."
 	ProxyAuthenticate                  = "Proxy-Authenticate"        // 要求在访问代理时提供身份认证信息。	Proxy-Authenticate: Basic
 	PublicKeyPins                      = "Public-Key-Pins"           // 用于缓解中间人攻击，声明网站认证使用的传输层安全协议证书的散列值	Public-Key-Pins: max-age=2592000; pin-sha256="E9CZ9INDbd+2eRQozYqqbQ2yXLVKB9+xcprMF+44U1g=";
-	Refresh                            = "Refresh"                   // 用于设定可定时的重定向跳转。右边例子设定了5秒后跳转至“http://www.w3.org/pub/WWW/People.html”。	Refresh: 5; url=http://www.w3.org/pub/WWW/People.html。
+	Refresh                            = "Refresh"                   // 用于设定可定时的重定向跳转。右边例子设定了 5 秒后跳转至 “http://www.w3.org/pub/WWW/People.html”。	Refresh: 5; url=http://www.w3.org/pub/WWW/People.html。
 	RetryAfter                         = "Retry-After"               // 如果某个实体临时不可用，则此协议头用来告知客户端日后重试。其值可以是一个特定的时间段(以秒为单位)或一个超文本传输协议日期。 	Example 1: Retry-After: 120 Example 2: Retry-After: Fri, 07 Nov 2014 23:59:59 GMT
 	Server                             = "Server"                    // 服务器的名字	Server: Apache/2.4.1 (Unix)
 	SetCookie                          = "Set-Cookie"                // HTTP cookie	Set-Cookie: UserID=JohnDoe; Max-Age=3600; Version=1
@@ -154,7 +154,7 @@ const (
 	XContentSecurityPolicy = "X-Content-Security-Policy"
 	XWebKitCSP             = "X-WebKit-CSP"
 
-	XContentTypeOptions           = "X-Content-Type-Options"            // 唯一允许的数值为 "nosniff"，防止 Internet Explorer 对文件进行MIME类型嗅探。这也对 Google Chrome 下载扩展时适用。X-Content-Type-Options: nosniff
+	XContentTypeOptions           = "X-Content-Type-Options"            // 唯一允许的数值为 "nosniff"，防止 Internet Explorer 对文件进行 MIME 类型嗅探。这也对 Google Chrome 下载扩展时适用。X-Content-Type-Options: nosniff
 	XPoweredBy                    = "X-Powered-By"                      // 表明用于支持当前网页应用程序的技术（例如：PHP）（版本号细节通常放置在 X-Runtime 或 X-Version 中）	X-Powered-By: PHP/5.4.0
 	XUACompatible                 = "X-UA-Compatible"                   // 推荐指定的渲染引擎（通常是向后兼容模式）来显示内容。也用于激活 Internet Explorer 中的 Chrome Frame。	X-UA-Compatible: IE=EmulateIE7	X-UA-Compatible: IE=edge X-UA-Compatible: Chrome=1
 	XContentDuration              = "X-Content-Duration"                // 指出音视频的长度，单位为秒。只受 Gecko 内核浏览器支持。	X-Content-Duration: 42.666
