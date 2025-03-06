@@ -156,7 +156,7 @@ func WithWordInterceptor(rule string) Option { return WithInterceptor(syntax.Mat
 
 // WithCORS 自定义[跨域请求]设置项
 //
-// origin 对应 Origin 报头。如果包含了 *，那么其它的设置将不再启作用。
+// origin 对应 Access-Control-Allow-Origin 报头。如果包含了 *，那么其它的设置将不再启作用。
 // 如果此值为空，表示不启用跨域的相关设置；
 //
 // allowHeaders 对应 Access-Control-Allow-Headers
@@ -297,7 +297,7 @@ func (c *cors) handle(node types.Node, wh http.Header, r *http.Request) {
 		allowOrigin = origin
 	}
 	wh.Set(header.AccessControlAllowOrigin, allowOrigin)
-	wh.Add(header.Vary, header.Origin)
+	wh.Add(header.Vary, header.AccessControlAllowOrigin)
 
 	// Access-Control-Allow-Credentials
 	if c.AllowCredentials {
