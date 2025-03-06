@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2014-2024 caixw
+// SPDX-FileCopyrightText: 2014-2025 caixw
 //
 // SPDX-License-Identifier: MIT
 
@@ -149,7 +149,7 @@ func TestCORS_sanitize(t *testing.T) {
 	}
 	a.NotError(c.sanitize())
 	a.True(c.anyHeaders).
-		Equal(c.allowHeadersString, "*").
+		Equal(c.allowHeadersString, "*,"+header.Authorization).
 		Equal(c.exposedHeadersString, "h1,h2")
 }
 

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2014-2024 caixw
+// SPDX-FileCopyrightText: 2014-2025 caixw
 //
 // SPDX-License-Identifier: MIT
 
@@ -221,20 +221,14 @@ func (o *options) sanitize() error {
 }
 
 func (c *cors) sanitize() error {
-	for _, o := range c.Origins {
-		if o == "*" {
-			c.anyOrigins = true
-			break
-		}
+	if slices.Contains(c.Origins, "*") {
+		c.anyOrigins = true
 	}
 	c.deny = len(c.Origins) == 0
 
-	for _, h := range c.AllowHeaders {
-		if h == "*" {
-			c.allowHeadersString = "*"
-			c.anyHeaders = true
-			break
-		}
+	if slices.Contains(c.AllowHeaders, "*") {
+		c.allowHeadersString = "*," + header.Authorization // Firefox 中 * 并不包含 Authorization 报头。
+		c.anyHeaders = true
 	}
 	if c.allowHeadersString == "" && len(c.AllowHeaders) > 0 {
 		c.allowHeadersString = strings.Join(c.AllowHeaders, ",")

@@ -2,7 +2,7 @@ github.com/issue9/assert/v4 v4.3.1 h1:dHYODk1yV7j/1baIB6K6UggI4r1Hfuljqic7PaDbwL
 github.com/issue9/assert/v4 v4.3.1/go.mod h1:v7qDRXi7AsaZZNh8eAK2rkLJg5/clztqQGA1DRv9Lv4=
 github.com/issue9/errwrap v0.3.2 h1:7KEme9Pfe75M+sIMcPCn/DV90wjnOcRbO4DXVAHj3Fw=
 github.com/issue9/errwrap v0.3.2/go.mod h1:KcCLuUGiffjooLCUjL89r1cyO8/HT/VRcQrneO53N3A=
-github.com/issue9/source v0.11.7 h1:wyZv2MExD1kem7FGxIy6/iSgDHqNpLox6dAZfP7VzKM=
-github.com/issue9/source v0.11.7/go.mod h1:cmLmHZdgj+ONnGNdnJp++94VKXTszNAD99hAYOC22bU=
-golang.org/x/mod v0.22.0 h1:D4nJWe9zXqHOmWqj4VMOJhvzj7bEZg4wEYa759z1pH4=
-golang.org/x/mod v0.22.0/go.mod h1:6SkKJ3Xj0I0BrPOZoBy3bdMptDDU9oJrpohJ3eWZ1fY=
+github.com/issue9/source v0.12.5 h1:yfp7gZLMGArbpYgn3wEJ6WAXvx2dCknEXUec/+e3WyE=
+github.com/issue9/source v0.12.5/go.mod h1:5nOhQUwAwEjFVeFkY0QJgSEMsmwHxNugO9O4RhfLNH4=
+golang.org/x/mod v0.24.0 h1:ZfthKaKaT4NrhGVZHO1/WDTwGES4De8KtWO0SIbNJMU=
+golang.org/x/mod v0.24.0/go.mod h1:IXM97Txy2VM4PJ3gI61r1YEk/gAj6zAHN3AdZt6S9Ww=
