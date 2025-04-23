@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2024 caixw
+// SPDX-FileCopyrightText: 2024-2025 caixw
 //
 // SPDX-License-Identifier: MIT
 
@@ -7,7 +7,9 @@ package header
 
 // HTTP 中的报头名称
 //
-// 大部分内容源自 https://zh.wikipedia.org/wiki/HTTP%E5%A4%B4%E5%AD%97%E6%AE%B5
+// 大部分内容源自以下地址：
+//   - https://zh.wikipedia.org/wiki/HTTP%E5%A4%B4%E5%AD%97%E6%AE%B5
+//   - https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Reference/Headers
 const (
 	Accept                             = "Accept"          // 能够接受的回应内容类型（Content-Types）。	Accept: text/plain
 	AcceptCharset                      = "Accept-Charset"  // 能够接受的字符集	Accept-Charset: utf-8
@@ -17,14 +19,14 @@ const (
 	Authorization                      = "Authorization"   // 用于超文本传输协议的认证的认证信息	Authorization: Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==
 	CacheControl                       = "Cache-Control"   // 用来指定在这次的请求/响应链中的所有缓存机制 都必须遵守的指令	Cache-Control: no-cache
 	Connection                         = "Connection"      // 该浏览器想要优先使用的连接类型	Connection: keep-alive Connection: Upgrade
-	Cookie                             = "Cookie"          // 之前由服务器通过 Set-Cookie （下文详述）发送的一个超文本传输协议Cookie	Cookie: $Version=1; Skin=new;
-	ContentLength                      = "Content-Length"  // 以八位字节数组 （8 位的字节）表示的请求体的长度	Content-Length: 348
+	Cookie                             = "Cookie"          // 之前由服务器通过 Set-Cookie（下文详述）发送的一个超文本传输协议Cookie	Cookie: $Version=1; Skin=new;
+	ContentLength                      = "Content-Length"  // 以八位字节数组（8 位的字节）表示的请求体的长度	Content-Length: 348
 	ContentMD5                         = "Content-MD5"     // 请求体的内容的二进制 MD5 散列值，以 Base64 编码的结果	Content-MD5: Q2hlY2sgSW50ZWdyaXR5IQ==	过时的
 	ContentDigest                      = "Content-Digest"
 	WantContentDigest                  = "Want-Content-Digest"
 	ReprDigest                         = "Repr-Digest"
 	WantReprDigest                     = "Want-Repr-Digest"
-	ContentType                        = "Content-Type"                // 请求体的 MIME 类型 （用于 POST 和 PUT 请求中）	Content-Type: application/x-www-form-urlencoded
+	ContentType                        = "Content-Type"                // 请求体的 MIME 类型（用于 POST 和 PUT 请求中）	Content-Type: application/x-www-form-urlencoded
 	Date                               = "Date"                        // 发送该消息的日期和时间(按照 RFC7231 中定义的"超文本传输协议日期"格式来发送)	Date: Tue, 15 Nov 1994 08:12:31 GMT
 	Expect                             = "Expect"                      // 表明客户端要求服务器做出特定的行为	Expect: 100-continue
 	From                               = "From"                        // 发起此请求的用户的邮件地址	From: user@example.com
@@ -85,6 +87,7 @@ const (
 	WWWAuthenticate                    = "WWW-Authenticate"          // 表明在请求获取这个实体时应当使用的认证模式。	WWW-Authenticate: Basic
 	ClearSiteData                      = "Clear-Site-Data"
 	AcceptCH                           = "Accept-CH"
+	CriticalCH                         = "Critical-CH"
 	AcceptCHLifetime                   = "Accept-CH-Lifetime"
 	ContentDPR                         = "Content-DPR"
 	DPR                                = "DPR"
@@ -105,34 +108,35 @@ const (
 	PingFrom                           = "Ping-From"
 	PingTo                             = "Ping-To"
 	ReportTo                           = "Report-To"
-	SecWebSocketAccept                 = "Sec-WebSocket-Accept"
-	SecWebSocketExtensions             = "Sec-WebSocket-Extensions"
-	SecWebSocketKey                    = "Sec-WebSocket-Key"
-	SecWebSocketProtocol               = "Sec-WebSocket-Protocol"
-	SecWebSocketVersion                = "Sec-WebSocket-Version"
-	AcceptPushPolicy                   = "Accept-Push-Policy"
-	AcceptSignature                    = "Accept-Signature"
-	AltSvc                             = "Alt-Svc"
-	Index                              = "Index"
-	LargeAllocation                    = "Large-Allocation"
-	PushPolicy                         = "Push-Policy"
-	ServerTiming                       = "Server-Timing"
-	Signature                          = "Signature"
-	SignedHeaders                      = "Signed-Headers"
-	SourceMap                          = "SourceMap"
+	SecWebSocketAccept                 = "Sec-WebSocket-Accept"     // 指示服务器愿意升级到 WebSocket 连接
+	SecWebSocketExtensions             = "Sec-WebSocket-Extensions" // 在请求中，该标头指示客户端支持的 WebSocket 扩展，按优先顺序排列。在响应中，它指示服务器从客户端的偏好中选择的扩展。
+	SecWebSocketKey                    = "Sec-WebSocket-Key"        // 请求标头，包含一个密钥，用于验证客户端明确打算打开 WebSocket。
+	SecWebSocketProtocol               = "Sec-WebSocket-Protocol"   // 在请求中，该标头指示客户端支持的子协议，按优先顺序排列。在响应中，它指示服务器从客户端的偏好中选择的子协议。
+	SecWebSocketVersion                = "Sec-WebSocket-Version"    // 在请求中，该标头指示客户端使用的 WebSocket 协议版本。在响应中，只有当服务器不支持请求的协议版本时才会发送，并列出服务器支持的版本。
+
+	AcceptPushPolicy = "Accept-Push-Policy"
+	AcceptSignature  = "Accept-Signature"
+	AltSvc           = "Alt-Svc"
+	Index            = "Index"
+	LargeAllocation  = "Large-Allocation"
+	PushPolicy       = "Push-Policy"
+	ServerTiming     = "Server-Timing"
+	Signature        = "Signature"
+	SignedHeaders    = "Signed-Headers"
+	SourceMap        = "SourceMap" // 连接到源代码映射，以便调试器可以逐步执行原始源代码，而不是生成或转换后的代码。
 
 	// 点击劫持保护：
 	//
-	// deny：该页面不允许在 frame 中展示，即使是同域名内。
-	// sameorigin：该页面允许同域名内在 frame 中展示。
-	// allow-from uri：该页面允许在指定 uri 的 frame 中展示。
-	// allowall：允许任意位置的frame显示，非标准值。
-	// X-Frame-Options: deny	过时的
+	//  - deny：该页面不允许在 frame 中展示，即使是同域名内；
+	//  - sameorigin：该页面允许同域名内在 frame 中展示；
+	//  - allow-from uri：该页面允许在指定 uri 的 frame 中展示；
+	//  - allowall：允许任意位置的frame显示，非标准值；
+	//  - X-Frame-Options: deny 过时的；
 	XFrameOptions = "X-Frame-Options"
 
 	// 非标准报头
 
-	XRequestedWith      = "X-Requested-With"  // 主要用于标识 Ajax 及可扩展标记语言请求。大部分的 JavaScript 框架会发送这个字段，且将其值设置为 XMLHttpRequest	X-Requested-With: XMLHttpRequest
+	XRequestedWith      = "X-Requested-With"  // 主要用于标识 AJAX 及可扩展标记语言请求。大部分的 JavaScript 框架会发送这个字段，且将其值设置为 XMLHttpRequest	X-Requested-With: XMLHttpRequest
 	DNT                 = "DNT"               // 请求某个网页应用程序停止跟踪某个用户。在火狐浏览器中，相当于 X-Do-Not-Track 协议头字段（自 Firefox/4.0 Beta 11 版开始支持）。Safari 和 Internet Explorer 9 也支持这个字段。2011 年 3 月 7 日，草案提交 IETF。 万维网协会的跟踪保护工作组正在就此制作一项规范。	DNT: 1 (DNT 启用)	DNT: 0 (DNT 被禁用)
 	XForwardedFor       = "X-Forwarded-For"   // 一个事实标准，用于标识某个通过超文本传输协议代理或负载均衡连接到某个网页服务器的客户端的原始互联网地址	X-Forwarded-For: client1, proxy1, proxy2 X-Forwarded-For: 129.78.138.66, 129.78.64.103
 	XForwardedHost      = "X-Forwarded-Host"  // 一个事实标准，用于识别客户端原本发出的 Host 请求头部。	X-Forwarded-Host: zh.wikipedia.org:80 X-Forwarded-Host: zh.wikipedia.org
@@ -147,7 +151,7 @@ const (
 	XWapProfile         = "X-Wap-Profile"          // 链接到互联网上的一个 XML 文件，其完整、仔细地描述了正在连接的设备。右侧以为 AT&T Samsung Galaxy S2 提供的 XML 文件为例。	x-wap-profile: http://wap.samsungmobile.com/uaprof/SGH-I777.xml
 	ProxyConnection     = "Proxy-Connection"       // 该字段源于早期超文本传输协议版本实现中的错误。与标准的连接（Connection）字段的功能完全相同。	Proxy-Connection: keep-alive
 	XCsrfToken          = "X-Csrf-Token"           // 用于防止跨站请求伪造。辅助用的头部有 X-CSRFToken 或 X-XSRF-TOKEN	X-Csrf-Token: i8XNjC4b8KVok4uw5RftR38Wgp2BFwql
-	XXSSProtection      = "X-XSS-Protection"       // 跨站脚本攻击 （XSS）过滤器	X-XSS-Protection: 1; mode=block
+	XXSSProtection      = "X-XSS-Protection"       // 跨站脚本攻击（XSS）过滤器	X-XSS-Protection: 1; mode=block
 
 	// 内容安全策略定义。	X-WebKit-CSP: default-src 'self'
 	ContentSecurityPolicy  = "Content-Security-Policy"
@@ -171,4 +175,20 @@ const (
 	XRateLimitLimit               = "X-Rate-Limit-Limit"
 	XRateLimitRemaining           = "X-Rate-Limit-Remaining"
 	XRateLimitReset               = "X-Rate-Limit-Reset"
+
+	SecFetchite                    = "Sec-Fetch-Site"                    // 指示请求发起者的源与其目标源之间的关系。其值可能是具有以下值的令牌 cross-site、same-origin、same-site 和 none。
+	SecFetchMode                   = "Sec-Fetch-Mode"                    // 向服务器指示请求的模式。其值可能是具有以下值的令牌 cors、navigate、no-cors、same-origin 和 websocket。
+	SecFetchUser                   = "Sec-Fetch-User"                    // 指示导航请求是否由用户激活触发。布尔值：0 表示 false，1 表示 true。
+	SecFetchDest                   = "Sec-Fetch-Dest"                    // 指示请求到服务器的目的地。
+	SecPurpose                     = "Sec-Purpose"                       // 指示请求的目的，当目的不是立即被用户代理使用时。标头现在有一个可能的值 prefetch，表示资源正在被提前获取，以备将来可能的导航。
+	ServiceWorkerNavigationPreload = "Service-Worker-Navigation-Preload" // 在 service worker 启动期间，在提前请求中发送的请求头，用于使用 fetch() 请求资源。该值由 NavigationPreloadManager.setHeaderValue() 设置，可用于通知服务器应返回与正常 fetch() 操作不同的资源。
+	ServiceWorker                  = "Service-Worker"                    // 包含在 Service Worker 脚本资源的获取请求中。此标头有助于管理员记录服务工作线程脚本请求以进行监控。
+
+	Priority = "Priority" // 提示特定资源请求在特定连接上的优先级。该值可以在请求中发送，以指示客户端的优先级，或者在响应中发送，如果服务器选择重新调整请求的优先级。
+
+	ReportingEndpoints = "Reporting-Endpoints" // 用于指定浏览器应使用报告 API 发送警告和错误报告的服务器端点的响应标头。
+
+	AttributionReportingEligible        = "Attribution-Reporting-Eligible"         // 用于表明与当前请求对应的响应有资格注册归因来源或触发器，以此参与归因报告。
+	AttributionReportingRegisterSource  = "Attribution-Reporting-Register-Source"  // 包含 Attribution-Reporting-Eligible 标头的请求的响应的一部分，用于注册归因来源。
+	AttributionReportingRegisterTrigger = "Attribution-Reporting-Register-Trigger" // 包含 Attribution-Reporting-Eligible 标头的请求的响应的一部分，用于注册归因触发器。
 )

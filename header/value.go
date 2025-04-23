@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2024 caixw
+// SPDX-FileCopyrightText: 2024-2025 caixw
 //
 // SPDX-License-Identifier: MIT
 
@@ -20,6 +20,7 @@ const (
 	HTML              = "text/html"
 	JSON              = "application/json"
 	YAML              = "application/yaml"
+	CBOR              = "application/cbor"
 	XML               = "application/xml"
 	Javascript        = "application/javascript"
 	OctetStream       = "application/octet-stream"
