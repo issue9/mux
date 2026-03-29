@@ -42,14 +42,12 @@ type Tree[T any] struct {
 
 	// 由 New 负责初始化的内容
 
-	locker       *sync.RWMutex
-	interceptors *syntax.Interceptors
-	name         string
-	notFound,
-	trace T
-	hasTrace bool
-	optionsBuilder,
-	methodNotAllowedBuilder types.BuildNodeHandler[T]
+	locker                                  *sync.RWMutex
+	interceptors                            *syntax.Interceptors
+	name                                    string
+	notFound, trace                         T
+	hasTrace                                bool
+	optionsBuilder, methodNotAllowedBuilder types.BuildNodeHandler[T]
 }
 
 func New[T any](
