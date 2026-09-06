@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2024-2025 caixw
+// SPDX-FileCopyrightText: 2024-2026 caixw
 //
 // SPDX-License-Identifier: MIT
 
@@ -18,6 +18,7 @@ const (
 	EventStream       = "text/event-stream"                 // SSE 的 content-type 值
 	Plain             = "text/plain"
 	HTML              = "text/html"
+	CSS               = "text/css"
 	JSON              = "application/json"
 	YAML              = "application/yaml"
 	CBOR              = "application/cbor"

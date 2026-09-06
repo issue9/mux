@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2014-2025 caixw
+// SPDX-FileCopyrightText: 2014-2026 caixw
 //
 // SPDX-License-Identifier: MIT
 
@@ -13,8 +13,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/issue9/assert/v4"
-	"github.com/issue9/assert/v4/rest"
+	"github.com/issue9/assert/v5"
+	"github.com/issue9/assert/v5/rest"
 
 	"github.com/issue9/mux/v9/header"
 	"github.com/issue9/mux/v9/internal/syntax"

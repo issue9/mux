@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2014-2024 caixw
+// SPDX-FileCopyrightText: 2014-2026 caixw
 //
 // SPDX-License-Identifier: MIT
 
@@ -7,8 +7,8 @@ package mux
 import (
 	"testing"
 
-	"github.com/issue9/assert/v4"
-	"github.com/issue9/assert/v4/rest"
+	"github.com/issue9/assert/v5"
+	"github.com/issue9/assert/v5/rest"
 
 	"github.com/issue9/mux/v9/header"
 	"github.com/issue9/mux/v9/types"
@@ -21,7 +21,7 @@ func BenchmarkHosts_Match(b *testing.B) {
 	r := rest.Get(a, "https://caixw.io/test").Request()
 
 	ps := types.NewContext()
-	for range b.N {
+	for b.Loop() {
 		a.True(h.Match(r, ps))
 	}
 }
@@ -34,7 +34,7 @@ func BenchmarkHeaderVersionWithoutKey_Match(b *testing.B) {
 		Request()
 
 	ps := types.NewContext()
-	for range b.N {
+	for b.Loop() {
 		a.True(h.Match(r, ps))
 	}
 }
@@ -47,7 +47,7 @@ func BenchmarkHeaderVersionWithKey_Match(b *testing.B) {
 		Request()
 
 	ps := types.NewContext()
-	for range b.N {
+	for b.Loop() {
 		a.True(h.Match(r, ps))
 	}
 }
@@ -57,7 +57,7 @@ func BenchmarkPathVersionWithoutKey_Match(b *testing.B) {
 	h := NewPathVersion("", "v4", "v3", "v1/", "/v2")
 
 	ps := types.NewContext()
-	for range b.N {
+	for b.Loop() {
 		r := rest.Get(a, "https://caixw.io/v1/test").Request()
 		a.True(h.Match(r, ps))
 	}
@@ -68,7 +68,7 @@ func BenchmarkPathVersionWithKey_Match(b *testing.B) {
 	h := NewPathVersion("version", "v4", "v3", "v1/", "/v2")
 
 	ps := types.NewContext()
-	for range b.N {
+	for b.Loop() {
 		r := rest.Get(a, "https://caixw.io/v1/test").Request()
 		a.True(h.Match(r, ps))
 	}
