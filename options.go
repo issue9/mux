@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2014-2025 caixw
+// SPDX-FileCopyrightText: 2014-2026 caixw
 //
 // SPDX-License-Identifier: MIT
 
@@ -320,7 +320,7 @@ func (c *cors) headerIsAllowed(r *http.Request) bool {
 		return true
 	}
 
-	for _, v := range strings.Split(h, ",") {
+	for v := range strings.SplitSeq(h, ",") {
 		if slices.Index(c.AllowHeaders, strings.TrimSpace(v)) < 0 {
 			return false
 		}

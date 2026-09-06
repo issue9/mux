@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2014-2024 caixw
+// SPDX-FileCopyrightText: 2014-2026 caixw
 //
 // SPDX-License-Identifier: MIT
 
@@ -251,15 +251,12 @@ func (seg *Segment) Match(ctx *types.Context) bool {
 // 获取两个字符串之间相同的前缀字符串的长度，
 // 不会从 {} 中间被分开，正则表达式与之后的内容也不再分隔。
 func longestPrefix(s1, s2 string) int {
-	l := len(s1)
-	if len(s2) < l {
-		l = len(s2)
-	}
+	l := min(len(s2), len(s1))
 
 	startIndex := -10
 	endIndex := -10
 	state := endByte
-	for i := 0; i < l; i++ {
+	for i := range l {
 		switch s1[i] {
 		case startByte:
 			startIndex = i
