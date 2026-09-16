@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2014-2024 caixw
+// SPDX-FileCopyrightText: 2014-2026 caixw
 //
 // SPDX-License-Identifier: MIT
 
@@ -197,8 +197,12 @@ func (r *Router[T]) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 func (r *Router[T]) serveContext(w http.ResponseWriter, req *http.Request, ctx *types.Context) {
 	if r.recoverFunc != nil {
 		defer func() {
-			if err := recover(); err != nil {
-				r.recoverFunc(w, err)
+			if msg := recover(); msg != nil {
+				if msg == http.ErrAbortHandler { // 不处理 ErrAbortHandler
+					panic(msg)
+				}
+
+				r.recoverFunc(w, msg)
 			}
 		}()
 	}

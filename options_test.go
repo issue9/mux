@@ -104,6 +104,20 @@ func TestRecovery(t *testing.T) {
 		router.ServeHTTP(w, r)
 		a.Equal(w.Code, 406)
 	})
+
+	// 忽略 http.ErrAbortHandler
+
+	p = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { panic(http.ErrAbortHandler) })
+
+	router = newRouter(a, "def5", WithStatusRecovery(406))
+	a.NotNil(router).NotNil(router.recoverFunc)
+	router.Get("/path", p)
+	a.PanicValue(func() {
+		w := httptest.NewRecorder()
+		r := rest.Get(a, "/path").Request()
+		router.ServeHTTP(w, r)
+		a.Equal(w.Code, 200)
+	}, http.ErrAbortHandler)
 }
 
 func TestCORS_sanitize(t *testing.T) {
