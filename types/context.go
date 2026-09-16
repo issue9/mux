@@ -1,10 +1,11 @@
-// SPDX-FileCopyrightText: 2014-2024 caixw
+// SPDX-FileCopyrightText: 2014-2026 caixw
 //
 // SPDX-License-Identifier: MIT
 
 package types
 
 import (
+	"iter"
 	"strconv"
 	"sync"
 )
@@ -13,7 +14,7 @@ var contextPool = &sync.Pool{New: func() any { return &Context{} }}
 
 // Context 保存着路由匹配过程中的上下文关系
 //
-// Context 同时实现了 [Route] 接口。
+// Context 同时实现了 [Route] 和 [Params] 接口。
 type Context struct {
 	Path       string // 实际请求的路径信息
 	params     map[string]string
@@ -70,68 +71,54 @@ func (ctx *Context) MustString(key, def string) string {
 	return def
 }
 
-func (ctx *Context) Int(key string) (int64, error) {
+func (ctx *Context) value[T any](key string, conv func(string) (T, error)) (T, error) {
 	if str, found := ctx.Get(key); found {
-		return strconv.ParseInt(str, 10, 64)
+		return conv(str)
 	}
-	return 0, ErrParamNotExists()
+
+	var zero T
+	return zero, ErrParamNotExists()
+}
+
+func (ctx *Context) mustValue[T any](key string, def T, conv func(string) (T, error)) T {
+	if str, found := ctx.Get(key); found {
+		if val, err := conv(str); err == nil {
+			return val
+		}
+	}
+	return def
+}
+
+func (ctx *Context) Int(key string) (int64, error) {
+	return ctx.value(key, func(s string) (int64, error) { return strconv.ParseInt(s, 10, 64) })
 }
 
 func (ctx *Context) MustInt(key string, def int64) int64 {
-	if str, found := ctx.Get(key); found {
-		if val, err := strconv.ParseInt(str, 10, 64); err == nil {
-			return val
-		}
-	}
-	return def
+	return ctx.mustValue(key, def, func(s string) (int64, error) { return strconv.ParseInt(s, 10, 64) })
 }
 
 func (ctx *Context) Uint(key string) (uint64, error) {
-	if str, found := ctx.Get(key); found {
-		return strconv.ParseUint(str, 10, 64)
-	}
-	return 0, ErrParamNotExists()
+	return ctx.value(key, func(s string) (uint64, error) { return strconv.ParseUint(s, 10, 64) })
 }
 
 func (ctx *Context) MustUint(key string, def uint64) uint64 {
-	if str, found := ctx.Get(key); found {
-		if val, err := strconv.ParseUint(str, 10, 64); err == nil {
-			return val
-		}
-	}
-	return def
+	return ctx.mustValue(key, def, func(s string) (uint64, error) { return strconv.ParseUint(s, 10, 64) })
 }
 
 func (ctx *Context) Bool(key string) (bool, error) {
-	if str, found := ctx.Get(key); found {
-		return strconv.ParseBool(str)
-	}
-	return false, ErrParamNotExists()
+	return ctx.value(key, func(s string) (bool, error) { return strconv.ParseBool(s) })
 }
 
 func (ctx *Context) MustBool(key string, def bool) bool {
-	if str, found := ctx.Get(key); found {
-		if val, err := strconv.ParseBool(str); err == nil {
-			return val
-		}
-	}
-	return def
+	return ctx.mustValue(key, def, func(s string) (bool, error) { return strconv.ParseBool(s) })
 }
 
 func (ctx *Context) Float(key string) (float64, error) {
-	if str, found := ctx.Get(key); found {
-		return strconv.ParseFloat(str, 64)
-	}
-	return 0, ErrParamNotExists()
+	return ctx.value(key, func(s string) (float64, error) { return strconv.ParseFloat(s, 64) })
 }
 
 func (ctx *Context) MustFloat(key string, def float64) float64 {
-	if str, found := ctx.Get(key); found {
-		if val, err := strconv.ParseFloat(str, 64); err == nil {
-			return val
-		}
-	}
-	return def
+	return ctx.mustValue(key, def, func(s string) (float64, error) { return strconv.ParseFloat(s, 64) })
 }
 
 func (ctx *Context) Get(key string) (string, bool) {
@@ -161,5 +148,15 @@ func (ctx *Context) Delete(k string) {
 func (ctx *Context) Range(f func(key, val string)) {
 	for k, v := range ctx.params {
 		f(k, v)
+	}
+}
+
+func (ctx *Context) IterSeq() iter.Seq2[string, string] {
+	return func(yield func(string, string) bool) {
+		for k, v := range ctx.params {
+			if !yield(k, v) {
+				break
+			}
+		}
 	}
 }

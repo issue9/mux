@@ -1,11 +1,14 @@
-// SPDX-FileCopyrightText: 2014-2024 caixw
+// SPDX-FileCopyrightText: 2014-2026 caixw
 //
 // SPDX-License-Identifier: MIT
 
 // Package types 类型的前置声明
 package types
 
-import "errors"
+import (
+	"errors"
+	"iter"
+)
 
 var errParamNotExists = errors.New("不存在该参数")
 
@@ -77,7 +80,12 @@ type Params interface {
 	Set(key, val string)
 
 	// Range 依次访问每个参数
+	//
+	// Deprecated: 使用 [Params.IterSeq] 代替
 	Range(func(key, val string))
+
+	// IterSeq 返回遍历每个参数的迭代器
+	IterSeq() iter.Seq2[string, string]
 }
 
 // Route 当前请求的路由信息
