@@ -57,20 +57,6 @@ func (ctx *Context) Exists(key string) bool {
 	return found
 }
 
-func (ctx *Context) String(key string) (string, error) {
-	if v, found := ctx.Get(key); found {
-		return v, nil
-	}
-	return "", ErrParamNotExists()
-}
-
-func (ctx *Context) MustString(key, def string) string {
-	if v, found := ctx.Get(key); found {
-		return v
-	}
-	return def
-}
-
 func (ctx *Context) value[T any](key string, conv func(string) (T, error)) (T, error) {
 	if str, found := ctx.Get(key); found {
 		return conv(str)
@@ -87,6 +73,14 @@ func (ctx *Context) mustValue[T any](key string, def T, conv func(string) (T, er
 		}
 	}
 	return def
+}
+
+func (ctx *Context) String(key string) (string, error) {
+	return ctx.value(key, func(s string) (string, error) { return s, nil })
+}
+
+func (ctx *Context) MustString(key, def string) string {
+	return ctx.mustValue(key, def, func(s string) (string, error) { return s, nil })
 }
 
 func (ctx *Context) Int(key string) (int64, error) {
