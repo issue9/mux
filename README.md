@@ -116,16 +116,15 @@ id := params.MustInt("id", 0) // 在无法获取 id 参数时采用 0 作为默�
 // server.go
 
 import "github.com/issue9/mux/v9"
-import "github.com/issue9/mux/v9/muxutil"
 
 m := mux.NewRouters(...)
 
 def := mux.NewRouter("default")
-m.AddRouter(muxutil.NewPathVersion("version-key", "v1"), def)
+m.AddRouter(mux.NewPathVersion("version-key", "v1"), def)
 def.Get("/path", h1)
 
 host := mux.NewRouter("host")
-m.AddRouter(muxutil.NewHosts("*.example.com"), host)
+m.AddRouter(mux.NewHosts("*.example.com"), host)
 host.Get("/path", h2)
 
 http.ListenAndServe(":8080", m)
@@ -210,7 +209,7 @@ r.Do() // 预检请求，可以正常访问
 
 ### 自定义路由
 
-官方提供的 `http.Handler` 未必是符合每个人的要求，通过 `Router` 用户可以很方便地实现自定义格式的 `http.Handler`，
+官方提供的 `http.Handler` 未必是符合每个人的要求，通过 `Router` 可以很方便地实现自定义格式的 `http.Handler`，
 只需要以下几个步骤：
 
 1. 定义一个专有的路由处理类型，可以是类也可以是函数；
@@ -257,7 +256,7 @@ func New(name string)* Router {
     notFound func(ctx* Context) {
         ctx.W.WriteHeader(404)
     }
-    return NewRouter[HandlerFunc](name, f, notFound, m, opt)
+    return NewRouter[HandlerFunc](name, call, notFound, m, opt)
 }
 ```
 

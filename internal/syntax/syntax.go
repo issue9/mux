@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2014-2024 caixw
+// SPDX-FileCopyrightText: 2014-2026 caixw
 //
 // SPDX-License-Identifier: MIT
 
@@ -63,10 +63,8 @@ func (t Type) String() string {
 
 // URL 将 ps 中的参数填入 pattern
 //
-// 如果 pattern 中存在，但是不存在于 ps，将出错，
-// 但是如果只存在于 ps，但是不存在于 pattern 是可以的。
-//
-// 不能将 URL 作为判断 pattern 是否合规的方法，在 ps 为空时， 将直接返回 pattern。
+// 如果存在于 pattern，不存在于 ps，将出错；
+// 如果存在于 ps，不存在于 pattern 则是可以的。
 func (i *Interceptors) URL(buf *errwrap.StringBuilder, pattern string, ps map[string]string) error {
 	if pattern == "" {
 		return nil
