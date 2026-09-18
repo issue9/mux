@@ -14,7 +14,7 @@ var contextPool = &sync.Pool{New: func() any { return &Context{} }}
 
 // Context 保存着路由匹配过程中的上下文关系
 //
-// Context 同时实现了 [Route] 和 [Params] 接口。
+// 实现了 [Route] 接口，同时自身也实现了 [Params] 接口作为 [Route.Params] 的返回值。
 type Context struct {
 	Path       string // 实际请求的路径信息
 	params     map[string]string

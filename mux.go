@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2014-2024 caixw
+// SPDX-FileCopyrightText: 2014-2026 caixw
 //
 // SPDX-License-Identifier: MIT
 
@@ -22,6 +22,7 @@
 package mux
 
 import (
+	"iter"
 	"slices"
 
 	"github.com/issue9/errwrap"
@@ -58,7 +59,37 @@ func URL(pattern string, params map[string]string) (string, error) {
 }
 
 // Methods 返回库支持的请求方法
-func Methods() []string { return slices.Clone(tree.Methods) }
+//
+// Deprecated: 可以使用 slices.Collect(MethodsSeq)
+//
+//go:fix inline
+func Methods() []string { return slices.Collect(MethodsSeq()) }
+
+// MethodsSeq 遍历支持当前库支持的方法
+func MethodsSeq() iter.Seq[string] {
+	return func(yield func(v string) bool) {
+		for _, m := range tree.Methods {
+			if !yield(m) {
+				break
+			}
+		}
+	}
+}
 
 // AnyMethods 返回 [Router.Any] 中添加的请求方法
-func AnyMethods() []string { return slices.Clone(tree.AnyMethods) }
+//
+// Deprecated: 可能使用 slices.Collect(AnyMethodsSeq)
+//
+//go:fix inline
+func AnyMethods() []string { return slices.Collect(AnyMethodsSeq()) }
+
+// AnyMethodsSeq 遍历支持 [Router.Any] 的方法
+func AnyMethodsSeq() iter.Seq[string] {
+	return func(yield func(v string) bool) {
+		for _, m := range tree.AnyMethods {
+			if !yield(m) {
+				break
+			}
+		}
+	}
+}
