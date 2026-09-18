@@ -5,6 +5,7 @@
 package syntax
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/issue9/assert/v5"
@@ -104,9 +105,11 @@ func TestInterceptor_Split(t *testing.T) {
 
 func TestSplitString(t *testing.T) {
 	a := assert.New(t, false)
+
 	test := func(input string, output ...string) {
-		ss := splitString(input)
-		a.Equal(ss, output)
+		seq, size := splitString(input)
+		ss := slices.Collect(seq)
+		a.Equal(ss, output).GreaterEqual(size, len(ss))
 	}
 
 	test("/", "/")

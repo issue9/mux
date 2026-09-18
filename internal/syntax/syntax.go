@@ -8,6 +8,7 @@ package syntax
 import (
 	"errors"
 	"fmt"
+	"iter"
 	"strings"
 
 	"github.com/issue9/errwrap"
@@ -70,12 +71,12 @@ func (i *Interceptors) URL(buf *errwrap.StringBuilder, pattern string, ps map[st
 		return nil
 	}
 
-	segs, err := i.Split(pattern)
+	segments, err := i.Split(pattern)
 	if err != nil {
 		return err
 	}
 
-	for _, seg := range segs {
+	for _, seg := range segments {
 		if seg.Type == String {
 			buf.WString(seg.Value)
 			continue
@@ -103,12 +104,12 @@ func (i *Interceptors) Split(str string) ([]*Segment, error) {
 		return nil, errors.New("参数 str 不能为空")
 	}
 
-	ss := splitString(str)
-	segs := make([]*Segment, 0, len(ss))
+	ss, size := splitString(str)
+	segments := make([]*Segment, 0, size)
 	var lastFlag bool
-	names := make(map[string]int, len(ss))
+	names := make(map[string]int, size)
 
-	for _, s := range ss {
+	for s := range ss {
 		if lastFlag && s[0] == startByte {
 			return nil, fmt.Errorf("两个命名参数不能连续出现：%s", str)
 		}
@@ -126,32 +127,35 @@ func (i *Interceptors) Split(str string) ([]*Segment, error) {
 			names[seg.Name]++
 		}
 
-		segs = append(segs, seg)
+		segments = append(segments, seg)
 	}
 
-	return segs, nil
+	return segments, nil
 }
 
-func splitString(str string) []string {
-	ss := make([]string, 0, strings.Count(str, string(startByte))+1)
-
+func splitString(str string) (iter.Seq[string], int) {
+	size := strings.Count(str, string(startByte)) + 1
 	var end int
-	for {
-		start := strings.IndexByte(str[end:], startByte)
-		if start == -1 {
-			ss = append(ss, str)
-			break
-		} else if start > 0 {
-			ss = append(ss, str[:start+end])
-			str = str[start+end:]
-		}
 
-		end = strings.IndexByte(str, endByte)
-		if end == -1 {
-			ss = append(ss, str)
-			break
-		}
-	}
+	return func(yield func(s string) bool) {
+		for {
+			start := strings.IndexByte(str[end:], startByte)
+			if start == -1 {
+				yield(str)
+				break
+			} else if start > 0 {
+				if yield(str[:start+end]) {
+					str = str[start+end:]
+				} else {
+					break
+				}
+			}
 
-	return ss
+			end = strings.IndexByte(str, endByte)
+			if end == -1 {
+				yield(str)
+				break
+			}
+		}
+	}, size
 }

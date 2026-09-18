@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2014-2024 caixw
+// SPDX-FileCopyrightText: 2014-2026 caixw
 //
 // SPDX-License-Identifier: MIT
 
@@ -206,11 +206,11 @@ func (tree *Tree[T]) Remove(pattern string, methods ...string) {
 
 // 获取指定的节点，若节点不存在，则在该位置生成一个新节点。
 func (tree *Tree[T]) getNode(pattern string) (*node[T], error) {
-	segs, err := tree.interceptors.Split(pattern)
+	segments, err := tree.interceptors.Split(pattern)
 	if err != nil {
 		return nil, err
 	}
-	return tree.node.getNode(segs)
+	return tree.node.getNode(segments)
 }
 
 // 此方法主要用于将 locker 的使用范围减至最小。
