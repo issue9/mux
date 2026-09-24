@@ -8,11 +8,9 @@ import (
 	"iter"
 	"net/http"
 	"slices"
-	"strconv"
 
 	"github.com/issue9/errwrap"
 
-	"github.com/issue9/mux/v10/header"
 	"github.com/issue9/mux/v10/internal/tree"
 	"github.com/issue9/mux/v10/types"
 )
@@ -51,11 +49,6 @@ type (
 		router  *Router[T]
 		pattern string
 		ms      []types.Middleware[T]
-	}
-
-	headResponse struct {
-		size int
-		http.ResponseWriter
 	}
 )
 
@@ -212,11 +205,8 @@ func (r *Router[T]) serveContext(w http.ResponseWriter, req *http.Request, ctx *
 	node, h, ok := r.tree.Handler(ctx, req.Method)
 	ctx.SetNode(node)
 
-	if ok { // !ok 即为 405 或是 404 状态
+	if ok { // !ok 即为 405 或是 404 状态，不需要处理 CORS。
 		r.cors.handle(node, w.Header(), req)
-		if req.Method == http.MethodHead {
-			w = &headResponse{ResponseWriter: w}
-		}
 	}
 	r.call(w, req, ctx, h)
 }
@@ -362,12 +352,3 @@ func (p *Prefix[T]) Resource(pattern string, m ...types.Middleware[T]) *Resource
 
 // Router 返回与当前资源关联的 [Router] 实例
 func (r *Resource[T]) Router() *Router[T] { return r.router }
-
-func (resp *headResponse) Write(bs []byte) (int, error) {
-	l := len(bs)
-	resp.size += l
-
-	// 只记录了长度，不实际写入 bs
-	resp.Header().Set(header.ContentLength, strconv.Itoa(resp.size))
-	return l, nil
-}

@@ -35,6 +35,26 @@ func newRouter(a *assert.Assertion, name string, o ...Option) *Router[http.Handl
 	return r
 }
 
+// 由 http.Server 处理的路由，主要是测试 http.MethodHead 方法是否正确。
+func TestRouterByHTTPServer(t *testing.T) {
+	a := assert.New(t, false)
+	r := newRouter(a, "def", WithLock(true))
+
+	r.Get("/", rest.BuildHandler(a, 201, "201", nil))
+	r.Get("/200", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, err := w.Write([]byte("200"))
+		a.NotError(err)
+	}))
+
+	s := rest.NewServer(a, r, nil)
+	println(s.URL())
+
+	s.Get("/").Do(nil).Status(201).StringBody("201")
+	s.NewRequest(http.MethodHead, "/").Do(nil).Status(201).BodyEmpty()
+	s.Get("/abc").Do(nil).Status(http.StatusNotFound)
+	s.NewRequest(http.MethodHead, "/200").Do(nil).Status(200).BodyEmpty() // 不调用 WriteHeader
+}
+
 func TestRouter(t *testing.T) {
 	a := assert.New(t, false)
 	r := newRouter(a, "def", WithLock(true))
@@ -45,9 +65,9 @@ func TestRouter(t *testing.T) {
 		a.NotError(err)
 	}))
 	rest.Get(a, "/").Do(r).Status(201).StringBody("201")
-	rest.NewRequest(a, http.MethodHead, "/").Do(r).Status(201).BodyEmpty()
+	rest.NewRequest(a, http.MethodHead, "/").Do(r).Status(201).StringBody("201") // HEAD 会自动注册为与 GET 相同的路由项
 	rest.Get(a, "/abc").Do(r).Status(http.StatusNotFound)
-	rest.NewRequest(a, http.MethodHead, "/200").Do(r).Status(200).BodyEmpty() // 不调用 WriteHeader
+	rest.NewRequest(a, http.MethodHead, "/200").Do(r).Status(200).StringBody("200") // HEAD 会自动注册为与 GET 相同的路由项
 	rest.NewRequest(a, http.MethodOptions, "*").Do(r).Status(200).Header(header.Allow, "GET, OPTIONS")
 
 	r.Get("/h/1", rest.BuildHandler(a, 201, "", nil))
