@@ -56,7 +56,7 @@ func New[T any](
 	lock bool,
 	i *syntax.Interceptors,
 	notFound T,
-	trace any, // 处理 TRACE 请求的方法。如果为空表示不需要处理 TRACE 请求，否则应该是 T 类型。
+	trace any, // 处理 TRACE 请求的方法。之所以使用 any 类型，是因为需要与 nil 作比较，T 类型不支持比较。
 	methodNotAllowedBuilder, optionsBuilder types.BuildNodeHandler[T],
 ) *Tree[T] {
 	s, err := i.NewSegment("")

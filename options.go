@@ -7,7 +7,6 @@ package mux
 import (
 	"errors"
 	"io"
-	"log"
 	"log/slog"
 	"net/http"
 	"slices"
@@ -105,18 +104,7 @@ func WithWriteRecovery(status int, out io.Writer) Option {
 //
 // status 表示向客户端输出的状态码；
 // l 为输出的日志；
-func WithLogRecovery(status int, l *log.Logger) Option {
-	return WithRecovery(func(w http.ResponseWriter, msg any) {
-		http.Error(w, http.StatusText(status), status)
-		l.Println(source.Stack(4, true, msg))
-	})
-}
-
-// WithSLogRecovery 将错误信息输出到日志
-//
-// status 表示向客户端输出的状态码；
-// l 为输出的日志；
-func WithSLogRecovery(status int, l *slog.Logger) Option {
+func WithLogRecovery(status int, l *slog.Logger) Option {
 	return WithRecovery(func(w http.ResponseWriter, msg any) {
 		http.Error(w, http.StatusText(status), status)
 		l.Error(source.Stack(4, true, msg))

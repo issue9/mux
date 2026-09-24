@@ -6,10 +6,9 @@ package mux
 
 import (
 	"bytes"
-	"log"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 	"time"
 
@@ -71,14 +70,14 @@ func TestRecovery(t *testing.T) {
 		router.ServeHTTP(w, r)
 		a.Wait(time.Microsecond*500).
 			Contains(out.String(), "panic test", out.String()).
-			Contains(out.String(), "options_test.go:48", out.String()).
+			Contains(out.String(), "options_test.go:47", out.String()).
 			Equal(w.Code, 404)
 	})
 
 	// LogRecovery
 
 	out = new(bytes.Buffer)
-	l := log.New(out, "log:", 0)
+	l := slog.New(slog.NewTextHandler(out, nil))
 	router = newRouter(a, "def3", WithLogRecovery(405, l))
 	a.NotNil(router).NotNil(router.recoverFunc)
 	router.Get("/path", p)
@@ -87,10 +86,9 @@ func TestRecovery(t *testing.T) {
 		r := rest.Get(a, "/path").Request()
 		router.ServeHTTP(w, r)
 		a.Equal(405, w.Code)
-		lines := strings.Split(out.String(), "\n")
-		a.Contains(lines[0], "panic test")                                  // 保证第一行是 panic 输出的信息
-		a.Contains(lines[1], "TestRecovery.func1")                          // 保证第二行是 panic 函数名
-		a.True(strings.HasSuffix(lines[2], "options_test.go:48"), lines[2]) // 保证第三行是 panic 的行号
+		a.Contains(out.String(), "panic test\\n")         // 保证第一行是 panic 输出的信息
+		a.Contains(out.String(), "TestRecovery.func1\\n") // 保证第二行是 panic 函数名
+		a.Contains(out.String(), "options_test.go:47\\n") // 保证第三行是 panic 的行号
 	})
 
 	// StatusRecovery
