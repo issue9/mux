@@ -31,9 +31,9 @@ func TestRouter(t *testing.T) {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				p := GetParams(r)
 				if p != nil {
-					p.Params().Range(func(k, v string) {
+					for k, v := range p.Params().IterSeq() {
 						ctx.Set(k, v)
-					})
+					}
 				}
 			})
 		})

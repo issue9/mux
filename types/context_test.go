@@ -199,7 +199,7 @@ func TestContext_Delete(t *testing.T) {
 	a.Equal(1, ctx.Count())
 }
 
-func TestContext_Range(t *testing.T) {
+func TestContext_IterSeq(t *testing.T) {
 	a := assert.New(t, false)
 	var size int
 
@@ -207,8 +207,8 @@ func TestContext_Range(t *testing.T) {
 	ps.Path = "/path"
 	ps.Set("k1", "v1")
 	ps.Set("k2", "v2")
-	ps.Range(func(k, v string) {
+	for range ps.IterSeq() {
 		size++
-	})
+	}
 	a.Equal(2, size)
 }

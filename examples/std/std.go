@@ -71,9 +71,9 @@ func WithValue(r *http.Request, ps types.Route) *http.Request {
 	}
 
 	if ps2 := GetParams(r); ps2 != nil && ps2.Params().Count() > 0 {
-		ps2.Params().Range(func(k, v string) {
+		for k, v := range ps2.Params().IterSeq() {
 			ps.Params().Set(k, v)
-		})
+		}
 	}
 
 	return r.WithContext(context.WithValue(r.Context(), contextKeyParams, ps))

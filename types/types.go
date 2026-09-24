@@ -79,11 +79,6 @@ type Params interface {
 	// Set 添加或是修改值
 	Set(key, val string)
 
-	// Range 依次访问每个参数
-	//
-	// Deprecated: 使用 [Params.IterSeq] 代替
-	Range(func(key, val string))
-
 	// IterSeq 返回遍历每个参数的迭代器
 	IterSeq() iter.Seq2[string, string]
 }

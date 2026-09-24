@@ -139,12 +139,6 @@ func (ctx *Context) Delete(k string) {
 	}
 }
 
-func (ctx *Context) Range(f func(key, val string)) {
-	for k, v := range ctx.params {
-		f(k, v)
-	}
-}
-
 func (ctx *Context) IterSeq() iter.Seq2[string, string] {
 	return func(yield func(string, string) bool) {
 		for k, v := range ctx.params {
