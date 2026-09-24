@@ -5,18 +5,19 @@
 package mux
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/issue9/assert/v5"
 
-	"github.com/issue9/mux/v9/internal/tree"
+	"github.com/issue9/mux/v10/internal/tree"
 )
 
 func TestMethods(t *testing.T) {
 	a := assert.New(t, false)
-	a.Equal(Methods(), tree.Methods).
-		Equal(AnyMethods(), tree.AnyMethods).
-		Contains(Methods(), AnyMethods())
+	a.Equal(slices.Collect(Methods()), tree.Methods).
+		Equal(slices.Collect(AnyMethods()), tree.AnyMethods).
+		Contains(slices.Collect(Methods()), slices.Collect(AnyMethods()))
 }
 
 func TestCheckSyntax(t *testing.T) {

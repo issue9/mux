@@ -5,6 +5,7 @@
 package tree
 
 import (
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -15,10 +16,10 @@ import (
 	"github.com/issue9/assert/v5/rest"
 	"github.com/issue9/errwrap"
 
-	"github.com/issue9/mux/v9/header"
-	"github.com/issue9/mux/v9/internal/syntax"
-	"github.com/issue9/mux/v9/internal/trace"
-	"github.com/issue9/mux/v9/types"
+	"github.com/issue9/mux/v10/header"
+	"github.com/issue9/mux/v10/internal/syntax"
+	"github.com/issue9/mux/v10/internal/trace"
+	"github.com/issue9/mux/v10/types"
 )
 
 type tester struct {
@@ -498,7 +499,7 @@ func TestTree_Routes(t *testing.T) {
 		a.NotError(tree.Add("/posts/{id}", rest.BuildHandler(a, http.StatusOK, "", nil), nil, http.MethodGet, http.MethodPut))
 		a.NotError(tree.Add("/posts/{id}/author", rest.BuildHandler(a, http.StatusOK, "", nil), nil, http.MethodGet))
 
-		routes := tree.Routes()
+		routes := maps.Collect(tree.Routes())
 		a.Equal(routes, map[string][]string{
 			"*":                  {http.MethodOptions},
 			"/":                  {http.MethodGet, http.MethodHead, http.MethodOptions},
@@ -516,7 +517,7 @@ func TestTree_Routes(t *testing.T) {
 		a.NotError(tree.Add("/posts/{id}", rest.BuildHandler(a, http.StatusOK, "", nil), nil, http.MethodGet, http.MethodPut))
 		a.NotError(tree.Add("/posts/{id}/author", rest.BuildHandler(a, http.StatusOK, "", nil), nil, http.MethodGet))
 
-		routes := tree.Routes()
+		routes := maps.Collect(tree.Routes())
 		a.Equal(routes, map[string][]string{
 			"*":                  {http.MethodOptions, http.MethodTrace},
 			"/":                  {http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodTrace},

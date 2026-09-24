@@ -8,8 +8,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/issue9/mux/v9/internal/syntax"
-	"github.com/issue9/mux/v9/types"
+	"github.com/issue9/mux/v10/internal/syntax"
+	"github.com/issue9/mux/v10/types"
 )
 
 const (
@@ -278,14 +278,22 @@ func splitNode[T any](n *node[T], pos int) (*node[T], error) {
 }
 
 // 将所有的路由地址列表写入 routes
-func (n *node[T]) routes(routes map[string][]string) {
+//
+// ok 返回 false 表示 yield 返回了 false，需要退出迭代。
+func (n *node[T]) routes(yield func(string, []string) bool) (ok bool) {
 	if n.methodIndex > 0 {
-		routes[n.Pattern()] = n.Methods()
+		if !yield(n.Pattern(), n.Methods()) {
+			return false
+		}
 	}
 
 	for _, v := range n.children {
-		v.routes(routes)
+		if !v.routes(yield) {
+			return false
+		}
 	}
+
+	return true
 }
 
 func (n *node[T]) checkAmbiguous(pattern string, hasNonString bool) (*node[T], bool, error) {

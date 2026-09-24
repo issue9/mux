@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2014-2024 caixw
+// SPDX-FileCopyrightText: 2014-2026 caixw
 //
 // SPDX-License-Identifier: MIT
 
@@ -10,10 +10,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/issue9/mux/v9/header"
-	"github.com/issue9/mux/v9/internal/syntax"
-	"github.com/issue9/mux/v9/internal/tree"
-	"github.com/issue9/mux/v9/types"
+	"github.com/issue9/mux/v10/header"
+	"github.com/issue9/mux/v10/internal/syntax"
+	"github.com/issue9/mux/v10/internal/tree"
+	"github.com/issue9/mux/v10/types"
 )
 
 type (

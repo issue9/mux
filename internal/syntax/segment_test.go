@@ -9,7 +9,7 @@ import (
 
 	"github.com/issue9/assert/v5"
 
-	"github.com/issue9/mux/v9/types"
+	"github.com/issue9/mux/v10/types"
 )
 
 func TestNewSegment(t *testing.T) {

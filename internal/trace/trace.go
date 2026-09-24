@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2014-2024 caixw
+// SPDX-FileCopyrightText: 2014-2026 caixw
 //
 // SPDX-License-Identifier: MIT
 
@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 
-	"github.com/issue9/mux/v9/header"
+	"github.com/issue9/mux/v10/header"
 )
 
 // Trace 简单的 Trace 请求方法实现

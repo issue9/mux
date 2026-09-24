@@ -16,10 +16,10 @@ import (
 
 	"github.com/issue9/source"
 
-	"github.com/issue9/mux/v9/header"
-	"github.com/issue9/mux/v9/internal/syntax"
-	"github.com/issue9/mux/v9/internal/trace"
-	"github.com/issue9/mux/v9/types"
+	"github.com/issue9/mux/v10/header"
+	"github.com/issue9/mux/v10/internal/syntax"
+	"github.com/issue9/mux/v10/internal/trace"
+	"github.com/issue9/mux/v10/types"
 )
 
 type (

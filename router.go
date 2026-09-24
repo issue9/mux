@@ -5,15 +5,16 @@
 package mux
 
 import (
+	"iter"
 	"net/http"
 	"slices"
 	"strconv"
 
 	"github.com/issue9/errwrap"
 
-	"github.com/issue9/mux/v9/header"
-	"github.com/issue9/mux/v9/internal/tree"
-	"github.com/issue9/mux/v9/types"
+	"github.com/issue9/mux/v10/header"
+	"github.com/issue9/mux/v10/internal/tree"
+	"github.com/issue9/mux/v10/types"
 )
 
 type (
@@ -95,7 +96,7 @@ func (r *Router[T]) Clean() { r.tree.Clean("") }
 // Routes 返回当前路由组的路由项
 //
 // 键名为请求地址，键值为对应的请求方法。
-func (r *Router[T]) Routes() map[string][]string { return r.tree.Routes() }
+func (r *Router[T]) Routes() iter.Seq2[string, []string] { return r.tree.Routes() }
 
 // Remove 移除指定的路由项
 //

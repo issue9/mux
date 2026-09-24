@@ -5,6 +5,7 @@
 package mux
 
 import (
+	"maps"
 	"net/http"
 	"slices"
 	"strings"
@@ -13,9 +14,9 @@ import (
 	"github.com/issue9/assert/v5"
 	"github.com/issue9/assert/v5/rest"
 
-	"github.com/issue9/mux/v9/header"
-	"github.com/issue9/mux/v9/internal/tree"
-	"github.com/issue9/mux/v9/types"
+	"github.com/issue9/mux/v10/header"
+	"github.com/issue9/mux/v10/internal/tree"
+	"github.com/issue9/mux/v10/types"
 )
 
 func call(w http.ResponseWriter, r *http.Request, ps types.Route, h http.Handler) {
@@ -126,7 +127,7 @@ func TestRouter_Routes(t *testing.T) {
 	a.NotNil(def)
 	def.Get("/m", rest.BuildHandler(a, 1, "", nil))
 	def.Post("/m", rest.BuildHandler(a, 1, "", nil))
-	a.Equal(def.Routes(), map[string][]string{"*": {"OPTIONS"}, "/m": {"GET", "HEAD", "OPTIONS", "POST"}})
+	a.Equal(maps.Collect(def.Routes()), map[string][]string{"*": {"OPTIONS"}, "/m": {"GET", "HEAD", "OPTIONS", "POST"}})
 }
 
 func TestRouter_Clean(t *testing.T) {
@@ -384,7 +385,7 @@ func TestPrefix(t *testing.T) {
 
 	// remove
 	p.Remove("/h/any", http.MethodPut, http.MethodGet)
-	methods := slices.DeleteFunc(Methods(), func(s string) bool {
+	methods := slices.DeleteFunc(slices.Collect(Methods()), func(s string) bool {
 		return s == http.MethodGet || s == http.MethodTrace || // 并未启用 TRACE
 			s == http.MethodPut || s == http.MethodHead // 删除了 GET，HEAD 也会删除。
 	})

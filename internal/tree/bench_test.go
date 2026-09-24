@@ -11,8 +11,8 @@ import (
 	"github.com/issue9/assert/v5"
 	"github.com/issue9/assert/v5/rest"
 
-	"github.com/issue9/mux/v9/internal/syntax"
-	"github.com/issue9/mux/v9/types"
+	"github.com/issue9/mux/v10/internal/syntax"
+	"github.com/issue9/mux/v10/types"
 )
 
 func BenchmarkTree_Handler(b *testing.B) {

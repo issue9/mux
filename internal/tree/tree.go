@@ -7,13 +7,14 @@ package tree
 
 import (
 	"fmt"
+	"iter"
 	"net/http"
 	"sync"
 
 	"github.com/issue9/errwrap"
 
-	"github.com/issue9/mux/v9/internal/syntax"
-	"github.com/issue9/mux/v9/types"
+	"github.com/issue9/mux/v10/internal/syntax"
+	"github.com/issue9/mux/v10/types"
 )
 
 // Tree 以树节点的形式保存的路由
@@ -249,25 +250,28 @@ func (tree *Tree[T]) Handler(ctx *types.Context, method string) (n types.Node, h
 }
 
 // Routes 获取当前的所有路由项以及对应的请求方法
-func (tree *Tree[T]) Routes() map[string][]string {
-	if tree.locker != nil {
-		tree.locker.RLock()
-		defer tree.locker.RUnlock()
+func (tree *Tree[T]) Routes() iter.Seq2[string, []string] {
+	return func(yield func(string, []string) bool) {
+		if tree.locker != nil {
+			tree.locker.RLock()
+			defer tree.locker.RUnlock()
+		}
+
+		ms := []string{http.MethodOptions}
+		if tree.hasTrace {
+			ms = append(ms, http.MethodTrace)
+		}
+
+		if !yield("*", ms) {
+			return
+		}
+
+		for _, v := range tree.node.children {
+			if !v.routes(yield) {
+				return
+			}
+		}
 	}
-
-	routes := make(map[string][]string, 100)
-
-	ms := []string{http.MethodOptions}
-	if tree.hasTrace {
-		ms = append(ms, http.MethodTrace)
-	}
-	routes["*"] = ms
-
-	for _, v := range tree.node.children {
-		v.routes(routes)
-	}
-
-	return routes
 }
 
 // Find 查找匹配的节点

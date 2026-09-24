@@ -5,13 +5,15 @@
 package mux
 
 import (
+	"maps"
 	"net/http"
+	"slices"
 	"testing"
 
 	"github.com/issue9/assert/v5"
 	"github.com/issue9/assert/v5/rest"
 
-	"github.com/issue9/mux/v9/internal/tree"
+	"github.com/issue9/mux/v10/internal/tree"
 )
 
 func newGroup(a *assert.Assertion, o ...Option) *Group[http.Handler] {
@@ -109,14 +111,14 @@ func TestGroup_Remove(t *testing.T) {
 
 	g.Remove("host")
 	g.Remove("host") // 已经删除，不存在了
-	a.Equal(1, len(g.Routers()))
+	a.Equal(1, len(slices.Collect(g.Routers())))
 	def = newRouter(a, "host")
 	g.Add(&pathVersion{}, def)
-	a.Equal(2, len(g.Routers()))
+	a.Equal(2, len(slices.Collect(g.Routers())))
 
 	// 删除空名，不出错。
 	g.Remove("")
-	a.Equal(2, len(g.Routers()))
+	a.Equal(2, len(slices.Collect(g.Routers())))
 }
 
 func TestGroup_empty(t *testing.T) {
@@ -219,7 +221,12 @@ func TestGroup_routers_multiple(t *testing.T) {
 	g.Add(nil, def)
 	def.Get("/t1", rest.BuildHandler(a, 201, "", nil))
 
-	a.Equal(g.Routes(), map[string]map[string][]string{
+	routes := make(map[string]map[string][]string)
+	for r := range g.Routers() {
+		routes[r.Name()] = maps.Collect(r.Routes())
+	}
+
+	a.Equal(routes, map[string]map[string][]string{
 		"v1": {
 			"*":     {http.MethodOptions},
 			"/path": {http.MethodGet, http.MethodHead, http.MethodOptions},

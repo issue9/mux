@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2014-2024 caixw
+// SPDX-FileCopyrightText: 2014-2026 caixw
 //
 // SPDX-License-Identifier: MIT
 
@@ -9,9 +9,9 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/issue9/mux/v9"
-	"github.com/issue9/mux/v9/header"
-	"github.com/issue9/mux/v9/types"
+	"github.com/issue9/mux/v10"
+	"github.com/issue9/mux/v10/header"
+	"github.com/issue9/mux/v10/types"
 )
 
 const contextKeyParams contextKey = 0

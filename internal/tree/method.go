@@ -10,7 +10,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/issue9/mux/v9/types"
+	"github.com/issue9/mux/v10/types"
 )
 
 var (

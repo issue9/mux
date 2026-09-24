@@ -12,9 +12,9 @@ import (
 
 	"github.com/issue9/assert/v5"
 
-	"github.com/issue9/mux/v9/header"
-	"github.com/issue9/mux/v9/internal/syntax"
-	"github.com/issue9/mux/v9/types"
+	"github.com/issue9/mux/v10/header"
+	"github.com/issue9/mux/v10/internal/syntax"
+	"github.com/issue9/mux/v10/types"
 )
 
 // NewTestTree 返回以 [http.Handler] 作为参数实例化的 [Tree]

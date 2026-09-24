@@ -7,12 +7,11 @@ package mux
 
 import (
 	"iter"
-	"slices"
 
 	"github.com/issue9/errwrap"
 
-	"github.com/issue9/mux/v9/internal/syntax"
-	"github.com/issue9/mux/v9/internal/tree"
+	"github.com/issue9/mux/v10/internal/syntax"
+	"github.com/issue9/mux/v10/internal/tree"
 )
 
 var emptyInterceptors = syntax.NewInterceptors()
@@ -42,15 +41,8 @@ func URL(pattern string, params map[string]string) (string, error) {
 	return buf.String(), buf.Err
 }
 
-// Methods 返回库支持的请求方法
-//
-// Deprecated: 可以使用 slices.Collect(MethodsSeq)
-//
-//go:fix inline
-func Methods() []string { return slices.Collect(MethodsSeq()) }
-
-// MethodsSeq 遍历支持当前库支持的方法
-func MethodsSeq() iter.Seq[string] {
+// Methods 遍历支持当前库支持的方法
+func Methods() iter.Seq[string] {
 	return func(yield func(v string) bool) {
 		for _, m := range tree.Methods {
 			if !yield(m) {
@@ -60,15 +52,8 @@ func MethodsSeq() iter.Seq[string] {
 	}
 }
 
-// AnyMethods 返回 [Router.Any] 中添加的请求方法
-//
-// Deprecated: 可能使用 slices.Collect(AnyMethodsSeq)
-//
-//go:fix inline
-func AnyMethods() []string { return slices.Collect(AnyMethodsSeq()) }
-
-// AnyMethodsSeq 遍历支持 [Router.Any] 的方法
-func AnyMethodsSeq() iter.Seq[string] {
+// AnyMethods 遍历支持 [Router.Any] 的方法
+func AnyMethods() iter.Seq[string] {
 	return func(yield func(v string) bool) {
 		for _, m := range tree.AnyMethods {
 			if !yield(m) {

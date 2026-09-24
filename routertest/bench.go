@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2014-2024 caixw
+// SPDX-FileCopyrightText: 2014-2026 caixw
 //
 // SPDX-License-Identifier: MIT
 
@@ -12,7 +12,7 @@ import (
 	"runtime/metrics"
 	"testing"
 
-	"github.com/issue9/mux/v9"
+	"github.com/issue9/mux/v10"
 )
 
 // Bench 执行所有的性能测试

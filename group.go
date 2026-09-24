@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2014-2024 caixw
+// SPDX-FileCopyrightText: 2014-2026 caixw
 //
 // SPDX-License-Identifier: MIT
 
@@ -6,11 +6,12 @@ package mux
 
 import (
 	"fmt"
+	"iter"
 	"net/http"
 	"slices"
 
-	"github.com/issue9/mux/v9/internal/tree"
-	"github.com/issue9/mux/v9/types"
+	"github.com/issue9/mux/v10/internal/tree"
+	"github.com/issue9/mux/v10/types"
 )
 
 type (
@@ -132,19 +133,17 @@ func (g *Group[T]) Use(m ...types.Middleware[T]) {
 }
 
 // Routers 返回路由列表
-func (g *Group[T]) Routers() []*Router[T] { return g.routers }
-
-func (g *Group[T]) Remove(name string) {
-	g.routers = slices.DeleteFunc(g.routers, func(r *Router[T]) bool { return r.Name() == name })
+func (g *Group[T]) Routers() iter.Seq[*Router[T]] {
+	return func(yield func(*Router[T]) bool) {
+		for _, r := range g.routers {
+			if !yield(r) {
+				return
+			}
+		}
+	}
 }
 
-func (g *Group[T]) Routes() map[string]map[string][]string {
-	routers := g.Routers()
-
-	routes := make(map[string]map[string][]string, len(routers))
-	for _, r := range routers {
-		routes[r.Name()] = r.Routes()
-	}
-
-	return routes
+// Remove 删除指定名称的路路由对象
+func (g *Group[T]) Remove(name string) {
+	g.routers = slices.DeleteFunc(g.routers, func(r *Router[T]) bool { return r.Name() == name })
 }
