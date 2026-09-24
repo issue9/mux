@@ -291,7 +291,7 @@ func (c *cors) handle(node types.Node, wh http.Header, r *http.Request) {
 	allowOrigin := "*"
 	if !c.anyOrigins {
 		origin := r.Header.Get(header.Origin)
-		if slices.Index(c.Origins, origin) < 0 {
+		if !slices.Contains(c.Origins, origin) {
 			return
 		}
 		allowOrigin = origin

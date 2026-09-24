@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2014-2024 caixw
+// SPDX-FileCopyrightText: 2014-2026 caixw
 //
 // SPDX-License-Identifier: MIT
 
@@ -34,7 +34,7 @@ var (
 	methodIndexes = map[int]methodIndexEntity{}
 )
 
-const methodNotAllowed = "" // 表示 405 的处理方法在各个节点上的名称。
+const methodNotAllowed = "" // 表示 405 的处理方法在各个节点上的名称
 
 func init() {
 	methodIndexMap = make(map[string]int, len(Methods))

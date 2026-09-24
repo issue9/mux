@@ -366,6 +366,7 @@ func (resp *headResponse) Write(bs []byte) (int, error) {
 	l := len(bs)
 	resp.size += l
 
+	// 只记录了长度，不实际写入 bs
 	resp.Header().Set(header.ContentLength, strconv.Itoa(resp.size))
 	return l, nil
 }

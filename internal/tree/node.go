@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2014-2024 caixw
+// SPDX-FileCopyrightText: 2014-2026 caixw
 //
 // SPDX-License-Identifier: MIT
 
@@ -23,8 +23,8 @@ type node[T any] struct {
 	segment *syntax.Segment
 	pattern string
 
-	methodIndex int // 在 methodIndexes 中的索引值
-	handlers    map[string]T
+	methodIndex int          // 在 methodIndexes 中的索引值
+	handlers    map[string]T // 键名为请求方法，[methodNotAllowed] 也作为键名在此使用。
 
 	// 保存着 node 实例在 children 中的下标。
 	//

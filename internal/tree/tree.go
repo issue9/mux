@@ -225,7 +225,7 @@ func (tree *Tree[T]) match(ctx *types.Context) *node[T] {
 // Handler 查找与参数匹配的处理对象
 //
 // 如果未找到，也会返回相应在的处理对象，比如 tree.notFound 或是相应的 methodNotAllowed 方法。
-func (tree *Tree[T]) Handler(ctx *types.Context, method string) (types.Node, T, bool) {
+func (tree *Tree[T]) Handler(ctx *types.Context, method string) (n types.Node, handler T, found bool) {
 	ctx.SetRouterName(tree.Name())
 
 	if tree.hasTrace && method == http.MethodTrace {
