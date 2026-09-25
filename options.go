@@ -309,7 +309,7 @@ func (c *cors) headerIsAllowed(r *http.Request) bool {
 	}
 
 	for v := range strings.SplitSeq(h, ",") {
-		if slices.Index(c.AllowHeaders, strings.TrimSpace(v)) < 0 {
+		if !slices.Contains(c.AllowHeaders, strings.TrimSpace(v)) {
 			return false
 		}
 	}

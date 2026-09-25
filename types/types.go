@@ -109,8 +109,11 @@ type Node interface {
 	AllowHeader() string
 }
 
-// BuildNodeHandler 为节点生成处理方法
-type BuildNodeHandler[T any] func(Node) T
+// BuildNodeHandler 定义了为节点 node 生成路由处理方法的类型
+//
+// node 为节点类型，该值可能为空值，表示不针对特定的类型。
+// 返回的类型 T 为路由项的处理函数。
+type BuildNodeHandler[T any] func(node Node) T
 
 // Middleware 中间件
 type Middleware[T any] interface {

@@ -165,7 +165,7 @@ func TestCORS_sanitize(t *testing.T) {
 		Equal(c.exposedHeadersString, "h1,h2")
 }
 
-func TestCORS_Handle(t *testing.T) {
+func TestCORS_handle(t *testing.T) {
 	a := assert.New(t, false)
 	tr := tree.NewTestTree(a, false, nil, syntax.NewInterceptors())
 	a.NotError(tr.Add("/path", nil, nil, http.MethodGet, http.MethodDelete))
