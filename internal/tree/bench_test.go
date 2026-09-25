@@ -10,10 +10,29 @@ import (
 
 	"github.com/issue9/assert/v5"
 	"github.com/issue9/assert/v5/rest"
+	"github.com/issue9/errwrap"
 
 	"github.com/issue9/mux/v10/internal/syntax"
 	"github.com/issue9/mux/v10/types"
 )
+
+func BenchmarkTree_URL(b *testing.B) {
+	a := assert.New(b, false)
+	h := rest.BuildHandler(a, http.StatusCreated, "", nil)
+	tree := NewTestTree(a, false, nil, syntax.NewInterceptors())
+
+	a.NotError(tree.Add("/", h, nil, http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}", h, nil, http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}/author", h, nil, http.MethodGet))
+	a.NotError(tree.Add("/posts/{id}/{author:\\w+}/profile", h, nil, http.MethodGet))
+
+	buf := &errwrap.StringBuilder{}
+	var err error
+	for b.Loop() {
+		err = tree.URL(buf, "/posts/{id}/{author:\\w+}/profile", map[string]string{"id": "1", "author": "author-1"})
+	}
+	a.NotError(err)
+}
 
 func BenchmarkTree_Handler(b *testing.B) {
 	a := assert.New(b, false)

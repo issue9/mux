@@ -422,22 +422,27 @@ func TestTree_Add_Remove(t *testing.T) {
 	a.NotError(tree.Add("/posts/1/author", rest.BuildHandler(a, http.StatusAccepted, "", nil), nil, http.MethodGet))
 	a.NotError(tree.Add("/posts/{id}/{author:\\w+}/profile", rest.BuildHandler(a, 1, "", nil), nil, http.MethodGet))
 
-	a.NotEmpty(tree.node.find("/posts/1/author").handlers)
-	a.NotEmpty(tree.node.find("/posts/{-id}/ignore-name").handlers)
+	node, _ := tree.node.find("/posts/1/author", 0)
+	a.NotEmpty(node.handlers)
+	node, _ = tree.node.find("/posts/{-id}/ignore-name", 0)
+	a.NotEmpty(node.handlers)
 	tree.Remove("/posts/1/author", http.MethodGet)
-	a.Nil(tree.node.find("/posts/1/author"))
+	node, _ = tree.node.find("/posts/1/author", 0)
+	a.Nil(node)
 
 	tree.Remove("/posts/{id}/author", http.MethodGet) // 只删除 GET
-	a.NotNil(tree.node.find("/posts/{id}/author"))
+	node, _ = tree.node.find("/posts/{id}/author", 0)
+	a.NotNil(node)
 	tree.Remove("/posts/{id}/author") // 删除所有请求方法
-	a.Nil(tree.node.find("/posts/{id}/author"))
+	node, _ = tree.node.find("/posts/{id}/author", 0)
+	a.Nil(node)
 	tree.Remove("/posts/{id}/author") // 删除已经不存在的节点，不会报错，不发生任何事情
 
 	// addAny
 
 	tree = NewTestTree(a, false, nil, syntax.NewInterceptors())
 	a.NotError(tree.Add("/path", rest.BuildHandler(a, 201, "", nil), nil))
-	node := tree.node.find("/path")
+	node, _ = tree.node.find("/path", 0)
 	a.Equal(len(Methods), len(node.handlers))    // 多了 methodNotAllowed，但是 trace 并不保存在 handlers 中
 	a.Equal(len(Methods)-1, len(node.Methods())) // methodNotAllowed 和 trace 并不记入 node.Methods()
 	a.Equal(node.AllowHeader(), strings.Join(node.Methods(), ", "))
@@ -446,7 +451,7 @@ func TestTree_Add_Remove(t *testing.T) {
 
 	tree = NewTestTree(a, true, nil, syntax.NewInterceptors())
 	a.NotError(tree.Add("/path", rest.BuildHandler(a, http.StatusAccepted, "", nil), nil, http.MethodGet))
-	node = tree.node.find("/path")
+	node, _ = tree.node.find("/path", 0)
 	a.Equal(4, len(node.handlers)).
 		NotNil(node.handlers[http.MethodOptions])
 
@@ -460,7 +465,8 @@ func TestTree_Add_Remove(t *testing.T) {
 	a.NotError(tree.Add("/path", rest.BuildHandler(a, http.StatusAccepted, "", nil), nil, http.MethodDelete))
 	a.ErrorString(tree.Add("/path", rest.BuildHandler(a, http.StatusAccepted, "", nil), nil, http.MethodDelete), http.MethodDelete)
 	tree.Remove("/path", http.MethodOptions) // remove options 不发生任何操作
-	a.Equal(tree.node.find("/path").AllowHeader(), "DELETE, OPTIONS")
+	node, _ = tree.node.find("/path", 0)
+	a.Equal(node.AllowHeader(), "DELETE, OPTIONS")
 
 	a.ErrorString(tree.Add("/path/{id}/path/{id:\\d+}", rest.BuildHandler(a, 1, "", nil), nil, http.MethodHead), "存在相同名称的路由参数")
 	a.ErrorString(tree.Add("/path/{id}{id2:\\d+}", rest.BuildHandler(a, 1, "", nil), nil, http.MethodHead), "两个命名参数不能连续出现")
@@ -474,17 +480,17 @@ func TestTree_Add_Remove(t *testing.T) {
 	a.NotError(tree.Add("/posts/{id}/author/email", rest.BuildHandler(a, 204, "", nil), nil, http.MethodGet))
 
 	tree.Remove("/posts/{id}") // 删除 202
-	nn := tree.node.find("/posts/{id}")
+	nn, _ := tree.node.find("/posts/{id}", 0)
 	a.True(nn == nil || len(nn.handlers) == 0)
 
 	tree.Remove("/posts/{id}/author") // 删除 203
-	nn = tree.node.find("/posts/{id}/author")
+	nn, _ = tree.node.find("/posts/{id}/author", 0)
 	a.True(nn == nil || len(nn.handlers) == 0)
 
 	tree.Remove("/posts/{id}/author/email") // 删除 204
-	nn = tree.node.find("/posts/{id}/author/email")
+	nn, _ = tree.node.find("/posts/{id}/author/email", 0)
 	a.True(nn == nil || len(nn.handlers) == 0)
-	nn = tree.node.find("/posts") // /posts 之下已经完全没有内容，所有子节点都可以删除
+	nn, _ = tree.node.find("/posts", 0) // /posts 之下已经完全没有内容，所有子节点都可以删除
 	a.NotEmpty(nn.handlers).Empty(nn.children)
 }
 
@@ -540,14 +546,21 @@ func TestTree_find(t *testing.T) {
 	a.NotError(tree.Add("/posts/1/author", h, nil, http.MethodGet))
 	a.NotError(tree.Add("/posts/{id}/{author:\\w+}/profile", h, nil, http.MethodGet))
 
-	a.Equal(tree.Find("/").segment.Value, "/")
-	a.Equal(tree.Find("/posts/{id}").segment.Value, "{id}")
-	a.Equal(tree.Find("/posts/{-id:\\d+}/authors").segment.Value, "{-id:\\d+}/authors")
-	a.Equal(tree.Find("/posts/{id}/author").segment.Value, "author")
-	a.Equal(tree.Find("/posts/{id}/{author:\\w+}/profile").segment.Value, "{author:\\w+}/profile")
+	n, depth := tree.find("/")
+	a.Equal(n.segment.Value, "/").Equal(depth, 1)
+	n, depth = tree.find("/posts/{id}")
+	a.Equal(n.segment.Value, "{id}").Equal(depth, 3)
+	n, depth = tree.find("/posts/{-id:\\d+}/authors")
+	a.Equal(n.segment.Value, "{-id:\\d+}/authors").Equal(depth, 3)
+	n, depth = tree.find("/posts/{id}/author")
+	a.Equal(n.segment.Value, "author").Equal(depth, 4)
+	n, depth = tree.find("/posts/{id}/{author:\\w+}/profile")
+	a.Equal(n.segment.Value, "{author:\\w+}/profile").Equal(depth, 4)
 
-	a.Nil(tree.Find("/not-exists"))
-	a.Nil(tree.Find("/posts/").handlers) // 空的节点，但是有子元素。
+	n, depth = tree.find("/not-exists")
+	a.Nil(n).Equal(depth, 0)
+	n, depth = tree.find("/posts/")
+	a.Nil(n.handlers).Equal(depth, 2) // 空的节点，但是有子元素。
 }
 
 func TestTree_URL(t *testing.T) {

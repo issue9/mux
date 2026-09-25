@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"iter"
 	"net/http"
+	"slices"
 	"sync"
 
 	"github.com/issue9/errwrap"
@@ -165,7 +166,7 @@ func (tree *Tree[T]) Remove(pattern string, methods ...string) {
 		defer tree.locker.Unlock()
 	}
 
-	child := tree.Find(pattern)
+	child, _ := tree.find(pattern)
 	if child == nil {
 		return
 	}
@@ -274,28 +275,24 @@ func (tree *Tree[T]) Routes() iter.Seq2[string, []string] {
 	}
 }
 
-// Find 查找匹配的节点
-func (tree *Tree[T]) Find(pattern string) *node[T] { return tree.node.find(pattern) }
+// find 查找匹配的节点
+func (tree *Tree[T]) find(pattern string) (*node[T], int) { return tree.node.find(pattern, 0) }
 
 // URL 将 ps 填入 pattern 生成 URL
 //
 // NOTE: 会检测 pattern 是否存在于 tree 中。
 func (tree *Tree[T]) URL(buf *errwrap.StringBuilder, pattern string, ps map[string]string) error {
-	n := tree.Find(pattern)
+	n, size := tree.find(pattern)
 	if n == nil {
 		return fmt.Errorf("%s 并不是一条有效的注册路由项", pattern)
 	}
 
-	nodes := make([]*node[T], 0, 5)
+	nodes := make([]*node[T], 0, size)
 	for curr := n; curr.parent != nil; curr = curr.parent { // 从尾部向上开始获取节点
 		nodes = append(nodes, curr)
 	}
-	l := len(nodes)
-	for i, j := 0, l-1; i < j; i, j = i+1, j-1 {
-		nodes[i], nodes[j] = nodes[j], nodes[i]
-	}
 
-	for _, node := range nodes {
+	for _, node := range slices.Backward(nodes) {
 		s := node.segment
 		switch s.Type {
 		case syntax.String:

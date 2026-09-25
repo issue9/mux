@@ -140,20 +140,23 @@ func (n *node[T]) sort() {
 }
 
 // 查找路由项，不存在返回 nil
-func (n *node[T]) find(pattern string) *node[T] {
+//
+// depth 当前节点在整个节点链上的位置，顶层为 0。
+// 返回的数值为返回节点在整个节点链上的位置。
+func (n *node[T]) find(pattern string, depth int) (*node[T], int) {
 	for _, child := range n.children {
 		if child.segment.Value == pattern {
-			return child
+			return child, depth + 1
 		}
 
 		if strings.HasPrefix(pattern, child.segment.Value) {
-			if nn := child.find(pattern[len(child.segment.Value):]); nn != nil {
-				return nn
+			if nn, d := child.find(pattern[len(child.segment.Value):], depth+1); nn != nil {
+				return nn, d
 			}
 		}
 	}
 
-	return nil
+	return nil, 0
 }
 
 // 清除路由项
