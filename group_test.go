@@ -18,7 +18,8 @@ import (
 
 func newGroup(a *assert.Assertion, o ...Option) *Group[http.Handler] {
 	a.TB().Helper()
-	g := NewGroup(call, http.NotFoundHandler(), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
+	var trace http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { Trace(w, r, true) })
+	g := NewGroup(call, http.NotFoundHandler(), trace, methodNotAllowedBuilder, optionsHandlerBuilder, o...)
 	a.NotNil(g)
 	return g
 }

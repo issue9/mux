@@ -14,7 +14,7 @@ import (
 )
 
 func TestContextRouter_Params(t *testing.T) {
-	tt := routertest.NewTester[Handler](call, HandlerFunc(notFound), methodNotAllowedBuilder, optionsHandlerBuilder)
+	tt := routertest.NewTester[Handler](call, HandlerFunc(notFound), HandlerFunc(trace), methodNotAllowedBuilder, optionsHandlerBuilder)
 
 	t.Run("params", func(t *testing.T) {
 		a := assert.New(t, false)

@@ -57,8 +57,7 @@ func New[T any](
 	lock bool,
 	i *syntax.Interceptors,
 	notFound T,
-	trace any, // 处理 TRACE 请求的方法。之所以使用 any 类型，是因为需要与 nil 作比较，T 类型不支持比较。
-	methodNotAllowedBuilder, optionsBuilder types.BuildNodeHandler[T],
+	traceBuilder, methodNotAllowedBuilder, optionsBuilder types.BuildNodeHandler[T],
 ) *Tree[T] {
 	s, err := i.NewSegment("")
 	if err != nil {
@@ -69,11 +68,7 @@ func New[T any](
 		panic("参数 name 不能为空")
 	}
 
-	hasTrace := trace != nil
-	var t T
-	if hasTrace {
-		t = trace.(T)
-	}
+	hasTrace := traceBuilder != nil
 
 	tree := &Tree[T]{
 		methods: make(map[string]int, len(Methods)),
@@ -81,7 +76,6 @@ func New[T any](
 
 		interceptors:            i,
 		name:                    name,
-		trace:                   t,
 		hasTrace:                hasTrace,
 		notFound:                notFound,
 		optionsBuilder:          optionsBuilder,
@@ -90,6 +84,9 @@ func New[T any](
 	tree.node.root = tree
 	tree.node.handlers = map[string]T{
 		http.MethodOptions: tree.optionsBuilder(tree.node),
+	}
+	if tree.hasTrace {
+		tree.trace = traceBuilder(tree.node)
 	}
 
 	if lock {

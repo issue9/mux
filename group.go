@@ -23,6 +23,7 @@ type (
 		call           CallFunc[T]
 		notFound       T // 所有路由都找不着时调用的方法，该方法应用的中间件中 router 参数是为空的。
 		originNotFound T // 这是未应用中间件的 notFound
+		originTrace    T
 		methodNotAllowedBuilder,
 		optionsBuilder types.BuildNodeHandler[T]
 		options     []Option
@@ -36,6 +37,7 @@ type (
 func NewGroup[T any](
 	call CallFunc[T],
 	notFound T,
+	trace T,
 	methodNotAllowedBuilder, optionsBuilder types.BuildNodeHandler[T],
 	o ...Option,
 ) *Group[T] {
@@ -51,6 +53,7 @@ func NewGroup[T any](
 		call:                    call,
 		notFound:                notFound,
 		originNotFound:          notFound,
+		originTrace:             trace,
 		methodNotAllowedBuilder: methodNotAllowedBuilder,
 		optionsBuilder:          optionsBuilder,
 		options:                 o,
@@ -88,7 +91,7 @@ func (g *Group[T]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // 新路由会继承 [NewGroup] 中指定的参数，其中的 o 可以覆盖由 [NewGroup] 中指定的相关参数；
 func (g *Group[T]) New(name string, matcher Matcher, o ...Option) *Router[T] {
 	o = slices.Concat(g.options, o)
-	r := NewRouter(name, g.call, g.originNotFound, g.methodNotAllowedBuilder, g.optionsBuilder, o...)
+	r := NewRouter(name, g.call, g.originNotFound, g.originTrace, g.methodNotAllowedBuilder, g.optionsBuilder, o...)
 	g.Add(matcher, r)
 	return r
 }

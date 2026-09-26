@@ -52,11 +52,13 @@ func methodNotAllowedBuilder(p types.Node) Handler {
 
 func notFound(ctx *CTX) { ctx.W.WriteHeader(http.StatusNotFound) }
 
+func trace(ctx *CTX) { mux.Trace(ctx.W, ctx.R, true) }
+
 func NewRouters(o ...mux.Option) *Routers {
-	return mux.NewGroup[Handler](call, HandlerFunc(notFound), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
+	return mux.NewGroup[Handler](call, HandlerFunc(notFound), HandlerFunc(trace), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
 }
 
 // NewRouter 声明适用于官方 http.Handler 接口的路由
 func NewRouter(name string, o ...mux.Option) *Router {
-	return mux.NewRouter[Handler](name, call, HandlerFunc(notFound), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
+	return mux.NewRouter[Handler](name, call, HandlerFunc(notFound), HandlerFunc(trace), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
 }

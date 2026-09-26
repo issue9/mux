@@ -45,13 +45,17 @@ func optionsHandlerBuilder(p types.Node) http.Handler {
 	})
 }
 
+func trace(w http.ResponseWriter, r *http.Request) {
+	mux.Trace(w, r, true)
+}
+
 func NewRouters(o ...mux.Option) *Routers {
-	return mux.NewGroup(call, http.NotFoundHandler(), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
+	return mux.NewGroup[http.Handler](call, http.NotFoundHandler(), http.HandlerFunc(trace), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
 }
 
 // NewRouter 声明适用于官方 [http.Handler] 接口的路由
 func NewRouter(name string, o ...mux.Option) *Router {
-	return mux.NewRouter(name, call, http.NotFoundHandler(), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
+	return mux.NewRouter[http.Handler](name, call, http.NotFoundHandler(), http.HandlerFunc(trace), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
 }
 
 // GetParams 获取当前请求实例上的参数列表

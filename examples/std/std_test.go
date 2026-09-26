@@ -23,7 +23,7 @@ var (
 )
 
 func TestRouter(t *testing.T) {
-	tt := routertest.NewTester(call, http.NotFoundHandler(), methodNotAllowedBuilder, optionsHandlerBuilder)
+	tt := routertest.NewTester[http.Handler](call, http.NotFoundHandler(), http.HandlerFunc(trace), methodNotAllowedBuilder, optionsHandlerBuilder)
 
 	t.Run("params", func(t *testing.T) {
 		a := assert.New(t, false)

@@ -7,10 +7,12 @@ package mux
 
 import (
 	"iter"
+	"net/http"
 
 	"github.com/issue9/errwrap"
 
 	"github.com/issue9/mux/v10/internal/syntax"
+	"github.com/issue9/mux/v10/internal/trace"
 	"github.com/issue9/mux/v10/internal/tree"
 )
 
@@ -21,6 +23,11 @@ func CheckSyntax(pattern string) error {
 	_, err := emptyInterceptors.Split(pattern)
 	return err
 }
+
+// Trace 一种简单的处理 TRACE 请求的方法
+//
+// 可以传递给 [NewRouter] 或是 [NewGroup] 的 trace 参数。
+func Trace(w http.ResponseWriter, r *http.Request, body bool) { trace.Trace(w, r, body) }
 
 // URL 根据参数生成地址
 //

@@ -30,7 +30,8 @@ var (
 
 func newRouter(a *assert.Assertion, name string, o ...Option) *Router[http.Handler] {
 	a.TB().Helper()
-	r := NewRouter(name, call, http.NotFoundHandler(), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
+	var trace http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { Trace(w, r, true) })
+	r := NewRouter(name, call, http.NotFoundHandler(), trace, methodNotAllowedBuilder, optionsHandlerBuilder, o...)
 	a.NotNil(r)
 	return r
 }
@@ -298,7 +299,7 @@ func TestRouter_Resource(t *testing.T) {
 func TestPrefix_Resource(t *testing.T) {
 	a := assert.New(t, false)
 
-	def := newRouter(a, "def", WithTrace(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { Trace(w, r, true) })))
+	def := newRouter(a, "def", WithTrace(true))
 	a.NotNil(def)
 
 	def.Use(tree.BuildTestMiddleware(a, "r"))
