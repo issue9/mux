@@ -13,13 +13,13 @@ import (
 
 func BenchmarkContext(b *testing.B) {
 	b.Run("no destroy", func(b *testing.B) {
-		for range b.N {
+		for b.Loop() {
 			NewContext()
 		}
 	})
 
 	b.Run("destroy", func(b *testing.B) {
-		for range b.N {
+		for b.Loop() {
 			NewContext().Destroy()
 		}
 	})
