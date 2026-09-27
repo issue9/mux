@@ -355,11 +355,11 @@ func TestOptions_sanitize(t *testing.T) {
 
 	// URLDomain
 
-	o, err = buildOption(func(o *options) { o.urlDomain = "https://example.com" })
-	a.NotError(err).NotNil(o).Equal(o.urlDomain, "https://example.com")
+	o, err = buildOption(func(o *options) { o.pathPrefix = "https://example.com" })
+	a.NotError(err).NotNil(o).Equal(o.pathPrefix, "https://example.com")
 
-	o, err = buildOption(func(o *options) { o.urlDomain = "https://example.com/" })
-	a.NotError(err).NotNil(o).Equal(o.urlDomain, "https://example.com")
+	o, err = buildOption(func(o *options) { o.pathPrefix = "https://example.com/" })
+	a.NotError(err).NotNil(o).Equal(o.pathPrefix, "https://example.com")
 
 	o, err = buildOption(func(o *options) { o.cors = &cors{AllowCredentials: true, Origins: []string{"*"}} })
 	a.Error(err).Nil(o)

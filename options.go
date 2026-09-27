@@ -29,7 +29,7 @@ type (
 		lock            bool
 		cors            *cors
 		interceptors    *syntax.Interceptors
-		urlDomain       string
+		pathPrefix      string
 		recoverFunc     RecoverFunc
 	}
 
@@ -71,8 +71,8 @@ func WithTrace(v bool) Option { return func(o *options) { o.trace = v } }
 // 如果需要频繁在运行时添加和删除路由项，那么应当添加此选项。
 func WithLock(l bool) Option { return func(o *options) { o.lock = l } }
 
-// WithURLDomain 为 [Router.URL] 生成的地址带上域名
-func WithURLDomain(prefix string) Option { return func(o *options) { o.urlDomain = prefix } }
+// WithPathPrefix 为 [Router.URL] 生成的地址添加前缀
+func WithPathPrefix(prefix string) Option { return func(o *options) { o.pathPrefix = prefix } }
 
 // WithRecovery 用于指定路由 panic 之后的处理方法
 //
@@ -197,9 +197,9 @@ func (o *options) sanitize() error {
 		return err
 	}
 
-	l := len(o.urlDomain)
-	if l != 0 && o.urlDomain[l-1] == '/' {
-		o.urlDomain = o.urlDomain[:l-1]
+	l := len(o.pathPrefix)
+	if l != 0 && o.pathPrefix[l-1] == '/' {
+		o.pathPrefix = o.pathPrefix[:l-1]
 	}
 
 	return nil

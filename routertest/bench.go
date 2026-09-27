@@ -43,7 +43,7 @@ func (t *Tester[T]) Bench(b *testing.B, h T) {
 func (t *Tester[T]) benchURL(b *testing.B, h T) {
 	const domain = "https://github.com"
 
-	router := mux.NewRouter("test", t.call, t.notFound, t.trace, t.methodNotAllowed, t.options, mux.WithLock(true), mux.WithURLDomain(domain))
+	router := mux.NewRouter("test", t.call, t.notFound, t.trace, t.methodNotAllowed, t.options, mux.WithLock(true), mux.WithPathPrefix(domain))
 	for _, api := range apis {
 		router.Handle(api.pattern, h, nil, api.method)
 	}

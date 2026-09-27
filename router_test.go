@@ -19,6 +19,8 @@ import (
 	"github.com/issue9/mux/v10/types"
 )
 
+var _ http.Handler = &Router[struct{}]{}
+
 func call(w http.ResponseWriter, r *http.Request, ps types.Route, h http.Handler) {
 	h.ServeHTTP(w, r)
 }
@@ -479,7 +481,7 @@ func TestPrefix_Prefix(t *testing.T) {
 
 func TestPrefix_URL(t *testing.T) {
 	a := assert.New(t, false)
-	def := newRouter(a, "def", WithAllowedCORS(3600), WithURLDomain("https://example.com"))
+	def := newRouter(a, "def", WithAllowedCORS(3600), WithPathPrefix("https://example.com"))
 	a.NotNil(def)
 
 	// 非正则

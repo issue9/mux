@@ -16,6 +16,8 @@ import (
 	"github.com/issue9/mux/v10/internal/tree"
 )
 
+var _ http.Handler = &Group[struct{}]{}
+
 func newGroup(a *assert.Assertion, o ...Option) *Group[http.Handler] {
 	a.TB().Helper()
 	var trace http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { Trace(w, r, true) })

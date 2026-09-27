@@ -88,7 +88,7 @@ func NewRouter[T any](
 		call: call,
 
 		cors:            opt.cors,
-		urlDomain:       opt.urlDomain,
+		urlDomain:       opt.pathPrefix,
 		recoverFunc:     opt.recoverFunc,
 		caseInsensitive: opt.caseInsensitive,
 	}
