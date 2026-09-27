@@ -5,7 +5,7 @@
 package mux
 
 import (
-	"log"
+	"log/slog"
 	"mime"
 	"net/http"
 	"strings"
@@ -197,7 +197,7 @@ func NewPathVersion(param string, version ...string) Matcher {
 // NewHeaderVersion 声明匹配报头 Accept 中版本号的 [Matcher] 实现
 //
 // param 将版本号作为参数保存到上下文中时的名称，如果不需要保存参数，可以设置为空值；
-// errlog 错误日志输出通道，如果为空则采用 [log.Default]；
+// errlog 错误日志输出通道，如果为空则采用 [slog.Error]；
 // key 表示在 accept 报头中的表示版本号的参数名，如果为空则采用 version；
 // version 版本的值，可能为空，表示匹配任意值；
 func NewHeaderVersion(param, key string, errlog func(error), version ...string) Matcher {
@@ -206,7 +206,7 @@ func NewHeaderVersion(param, key string, errlog func(error), version ...string) 
 	}
 
 	if errlog == nil {
-		errlog = func(err error) { log.Println(err) }
+		errlog = func(err error) { slog.Error(err.Error()) }
 	}
 
 	return &headerVersion{

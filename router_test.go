@@ -56,6 +56,19 @@ func TestRouterByHTTPServer(t *testing.T) {
 	s.NewRequest(http.MethodHead, "/200").Do(nil).Status(200).BodyEmpty() // 不调用 WriteHeader
 }
 
+func TestCaseInsensitive(t *testing.T) {
+	a := assert.New(t, false)
+
+	r := newRouter(a, "def", WithLock(true), WithCaseInsensitive(true))
+	r.Get("/abc", rest.BuildHandler(a, 201, "201", nil))
+	rest.Get(a, "/abc").Do(r).Status(201).StringBody("201")
+	rest.Get(a, "/ABC").Do(r).Status(201).StringBody("201")
+
+	r = newRouter(a, "def", WithLock(true))
+	r.Get("/abc", rest.BuildHandler(a, 201, "201", nil))
+	rest.Get(a, "/ABC").Do(r).Status(404)
+}
+
 func TestRouter(t *testing.T) {
 	a := assert.New(t, false)
 	r := newRouter(a, "def", WithLock(true))

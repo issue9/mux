@@ -24,12 +24,13 @@ type (
 	Option func(*options)
 
 	options struct {
-		trace        bool
-		lock         bool
-		cors         *cors
-		interceptors *syntax.Interceptors
-		urlDomain    string
-		recoverFunc  RecoverFunc
+		caseInsensitive bool
+		trace           bool
+		lock            bool
+		cors            *cors
+		interceptors    *syntax.Interceptors
+		urlDomain       string
+		recoverFunc     RecoverFunc
 	}
 
 	cors struct {
@@ -54,6 +55,12 @@ type (
 
 	InterceptorFunc = syntax.InterceptorFunc
 )
+
+// WithCaseInsensitive 不区分大小写
+//
+// 该行为只针对客户端的请求地址，会将 [Request.URL.Path] 转换为小写进行对比，但是不会改变 [Request.URL.Path] 本身。
+// 该开关不会影响由 [Router.Add] 等一系列添加路由项的 pattern 参数。
+func WithCaseInsensitive(v bool) Option { return func(o *options) { o.caseInsensitive = v } }
 
 // WithTrace 是否启用 TRACE 方法
 func WithTrace(v bool) Option { return func(o *options) { o.trace = v } }
@@ -244,7 +251,7 @@ func (c *cors) handle(node types.Node, wh http.Header, r *http.Request) {
 
 	if preflight {
 		// Access-Control-Allow-Methods
-		if slices.Index(node.Methods(), reqMethod) < 0 {
+		if !slices.Contains(node.Methods(), reqMethod) {
 			return
 		}
 		wh.Set(header.AccessControlAllowMethods, node.AllowHeader())
@@ -293,14 +300,11 @@ func (c *cors) headerIsAllowed(r *http.Request) bool {
 		return true
 	}
 
-	h := strings.TrimSpace(r.Header.Get(header.AccessControlRequestHeaders))
-	if h == "" {
-		return true
-	}
-
-	for v := range strings.SplitSeq(h, ",") {
-		if !slices.Contains(c.AllowHeaders, strings.TrimSpace(v)) {
-			return false
+	if h := strings.TrimSpace(r.Header.Get(header.AccessControlRequestHeaders)); h != "" {
+		for v := range strings.SplitSeq(h, ",") {
+			if !slices.Contains(c.AllowHeaders, strings.TrimSpace(v)) {
+				return false
+			}
 		}
 	}
 

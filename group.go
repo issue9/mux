@@ -83,7 +83,7 @@ func (g *Group[T]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 		}()
 	}
-	g.call(w, r, ctx, g.notFound)
+	g.call(w, r, ctx, g.notFound) // 404 不需要处理 CORS
 }
 
 // New 声明新路由

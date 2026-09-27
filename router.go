@@ -8,6 +8,7 @@ import (
 	"iter"
 	"net/http"
 	"slices"
+	"strings"
 
 	"github.com/issue9/errwrap"
 
@@ -28,10 +29,11 @@ type (
 		call CallFunc[T]
 		ms   []types.Middleware[T]
 
-		cors        *cors
-		urlDomain   string
-		recoverFunc RecoverFunc
-		matcher     Matcher
+		cors            *cors
+		urlDomain       string
+		recoverFunc     RecoverFunc
+		matcher         Matcher
+		caseInsensitive bool
 	}
 
 	// CallFunc 指定如何调用用户给定的类型 T
@@ -85,9 +87,10 @@ func NewRouter[T any](
 		tree: tree.New(name, opt.lock, opt.interceptors, notFound, traceBuilder, methodNotAllowedBuilder, optionsBuilder),
 		call: call,
 
-		cors:        opt.cors,
-		urlDomain:   opt.urlDomain,
-		recoverFunc: opt.recoverFunc,
+		cors:            opt.cors,
+		urlDomain:       opt.urlDomain,
+		recoverFunc:     opt.recoverFunc,
+		caseInsensitive: opt.caseInsensitive,
 	}
 
 	return r
@@ -212,6 +215,10 @@ func (r *Router[T]) serveContext(w http.ResponseWriter, req *http.Request, ctx *
 	}
 
 	ctx.Path = req.URL.Path
+	if r.caseInsensitive {
+		ctx.Path = strings.ToLower(req.URL.Path)
+	}
+
 	node, h, ok := r.tree.Handler(ctx, req.Method)
 	ctx.SetNode(node)
 
