@@ -31,7 +31,7 @@ func (t *Tester[T]) Bench(b *testing.B, h T) {
 		t.benchURL(b, h)
 	})
 
-	b.Run("Add", func(b *testing.B) {
+	b.Run("AddServe", func(b *testing.B) {
 		t.benchAddAndServeHTTP(b, h)
 	})
 

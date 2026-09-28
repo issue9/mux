@@ -21,7 +21,7 @@ type Segment struct {
 	Value  string // 节点上的原始内容
 	Name   string // 当前节点的参数名称，适用非字符节点。
 	rule   string // 节点的规则值，即 : 之后的部分，非字符串节点有效。
-	Suffix string // 保存参数名之后的字符串，比如 "{id}/author" 此值为 "/author"，非 endpoint 的拦截器和命名节点不能为空。。
+	Suffix string // 保存参数名之后的字符串，比如 "{id}/author" 此值为 "/author"，非 endpoint 的拦截器和命名节点不能为空。
 
 	// TODO: Type、ambiguousLength、Endpoint 和 ignoreName 采用一个 int 字段代替
 

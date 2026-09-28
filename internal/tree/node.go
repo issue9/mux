@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	indexesSize  = 5 // Node.children 的数量只有达到此值时，才会为其建立 indexes 索引表。
-	handlersSize = 3 // Node.handlers 的初始容量
+	indexesSize  = 5 // node.children 的数量只有达到此值时，才会为其建立 indexes 索引表。
+	handlersSize = 3 // node.handlers 的初始容量
 )
 
 type node[T any] struct {
@@ -26,7 +26,7 @@ type node[T any] struct {
 	optionsIndex int          // 当前节点所支持的请求方法在 [optionsIndexes] 中的索引值
 	handlers     map[string]T // 键名为请求方法，[methodNotAllowed] 也作为键名在此使用。
 
-	// 保存着 node 实例在 children 中的下标。
+	// 保存着 node 实例在 children 中的下标
 	//
 	// 所有节点类型为字符串的子节点，其首字符必定是不同的（相同的都提升到父节点中），
 	// 根据此特性，可以将所有字符串类型的首字符做个索引，这样字符串类型节点的比较，

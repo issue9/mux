@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-// package cors 跨域的相关操作
+// Package cors 跨域的相关操作
 package cors
 
 import (
