@@ -64,7 +64,7 @@ func BenchmarkSegment_Match_String(b *testing.B) {
 		ctx.Path = "/posts/author"
 		ok = seg.Match(ctx)
 	}
-	a.True(ok).Zero(ctx.Count())
+	a.True(ok).Zero(ctx.ParamsCount())
 }
 
 func BenchmarkSegment_Match_Regexp(b *testing.B) {

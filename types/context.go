@@ -16,10 +16,10 @@ var contextPool = &sync.Pool{New: func() any { return &Context{} }}
 //
 // 实现了 [Route] 接口，同时自身也实现了 [Params] 接口作为 [Route.Params] 的返回值。
 type Context struct {
-	Path       string // 实际请求的路径信息
-	params     map[string]string
-	routerName string
-	node       Node
+	Path   string // 实际请求的路径信息
+	params map[string]string
+	name   string
+	node   Node
 }
 
 func NewContext() *Context {
@@ -31,19 +31,17 @@ func NewContext() *Context {
 func (ctx *Context) Reset() {
 	ctx.Path = ""
 	clear(ctx.params)
-	ctx.routerName = ""
+	ctx.name = ""
 	ctx.node = nil
 }
 
-func (ctx *Context) Params() Params { return ctx }
-
 func (ctx *Context) SetNode(n Node) { ctx.node = n }
 
-func (ctx *Context) SetRouterName(n string) { ctx.routerName = n }
+func (ctx *Context) SetRouterName(n string) { ctx.name = n }
 
 func (ctx *Context) Node() Node { return ctx.node }
 
-func (ctx *Context) RouterName() string { return ctx.routerName }
+func (ctx *Context) Name() string { return ctx.name }
 
 func (ctx *Context) Destroy() {
 	const destroyMaxSize = 30
@@ -123,7 +121,7 @@ func (ctx *Context) Get(key string) (string, bool) {
 	return v, f
 }
 
-func (ctx *Context) Count() int { return len(ctx.params) }
+func (ctx *Context) ParamsCount() int { return len(ctx.params) }
 
 func (ctx *Context) Set(k, v string) {
 	if ctx.params == nil {
@@ -139,7 +137,7 @@ func (ctx *Context) Delete(k string) {
 	}
 }
 
-func (ctx *Context) IterSeq() iter.Seq2[string, string] {
+func (ctx *Context) Params() iter.Seq2[string, string] {
 	return func(yield func(string, string) bool) {
 		for k, v := range ctx.params {
 			if !yield(k, v) {

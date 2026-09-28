@@ -94,7 +94,7 @@ func (t *tester) paramsTrue(method, path string, code int, params map[string]str
 
 	_, _, ps := t.handler(method, path, code)
 	if len(params) > 0 {
-		t.a.Equal(len(params), ps.Count())
+		t.a.Equal(len(params), ps.ParamsCount())
 		for k, v := range params {
 			vv, found := ps.Get(k)
 			t.a.True(found).Equal(vv, v)
@@ -608,7 +608,7 @@ func TestTree_match(t *testing.T) {
 	a.True(ok).
 		NotNil(node).
 		NotNil(h).
-		Zero(ctx.Count())
+		Zero(ctx.ParamsCount())
 
 	w := httptest.NewRecorder()
 	r := rest.NewRequest(a, http.MethodOptions, "/path1").Request()
@@ -634,7 +634,7 @@ func TestTree_match(t *testing.T) {
 	a.True(ok).
 		NotNil(node).
 		NotNil(h).
-		Zero(ctx.Count())
+		Zero(ctx.ParamsCount())
 
 	w = httptest.NewRecorder()
 	r = rest.NewRequest(a, http.MethodOptions, "/path2").Request()

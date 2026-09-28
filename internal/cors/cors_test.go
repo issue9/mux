@@ -71,7 +71,7 @@ func TestCORS_Handle(t *testing.T) {
 	ctx := types.NewContext()
 	ctx.Path = "/path"
 	node, _, exists := tr.Handler(ctx, http.MethodGet)
-	a.NotNil(node).Zero(ctx.Count()).True(exists)
+	a.NotNil(node).Zero(ctx.ParamsCount()).True(exists)
 
 	// deny
 

@@ -31,7 +31,7 @@ func TestRouter(t *testing.T) {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				p := GetParams(r)
 				if p != nil {
-					for k, v := range p.Params().IterSeq() {
+					for k, v := range p.Params() {
 						ctx.Set(k, v)
 					}
 				}
@@ -65,8 +65,8 @@ func TestWithValue(t *testing.T) {
 	r = WithValue(r, pp)
 	ps := GetParams(r)
 	a.NotNil(ps).
-		Equal(ps.Params().MustString("k2", "def"), "v2").
-		Equal(ps.Params().MustString("k1", "def"), "v1")
+		Equal(ps.MustString("k2", "def"), "v2").
+		Equal(ps.MustString("k1", "def"), "v1")
 }
 
 func TestGetParams(t *testing.T) {
@@ -81,5 +81,5 @@ func TestGetParams(t *testing.T) {
 	r = rest.Get(a, "/to/path").Request()
 	ctx := context.WithValue(r.Context(), contextKeyParams, c)
 	r = r.WithContext(ctx)
-	a.Equal(GetParams(r).Params().MustString("key1", "def"), "1")
+	a.Equal(GetParams(r).MustString("key1", "def"), "1")
 }

@@ -21,7 +21,7 @@ func TestContextRouter_Params(t *testing.T) {
 		tt.Params(a, func(ctx *types.Context) Handler {
 			return HandlerFunc(func(c *CTX) {
 				if c.P != nil {
-					for k, v := range c.P.Params().IterSeq() {
+					for k, v := range c.P.Params() {
 						ctx.Set(k, v)
 					}
 				}

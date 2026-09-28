@@ -24,7 +24,7 @@ func BenchmarkCORS_Handle(b *testing.B) {
 	ctx := types.NewContext()
 	ctx.Path = "/path"
 	node, _, exists := tr.Handler(ctx, http.MethodGet)
-	a.NotNil(node).Zero(ctx.Count()).True(exists)
+	a.NotNil(node).Zero(ctx.ParamsCount()).True(exists)
 
 	b.Run("deny", func(b *testing.B) {
 		c := &CORS{}

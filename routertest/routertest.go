@@ -50,7 +50,7 @@ func (t *Tester[T]) Params(a *assert.Assertion, f func(ctx *types.Context) T) {
 
 		a.Equal(w.Code, status)
 		if len(ps) > 0 { // 由于 globalParams 是公用数据，会保存上一次获取的值，所以只在有值时才比较
-			a.Equal(len(ps), globalParams.Count())
+			a.Equal(len(ps), globalParams.ParamsCount())
 			for k, v := range ps {
 				vv, found := globalParams.Get(k)
 				a.True(found).Equal(vv, v)

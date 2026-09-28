@@ -155,15 +155,15 @@ func TestContext_Set(t *testing.T) {
 
 	ctx := NewContext()
 	ctx.Set("k1", "v1")
-	a.Equal(ctx.Count(), 1)
+	a.Equal(ctx.ParamsCount(), 1)
 
 	ctx.Set("k1", "v2")
-	a.Equal(ctx.Count(), 1).
+	a.Equal(ctx.ParamsCount(), 1).
 		Equal(ctx.params, map[string]string{"k1": "v2"})
 
 	ctx.Set("k2", "v2")
 	a.Equal(ctx.params, map[string]string{"k1": "v2", "k2": "v2"}).
-		Equal(ctx.Count(), 2)
+		Equal(ctx.ParamsCount(), 2)
 }
 
 func TestContext_Get(t *testing.T) {
@@ -188,15 +188,15 @@ func TestContext_Delete(t *testing.T) {
 	ctx.Set("k2", "v2")
 
 	ctx.Delete("k1")
-	a.Equal(1, ctx.Count())
+	a.Equal(1, ctx.ParamsCount())
 	ctx.Delete("k1") // 多次删除同一个值
-	a.Equal(1, ctx.Count())
+	a.Equal(1, ctx.ParamsCount())
 
 	ctx.Delete("k2")
-	a.Equal(0, ctx.Count())
+	a.Equal(0, ctx.ParamsCount())
 
 	ctx.Set("k3", "v3")
-	a.Equal(1, ctx.Count())
+	a.Equal(1, ctx.ParamsCount())
 }
 
 func TestContext_IterSeq(t *testing.T) {
@@ -207,7 +207,7 @@ func TestContext_IterSeq(t *testing.T) {
 	ps.Path = "/path"
 	ps.Set("k1", "v1")
 	ps.Set("k2", "v2")
-	for range ps.IterSeq() {
+	for range ps.Params() {
 		size++
 	}
 	a.Equal(2, size)

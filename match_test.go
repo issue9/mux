@@ -92,15 +92,15 @@ func TestHosts_Match(t *testing.T) {
 
 	r := rest.Get(a, "http://caixw.io/test").Request()
 	ps := types.NewContext()
-	a.True(h.Match(r, ps)).Zero(ps.Count())
+	a.True(h.Match(r, ps)).Zero(ps.ParamsCount())
 
 	r = rest.Get(a, "https://caixw.io/test").Request()
 	ps = types.NewContext()
-	a.True(h.Match(r, ps)).Zero(ps.Count())
+	a.True(h.Match(r, ps)).Zero(ps.ParamsCount())
 
 	r = rest.Get(a, "https://CAIXW.io/test").Request()
 	ps = types.NewContext()
-	a.True(h.Match(r, ps)).Zero(ps.Count())
+	a.True(h.Match(r, ps)).Zero(ps.ParamsCount())
 
 	// 泛域名
 	r = rest.Get(a, "https://xx.example.com/test").Request()
@@ -115,7 +115,7 @@ func TestHosts_Match(t *testing.T) {
 	// 带端口
 	r = rest.Get(a, "http://caixw.io:88/test").Request()
 	ps = types.NewContext()
-	a.True(h.Match(r, ps)).Zero(ps.Count())
+	a.True(h.Match(r, ps)).Zero(ps.ParamsCount())
 
 	// 访问不允许的域名
 	r = rest.Get(a, "http://sub.caixw.io/test").Request()
@@ -161,7 +161,7 @@ func TestHosts_Add_Delete(t *testing.T) {
 	// delete xx.example.com
 	r := rest.Get(a, "https://xx.example.com/api/path").Request()
 	ps := types.NewContext()
-	a.True(h.Match(r, ps)).Zero(ps.Count())
+	a.True(h.Match(r, ps)).Zero(ps.ParamsCount())
 
 	// 删除 xx.example.com，则适配到 {sub}.example.com
 	h.Delete("xx.example.com")

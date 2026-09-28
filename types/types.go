@@ -15,10 +15,13 @@ var errParamNotExists = errors.New("不存在该参数")
 // ErrParamNotExists 用于表示 [Params] 中参数不存在的错误
 func ErrParamNotExists() error { return errParamNotExists }
 
-// Params 表示路由中的参数操作接口
-type Params interface {
-	// Count 返回参数的数量
-	Count() int
+// Route 当前请求的路由信息
+type Route interface {
+	// ParamsCount 返回参数的数量
+	ParamsCount() int
+
+	// Params 返回遍历每个参数的迭代器
+	Params() iter.Seq2[string, string]
 
 	// Get 获取指定名称的参数值
 	Get(key string) (v string, found bool)
@@ -79,22 +82,13 @@ type Params interface {
 	// Set 添加或是修改值
 	Set(key, val string)
 
-	// IterSeq 返回遍历每个参数的迭代器
-	IterSeq() iter.Seq2[string, string]
-}
-
-// Route 当前请求的路由信息
-type Route interface {
-	// Params 当前请求关联的参数
-	Params() Params
-
 	// Node 当前请求关联的节点信息
 	//
 	// 有可能返回 nil，比如请求到了 404。
 	Node() Node
 
-	// RouterName [mux.Router.Name] 的值
-	RouterName() string
+	// Name [mux.Router.Name] 的值
+	Name() string
 }
 
 // Node 路由节点

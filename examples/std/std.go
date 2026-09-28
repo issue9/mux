@@ -74,9 +74,9 @@ func WithValue(r *http.Request, ps types.Route) *http.Request {
 		return r
 	}
 
-	if ps2 := GetParams(r); ps2 != nil && ps2.Params().Count() > 0 {
-		for k, v := range ps2.Params().IterSeq() {
-			ps.Params().Set(k, v)
+	if ps2 := GetParams(r); ps2 != nil {
+		for k, v := range ps2.Params() {
+			ps.Set(k, v)
 		}
 	}
 
