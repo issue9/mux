@@ -72,7 +72,7 @@ func New[T any](
 
 	tree := &Tree[T]{
 		methods: make(map[string]int, len(Methods)),
-		node:    &node[T]{segment: s, methodIndex: methodIndexMap[http.MethodOptions]},
+		node:    &node[T]{segment: s, optionsIndex: methodIndexes[http.MethodOptions]},
 
 		interceptors:            i,
 		name:                    name,
@@ -213,7 +213,7 @@ func (tree *Tree[T]) getNode(pattern string) (*node[T], error) {
 }
 
 // 此方法主要用于将 locker 的使用范围减至最小。
-func (tree *Tree[T]) match(ctx *types.Context) *node[T] {
+func (tree *Tree[T]) match(ctx *types.Context) (node *node[T], found bool) {
 	if tree.locker != nil {
 		tree.locker.RLock()
 		defer tree.locker.RUnlock()
@@ -235,12 +235,11 @@ func (tree *Tree[T]) Handler(ctx *types.Context, method string) (n types.Node, h
 	if ctx.Path == "*" || ctx.Path == "" {
 		node = tree.node
 	} else {
-		node = tree.match(ctx)
+		if node, found = tree.match(ctx); !found || node.size() == 0 {
+			return nil, tree.notFound, false
+		}
 	}
 
-	if node == nil || node.size() == 0 {
-		return nil, tree.notFound, false
-	}
 	if h, exists := node.handlers[method]; exists {
 		return node, h, true
 	}

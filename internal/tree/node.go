@@ -23,8 +23,8 @@ type node[T any] struct {
 	segment *syntax.Segment
 	pattern string
 
-	methodIndex int          // 在 methodIndexes 中的索引值
-	handlers    map[string]T // 键名为请求方法，[methodNotAllowed] 也作为键名在此使用。
+	optionsIndex int          // 当前节点所支持的请求方法在 [optionsIndexes] 中的索引值
+	handlers     map[string]T // 键名为请求方法，[methodNotAllowed] 也作为键名在此使用。
 
 	// 保存着 node 实例在 children 中的下标。
 	//
@@ -33,6 +33,7 @@ type node[T any] struct {
 	// 可以通过索引排除不必要的比较操作。
 	indexes map[byte]int
 
+	// children 是按优先级排序的，所以前 len(indexes) 元素必然对应 indexes 中的值。
 	children []*node[T]
 }
 
@@ -186,49 +187,49 @@ func (n *node[T]) clean(prefix string) {
 }
 
 // 从子节点中查找与当前路径匹配的节点，若找不到，则返回 nil。
-func (n *node[T]) matchChildren(ctx *types.Context) *node[T] {
+func (n *node[T]) matchChildren(ctx *types.Context) (node *node[T], found bool) {
 	if len(n.indexes) > 0 && len(ctx.Path) > 0 { // 普通字符串的匹配
-		child := n.children[n.indexes[ctx.Path[0]]]
-		if child == nil {
+		idx, found := n.indexes[ctx.Path[0]]
+		if !found {
 			goto LOOP
 		}
 
 		path := ctx.Path
 
-		if !child.segment.Match(ctx) { // 这会修改 ctx.Path 的值
+		child := n.children[idx]
+		if !child.segment.Match(ctx) { // 返回 true 时会修改 ctx.Path 的值
 			goto LOOP
 		}
-		if nn := child.matchChildren(ctx); nn != nil {
-			return nn
+		if nn, found := child.matchChildren(ctx); found {
+			return nn, true
 		}
 
-		ctx.Path = path
+		ctx.Path = path // 未匹配，改回原值。
 	}
 
 LOOP:
 	// 即使 p.Path 为空，也有可能子节点正好可以匹配空的内容。
 	// 比如 /posts/{path:\\w*} 后面的 path 即为空节点。所以此处不判断 len(p.Path)
 	for i := len(n.indexes); i < len(n.children); i++ {
-		child := n.children[i]
 		path := ctx.Path
+		child := n.children[i]
 
-		if !child.segment.Match(ctx) { // 不匹配
-			continue
-		}
-		if nn := child.matchChildren(ctx); nn != nil {
-			return nn
-		}
+		if child.segment.Match(ctx) {
+			if nn, found := child.matchChildren(ctx); found {
+				return nn, true
+			}
 
-		// 不匹配子元素，则恢复原有数据
-		ctx.Path = path
-		ctx.Delete(n.segment.Name)
+			// 不匹配子元素，则恢复由 matchChildren 和 segment.Match 修改的数据
+			ctx.Path = path
+			ctx.Delete(n.segment.Name)
+		}
 	}
 
 	// 没有子节点匹配，len(p.Path)==0，且子节点不为空，可以判定与当前节点匹配。
 	if len(ctx.Path) == 0 && n.size() > 0 {
-		return n
+		return n, true
 	}
-	return nil
+	return nil, false
 }
 
 // 从 nodes 中删除一个 pattern 字段为指定值的元素，
@@ -266,7 +267,7 @@ func splitNode[T any](n *node[T], pos int) (*node[T], error) {
 	ret := p.newChild(segs[0])
 	c := ret.newChild(segs[1])
 	c.handlers = n.handlers
-	c.methodIndex = n.methodIndex
+	c.optionsIndex = n.optionsIndex
 	c.children = n.children
 	c.indexes = n.indexes
 	for _, item := range c.children {
@@ -284,7 +285,7 @@ func splitNode[T any](n *node[T], pos int) (*node[T], error) {
 //
 // ok 返回 false 表示 yield 返回了 false，需要退出迭代。
 func (n *node[T]) routes(yield func(string, []string) bool) (ok bool) {
-	if n.methodIndex > 0 {
+	if n.optionsIndex > 0 {
 		if !yield(n.Pattern(), n.Methods()) {
 			return false
 		}

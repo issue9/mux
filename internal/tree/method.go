@@ -29,59 +29,58 @@ var (
 
 	AnyMethods = Methods[:len(Methods)-3] // 添加请求方法时，所采用的默认值。
 
-	methodIndexMap map[string]int // 各个请求方法对应的数值
-
-	methodIndexes = map[int]methodIndexEntity{}
+	methodIndexes  map[string]int            // 将请求方法转换为一个对应的唯一数值
+	optionsIndexes = map[int]optionsEntity{} // 各类请求方法组合下对应的 OPTIONS 值
 )
 
 const methodNotAllowed = "" // 表示 405 的处理方法在各个节点上的名称
 
-func init() {
-	methodIndexMap = make(map[string]int, len(Methods))
-	for i, m := range Methods {
-		methodIndexMap[m] = 1 << i
-	}
-}
-
-type methodIndexEntity struct {
+type optionsEntity struct {
 	methods []string
 	options string
 }
 
-func buildMethodIndexes(index int) {
-	if _, found := methodIndexes[index]; found {
+func init() {
+	methodIndexes = make(map[string]int, len(Methods))
+	for i, m := range Methods {
+		methodIndexes[m] = 1 << i
+	}
+}
+
+func buildOptionsIndexes(index int) {
+	if _, found := optionsIndexes[index]; found {
 		return
 	}
 
 	methods := make([]string, 0, len(Methods))
-	for method, i := range methodIndexMap {
+	for method, i := range methodIndexes {
 		if index&i == i {
 			methods = append(methods, method)
 		}
 	}
 	slices.Sort(methods)
 
-	methodIndexes[index] = methodIndexEntity{
+	optionsIndexes[index] = optionsEntity{
 		methods: methods,
 		options: strings.Join(methods, ", "),
 	}
 }
 
 func (n *node[T]) buildMethods() {
-	n.methodIndex = 0
+	n.optionsIndex = 0
 	for method := range n.handlers {
-		n.methodIndex += methodIndexMap[method]
+		n.optionsIndex += methodIndexes[method]
 	}
 	if n.root.hasTrace {
-		n.methodIndex += methodIndexMap[http.MethodTrace]
+		n.optionsIndex += methodIndexes[http.MethodTrace]
 	}
-	buildMethodIndexes(n.methodIndex)
+	buildOptionsIndexes(n.optionsIndex)
 }
 
-func (n *node[T]) AllowHeader() string { return methodIndexes[n.methodIndex].options }
+func (n *node[T]) AllowHeader() string { return optionsIndexes[n.optionsIndex].options }
 
 // Methods 当前节点支持的请求方法
-func (n *node[T]) Methods() []string { return methodIndexes[n.methodIndex].methods }
+func (n *node[T]) Methods() []string { return optionsIndexes[n.optionsIndex].methods }
 
 // 添加一个处理函数
 func (n *node[T]) addMethods(h T, pattern string, ms []types.Middleware[T], methods ...string) error {
@@ -89,7 +88,7 @@ func (n *node[T]) addMethods(h T, pattern string, ms []types.Middleware[T], meth
 		if m == http.MethodOptions || m == http.MethodHead || (n.root.hasTrace && m == http.MethodTrace) {
 			return fmt.Errorf("无法手动添加 OPTIONS/HEAD/TRACE 请求方法")
 		}
-		if _, found := methodIndexMap[m]; !found {
+		if _, found := methodIndexes[m]; !found {
 			return fmt.Errorf("该请求方法 %s 不被支持", m)
 		}
 
@@ -126,16 +125,16 @@ func (tree *Tree[T]) buildMethods(num int, methods ...string) {
 	}
 
 	// 即使所有接口都没了，也有 OPTIONS * 存在，所以始终有 OPTIONS 和可能的 TRACE 存在。
-	tree.node.methodIndex = methodIndexMap[http.MethodOptions]
+	tree.node.optionsIndex = methodIndexes[http.MethodOptions]
 	if tree.hasTrace {
-		tree.node.methodIndex += methodIndexMap[http.MethodTrace]
+		tree.node.optionsIndex += methodIndexes[http.MethodTrace]
 	}
 
 	for m, num := range tree.methods {
 		if num > 0 {
-			tree.node.methodIndex += methodIndexMap[m]
+			tree.node.optionsIndex += methodIndexes[m]
 		}
 	}
 
-	buildMethodIndexes(tree.node.methodIndex)
+	buildOptionsIndexes(tree.node.optionsIndex)
 }
