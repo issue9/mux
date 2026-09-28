@@ -4,7 +4,7 @@
 [![Go version](https://img.shields.io/github/go-mod/go-version/issue9/mux)](https://golang.org)
 [![license](https://img.shields.io/github/license/issue9/mux)](LICENSE)
 [![codecov](https://codecov.io/gh/issue9/mux/branch/master/graph/badge.svg)](https://codecov.io/gh/issue9/mux)
-[![PkgGoDev](https://pkg.go.dev/badge/github.com/issue9/mux/v9)](https://pkg.go.dev/github.com/issue9/mux/v9)
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/issue9/mux/v10)](https://pkg.go.dev/github.com/issue9/mux/v10)
 
 **这是一个用于定制路由的包，适用于第三方框架实现自己的路由功能。想直接使用，需要少量的代码实例化泛型对象。**
 
@@ -25,7 +25,7 @@
 - panic 处理；
 
 ```go
-import "github.com/issue9/mux/v9"
+import "github.com/issue9/mux/v10"
 
 router := mux.NewRouter[http.Handler]("", ...) // 采用泛型实现自定义对象
 router.Get("/users/1", h).
@@ -93,16 +93,12 @@ rule 表示对参数的约束，一般为正则或是空，为空表示匹配任
 
 ### 路由参数
 
-通过正则表达式匹配的路由，其中带命名的参数可通过 `GetParams()` 获取：
+通过正则表达式匹配的路由，其中带命名的参数可通过 `types.Route` 获取：
 
 ```go
-import "github.com/issue9/mux/v9"
-
-params := mux.GetParams(r)
-
-id, err := params.Int("id")
+id, err := route.Int("id")
  // 或是
-id := params.MustInt("id", 0) // 在无法获取 id 参数时采用 0 作为默认值返回
+id := route.MustInt("id", 0) // 在无法获取 id 参数时采用 0 作为默认值返回
 ```
 
 ## 高级用法
@@ -114,7 +110,7 @@ id := params.MustInt("id", 0) // 在无法获取 id 参数时采用 0 作为默�
 ```go
 // server.go
 
-import "github.com/issue9/mux/v9"
+import "github.com/issue9/mux/v10"
 
 m := mux.NewRouters(...)
 
@@ -145,7 +141,7 @@ r.Do()
 但是正则表达式的性能并不是很好，这个时候我们可以通过在 `NewRouter` 传递 `WithInterceptor` 进行拦截：
 
 ```go
-import "github.com/issue9/mux/v9"
+import "github.com/issue9/mux/v10"
 
 func digit(path string) bool {
     for _, c := range path {
@@ -186,9 +182,9 @@ CORS 不再是以中间件的形式提供，而是通过 `NewRouter` 直接传�
 OPTIONS 请求方法由系统自动生成。
 
 ```go
-import "github.com/issue9/mux/v9"
+import "github.com/issue9/mux/v10"
 
-r := mux.NewRouter(... ,mux.CORS(...)) // 任意跨域请求
+r := mux.NewRouter(... ,WithCORS(...)) // 任意跨域请求
 r.Get("/posts/{id}", nil)     // 默认情况下， OPTIONS 的报头为 GET, OPTIONS
 http.ListenAndServe(":8080", m)
 
@@ -232,11 +228,11 @@ type MiddlewareFunc = MiddlewareFunc[HandlerFunc]
 type Middleware = Middleware[HandlerFunc]
 
 func New(name string)* Router {
-    call := func(w http.ResponseWriter, r *http.Request, ps Params, h HandlerFunc) {
+    call := func(w http.ResponseWriter, r *http.Request, rs types.Route, h HandlerFunc) {
         ctx := &Context {
             R: r,
             W: w,
-            P: ps,
+            P: rs,
         }
         h(ctx)
     }

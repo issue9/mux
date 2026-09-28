@@ -1,25 +1,26 @@
-// SPDX-FileCopyrightText: 2014-2024 caixw
+// SPDX-FileCopyrightText: 2014-2026 caixw
 //
 // SPDX-License-Identifier: MIT
 
 package syntax
 
-import "fmt"
+import (
+	"fmt"
 
-// InterceptorFunc 拦截器的处理函数
-type InterceptorFunc func(string) bool
+	"github.com/issue9/mux/v10/types"
+)
 
 type Interceptors struct {
-	funcs map[string]InterceptorFunc
+	funcs map[string]types.InterceptorFunc
 }
 
 func NewInterceptors() *Interceptors {
 	return &Interceptors{
-		funcs: map[string]InterceptorFunc{},
+		funcs: map[string]types.InterceptorFunc{},
 	}
 }
 
-func (i *Interceptors) Add(f InterceptorFunc, name ...string) {
+func (i *Interceptors) Add(f types.InterceptorFunc, name ...string) {
 	if len(name) == 0 {
 		panic("参数 name 不能为空")
 	}

@@ -54,3 +54,6 @@ type MiddlewareFunc[T any] func(next T, method, pattern, router string) T
 func (f MiddlewareFunc[T]) Middleware(next T, method, pattern, router string) T {
 	return f(next, method, pattern, router)
 }
+
+// InterceptorFunc 拦截器的处理函数
+type InterceptorFunc func(string) bool

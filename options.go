@@ -13,6 +13,7 @@ import (
 
 	"github.com/issue9/mux/v10/internal/cors"
 	"github.com/issue9/mux/v10/internal/syntax"
+	"github.com/issue9/mux/v10/types"
 )
 
 type (
@@ -29,8 +30,6 @@ type (
 	}
 
 	RecoverFunc = func(http.ResponseWriter, any)
-
-	InterceptorFunc = syntax.InterceptorFunc
 )
 
 // WithCaseInsensitive 是否不区分大小写
@@ -106,7 +105,7 @@ func WithLogRecovery(status int, l *slog.Logger) Option {
 // 使第二个记录的优先级提升，会使第一条永远无法匹配到数据。
 //
 // 可多次调用，表示同时指定了多个。
-func WithInterceptor(f InterceptorFunc, rule ...string) Option {
+func WithInterceptor(f types.InterceptorFunc, rule ...string) Option {
 	return func(o *options) { o.interceptors.Add(f, rule...) }
 }
 

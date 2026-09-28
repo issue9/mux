@@ -110,7 +110,7 @@ func NewHosts(lock bool, domain ...string) *Hosts {
 // RegisterInterceptor 注册拦截器
 //
 // NOTE: 拦截器只有在注册之后添加的域名才有效果。
-func (hs *Hosts) RegisterInterceptor(f InterceptorFunc, name ...string) { hs.i.Add(f, name...) }
+func (hs *Hosts) RegisterInterceptor(f types.InterceptorFunc, name ...string) { hs.i.Add(f, name...) }
 
 func (hs *Hosts) Match(r *http.Request, route *types.Route) bool {
 	h := r.Host // r.URL.Hostname() 可能为空，r.Host 一直有值！

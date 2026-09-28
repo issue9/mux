@@ -45,7 +45,7 @@ type Segment struct {
 	expr *regexp.Regexp
 
 	// 拦截器的处理函数
-	matcher InterceptorFunc
+	matcher types.InterceptorFunc
 }
 
 // NewSegment 声明新的 [Segment] 变量
