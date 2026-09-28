@@ -20,14 +20,14 @@ func BenchmarkSegment_Match_Named(b *testing.B) {
 	seg, err := i.NewSegment("{id}/author")
 	a.NotError(err).NotNil(seg)
 
-	ctx := types.NewContext()
+	route := types.NewRoute()
 	var ok bool
 	for b.Loop() {
-		ctx.Reset()
-		ctx.Path = "100000/author"
-		ok = seg.Match(ctx)
+		route.Reset()
+		route.Path = "100000/author"
+		ok = seg.Match(route)
 	}
-	a.True(ok).Equal(ctx.MustString("id", "not-exits"), "100000") // 相同的数据，仅判断最后一次数据
+	a.True(ok).Equal(route.MustString("id", "not-exits"), "100000") // 相同的数据，仅判断最后一次数据
 }
 
 func BenchmarkSegment_Match_Named_withInterceptors(b *testing.B) {
@@ -39,14 +39,14 @@ func BenchmarkSegment_Match_Named_withInterceptors(b *testing.B) {
 	seg, err := i.NewSegment("{id:digit}/author")
 	a.NotError(err).NotNil(seg)
 
-	ctx := types.NewContext()
+	route := types.NewRoute()
 	var ok bool
 	for b.Loop() {
-		ctx.Reset()
-		ctx.Path = "100000/author"
-		ok = seg.Match(ctx)
+		route.Reset()
+		route.Path = "100000/author"
+		ok = seg.Match(route)
 	}
-	a.True(ok).Equal(ctx.MustString("id", "not-exits"), "100000")
+	a.True(ok).Equal(route.MustString("id", "not-exits"), "100000")
 }
 
 func BenchmarkSegment_Match_String(b *testing.B) {
@@ -57,14 +57,14 @@ func BenchmarkSegment_Match_String(b *testing.B) {
 	seg, err := i.NewSegment("/posts/author")
 	a.NotError(err).NotNil(seg)
 
-	ctx := types.NewContext()
+	route := types.NewRoute()
 	var ok bool
 	for b.Loop() {
-		ctx.Reset()
-		ctx.Path = "/posts/author"
-		ok = seg.Match(ctx)
+		route.Reset()
+		route.Path = "/posts/author"
+		ok = seg.Match(route)
 	}
-	a.True(ok).Zero(ctx.ParamsCount())
+	a.True(ok).Zero(route.Count())
 }
 
 func BenchmarkSegment_Match_Regexp(b *testing.B) {
@@ -75,12 +75,12 @@ func BenchmarkSegment_Match_Regexp(b *testing.B) {
 	seg, err := i.NewSegment("{id:\\d+}/author")
 	a.NotError(err).NotNil(seg)
 
-	ctx := types.NewContext()
+	route := types.NewRoute()
 	var ok bool
 	for b.Loop() {
-		ctx.Reset()
-		ctx.Path = "1/author"
-		ok = seg.Match(ctx)
+		route.Reset()
+		route.Path = "1/author"
+		ok = seg.Match(route)
 	}
-	a.True(ok).Equal(ctx.MustString("id", "not-exists"), "1")
+	a.True(ok).Equal(route.MustString("id", "not-exists"), "1")
 }

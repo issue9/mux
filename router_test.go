@@ -21,7 +21,7 @@ import (
 
 var _ http.Handler = &Router[struct{}]{}
 
-func call(w http.ResponseWriter, r *http.Request, ps types.Route, h http.Handler) {
+func call(w http.ResponseWriter, r *http.Request, ps *types.Route, h http.Handler) {
 	h.ServeHTTP(w, r)
 }
 

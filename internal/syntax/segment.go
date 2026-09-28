@@ -199,33 +199,33 @@ func (seg *Segment) Valid(pattern string) bool {
 // Match 路径是否与当前节点匹配
 //
 // 如果正确匹配，则将剩余的未匹配字符串写入到 p.Path 并返回 true。
-func (seg *Segment) Match(ctx *types.Context) bool {
+func (seg *Segment) Match(route *types.Route) bool {
 	switch seg.Type {
 	case String:
-		if strings.HasPrefix(ctx.Path, seg.Value) {
-			ctx.Path = ctx.Path[len(seg.Value):]
+		if strings.HasPrefix(route.Path, seg.Value) {
+			route.Path = route.Path[len(seg.Value):]
 			return true
 		}
 	case Interceptor, Named:
 		if seg.Endpoint {
-			if seg.matcher(ctx.Path) {
+			if seg.matcher(route.Path) {
 				if !seg.ignoreName {
-					ctx.Set(seg.Name, ctx.Path)
+					route.Set(seg.Name, route.Path)
 				}
-				ctx.Path = ctx.Path[:0]
+				route.Path = route.Path[:0]
 				return true
 			}
-		} else if index := strings.Index(ctx.Path, seg.Suffix); index >= 0 {
+		} else if index := strings.Index(route.Path, seg.Suffix); index >= 0 {
 			for {
-				if val := ctx.Path[:index]; seg.matcher(val) {
+				if val := route.Path[:index]; seg.matcher(val) {
 					if !seg.ignoreName {
-						ctx.Set(seg.Name, val)
+						route.Set(seg.Name, val)
 					}
-					ctx.Path = ctx.Path[index+len(seg.Suffix):]
+					route.Path = route.Path[index+len(seg.Suffix):]
 					return true
 				}
 
-				i := strings.Index(ctx.Path[index+len(seg.Suffix):], seg.Suffix)
+				i := strings.Index(route.Path[index+len(seg.Suffix):], seg.Suffix)
 				if i < 0 {
 					return false
 				}
@@ -234,13 +234,13 @@ func (seg *Segment) Match(ctx *types.Context) bool {
 		}
 	case Regexp:
 		if seg.ignoreName {
-			if loc := seg.expr.FindStringIndex(ctx.Path); loc != nil && loc[0] == 0 {
-				ctx.Path = ctx.Path[loc[1]:]
+			if loc := seg.expr.FindStringIndex(route.Path); loc != nil && loc[0] == 0 {
+				route.Path = route.Path[loc[1]:]
 				return true
 			}
-		} else if loc := seg.expr.FindStringSubmatchIndex(ctx.Path); loc != nil && loc[0] == 0 {
-			ctx.Set(seg.Name, ctx.Path[:loc[3]]) // 只有 ignoreName == false，才会有捕获的值
-			ctx.Path = ctx.Path[loc[1]:]
+		} else if loc := seg.expr.FindStringSubmatchIndex(route.Path); loc != nil && loc[0] == 0 {
+			route.Set(seg.Name, route.Path[:loc[3]]) // 只有 ignoreName == false，才会有捕获的值
+			route.Path = route.Path[loc[1]:]
 			return true
 		}
 	}

@@ -25,10 +25,10 @@ type (
 		// Match 验证请求是否符合当前对象的要求
 		//
 		// 如果返回 false，那么不应当对参所指向的内容作修改，否则可能影响后续的判断。
-		Match(*http.Request, *types.Context) bool
+		Match(*http.Request, *types.Route) bool
 	}
 
-	MatcherFunc func(*http.Request, *types.Context) bool
+	MatcherFunc func(*http.Request, *types.Route) bool
 
 	// Hosts 限定域名的匹配工具
 	Hosts struct {
@@ -49,17 +49,17 @@ type (
 	}
 )
 
-func (f MatcherFunc) Match(r *http.Request, p *types.Context) bool { return f(r, p) }
+func (f MatcherFunc) Match(r *http.Request, p *types.Route) bool { return f(r, p) }
 
-func anyRouter(*http.Request, *types.Context) bool { return true }
+func anyRouter(*http.Request, *types.Route) bool { return true }
 
 // AndMatcher 按顺序符合每一个要求
 //
 // 前一个对象返回的实例将作为下一个对象的输入参数。
 func AndMatcher(m ...Matcher) Matcher {
-	return MatcherFunc(func(r *http.Request, ctx *types.Context) bool {
+	return MatcherFunc(func(r *http.Request, route *types.Route) bool {
 		for _, mm := range m {
-			if !mm.Match(r, ctx) {
+			if !mm.Match(r, route) {
 				return false
 			}
 		}
@@ -69,9 +69,9 @@ func AndMatcher(m ...Matcher) Matcher {
 
 // OrMatcher 仅需符合一个要求
 func OrMatcher(m ...Matcher) Matcher {
-	return MatcherFunc(func(r *http.Request, ctx *types.Context) bool {
+	return MatcherFunc(func(r *http.Request, route *types.Route) bool {
 		for _, mm := range m {
-			if ok := mm.Match(r, ctx); ok {
+			if ok := mm.Match(r, route); ok {
 				return true
 			}
 		}
@@ -80,16 +80,16 @@ func OrMatcher(m ...Matcher) Matcher {
 }
 
 // AndMatcherFunc 需同时符合每一个要求
-func AndMatcherFunc(f ...func(*http.Request, *types.Context) bool) Matcher {
+func AndMatcherFunc(f ...func(*http.Request, *types.Route) bool) Matcher {
 	return AndMatcher(f2i(f...)...)
 }
 
 // OrMatcherFunc 仅需符合一个要求
-func OrMatcherFunc(f ...func(*http.Request, *types.Context) bool) Matcher {
+func OrMatcherFunc(f ...func(*http.Request, *types.Route) bool) Matcher {
 	return OrMatcher(f2i(f...)...)
 }
 
-func f2i(f ...func(*http.Request, *types.Context) bool) []Matcher {
+func f2i(f ...func(*http.Request, *types.Route) bool) []Matcher {
 	ms := make([]Matcher, 0, len(f))
 	for _, ff := range f {
 		ms = append(ms, MatcherFunc(ff))
@@ -112,7 +112,7 @@ func NewHosts(lock bool, domain ...string) *Hosts {
 // NOTE: 拦截器只有在注册之后添加的域名才有效果。
 func (hs *Hosts) RegisterInterceptor(f InterceptorFunc, name ...string) { hs.i.Add(f, name...) }
 
-func (hs *Hosts) Match(r *http.Request, ctx *types.Context) bool {
+func (hs *Hosts) Match(r *http.Request, route *types.Route) bool {
 	h := r.Host // r.URL.Hostname() 可能为空，r.Host 一直有值！
 	if i := strings.LastIndexByte(h, ':'); i != -1 && validOptionalPort(h[i:]) {
 		h = h[:i]
@@ -121,8 +121,8 @@ func (hs *Hosts) Match(r *http.Request, ctx *types.Context) bool {
 		h = h[1 : len(h)-1]
 	}
 
-	ctx.Path = strings.ToLower(h)
-	_, _, exists := hs.tree.Handler(ctx, http.MethodGet)
+	route.Path = strings.ToLower(h)
+	_, _, exists := hs.tree.Handler(route, http.MethodGet)
 	return exists
 }
 
@@ -217,7 +217,7 @@ func NewHeaderVersion(param, key string, errlog func(error), version ...string) 
 	}
 }
 
-func (v *headerVersion) Match(r *http.Request, ctx *types.Context) bool {
+func (v *headerVersion) Match(r *http.Request, route *types.Route) bool {
 	header := r.Header.Get(header.Accept)
 	if header == "" {
 		return false
@@ -233,7 +233,7 @@ func (v *headerVersion) Match(r *http.Request, ctx *types.Context) bool {
 	for _, vv := range v.versions {
 		if vv == ver {
 			if v.paramName != "" {
-				ctx.Set(v.paramName, vv)
+				route.Set(v.paramName, vv)
 			}
 			return true
 		}
@@ -241,7 +241,7 @@ func (v *headerVersion) Match(r *http.Request, ctx *types.Context) bool {
 	return false
 }
 
-func (v *pathVersion) Match(r *http.Request, ctx *types.Context) bool {
+func (v *pathVersion) Match(r *http.Request, route *types.Route) bool {
 	p := r.URL.Path
 	for _, ver := range v.versions {
 		if strings.HasPrefix(p, ver) {
@@ -249,7 +249,7 @@ func (v *pathVersion) Match(r *http.Request, ctx *types.Context) bool {
 
 			r.URL.Path = strings.TrimPrefix(p, vv)
 			if v.paramName != "" {
-				ctx.Set(v.paramName, vv)
+				route.Set(v.paramName, vv)
 			}
 
 			return true

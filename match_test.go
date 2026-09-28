@@ -29,13 +29,13 @@ func TestAndMatcherFunc(t *testing.T) {
 
 	m := AndMatcherFunc(p1.Match, p2.Match)
 	r := rest.Get(a, "/v1/v2/path").Request()
-	ps := types.NewContext()
+	ps := types.NewRoute()
 	ok := m.Match(r, ps)
 	a.True(ok).Equal(r.URL.Path, "/path")
 
 	m = AndMatcherFunc(p1.Match, p2.Match)
 	r = rest.Get(a, "/v2/v1/path").Request()
-	ps = types.NewContext()
+	ps = types.NewRoute()
 	ok = m.Match(r, ps)
 	a.False(ok)
 }
@@ -48,19 +48,19 @@ func TestOrMatcherFunc(t *testing.T) {
 
 	m := OrMatcherFunc(p1.Match, p2.Match)
 	r := rest.Get(a, "/v1/v2/path").Request()
-	ps := types.NewContext()
+	ps := types.NewRoute()
 	ok := m.Match(r, ps)
 	a.True(ok).Equal(r.URL.Path, "/v2/path")
 
 	m = OrMatcherFunc(p1.Match, p2.Match)
 	r = rest.Get(a, "/v2/v1/path").Request()
-	ps = types.NewContext()
+	ps = types.NewRoute()
 	ok = m.Match(r, ps)
 	a.True(ok).Equal(r.URL.Path, "/v1/path")
 
 	m = OrMatcherFunc(p1.Match, p2.Match)
 	r = rest.Get(a, "/v111/v2/v1/path").Request()
-	ps = types.NewContext()
+	ps = types.NewRoute()
 	ok = m.Match(r, ps)
 	a.False(ok)
 }
@@ -74,12 +74,12 @@ func TestHost_RegisterInterceptor(t *testing.T) {
 	h.Add("{sub:\\d+}.example.com")
 
 	r := rest.Get(a, "http://sub--1.example.com/test").Request()
-	ps := types.NewContext()
+	ps := types.NewRoute()
 	a.False(h.Match(r, ps))
 
 	// 将 \\d+ 注册为任意非空字符
 	r = rest.Get(a, "http://sub.example.com/test").Request()
-	ps = types.NewContext()
+	ps = types.NewRoute()
 	ok := h.Match(r, ps)
 	a.True(ok).Equal(ps.MustString("sub", "def"), "sub")
 }
@@ -91,40 +91,40 @@ func TestHosts_Match(t *testing.T) {
 	a.NotNil(h)
 
 	r := rest.Get(a, "http://caixw.io/test").Request()
-	ps := types.NewContext()
-	a.True(h.Match(r, ps)).Zero(ps.ParamsCount())
+	ps := types.NewRoute()
+	a.True(h.Match(r, ps)).Zero(ps.Count())
 
 	r = rest.Get(a, "https://caixw.io/test").Request()
-	ps = types.NewContext()
-	a.True(h.Match(r, ps)).Zero(ps.ParamsCount())
+	ps = types.NewRoute()
+	a.True(h.Match(r, ps)).Zero(ps.Count())
 
 	r = rest.Get(a, "https://CAIXW.io/test").Request()
-	ps = types.NewContext()
-	a.True(h.Match(r, ps)).Zero(ps.ParamsCount())
+	ps = types.NewRoute()
+	a.True(h.Match(r, ps)).Zero(ps.Count())
 
 	// 泛域名
 	r = rest.Get(a, "https://xx.example.com/test").Request()
-	ps = types.NewContext()
+	ps = types.NewRoute()
 	a.True(h.Match(r, ps)).Equal(ps.MustString("sub", "yy"), "xx")
 
 	// 泛域名
 	r = rest.Get(a, "https://xx.yy.example.com/test").Request()
-	ps = types.NewContext()
+	ps = types.NewRoute()
 	a.True(h.Match(r, ps)).Equal(ps.MustString("sub", "yy"), "xx.yy")
 
 	// 带端口
 	r = rest.Get(a, "http://caixw.io:88/test").Request()
-	ps = types.NewContext()
-	a.True(h.Match(r, ps)).Zero(ps.ParamsCount())
+	ps = types.NewRoute()
+	a.True(h.Match(r, ps)).Zero(ps.Count())
 
 	// 访问不允许的域名
 	r = rest.Get(a, "http://sub.caixw.io/test").Request()
-	ps = types.NewContext()
+	ps = types.NewRoute()
 	a.False(h.Match(r, ps))
 
 	// 访问不允许的域名
 	r = rest.Get(a, "http://sub.1eample.com/test").Request()
-	ps = types.NewContext()
+	ps = types.NewRoute()
 	a.False(h.Match(r, ps))
 }
 
@@ -160,19 +160,19 @@ func TestHosts_Add_Delete(t *testing.T) {
 
 	// delete xx.example.com
 	r := rest.Get(a, "https://xx.example.com/api/path").Request()
-	ps := types.NewContext()
-	a.True(h.Match(r, ps)).Zero(ps.ParamsCount())
+	ps := types.NewRoute()
+	a.True(h.Match(r, ps)).Zero(ps.Count())
 
 	// 删除 xx.example.com，则适配到 {sub}.example.com
 	h.Delete("xx.example.com")
 	r = rest.Get(a, "https://xx.example.com/api/path").Request()
-	ps = types.NewContext()
+	ps = types.NewRoute()
 	a.True(h.Match(r, ps))
 
 	// delete {sub}.example.com
 	h.Delete("{sub}.example.com")
 	r = rest.Get(a, "https://zzz.example.com/api/path").Request()
-	ps = types.NewContext()
+	ps = types.NewRoute()
 	a.False(h.Match(r, ps))
 }
 
@@ -185,7 +185,7 @@ func TestHeaderVersion_Match(t *testing.T) {
 	r := rest.Get(a, "https://caixw.io/test").
 		Header(header.Accept, "application/json; version=1.0").
 		Request()
-	ps := types.NewContext()
+	ps := types.NewRoute()
 	ok := h.Match(r, ps)
 	a.True(ok).Equal(ps.MustString("version", "not-exists"), "1.0")
 
@@ -194,7 +194,7 @@ func TestHeaderVersion_Match(t *testing.T) {
 	r = rest.Get(a, "https://caixw.io/test").
 		Header(header.Accept, "application/json; version=1.0").
 		Request()
-	ps = types.NewContext()
+	ps = types.NewRoute()
 	ok = h.Match(r, ps)
 	a.True(ok)
 
@@ -202,7 +202,7 @@ func TestHeaderVersion_Match(t *testing.T) {
 	r = rest.Get(a, "https://not.exists/test").
 		Header(header.Accept, "application/json; version=").
 		Request()
-	ps = types.NewContext()
+	ps = types.NewRoute()
 	ok = h.Match(r, ps)
 	a.False(ok)
 
@@ -210,7 +210,7 @@ func TestHeaderVersion_Match(t *testing.T) {
 	r = rest.Get(a, "https://not.exists/test").
 		Header(header.Accept, "application/json; version = 2").
 		Request()
-	ps = types.NewContext()
+	ps = types.NewRoute()
 	ok = h.Match(r, ps)
 	a.False(ok)
 
@@ -218,7 +218,7 @@ func TestHeaderVersion_Match(t *testing.T) {
 	r = rest.Get(a, "https://caixw.io/test").
 		Header(header.Accept, "application/json").
 		Request()
-	ps = types.NewContext()
+	ps = types.NewRoute()
 	ok = h.Match(r, ps)
 	a.False(ok)
 
@@ -226,14 +226,14 @@ func TestHeaderVersion_Match(t *testing.T) {
 	r = rest.Get(a, "https://caixw.io/test").
 		Header(header.Accept, ";version=1.0").
 		Request()
-	ps = types.NewContext()
+	ps = types.NewRoute()
 	ok = h.Match(r, ps)
 	a.False(ok)
 
 	// 未指定 Accept
 	r = rest.Get(a, "https://caixw.io/test").
 		Request()
-	ps = types.NewContext()
+	ps = types.NewRoute()
 	ok = h.Match(r, ps)
 	a.False(ok)
 
@@ -243,7 +243,7 @@ func TestHeaderVersion_Match(t *testing.T) {
 	r = rest.Get(a, "https://caixw.io/test").
 		Header(header.Accept, "application/json; version=1.0").
 		Request()
-	ps = types.NewContext()
+	ps = types.NewRoute()
 	ok = h.Match(r, ps)
 	a.False(ok)
 
@@ -251,7 +251,7 @@ func TestHeaderVersion_Match(t *testing.T) {
 	r = rest.Get(a, "https://not.exists/test").
 		Header(header.Accept, "application/json; version=").
 		Request()
-	ps = types.NewContext()
+	ps = types.NewRoute()
 	ok = h.Match(r, ps)
 	a.False(ok)
 
@@ -259,14 +259,14 @@ func TestHeaderVersion_Match(t *testing.T) {
 	r = rest.Get(a, "https://not.exists/test").
 		Header(header.Accept, "application/json; version=2").
 		Request()
-	ps = types.NewContext()
+	ps = types.NewRoute()
 	ok = h.Match(r, ps)
 	a.False(ok)
 
 	r = rest.Get(a, "https://caixw.io/test").
 		Header(header.Accept, "application/json; version=1.0").
 		Request()
-	ps = types.NewContext()
+	ps = types.NewRoute()
 	ok = h.Match(r, ps)
 	a.False(ok)
 }
@@ -282,7 +282,7 @@ func TestPathVersion_Match(t *testing.T) {
 
 	// 相同版本号
 	r := rest.Get(a, "https://caixw.io/v1/test").Request()
-	ps := types.NewContext()
+	ps := types.NewRoute()
 	ok := h.Match(r, ps)
 	a.True(ok)
 	a.Equal(r.URL.Path, "/test").
@@ -291,14 +291,14 @@ func TestPathVersion_Match(t *testing.T) {
 	// 相同版本号，未指定 key
 	h = NewPathVersion("", "v3", "/v2", "/v1")
 	r = rest.Get(a, "https://caixw.io/v1/test").Request()
-	ps = types.NewContext()
+	ps = types.NewRoute()
 	ok = h.Match(r, ps)
 	a.True(ok)
 	a.Equal(r.URL.Path, "/test")
 
 	// 空版本
 	r = rest.Get(a, "https://caixw.io/test").Request()
-	ps = types.NewContext()
+	ps = types.NewRoute()
 	ok = h.Match(r, ps)
 	a.False(ok)
 	a.Equal(r.URL.Path, "/test")
@@ -306,7 +306,7 @@ func TestPathVersion_Match(t *testing.T) {
 	// 不同版本
 	r = rest.Get(a, "https://caixw.io/v111/test").Request()
 	a.NotNil(r)
-	ps = types.NewContext()
+	ps = types.NewRoute()
 	ok = h.Match(r, ps)
 	a.False(ok)
 	a.Equal(r.URL.Path, "/v111/test")
@@ -317,7 +317,7 @@ func TestPathVersion_Match(t *testing.T) {
 	r = rest.Get(a, "https://caixw.io/test").
 		Header(header.Accept, "application/json; version=1.0").
 		Request()
-	ps = types.NewContext()
+	ps = types.NewRoute()
 	ok = h.Match(r, ps)
 	a.False(ok)
 }

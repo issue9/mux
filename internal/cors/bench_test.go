@@ -21,10 +21,10 @@ func BenchmarkCORS_Handle(b *testing.B) {
 	a := assert.New(b, false)
 	tr := tree.NewTestTree(a, false, nil, syntax.NewInterceptors())
 	a.NotError(tr.Add("/path", nil, nil, http.MethodGet, http.MethodDelete))
-	ctx := types.NewContext()
-	ctx.Path = "/path"
-	node, _, exists := tr.Handler(ctx, http.MethodGet)
-	a.NotNil(node).Zero(ctx.ParamsCount()).True(exists)
+	route := types.NewRoute()
+	route.Path = "/path"
+	node, _, exists := tr.Handler(route, http.MethodGet)
+	a.NotNil(node).Zero(route.Count()).True(exists)
 
 	b.Run("deny", func(b *testing.B) {
 		c := &CORS{}

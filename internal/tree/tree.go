@@ -213,29 +213,29 @@ func (tree *Tree[T]) getNode(pattern string) (*node[T], error) {
 }
 
 // 此方法主要用于将 locker 的使用范围减至最小。
-func (tree *Tree[T]) match(ctx *types.Context) (node *node[T], found bool) {
+func (tree *Tree[T]) match(route *types.Route) (node *node[T], found bool) {
 	if tree.locker != nil {
 		tree.locker.RLock()
 		defer tree.locker.RUnlock()
 	}
-	return tree.node.matchChildren(ctx)
+	return tree.node.matchChildren(route)
 }
 
 // Handler 查找与参数匹配的处理对象
 //
 // 如果未找到，也会返回相应在的处理对象，比如 tree.notFound 或是相应的 methodNotAllowed 方法。
-func (tree *Tree[T]) Handler(ctx *types.Context, method string) (n types.Node, handler T, found bool) {
-	ctx.SetRouterName(tree.Name())
+func (tree *Tree[T]) Handler(route *types.Route, method string) (n types.Node, handler T, found bool) {
+	route.SetRouterName(tree.Name())
 
 	if tree.hasTrace && method == http.MethodTrace {
 		return tree.node, tree.trace, true
 	}
 
 	var node *node[T]
-	if ctx.Path == "*" || ctx.Path == "" {
+	if route.Path == "*" || route.Path == "" {
 		node = tree.node
 	} else {
-		if node, found = tree.match(ctx); !found || node.size() == 0 {
+		if node, found = tree.match(route); !found || node.size() == 0 {
 			return nil, tree.notFound, false
 		}
 	}

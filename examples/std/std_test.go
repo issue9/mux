@@ -27,7 +27,7 @@ func TestRouter(t *testing.T) {
 
 	t.Run("params", func(t *testing.T) {
 		a := assert.New(t, false)
-		tt.Params(a, func(ctx *types.Context) http.Handler {
+		tt.Params(a, func(ctx *types.Route) http.Handler {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				p := GetParams(r)
 				if p != nil {
@@ -53,14 +53,14 @@ func TestWithValue(t *testing.T) {
 	a := assert.New(t, false)
 
 	r := rest.Get(a, "/to/path").Request()
-	a.NotEqual(WithValue(r, &types.Context{}), r)
+	a.NotEqual(WithValue(r, &types.Route{}), r)
 
 	r = rest.Get(a, "/to/path").Request()
-	pp := types.NewContext()
+	pp := types.NewRoute()
 	pp.Set("k1", "v1")
 	r = WithValue(r, pp)
 
-	pp = types.NewContext()
+	pp = types.NewRoute()
 	pp.Set("k2", "v2")
 	r = WithValue(r, pp)
 	ps := GetParams(r)
@@ -76,7 +76,7 @@ func TestGetParams(t *testing.T) {
 	ps := GetParams(r)
 	a.Nil(ps)
 
-	c := types.NewContext()
+	c := types.NewRoute()
 	c.Set("key1", "1")
 	r = rest.Get(a, "/to/path").Request()
 	ctx := context.WithValue(r.Context(), contextKeyParams, c)

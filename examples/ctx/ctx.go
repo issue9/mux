@@ -17,7 +17,7 @@ type (
 	CTX struct {
 		R *http.Request
 		W http.ResponseWriter
-		P types.Route
+		P *types.Route
 	}
 
 	Router = mux.Router[Handler]
@@ -33,7 +33,7 @@ type (
 
 func (f HandlerFunc) Handle(c *CTX) { f(c) }
 
-func call(w http.ResponseWriter, r *http.Request, ps types.Route, h Handler) {
+func call(w http.ResponseWriter, r *http.Request, ps *types.Route, h Handler) {
 	h.Handle(&CTX{R: r, W: w, P: ps})
 }
 

@@ -187,46 +187,46 @@ func (n *node[T]) clean(prefix string) {
 }
 
 // 从子节点中查找与当前路径匹配的节点，若找不到，则返回 nil。
-func (n *node[T]) matchChildren(ctx *types.Context) (node *node[T], found bool) {
-	if len(n.indexes) > 0 && len(ctx.Path) > 0 { // 普通字符串的匹配
-		idx, found := n.indexes[ctx.Path[0]]
+func (n *node[T]) matchChildren(route *types.Route) (node *node[T], found bool) {
+	if len(n.indexes) > 0 && len(route.Path) > 0 { // 普通字符串的匹配
+		idx, found := n.indexes[route.Path[0]]
 		if !found {
 			goto LOOP
 		}
 
-		path := ctx.Path
+		path := route.Path
 
 		child := n.children[idx]
-		if !child.segment.Match(ctx) { // 返回 true 时会修改 ctx.Path 的值
+		if !child.segment.Match(route) { // 返回 true 时会修改 route.Path 的值
 			goto LOOP
 		}
-		if nn, found := child.matchChildren(ctx); found {
+		if nn, found := child.matchChildren(route); found {
 			return nn, true
 		}
 
-		ctx.Path = path // 未匹配，改回原值。
+		route.Path = path // 未匹配，改回原值。
 	}
 
 LOOP:
 	// 即使 p.Path 为空，也有可能子节点正好可以匹配空的内容。
 	// 比如 /posts/{path:\\w*} 后面的 path 即为空节点。所以此处不判断 len(p.Path)
 	for i := len(n.indexes); i < len(n.children); i++ {
-		path := ctx.Path
+		path := route.Path
 		child := n.children[i]
 
-		if child.segment.Match(ctx) {
-			if nn, found := child.matchChildren(ctx); found {
+		if child.segment.Match(route) {
+			if nn, found := child.matchChildren(route); found {
 				return nn, true
 			}
 
 			// 不匹配子元素，则恢复由 matchChildren 和 segment.Match 修改的数据
-			ctx.Path = path
-			ctx.Delete(n.segment.Name)
+			route.Path = path
+			route.Delete(n.segment.Name)
 		}
 	}
 
 	// 没有子节点匹配，len(p.Path)==0，且子节点不为空，可以判定与当前节点匹配。
-	if len(ctx.Path) == 0 && n.size() > 0 {
+	if len(route.Path) == 0 && n.size() > 0 {
 		return n, true
 	}
 	return nil, false

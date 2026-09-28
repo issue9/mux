@@ -20,7 +20,7 @@ func BenchmarkHosts_Match(b *testing.B) {
 	a.NotNil(h)
 	r := rest.Get(a, "https://caixw.io/test").Request()
 
-	ps := types.NewContext()
+	ps := types.NewRoute()
 	for b.Loop() {
 		a.True(h.Match(r, ps))
 	}
@@ -33,7 +33,7 @@ func BenchmarkHeaderVersionWithoutKey_Match(b *testing.B) {
 		Header(header.Accept, "application/json; version=1.0").
 		Request()
 
-	ps := types.NewContext()
+	ps := types.NewRoute()
 	for b.Loop() {
 		a.True(h.Match(r, ps))
 	}
@@ -46,7 +46,7 @@ func BenchmarkHeaderVersionWithKey_Match(b *testing.B) {
 		Header(header.Accept, "application/json; version=1.0").
 		Request()
 
-	ps := types.NewContext()
+	ps := types.NewRoute()
 	for b.Loop() {
 		a.True(h.Match(r, ps))
 	}
@@ -56,7 +56,7 @@ func BenchmarkPathVersionWithoutKey_Match(b *testing.B) {
 	a := assert.New(b, false)
 	h := NewPathVersion("", "v4", "v3", "v1/", "/v2")
 
-	ps := types.NewContext()
+	ps := types.NewRoute()
 	for b.Loop() {
 		r := rest.Get(a, "https://caixw.io/v1/test").Request()
 		a.True(h.Match(r, ps))
@@ -67,7 +67,7 @@ func BenchmarkPathVersionWithKey_Match(b *testing.B) {
 	a := assert.New(b, false)
 	h := NewPathVersion("version", "v4", "v3", "v1/", "/v2")
 
-	ps := types.NewContext()
+	ps := types.NewRoute()
 	for b.Loop() {
 		r := rest.Get(a, "https://caixw.io/v1/test").Request()
 		a.True(h.Match(r, ps))

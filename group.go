@@ -62,18 +62,19 @@ func NewGroup[T any](
 }
 
 func (g *Group[T]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx := types.NewContext()
-	defer ctx.Destroy()
+	route := types.NewRoute()
+	defer route.Destroy()
 
 	// 如果已经在 [NewGroup] 中指定了 Recovery 的相关参数，那么在初始化 g.routers
 	// 时会自动为各个路由添加，无需在此处再次添加 Recovery 的处理。
 
 	for _, router := range g.routers {
-		if ok := router.matcher.Match(r, ctx); ok {
-			router.serveContext(w, r, ctx)
+		if ok := router.matcher.Match(r, route); ok {
+			route.Reset()
+			router.serveContext(w, r, route)
 			return
 		}
-		ctx.Reset()
+		route.Reset()
 	}
 
 	if g.recoverFunc != nil { // g.notFound 可能 panic
@@ -83,7 +84,7 @@ func (g *Group[T]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 		}()
 	}
-	g.call(w, r, ctx, g.notFound) // 404 不需要处理 CORS
+	g.call(w, r, route, g.notFound) // 404 不需要处理 CORS
 }
 
 // New 声明新路由

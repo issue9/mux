@@ -38,7 +38,7 @@ type (
 	}
 
 	// CallFunc 指定如何调用用户给定的类型 T
-	CallFunc[T any] func(http.ResponseWriter, *http.Request, types.Route, T)
+	CallFunc[T any] func(http.ResponseWriter, *http.Request, *types.Route, T)
 
 	// Resource 以资源地址为对象的路由
 	Resource[T any] struct {
@@ -193,12 +193,12 @@ func (r *Router[T]) URL(strict bool, pattern string, params map[string]string) (
 }
 
 func (r *Router[T]) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	ctx := types.NewContext()
-	r.serveContext(w, req, ctx)
-	ctx.Destroy()
+	route := types.NewRoute()
+	r.serveContext(w, req, route)
+	route.Destroy()
 }
 
-func (r *Router[T]) serveContext(w http.ResponseWriter, req *http.Request, ctx *types.Context) {
+func (r *Router[T]) serveContext(w http.ResponseWriter, req *http.Request, route *types.Route) {
 	if r.recoverFunc != nil {
 		defer func() {
 			if msg := recover(); msg != nil {
@@ -211,18 +211,18 @@ func (r *Router[T]) serveContext(w http.ResponseWriter, req *http.Request, ctx *
 		}()
 	}
 
-	ctx.Path = req.URL.Path
+	route.Path = req.URL.Path
 	if r.caseInsensitive {
-		ctx.Path = strings.ToLower(req.URL.Path)
+		route.Path = strings.ToLower(req.URL.Path)
 	}
 
-	node, h, ok := r.tree.Handler(ctx, req.Method)
-	ctx.SetNode(node)
+	node, h, ok := r.tree.Handler(route, req.Method)
+	route.SetNode(node)
 
 	if ok { // !ok 即为 405 或是 404 状态，不需要处理 CORS。
 		r.cors.Handle(node, w.Header(), req)
 	}
-	r.call(w, req, ctx, h)
+	r.call(w, req, route, h)
 }
 
 // Name 路由名称

@@ -18,7 +18,7 @@ func TestContextRouter_Params(t *testing.T) {
 
 	t.Run("params", func(t *testing.T) {
 		a := assert.New(t, false)
-		tt.Params(a, func(ctx *types.Context) Handler {
+		tt.Params(a, func(ctx *types.Route) Handler {
 			return HandlerFunc(func(c *CTX) {
 				if c.P != nil {
 					for k, v := range c.P.Params() {

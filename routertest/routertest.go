@@ -33,12 +33,12 @@ func NewTester[T any](c mux.CallFunc[T], notFound, trace T, m, o types.BuildNode
 
 // Params 测试参数是否正常
 //
-// f 返回一个路由处理函数，该函数必须要将获得的参数写入 ctx。
-func (t *Tester[T]) Params(a *assert.Assertion, f func(ctx *types.Context) T) {
+// f 返回一个路由处理函数，该函数必须要将获得的参数写入 route。
+func (t *Tester[T]) Params(a *assert.Assertion, f func(route *types.Route) T) {
 	router := mux.NewRouter("test", t.call, t.notFound, t.trace, t.methodNotAllowed, t.options, mux.WithDigitInterceptor("digit"))
 	a.NotNil(router)
 
-	globalParams := types.NewContext()
+	globalParams := types.NewRoute()
 
 	requestParams := func(method, url string, status int, ps map[string]string) {
 		a.TB().Helper()
@@ -50,7 +50,7 @@ func (t *Tester[T]) Params(a *assert.Assertion, f func(ctx *types.Context) T) {
 
 		a.Equal(w.Code, status)
 		if len(ps) > 0 { // 由于 globalParams 是公用数据，会保存上一次获取的值，所以只在有值时才比较
-			a.Equal(len(ps), globalParams.ParamsCount())
+			a.Equal(len(ps), globalParams.Count())
 			for k, v := range ps {
 				vv, found := globalParams.Get(k)
 				a.True(found).Equal(vv, v)

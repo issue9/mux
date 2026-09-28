@@ -64,21 +64,21 @@ func BenchmarkTree_Handler(b *testing.B) {
 
 	// 确保数据是正确返回的
 	for i := range l {
-		ctx := types.NewContext()
+		route := types.NewRoute()
 		index := i % len(paths)
-		ctx.Path = paths[index]
-		node, h, ok := tree.Handler(ctx, http.MethodGet)
+		route.Path = paths[index]
+		node, h, ok := tree.Handler(route, http.MethodGet)
 		a.True(ok).
 			NotNil(node).
 			NotNil(h)
 	}
 
 	b.ResetTimer()
-	ctx := types.NewContext()
+	route := types.NewRoute()
 	for i := range b.N {
-		ctx.Reset()
+		route.Reset()
 		index := i % l
-		ctx.Path = paths[index]
-		tree.Handler(ctx, http.MethodGet)
+		route.Path = paths[index]
+		tree.Handler(route, http.MethodGet)
 	}
 }

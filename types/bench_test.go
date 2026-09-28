@@ -14,13 +14,13 @@ import (
 func BenchmarkContext(b *testing.B) {
 	b.Run("no destroy", func(b *testing.B) {
 		for b.Loop() {
-			NewContext()
+			NewRoute()
 		}
 	})
 
 	b.Run("destroy", func(b *testing.B) {
 		for b.Loop() {
-			NewContext().Destroy()
+			NewRoute().Destroy()
 		}
 	})
 }
@@ -29,45 +29,45 @@ func BenchmarkContext_Get(b *testing.B) {
 	a := assert.New(b, false)
 
 	b.Run("1 param", func(b *testing.B) {
-		ctx := NewContext()
-		ctx.Set("K1", "v1")
+		route := NewRoute()
+		route.Set("K1", "v1")
 
 		var found bool
 		for b.Loop() {
-			_, found = ctx.Get("K1")
+			_, found = route.Get("K1")
 		}
 		a.True(found) // 结果是否正确由测试代码保证，性能测试只是检测最后一次的结果是否正确。
 
-		ctx.Destroy()
+		route.Destroy()
 	})
 
 	b.Run("5 param", func(b *testing.B) {
-		ctx := NewContext()
+		route := NewRoute()
 		for i := range 5 {
-			ctx.Set("K"+strconv.Itoa(i+1), "v"+strconv.Itoa(i+1))
+			route.Set("K"+strconv.Itoa(i+1), "v"+strconv.Itoa(i+1))
 		}
 
 		var found bool
 		for b.Loop() {
-			_, found = ctx.Get("K5")
+			_, found = route.Get("K5")
 		}
 		a.True(found)
 
-		ctx.Destroy()
+		route.Destroy()
 	})
 
 	b.Run("10 param", func(b *testing.B) {
-		ctx := NewContext()
+		route := NewRoute()
 		for i := range 10 {
-			ctx.Set("K"+strconv.Itoa(i+1), "v"+strconv.Itoa(i+1))
+			route.Set("K"+strconv.Itoa(i+1), "v"+strconv.Itoa(i+1))
 		}
 
 		var found bool
 		for b.Loop() {
-			_, found = ctx.Get("K10")
+			_, found = route.Get("K10")
 		}
 		a.True(found)
 
-		ctx.Destroy()
+		route.Destroy()
 	})
 }
