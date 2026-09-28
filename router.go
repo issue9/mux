@@ -12,6 +12,7 @@ import (
 
 	"github.com/issue9/errwrap"
 
+	"github.com/issue9/mux/v10/internal/cors"
 	"github.com/issue9/mux/v10/internal/tree"
 	"github.com/issue9/mux/v10/types"
 )
@@ -29,7 +30,7 @@ type (
 		call CallFunc[T]
 		ms   []types.Middleware[T]
 
-		cors            *cors
+		cors            *cors.CORS
 		urlDomain       string
 		recoverFunc     RecoverFunc
 		matcher         Matcher
@@ -56,14 +57,10 @@ type (
 
 // NewRouter 声明路由
 //
-// name 路由名称，可以为空；
-//
-// notFound 表示 404 路由的处理方法；
-//
-// trace 表示 TRACE 请求的处理方法，即使不使用该功能也需要指定方法，
-// 之后可通过 [WithTrace] 关闭该功能。[Trace] 已经实现了一个简单的 TRACE 处理方法；
-//
-// methodNotAllowedBuilder 和 optionsBuilder 可以自定义 405 和 OPTIONS 请求的处理方式；
+// name 路由名称，不可以为空；
+// notFound 和 trace 分别表示 404 和 TRACE 请求的处理方法。
+// 这两个参数不能为空，特别是 trace，它是为 [WithTrace] 开启时提供的功能；
+// methodNotAllowedBuilder 和 optionsBuilder 用于自定义 405 和 OPTIONS 请求的处理方式，不能为空；
 // o 用于指定一些可选的参数；
 //
 // T 表示用户用于处理路由项的方法。
@@ -223,7 +220,7 @@ func (r *Router[T]) serveContext(w http.ResponseWriter, req *http.Request, ctx *
 	ctx.SetNode(node)
 
 	if ok { // !ok 即为 405 或是 404 状态，不需要处理 CORS。
-		r.cors.handle(node, w.Header(), req)
+		r.cors.Handle(node, w.Header(), req)
 	}
 	r.call(w, req, ctx, h)
 }
@@ -275,7 +272,7 @@ func (p *Prefix[T]) Remove(pattern string, methods ...string) {
 //	r := NewRouter(...)
 //	p1 := r.Prefix("prefix")
 //	p2 := r.Prefix("prefix")
-//	p2.Clean() 将同时清除 p1 的内容，因为有相同的前缀。
+//	p2.Clean() // 将同时清除 p1 的内容，因为有相同的前缀。
 func (p *Prefix[T]) Clean() { p.router.tree.Clean(p.Pattern()) }
 
 // URL 根据参数生成地址

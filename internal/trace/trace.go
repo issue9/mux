@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
+// package trace 提供了 TRACE 请求实现
 package trace
 
 import (

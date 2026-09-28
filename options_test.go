@@ -14,11 +14,7 @@ import (
 
 	"github.com/issue9/assert/v5"
 	"github.com/issue9/assert/v5/rest"
-
-	"github.com/issue9/mux/v10/header"
-	"github.com/issue9/mux/v10/internal/syntax"
-	"github.com/issue9/mux/v10/internal/tree"
-	"github.com/issue9/mux/v10/types"
+	"github.com/issue9/mux/v10/internal/cors"
 )
 
 func TestOption(t *testing.T) {
@@ -70,7 +66,7 @@ func TestRecovery(t *testing.T) {
 		router.ServeHTTP(w, r)
 		a.Wait(time.Microsecond*500).
 			Contains(out.String(), "panic test", out.String()).
-			Contains(out.String(), "options_test.go:47", out.String()).
+			Contains(out.String(), "options_test.go:43", out.String()).
 			Equal(w.Code, 404)
 	})
 
@@ -88,7 +84,7 @@ func TestRecovery(t *testing.T) {
 		a.Equal(405, w.Code)
 		a.Contains(out.String(), "panic test\\n")         // 保证第一行是 panic 输出的信息
 		a.Contains(out.String(), "TestRecovery.func1\\n") // 保证第二行是 panic 函数名
-		a.Contains(out.String(), "options_test.go:47\\n") // 保证第三行是 panic 的行号
+		a.Contains(out.String(), "options_test.go:43\\n") // 保证第三行是 panic 的行号
 	})
 
 	// StatusRecovery
@@ -118,233 +114,6 @@ func TestRecovery(t *testing.T) {
 	}, http.ErrAbortHandler)
 }
 
-func TestCORS_sanitize(t *testing.T) {
-	a := assert.New(t, false)
-
-	c := &cors{}
-	a.NotError(c.sanitize())
-	a.True(c.deny).
-		False(c.anyHeaders).
-		Empty(c.allowHeadersString).
-		False(c.anyOrigins).
-		Empty(c.exposedHeadersString).
-		Empty(c.maxAgeString)
-
-	c = &cors{
-		Origins: []string{"*"},
-		MaxAge:  50,
-	}
-	a.NotError(c.sanitize())
-	a.True(c.anyOrigins).Equal(c.maxAgeString, "50")
-
-	c = &cors{
-		Origins: []string{"*"},
-		MaxAge:  -1,
-	}
-	a.NotError(c.sanitize())
-	a.True(c.anyOrigins).Equal(c.maxAgeString, "-1")
-
-	c = &cors{
-		MaxAge: -2,
-	}
-	a.ErrorString(c.sanitize(), "maxAge 的值只能是 >= -1")
-
-	c = &cors{
-		Origins:          []string{"*"},
-		AllowCredentials: true,
-	}
-	a.ErrorString(c.sanitize(), "不能同时成立")
-
-	c = &cors{
-		AllowHeaders:   []string{"*"},
-		ExposedHeaders: []string{"h1", "h2"},
-	}
-	a.NotError(c.sanitize())
-	a.True(c.anyHeaders).
-		Equal(c.allowHeadersString, "*,"+header.Authorization).
-		Equal(c.exposedHeadersString, "h1,h2")
-}
-
-func TestCORS_handle(t *testing.T) {
-	a := assert.New(t, false)
-	tr := tree.NewTestTree(a, false, nil, syntax.NewInterceptors())
-	a.NotError(tr.Add("/path", nil, nil, http.MethodGet, http.MethodDelete))
-	ctx := types.NewContext()
-	ctx.Path = "/path"
-	node, _, exists := tr.Handler(ctx, http.MethodGet)
-	a.NotNil(node).Zero(ctx.Count()).True(exists)
-
-	// deny
-
-	c := &cors{}
-	a.NotError(c.sanitize())
-	w := httptest.NewRecorder()
-	r := rest.Get(a, "/path").Request()
-	c.handle(node, w.Header(), r)
-	a.Empty(w.Header().Get(header.AccessControlAllowOrigin))
-
-	// allowed
-
-	c = &cors{MaxAge: 3600, Origins: []string{"*"}, AllowHeaders: []string{"*"}}
-	a.NotError(c.sanitize())
-	w = httptest.NewRecorder()
-	r = rest.Get(a, "/path").Request()
-	c.handle(node, w.Header(), r)
-	a.Equal(w.Header().Get(header.AccessControlAllowOrigin), "*")
-	// 非预检，没有此报头
-	a.Empty(w.Header().Get(header.AccessControlAllowMethods)).
-		Empty(w.Header().Get(header.AccessControlMaxAge)).
-		Empty(w.Header().Get(header.AccessControlAllowHeaders))
-
-	w = httptest.NewRecorder()
-	r = rest.Get(a, "/path").Header(header.Origin, "http://example.com").Request()
-
-	c.handle(node, w.Header(), r)
-	a.Equal(w.Header().Get(header.AccessControlAllowOrigin), "*")
-	// 非预检，没有此报头
-	a.Empty(w.Header().Get(header.AccessControlAllowMethods)).
-		Empty(w.Header().Get(header.AccessControlMaxAge)).
-		Empty(w.Header().Get(header.AccessControlAllowHeaders))
-
-	w = httptest.NewRecorder()
-	r = rest.NewRequest(a, http.MethodOptions, "/path").Header(header.Origin, "http://example.com").Request()
-
-	c.handle(node, w.Header(), r)
-	a.Equal(w.Header().Get(header.AccessControlAllowOrigin), "*")
-	// 非预检，没有此报头
-	a.Empty(w.Header().Get(header.AccessControlAllowMethods)).
-		Empty(w.Header().Get(header.AccessControlMaxAge)).
-		Empty(w.Header().Get(header.AccessControlAllowHeaders))
-
-	// preflight
-	w = httptest.NewRecorder()
-	r = rest.NewRequest(a, http.MethodOptions, "/path").
-		Header(header.Origin, "http://example.com").
-		Header(header.AccessControlRequestMethod, "GET").
-		Request()
-	c.handle(node, w.Header(), r)
-	a.Equal(w.Header().Get(header.AccessControlAllowOrigin), "*")
-	a.Equal(w.Header().Get(header.AccessControlAllowMethods), "DELETE, GET, HEAD, OPTIONS")
-
-	// preflight，但是方法不被允许
-	w = httptest.NewRecorder()
-	r = rest.NewRequest(a, http.MethodOptions, "/path").
-		Header(header.Origin, "http://example.com").
-		Header(header.AccessControlRequestMethod, "PATCH").
-		Request()
-	c.handle(node, w.Header(), r)
-	a.Equal(w.Header().Get(header.AccessControlAllowOrigin), "")
-	a.Equal(w.Header().Get(header.AccessControlAllowMethods), "")
-
-	// custom cors
-	c = &cors{
-		Origins:          []string{"https://example.com/"},
-		ExposedHeaders:   []string{"h1"},
-		MaxAge:           50,
-		AllowCredentials: true,
-	}
-	a.NotError(c.sanitize())
-
-	w = httptest.NewRecorder()
-	r = rest.Get(a, "/path").
-		Header(header.Origin, "https://example.com/").
-		Request()
-	c.handle(node, w.Header(), r)
-	a.Equal(w.Header().Get(header.AccessControlAllowOrigin), "https://example.com/")
-	// 非预检，没有此报头
-	a.Empty(w.Header().Get(header.AccessControlAllowMethods)).
-		Empty(w.Header().Get(header.AccessControlMaxAge)).
-		Empty(w.Header().Get(header.AccessControlAllowHeaders))
-
-	// preflight
-	w = httptest.NewRecorder()
-	r = rest.NewRequest(a, http.MethodOptions, "/path").
-		Header(header.Origin, "https://example.com/").
-		Header(header.AccessControlRequestHeaders, "h1").
-		Request()
-	c.handle(node, w.Header(), r)
-	a.Equal(w.Header().Get(header.AccessControlAllowOrigin), "https://example.com/")
-	a.Equal(w.Header().Get(header.AccessControlAllowHeaders), "")
-	a.Equal(w.Header().Get(header.AccessControlAllowCredentials), "true")
-	a.Equal(w.Header().Get(header.AccessControlExposeHeaders), "h1")
-	a.Equal(w.Header().Get(header.AccessControlAllowOrigin), "https://example.com/")
-
-	// preflight，但是报头不被允许
-	w = httptest.NewRecorder()
-	r = rest.NewRequest(a, http.MethodOptions, "/path").
-		Header(header.Origin, "https://example.com/").
-		Header(header.AccessControlRequestMethod, "GET").
-		Header(header.AccessControlRequestHeaders, "deny").
-		Request()
-	c.handle(node, w.Header(), r)
-	a.Equal(w.Header().Get(header.AccessControlAllowOrigin), "")
-	a.Equal(w.Header().Get(header.AccessControlAllowHeaders), "")
-	a.Equal(w.Header().Get(header.AccessControlAllowCredentials), "")
-
-	// preflight，origin 不匹配
-	w = httptest.NewRecorder()
-	r = rest.NewRequest(a, http.MethodOptions, "/path").
-		Header(header.Origin, "https://deny.com/").
-		Header(header.AccessControlRequestMethod, "GET").
-		Request()
-	c.handle(node, w.Header(), r)
-	a.Equal(w.Header().Get(header.AccessControlAllowOrigin), "")
-	a.Equal(w.Header().Get(header.AccessControlAllowHeaders), "")
-	a.Equal(w.Header().Get(header.AccessControlAllowCredentials), "")
-
-	// deny
-
-	c = &cors{}
-	a.NotError(c.sanitize())
-	w = httptest.NewRecorder()
-	r = rest.Get(a, "/path").Request()
-	c.handle(node, w.Header(), r)
-	a.Empty(w.Header().Get(header.AccessControlAllowOrigin))
-}
-
-func TestCORS_headerIsAllowed(t *testing.T) {
-	a := assert.New(t, false)
-
-	// Deny
-
-	c := &cors{}
-	a.NotError(c.sanitize())
-
-	r := rest.Get(a, "/").Request()
-	a.True(c.headerIsAllowed(r))
-
-	r = rest.Get(a, "/").Header(header.AccessControlRequestHeaders, "h1").Request()
-	a.False(c.headerIsAllowed(r))
-
-	// Allowed
-
-	c = &cors{MaxAge: 3600, Origins: []string{"*"}, AllowHeaders: []string{"*"}}
-	a.NotNil(c).NotError(c.sanitize())
-
-	r = rest.Get(a, "/").Request()
-	a.True(c.headerIsAllowed(r))
-
-	r = rest.Get(a, "/").Header(header.AccessControlRequestHeaders, "h1").Request()
-	a.True(c.headerIsAllowed(r))
-
-	// 自定义
-	c = &cors{AllowHeaders: []string{"h1", "h2"}}
-	a.NotError(c.sanitize())
-
-	r = rest.Get(a, "/").Request()
-	a.True(c.headerIsAllowed(r))
-
-	r = rest.Get(a, "/").Header(header.AccessControlRequestHeaders, "h1").Request()
-	a.True(c.headerIsAllowed(r))
-
-	// 不存在的报头
-	r = rest.Get(a, "/").Request()
-	a.True(c.headerIsAllowed(r))
-
-	r = rest.Get(a, "/").Header(header.AccessControlRequestHeaders, "h100").Request()
-	a.False(c.headerIsAllowed(r))
-}
-
 func TestOptions_sanitize(t *testing.T) {
 	a := assert.New(t, false)
 
@@ -361,6 +130,6 @@ func TestOptions_sanitize(t *testing.T) {
 	o, err = buildOption(func(o *options) { o.pathPrefix = "https://example.com/" })
 	a.NotError(err).NotNil(o).Equal(o.pathPrefix, "https://example.com")
 
-	o, err = buildOption(func(o *options) { o.cors = &cors{AllowCredentials: true, Origins: []string{"*"}} })
+	o, err = buildOption(func(o *options) { o.cors = &cors.CORS{AllowCredentials: true, Origins: []string{"*"}} })
 	a.Error(err).Nil(o)
 }

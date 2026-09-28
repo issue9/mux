@@ -5,19 +5,14 @@
 package mux
 
 import (
-	"errors"
 	"io"
 	"log/slog"
 	"net/http"
-	"slices"
-	"strconv"
-	"strings"
 
 	"github.com/issue9/source"
 
-	"github.com/issue9/mux/v10/header"
+	"github.com/issue9/mux/v10/internal/cors"
 	"github.com/issue9/mux/v10/internal/syntax"
-	"github.com/issue9/mux/v10/types"
 )
 
 type (
@@ -27,28 +22,10 @@ type (
 		caseInsensitive bool
 		trace           bool
 		lock            bool
-		cors            *cors
+		cors            *cors.CORS
 		interceptors    *syntax.Interceptors
 		pathPrefix      string
 		recoverFunc     RecoverFunc
-	}
-
-	cors struct {
-		Origins    []string
-		anyOrigins bool
-		deny       bool
-
-		AllowHeaders       []string
-		allowHeadersString string
-		anyHeaders         bool
-
-		ExposedHeaders       []string
-		exposedHeadersString string
-
-		MaxAge       int
-		maxAgeString string
-
-		AllowCredentials bool
 	}
 
 	RecoverFunc = func(http.ResponseWriter, any)
@@ -56,10 +33,13 @@ type (
 	InterceptorFunc = syntax.InterceptorFunc
 )
 
-// WithCaseInsensitive 不区分大小写
+// WithCaseInsensitive 是否不区分大小写
 //
-// 该行为只针对客户端的请求地址，会将 [Request.URL.Path] 转换为小写进行对比，但是不会改变 [Request.URL.Path] 本身。
-// 该开关不会影响由 [Router.Add] 等一系列添加路由项的 pattern 参数。
+// 该行为只针对客户端的请求地址，会将 [Request.URL.Path] 转换为小写与现有的路由项进行对比，
+// 但是不会改变 [Request.URL.Path] 本身。
+//
+// 该开关不会影响由 [Router.Add] 等一系列添加路由项的 pattern 参数，
+// 如果这些 pattern 参数为大写，可能永远无法匹配任何地址。
 func WithCaseInsensitive(v bool) Option { return func(o *options) { o.caseInsensitive = v } }
 
 // WithTrace 是否启用 TRACE 方法
@@ -159,7 +139,7 @@ func WithWordInterceptor(rule string) Option { return WithInterceptor(syntax.Mat
 // [跨域请求]: https://developer.mozilla.org/zh-CN/docs/Web/HTTP/cors
 func WithCORS(origin []string, allowHeaders []string, exposedHeaders []string, maxAge int, allowCredentials bool) Option {
 	return func(o *options) {
-		o.cors = &cors{
+		o.cors = &cors.CORS{
 			Origins:          origin,
 			AllowHeaders:     allowHeaders,
 			ExposedHeaders:   exposedHeaders,
@@ -169,10 +149,10 @@ func WithCORS(origin []string, allowHeaders []string, exposedHeaders []string, m
 	}
 }
 
-// WithDenyCORS 禁用跨域请求
+// WithDenyCORS 禁用跨域请求的 [WithCORS] 选项
 func WithDenyCORS() Option { return WithCORS(nil, nil, nil, 0, false) }
 
-// WithAllowedCORS 允许跨域请求
+// WithAllowedCORS 允许跨域请求的 [WithCOORS] 选项
 func WithAllowedCORS(maxAge int) Option {
 	return WithCORS([]string{"*"}, []string{"*"}, nil, maxAge, false)
 }
@@ -191,9 +171,9 @@ func buildOption(o ...Option) (*options, error) {
 
 func (o *options) sanitize() error {
 	if o.cors == nil {
-		o.cors = &cors{}
+		o.cors = &cors.CORS{}
 	}
-	if err := o.cors.sanitize(); err != nil {
+	if err := o.cors.Sanitize(); err != nil {
 		return err
 	}
 
@@ -203,110 +183,4 @@ func (o *options) sanitize() error {
 	}
 
 	return nil
-}
-
-func (c *cors) sanitize() error {
-	if slices.Contains(c.Origins, "*") {
-		c.anyOrigins = true
-	}
-	c.deny = len(c.Origins) == 0
-
-	if slices.Contains(c.AllowHeaders, "*") {
-		c.allowHeadersString = "*," + header.Authorization // Firefox 中 * 并不包含 Authorization 报头。
-		c.anyHeaders = true
-	}
-	if c.allowHeadersString == "" && len(c.AllowHeaders) > 0 {
-		c.allowHeadersString = strings.Join(c.AllowHeaders, ",")
-	}
-
-	if len(c.ExposedHeaders) > 0 {
-		c.exposedHeadersString = strings.Join(c.ExposedHeaders, ",")
-	}
-
-	switch {
-	case c.MaxAge == 0:
-	case c.MaxAge >= -1:
-		c.maxAgeString = strconv.Itoa(c.MaxAge)
-	default:
-		return errors.New("maxAge 的值只能是 >= -1")
-	}
-
-	if c.anyOrigins && c.AllowCredentials {
-		return errors.New("origin=* 和 allowCredentials=true 不能同时成立")
-	}
-
-	return nil
-}
-
-func (c *cors) handle(node types.Node, wh http.Header, r *http.Request) {
-	if c.deny {
-		return
-	}
-
-	// Origin 是可以为空的，所以采用 Access-Control-Request-Method 判断是否为预检。
-	reqMethod := r.Header.Get(header.AccessControlRequestMethod)
-	preflight := r.Method == http.MethodOptions &&
-		reqMethod != "" &&
-		r.URL.Path != "*" // OPTIONS * 不算预检，也不存在其它的请求方法处理方式。
-
-	if preflight {
-		// Access-Control-Allow-Methods
-		if !slices.Contains(node.Methods(), reqMethod) {
-			return
-		}
-		wh.Set(header.AccessControlAllowMethods, node.AllowHeader())
-		wh.Add(header.Vary, header.AccessControlRequestMethod)
-
-		// Access-Control-Allow-Headers
-		if !c.headerIsAllowed(r) {
-			return
-		}
-		if c.allowHeadersString != "" {
-			wh.Set(header.AccessControlAllowHeaders, c.allowHeadersString)
-			wh.Add(header.Vary, header.AccessControlAllowHeaders)
-		}
-
-		// Access-Control-Max-Age
-		if c.maxAgeString != "" {
-			wh.Set(header.AccessControlMaxAge, c.maxAgeString)
-		}
-	}
-
-	// Access-Control-Allow-Origin
-	allowOrigin := "*"
-	if !c.anyOrigins {
-		origin := r.Header.Get(header.Origin)
-		if !slices.Contains(c.Origins, origin) {
-			return
-		}
-		allowOrigin = origin
-	}
-	wh.Set(header.AccessControlAllowOrigin, allowOrigin)
-	wh.Add(header.Vary, header.AccessControlAllowOrigin)
-
-	// Access-Control-Allow-Credentials
-	if c.AllowCredentials {
-		wh.Set(header.AccessControlAllowCredentials, "true")
-	}
-
-	// Access-Control-Expose-Headers
-	if c.exposedHeadersString != "" {
-		wh.Set(header.AccessControlExposeHeaders, c.exposedHeadersString)
-	}
-}
-
-func (c *cors) headerIsAllowed(r *http.Request) bool {
-	if c.anyHeaders {
-		return true
-	}
-
-	if h := strings.TrimSpace(r.Header.Get(header.AccessControlRequestHeaders)); h != "" {
-		for v := range strings.SplitSeq(h, ",") {
-			if !slices.Contains(c.AllowHeaders, strings.TrimSpace(v)) {
-				return false
-			}
-		}
-	}
-
-	return true
 }
