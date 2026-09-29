@@ -14,6 +14,31 @@ import (
 	"github.com/issue9/mux/v10/types"
 )
 
+func BenchmarkCleanPath(b *testing.B) {
+	a := assert.New(b, false)
+
+	paths := []string{
+		"",
+		"/api//",
+		"/api////users/1",
+		"//api/users/1",
+		"api///users////1",
+		"api//",
+		"/api/",
+		"/api/./",
+		"/api/..",
+		"/api//../",
+		"/api/..//../",
+		"/api../",
+		"api../",
+	}
+
+	for i := range b.N {
+		ret := cleanPath(paths[i%len(paths)])
+		a.True(len(ret) > 0)
+	}
+}
+
 func BenchmarkHosts_Match(b *testing.B) {
 	a := assert.New(b, false)
 	h := NewHosts(true, "caixw.io", "caixw.oi", "*.example.com")

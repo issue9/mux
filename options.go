@@ -8,7 +8,9 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"strings"
 
+	"github.com/issue9/errwrap"
 	"github.com/issue9/source"
 
 	"github.com/issue9/mux/v10/internal/cors"
@@ -23,6 +25,7 @@ type (
 		caseInsensitive bool
 		trace           bool
 		lock            bool
+		cleanPath       bool
 		cors            *cors.CORS
 		interceptors    *syntax.Interceptors
 		pathPrefix      string
@@ -32,13 +35,10 @@ type (
 	RecoverFunc = func(http.ResponseWriter, any)
 )
 
-// WithCaseInsensitive 是否不区分大小写
-//
-// 该行为只针对客户端的请求地址，会将 [Request.URL.Path] 转换为小写与现有的路由项进行对比，
-// 但是不会改变 [Request.URL.Path] 本身。
-//
-// 该开关不会影响由 [Router.Add] 等一系列添加路由项的 pattern 参数，
-// 如果这些 pattern 参数为大写，可能永远无法匹配任何地址。
+// 清除请求地址中重复的 / 字符
+func WithCleanPath(v bool) Option { return func(o *options) { o.cleanPath = v } }
+
+// WithCaseInsensitive 是否不区分请求地址的大小写
 func WithCaseInsensitive(v bool) Option { return func(o *options) { o.caseInsensitive = v } }
 
 // WithTrace 是否启用 TRACE 方法
@@ -182,4 +182,41 @@ func (o *options) sanitize() error {
 	}
 
 	return nil
+}
+
+// cleanPath 清除路径中的重复的 / 字符
+func cleanPath(p string) string {
+	if p == "" {
+		return "/"
+	}
+
+	var b errwrap.StringBuilder
+	b.Grow(len(p) + 1)
+
+	if p[0] != '/' {
+		b.WriteByte('/')
+	}
+
+	index := strings.Index(p, "//")
+	if index == -1 {
+		b.WriteString(p)
+		return b.String()
+	}
+
+	b.WriteString(p[:index+1])
+
+	slash := true
+	for i := index + 2; i < len(p); i++ {
+		if p[i] == '/' {
+			if slash {
+				continue
+			}
+			slash = true
+		} else {
+			slash = false
+		}
+		b.WriteByte(p[i])
+	}
+
+	return b.String()
 }

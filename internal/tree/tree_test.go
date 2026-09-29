@@ -294,6 +294,7 @@ func TestTree_Route(t *testing.T) {
 	test.matchTrue(http.MethodGet, "/中文/5index.html", 220, "/中文/{id}")
 
 	// 测试非英文字符 indexes 功能，汉字中的相同部分会被提取到上一级。
+	// 中和丽的首字节都是 0x4E。
 	test = newTester(a, false, nil)
 	test.add(http.MethodGet, "/中文/1", 201)
 	test.add(http.MethodGet, "/中文/2", 202)

@@ -61,7 +61,7 @@ func TestRouterByHTTPServer(t *testing.T) {
 func TestCaseInsensitive(t *testing.T) {
 	a := assert.New(t, false)
 
-	r := newRouter(a, "def", WithLock(true), WithCaseInsensitive(true))
+	r := newRouter(a, "def", WithCaseInsensitive(true))
 	r.Get("/abc", rest.BuildHandler(a, 201, "201", nil))
 	rest.Get(a, "/abc").Do(r).Status(201).StringBody("201")
 	rest.Get(a, "/ABC").Do(r).Status(201).StringBody("201")
@@ -69,6 +69,19 @@ func TestCaseInsensitive(t *testing.T) {
 	r = newRouter(a, "def", WithLock(true))
 	r.Get("/abc", rest.BuildHandler(a, 201, "201", nil))
 	rest.Get(a, "/ABC").Do(r).Status(404)
+}
+
+func TestCleanPath(t *testing.T) {
+	a := assert.New(t, false)
+
+	r := newRouter(a, "def", WithCleanPath(true))
+	r.Get("/abc/def", rest.BuildHandler(a, 201, "201", nil))
+	rest.Get(a, "/abc//def").Do(r).Status(201).StringBody("201")
+	rest.Get(a, "//abc//def").Do(r).Status(201).StringBody("201")
+
+	r = newRouter(a, "def", WithLock(true))
+	r.Get("/abc/def", rest.BuildHandler(a, 201, "201", nil))
+	rest.Get(a, "/abc/def/").Do(r).Status(404)
 }
 
 func TestRouter(t *testing.T) {

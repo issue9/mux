@@ -30,11 +30,13 @@ type (
 		call CallFunc[T]
 		ms   []types.Middleware[T]
 
+		urlDomain   string
+		recoverFunc RecoverFunc
+		matcher     Matcher
+
 		cors            *cors.CORS
-		urlDomain       string
-		recoverFunc     RecoverFunc
-		matcher         Matcher
 		caseInsensitive bool
+		cleanPath       bool
 	}
 
 	// CallFunc 指定如何调用用户给定的类型 T
@@ -84,10 +86,12 @@ func NewRouter[T any](
 		tree: tree.New(name, opt.lock, opt.interceptors, notFound, traceBuilder, methodNotAllowedBuilder, optionsBuilder),
 		call: call,
 
+		urlDomain:   opt.pathPrefix,
+		recoverFunc: opt.recoverFunc,
+
 		cors:            opt.cors,
-		urlDomain:       opt.pathPrefix,
-		recoverFunc:     opt.recoverFunc,
 		caseInsensitive: opt.caseInsensitive,
+		cleanPath:       opt.cleanPath,
 	}
 
 	return r
@@ -214,6 +218,10 @@ func (r *Router[T]) serveContext(w http.ResponseWriter, req *http.Request, route
 	route.Path = req.URL.Path
 	if r.caseInsensitive {
 		route.Path = strings.ToLower(req.URL.Path)
+	}
+	if r.cleanPath {
+		route.Path = cleanPath(route.Path)
+		println("true:", route.Path)
 	}
 
 	node, h, ok := r.tree.Handler(route, req.Method)
