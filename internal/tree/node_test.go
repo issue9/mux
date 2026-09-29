@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/issue9/assert/v5"
+	"github.com/issue9/assert/v5/rest"
 
 	"github.com/issue9/mux/v10/internal/syntax"
 	"github.com/issue9/mux/v10/types"
@@ -113,4 +114,23 @@ func TestSplitNode(t *testing.T) {
 
 	nn, err = splitNode(node, 8)
 	a.NotError(err).NotNil(nn)
+}
+
+// 删除节点之后，父节点的 indexes 不能残留陈旧的索引，
+// 否则 [node.matchChildren] 会用越界的下标访问 children。
+func TestNode_buildIndexes(t *testing.T) {
+	a := assert.New(t, false)
+	tree := NewTestTree(a, true, nil, syntax.NewInterceptors())
+
+	for _, p := range []string{"/a", "/b", "/c", "/d", "/e", "/f", "/g"} {
+		a.NotError(tree.Add(p, rest.BuildHandler(a, 201, "", nil), nil, http.MethodGet))
+	}
+
+	tree.Remove("/f")
+	tree.Remove("/g")
+
+	route := types.NewRoute()
+	route.Path = "/f"
+	_, _, found := tree.Handler(route, http.MethodGet)
+	a.False(found) // 已删除，必须表现为 404 而不是 panic
 }

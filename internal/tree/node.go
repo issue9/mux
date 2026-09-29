@@ -48,6 +48,8 @@ func (n *node[T]) buildIndexes() {
 
 	if n.indexes == nil {
 		n.indexes = make(map[byte]int, indexesSize)
+	} else {
+		clear(n.indexes)
 	}
 
 	for index, node := range n.children {
