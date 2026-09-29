@@ -42,7 +42,7 @@ func (n *node[T]) size() int { return len(n.handlers) }
 // 构建当前节点的索引表
 func (n *node[T]) buildIndexes() {
 	if len(n.children) < indexesSize {
-		n.indexes = nil
+		clear(n.indexes)
 		return
 	}
 
@@ -164,6 +164,7 @@ func (n *node[T]) find(pattern string, depth int) (*node[T], int) {
 func (n *node[T]) clean(prefix string) {
 	if len(prefix) == 0 {
 		n.children = n.children[:0]
+		clear(n.indexes)
 		return
 	}
 
@@ -204,7 +205,7 @@ func (n *node[T]) matchChildren(route *types.Route) (node *node[T], found bool) 
 			return nn, true
 		}
 
-		route.Path = path // 未匹配，改回原值。
+		route.Path = path // 未匹配，改回原值，字符串匹配不涉及参数问题，不需要删除 child.segment.Name。
 	}
 
 LOOP:
@@ -221,7 +222,7 @@ LOOP:
 
 			// 不匹配子元素，则恢复由 matchChildren 和 segment.Match 修改的数据
 			route.Path = path
-			route.Delete(n.segment.Name)
+			route.Delete(child.segment.Name)
 		}
 	}
 
@@ -308,6 +309,9 @@ func (n *node[T]) checkAmbiguous(pattern string, hasNonString bool) (*node[T], b
 		return nil, false, nil
 	}
 
+	// 仅在有子节点匹配时，才需要㤢性求值 s0
+	var s0 *syntax.Segment
+
 	for _, c := range n.children {
 		seg := c.segment
 
@@ -323,11 +327,13 @@ func (n *node[T]) checkAmbiguous(pattern string, hasNonString bool) (*node[T], b
 			continue
 		}
 
-		segs, err := n.root.interceptors.Split(pattern)
-		if err != nil {
-			return nil, false, err
+		if s0 == nil {
+			segs, err := n.root.interceptors.Split(pattern)
+			if err != nil {
+				return nil, false, err
+			}
+			s0 = segs[0]
 		}
-		s0 := segs[0]
 
 		if seg.IsAmbiguous(s0) {
 			node, hasNonString, err := c.checkAmbiguous(pattern[s0.AmbiguousLen():], true)
