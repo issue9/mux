@@ -8,7 +8,6 @@ package syntax
 import (
 	"errors"
 	"fmt"
-	"iter"
 	"strings"
 
 	"github.com/issue9/errwrap"
@@ -109,7 +108,7 @@ func (i *Interceptors) Split(str string) ([]*Segment, error) {
 	var lastFlag bool
 	names := make(map[string]int, size)
 
-	for s := range ss {
+	for _, s := range ss {
 		if lastFlag && s[0] == startByte {
 			return nil, fmt.Errorf("两个命名参数不能连续出现：%s", str)
 		}
@@ -133,29 +132,26 @@ func (i *Interceptors) Split(str string) ([]*Segment, error) {
 	return segments, nil
 }
 
-func splitString(str string) (iter.Seq[string], int) {
+func splitString(str string) ([]string, int) {
 	size := strings.Count(str, string(startByte)) + 1
 	var end int
+	ss := make([]string, 0, size)
 
-	return func(yield func(s string) bool) {
-		for {
-			start := strings.IndexByte(str[end:], startByte)
-			if start == -1 {
-				yield(str)
-				break
-			} else if start > 0 {
-				if yield(str[:start+end]) {
-					str = str[start+end:]
-				} else {
-					break
-				}
-			}
-
-			end = strings.IndexByte(str, endByte)
-			if end == -1 {
-				yield(str)
-				break
-			}
+	for {
+		start := strings.IndexByte(str[end:], startByte)
+		if start == -1 {
+			ss = append(ss, str)
+			break
+		} else if start > 0 {
+			ss = append(ss, str[:start+end])
+			str = str[start+end:]
 		}
-	}, size
+
+		end = strings.IndexByte(str, endByte)
+		if end == -1 {
+			ss = append(ss, str)
+			break
+		}
+	}
+	return ss, size
 }
