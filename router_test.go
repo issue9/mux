@@ -71,13 +71,13 @@ func TestCaseInsensitive(t *testing.T) {
 	rest.Get(a, "/ABC").Do(r).Status(404)
 }
 
-func testCleanPath(t *testing.T) {
+func TestCleanPath(t *testing.T) {
 	a := assert.New(t, false)
 
 	r := newRouter(a, "def", WithCleanPath(true))
 	r.Get("/abc/def", rest.BuildHandler(a, 201, "201", nil))
 	rest.Get(a, "/abc//def").Do(r).Status(201).StringBody("201")
-	rest.Get(a, "//abc//def").Do(r).Status(201).StringBody("201")
+	rest.Get(a, "/abc///def").Do(r).Status(201).StringBody("201")
 
 	r = newRouter(a, "def", WithLock(true))
 	r.Get("/abc/def", rest.BuildHandler(a, 201, "201", nil))

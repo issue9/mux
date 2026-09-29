@@ -8,6 +8,8 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"path"
+	"strings"
 
 	"github.com/issue9/source"
 
@@ -34,8 +36,6 @@ type (
 )
 
 // WithCleanPath 是否清除请求地址中重复的斜杠和点
-//
-// NOTE: 如果为 true，会使用标准库的 [path.Clean] 进行清除。
 func WithCleanPath(v bool) Option { return func(o *options) { o.cleanPath = v } }
 
 // WithCaseInsensitive 是否不区分请求地址的大小写
@@ -182,4 +182,26 @@ func (o *options) sanitize() error {
 	}
 
 	return nil
+}
+
+// https://github.com/golang/go/blob/38f24c5c4659b7b8f468e5a2544412e9532e55e9/src/net/http/server.go#L2789-L2808
+func cleanPath(p string) string {
+	if p == "" {
+		return "/"
+	}
+	if p[0] != '/' {
+		p = "/" + p
+	}
+	np := path.Clean(p)
+	// path.Clean removes trailing slash except for root;
+	// put the trailing slash back if necessary.
+	if p[len(p)-1] == '/' && np != "/" {
+		// Fast path for common case of p being the string we want:
+		if len(p) == len(np)+1 && strings.HasPrefix(p, np) {
+			np = p
+		} else {
+			np += "/"
+		}
+	}
+	return np
 }

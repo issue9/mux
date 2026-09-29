@@ -7,7 +7,6 @@ package mux
 import (
 	"iter"
 	"net/http"
-	"path"
 	"slices"
 	"strings"
 
@@ -217,11 +216,11 @@ func (r *Router[T]) serveContext(w http.ResponseWriter, req *http.Request, route
 	}
 
 	route.Path = req.URL.Path
-	if r.caseInsensitive {
-		route.Path = strings.ToLower(req.URL.Path)
-	}
 	if r.cleanPath {
-		route.Path = path.Clean(route.Path)
+		route.Path = cleanPath(req.URL.Path)
+	}
+	if r.caseInsensitive {
+		route.Path = strings.ToLower(route.Path)
 	}
 
 	node, h, ok := r.tree.Handler(route, req.Method)
