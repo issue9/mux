@@ -72,7 +72,7 @@ func New[T any](
 
 	tree := &Tree[T]{
 		methods: make(map[string]int, len(Methods)),
-		node:    &node[T]{segment: s, optionsIndex: methodIndexes[http.MethodOptions]},
+		node:    &node[T]{segment: s},
 
 		interceptors:            i,
 		name:                    name,
@@ -92,6 +92,8 @@ func New[T any](
 	if lock {
 		tree.locker = &sync.RWMutex{}
 	}
+
+	tree.node.buildMethods()
 
 	return tree
 }

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"slices"
 	"strings"
+	"sync"
 
 	"github.com/issue9/mux/v10/types"
 )
@@ -29,16 +30,18 @@ var (
 
 	AnyMethods = Methods[:len(Methods)-3] // 添加请求方法时，所采用的默认值。
 
-	methodIndexes  map[string]int            // 将请求方法转换为一个对应的唯一数值
-	optionsIndexes = map[int]optionsEntity{} // 各类请求方法组合下对应的 OPTIONS 值
-)
+	methodIndexes map[string]int // 将请求方法转换为一个对应的唯一数值
 
-const methodNotAllowed = "" // 表示 405 的处理方法在各个节点上的名称
+	optionsIndexes    = map[int]*optionsEntity{} // 各类请求方法组合下对应的 OPTIONS 值
+	optionsIndexesMux = &sync.RWMutex{}          // 小型 map，直接使用 sync.RWMutex 比 sync.Map 更快一些。
+)
 
 type optionsEntity struct {
 	methods []string
-	options string
+	allow   string
 }
+
+const methodNotAllowed = "" // 表示 405 的处理方法在各个节点上的名称
 
 func init() {
 	methodIndexes = make(map[string]int, len(Methods))
@@ -48,9 +51,12 @@ func init() {
 }
 
 func buildOptionsIndexes(index int) {
+	optionsIndexesMux.RLock()
 	if _, found := optionsIndexes[index]; found {
+		optionsIndexesMux.RUnlock()
 		return
 	}
+	optionsIndexesMux.RUnlock()
 
 	methods := make([]string, 0, len(Methods))
 	for method, i := range methodIndexes {
@@ -60,27 +66,44 @@ func buildOptionsIndexes(index int) {
 	}
 	slices.Sort(methods)
 
-	optionsIndexes[index] = optionsEntity{
+	optionsIndexesMux.Lock()
+	defer optionsIndexesMux.Unlock()
+	optionsIndexes[index] = &optionsEntity{
 		methods: methods,
-		options: strings.Join(methods, ", "),
+		allow:   strings.Join(methods, ", "),
 	}
 }
 
 func (n *node[T]) buildMethods() {
-	n.optionsIndex = 0
+	optionsIndex := 0
 	for method := range n.handlers {
-		n.optionsIndex += methodIndexes[method]
+		optionsIndex += methodIndexes[method]
 	}
 	if n.root.hasTrace {
-		n.optionsIndex += methodIndexes[http.MethodTrace]
+		optionsIndex += methodIndexes[http.MethodTrace]
 	}
-	buildOptionsIndexes(n.optionsIndex)
+	buildOptionsIndexes(optionsIndex)
+
+	optionsIndexesMux.RLock()
+	opt := optionsIndexes[optionsIndex]
+	optionsIndexesMux.RUnlock()
+	n.options.Store(opt)
 }
 
-func (n *node[T]) AllowHeader() string { return optionsIndexes[n.optionsIndex].options }
+func (n *node[T]) AllowHeader() string {
+	if opt := n.options.Load(); opt != nil {
+		return opt.allow
+	}
+	return ""
+}
 
 // Methods 当前节点支持的请求方法
-func (n *node[T]) Methods() []string { return optionsIndexes[n.optionsIndex].methods }
+func (n *node[T]) Methods() []string {
+	if opt := n.options.Load(); opt != nil {
+		return opt.methods
+	}
+	return nil
+}
 
 // 添加一个处理函数
 func (n *node[T]) addMethods(h T, pattern string, ms []types.Middleware[T], methods ...string) error {
@@ -125,16 +148,21 @@ func (tree *Tree[T]) buildMethods(num int, methods ...string) {
 	}
 
 	// 即使所有接口都没了，也有 OPTIONS * 存在，所以始终有 OPTIONS 和可能的 TRACE 存在。
-	tree.node.optionsIndex = methodIndexes[http.MethodOptions]
+	optionsIndex := methodIndexes[http.MethodOptions]
 	if tree.hasTrace {
-		tree.node.optionsIndex += methodIndexes[http.MethodTrace]
+		optionsIndex += methodIndexes[http.MethodTrace]
 	}
 
 	for m, num := range tree.methods {
 		if num > 0 {
-			tree.node.optionsIndex += methodIndexes[m]
+			optionsIndex += methodIndexes[m]
 		}
 	}
 
-	buildOptionsIndexes(tree.node.optionsIndex)
+	buildOptionsIndexes(optionsIndex)
+
+	optionsIndexesMux.RLock()
+	opt := optionsIndexes[optionsIndex]
+	optionsIndexesMux.RUnlock()
+	tree.node.options.Store(opt)
 }

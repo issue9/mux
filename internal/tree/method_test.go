@@ -15,22 +15,26 @@ import (
 
 func TestBuildOptionsIndexes(t *testing.T) {
 	a := assert.New(t, false)
-	optionsIndexes = map[int]optionsEntity{}
+	optionsIndexesMux.Lock()
+	optionsIndexes = map[int]*optionsEntity{}
+	optionsIndexesMux.Unlock()
 
 	index := methodIndexes[http.MethodGet]
 	buildOptionsIndexes(index)
 	a.Equal(1, len(optionsIndexes)).
-		Equal(optionsIndexes[index].options, "GET").
+		Equal(optionsIndexes[index].allow, "GET").
 		Equal(optionsIndexes[index].methods, []string{"GET"})
 
 	index = methodIndexes[http.MethodGet] + methodIndexes[http.MethodPatch]
 	buildOptionsIndexes(index)
 	a.Equal(2, len(optionsIndexes)).
-		Equal(optionsIndexes[index].options, "GET, PATCH").
+		Equal(optionsIndexes[index].allow, "GET, PATCH").
 		Equal(optionsIndexes[index].methods, []string{"GET", "PATCH"})
 
 	// 重置为空
-	optionsIndexes = map[int]optionsEntity{}
+	optionsIndexesMux.Lock()
+	optionsIndexes = map[int]*optionsEntity{}
+	optionsIndexesMux.Unlock()
 }
 
 func TestTree_buildMethods(t *testing.T) {
@@ -40,20 +44,20 @@ func TestTree_buildMethods(t *testing.T) {
 	// delete=1
 	tree.buildMethods(1, http.MethodDelete)
 	a.Equal(tree.methods, map[string]int{http.MethodDelete: 1})
-	a.Equal(tree.node.optionsIndex, methodIndexes[http.MethodDelete]+methodIndexes[http.MethodOptions])
+	a.Equal(tree.node.options.Load().allow, "DELETE, OPTIONS")
 
 	// get=1,delete=2
 	tree.buildMethods(1, http.MethodDelete, http.MethodGet)
 	a.Equal(tree.methods, map[string]int{http.MethodDelete: 2, http.MethodGet: 1})
-	a.Equal(tree.node.optionsIndex, methodIndexes[http.MethodDelete]+methodIndexes[http.MethodOptions]+methodIndexes[http.MethodGet])
+	a.Equal(tree.node.options.Load().allow, "DELETE, GET, OPTIONS")
 
 	// get=1,delete=1
 	tree.buildMethods(-1, http.MethodDelete)
 	a.Equal(tree.methods, map[string]int{http.MethodDelete: 1, http.MethodGet: 1})
-	a.Equal(tree.node.optionsIndex, methodIndexes[http.MethodDelete]+methodIndexes[http.MethodOptions]+methodIndexes[http.MethodGet])
+	a.Equal(tree.node.options.Load().allow, "DELETE, GET, OPTIONS")
 
 	// get=1,delete=0
 	tree.buildMethods(-1, http.MethodDelete)
 	a.Equal(tree.methods, map[string]int{http.MethodGet: 1, http.MethodDelete: 0})
-	a.Equal(tree.node.optionsIndex, methodIndexes[http.MethodOptions]+methodIndexes[http.MethodGet])
+	a.Equal(tree.node.options.Load().allow, "GET, OPTIONS")
 }

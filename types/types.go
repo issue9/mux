@@ -18,6 +18,8 @@ type Node interface {
 	Pattern() string
 
 	// Methods 当前节点支持的方法列表
+	//
+	// NOTE: 返回切片不能修改
 	Methods() []string
 
 	// AllowHeader Allow 报头的内容

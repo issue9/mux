@@ -7,6 +7,7 @@ package tree
 import (
 	"slices"
 	"strings"
+	"sync/atomic"
 
 	"github.com/issue9/mux/v10/internal/syntax"
 	"github.com/issue9/mux/v10/types"
@@ -23,8 +24,8 @@ type node[T any] struct {
 	segment *syntax.Segment
 	pattern string
 
-	optionsIndex int          // 当前节点所支持的请求方法在 [optionsIndexes] 中的索引值
-	handlers     map[string]T // 键名为请求方法，[methodNotAllowed] 也作为键名在此使用。
+	options  atomic.Pointer[optionsEntity]
+	handlers map[string]T // 键名为请求方法，[methodNotAllowed] 也作为键名在此使用。
 
 	// 保存着 node 实例在 children 中的下标
 	//
@@ -270,7 +271,7 @@ func splitNode[T any](n *node[T], pos int) (*node[T], error) {
 	ret := p.newChild(segs[0])
 	c := ret.newChild(segs[1])
 	c.handlers = n.handlers
-	c.optionsIndex = n.optionsIndex
+	c.options.Store(n.options.Load())
 	c.children = n.children
 	c.indexes = n.indexes
 	for _, item := range c.children {
@@ -288,7 +289,7 @@ func splitNode[T any](n *node[T], pos int) (*node[T], error) {
 //
 // ok 返回 false 表示 yield 返回了 false，需要退出迭代。
 func (n *node[T]) routes(yield func(string, []string) bool) (ok bool) {
-	if n.optionsIndex > 0 {
+	if opt := n.options.Load(); opt != nil && len(opt.methods) > 0 {
 		if !yield(n.Pattern(), n.Methods()) {
 			return false
 		}
