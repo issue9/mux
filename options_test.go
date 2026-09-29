@@ -133,24 +133,3 @@ func TestOptions_sanitize(t *testing.T) {
 	o, err = buildOption(func(o *options) { o.cors = &cors.CORS{AllowCredentials: true, Origins: []string{"*"}} })
 	a.Error(err).Nil(o)
 }
-
-func TestClearPath(t *testing.T) {
-	a := assert.New(t, false)
-
-	a.Equal(cleanPath(""), "/")
-	a.Equal(cleanPath("{}"), "/{}")
-
-	a.Equal(cleanPath("/api//"), "/api/")
-	a.Equal(cleanPath("/{api}//"), "/{api}/")
-	a.Equal(cleanPath("/{api}/{}/"), "/{api}/{}/")
-	a.Equal(cleanPath("api/"), "/api/")
-	a.Equal(cleanPath("api/////"), "/api/")
-	a.Equal(cleanPath("//api/////1"), "/api/1")
-
-	a.Equal(cleanPath("/api/"), "/api/")
-	a.Equal(cleanPath("/api/./"), "/api/./")
-
-	a.Equal(cleanPath("/api/.."), "/api/..")
-	a.Equal(cleanPath("/api/../"), "/api/../")
-	a.Equal(cleanPath("/api/../../"), "/api/../../")
-}

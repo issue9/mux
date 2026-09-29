@@ -7,6 +7,7 @@ package mux
 import (
 	"iter"
 	"net/http"
+	"path"
 	"slices"
 	"strings"
 
@@ -220,8 +221,7 @@ func (r *Router[T]) serveContext(w http.ResponseWriter, req *http.Request, route
 		route.Path = strings.ToLower(req.URL.Path)
 	}
 	if r.cleanPath {
-		route.Path = cleanPath(route.Path)
-		println("true:", route.Path)
+		route.Path = path.Clean(route.Path)
 	}
 
 	node, h, ok := r.tree.Handler(route, req.Method)

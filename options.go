@@ -8,9 +8,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
-	"strings"
 
-	"github.com/issue9/errwrap"
 	"github.com/issue9/source"
 
 	"github.com/issue9/mux/v10/internal/cors"
@@ -35,7 +33,9 @@ type (
 	RecoverFunc = func(http.ResponseWriter, any)
 )
 
-// 清除请求地址中重复的 / 字符
+// WithCleanPath 是否清除请求地址中重复的斜杠和点
+//
+// NOTE: 如果为 true，会使用标准库的 [path.Clean] 进行清除。
 func WithCleanPath(v bool) Option { return func(o *options) { o.cleanPath = v } }
 
 // WithCaseInsensitive 是否不区分请求地址的大小写
@@ -182,41 +182,4 @@ func (o *options) sanitize() error {
 	}
 
 	return nil
-}
-
-// cleanPath 清除路径中的重复的 / 字符
-func cleanPath(p string) string {
-	if p == "" {
-		return "/"
-	}
-
-	var b errwrap.StringBuilder
-	b.Grow(len(p) + 1)
-
-	if p[0] != '/' {
-		b.WriteByte('/')
-	}
-
-	index := strings.Index(p, "//")
-	if index == -1 {
-		b.WriteString(p)
-		return b.String()
-	}
-
-	b.WriteString(p[:index+1])
-
-	slash := true
-	for i := index + 2; i < len(p); i++ {
-		if p[i] == '/' {
-			if slash {
-				continue
-			}
-			slash = true
-		} else {
-			slash = false
-		}
-		b.WriteByte(p[i])
-	}
-
-	return b.String()
 }
