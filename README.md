@@ -42,7 +42,7 @@ p.Post("/login", h) // 相当于 m.Get("/api/login", h)
 res := p.Resource("/users/{id:\\d+}")
 res.Get(h)   // 相当于 m.Get("/api/users/{id:\\d+}", h)
 res.Post(h)  // 相当于 m.Post("/api/users/{id:\\d+}", h)
-res.URL(map[string]string{"id": "5"}) // 构建一条基于此路由项的路径：/users/5
+res.URL(true, map[string]string{"id": "5"}) // 构建一条基于此路由项的路径：/users/5
 
 http.ListenAndServe(":8080", router)
 ```
@@ -112,7 +112,7 @@ id := route.MustInt("id", 0) // 在无法获取 id 参数时采用 0 作为默�
 
 import "github.com/issue9/mux/v10"
 
-m := mux.NewRouters(...)
+m := mux.NewGroup(...)
 
 def := mux.NewRouter("default")
 m.AddRouter(mux.NewPathVersion("version-key", "v1"), def)

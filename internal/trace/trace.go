@@ -20,8 +20,8 @@ import (
 func Trace(w http.ResponseWriter, r *http.Request, body bool) error {
 	text, err := httputil.DumpRequest(r, body)
 	if err == nil {
-		w.WriteHeader(http.StatusOK)
 		w.Header().Set(header.ContentType, header.MessageHTTP)
+		w.WriteHeader(http.StatusOK)
 		_, err = w.Write([]byte(html.EscapeString(string(text))))
 	}
 

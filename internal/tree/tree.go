@@ -102,13 +102,14 @@ func (tree *Tree[T]) Name() string { return tree.name }
 //
 // methods 可以为空，表示采用 [AnyMethods] 中的值。
 func (tree *Tree[T]) Add(pattern string, h T, ms []types.Middleware[T], methods ...string) error {
-	if err := tree.checkAmbiguous(pattern); err != nil {
-		return err
-	}
-
 	if tree.locker != nil {
 		tree.locker.Lock()
 		defer tree.locker.Unlock()
+	}
+
+	// checkAmbiguous 会遍历整棵树，必须置于锁内，否则会与其它 goroutine 的注册操作产生数据竞争。
+	if err := tree.checkAmbiguous(pattern); err != nil {
+		return err
 	}
 
 	n, err := tree.getNode(pattern)
@@ -212,15 +213,6 @@ func (tree *Tree[T]) getNode(pattern string) (*node[T], error) {
 	return tree.node.getNode(segments)
 }
 
-// 此方法主要用于将 locker 的使用范围减至最小。
-func (tree *Tree[T]) match(route *types.Route) (node *node[T], found bool) {
-	if tree.locker != nil {
-		tree.locker.RLock()
-		defer tree.locker.RUnlock()
-	}
-	return tree.node.matchChildren(route)
-}
-
 // Handler 查找与参数匹配的处理对象
 //
 // 如果未找到，也会返回相应在的处理对象，比如 tree.notFound 或是相应的 methodNotAllowed 方法。
@@ -231,11 +223,17 @@ func (tree *Tree[T]) Handler(route *types.Route, method string) (n types.Node, h
 		return tree.node, tree.trace, true
 	}
 
+	// 节点的匹配与 node.handlers 的读取必须在同一把读锁之内完成，否则注册阶段对 node.handlers 的修改，会与此处的读取产生数据竞争。
+	if tree.locker != nil {
+		tree.locker.RLock()
+		defer tree.locker.RUnlock()
+	}
+
 	var node *node[T]
 	if route.Path == "*" || route.Path == "" {
 		node = tree.node
 	} else {
-		if node, found = tree.match(route); !found || node.size() == 0 {
+		if node, found = tree.node.matchChildren(route); !found || node.size() == 0 {
 			return nil, tree.notFound, false
 		}
 	}
