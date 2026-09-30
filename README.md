@@ -276,7 +276,7 @@ r.Prefix("/admin").Get("/login", func(ctx *Context){
 ## 性能
 
 <https://caixw.github.io/go-http-routers-testing/> 提供了与其它几个框架的对比情况。
-或者在 routertest 下运行 `go test -bench=.` 执行一个简单的性能测试。
+或者在 examples 下的两个示例中运行 `go test -bench=.` 执行一个简单的性能测试。
 
 ## 版权
 

@@ -312,7 +312,7 @@ func (n *node[T]) checkAmbiguous(pattern string, hasNonString bool) (*node[T], b
 		return nil, false, nil
 	}
 
-	// 仅在有子节点匹配时，才需要㤢性求值 s0
+	// 仅在有子节点匹配时，才需要惰性求值 s0
 	var s0 *syntax.Segment
 
 	for _, c := range n.children {

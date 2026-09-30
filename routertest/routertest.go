@@ -16,18 +16,24 @@ import (
 	"github.com/issue9/mux/v10/types"
 )
 
-type Tester[T any] struct {
-	call                      mux.CallFunc[T]
-	notFound, trace           T
-	methodNotAllowed, options types.BuildNodeHandler[T]
+type TestRouter[T any] struct {
+	ServeHTTP http.HandlerFunc
+	Handle    func(pattern string, h T, methods ...string)
+	Clean     func()
+	Remove    func(pattern string, methods ...string)
+	URL       func(strict bool, pattern string, params map[string]string) (string, error)
 }
 
-func NewTester[T any](c mux.CallFunc[T], notFound, trace T, m, o types.BuildNodeHandler[T]) *Tester[T] {
+type Tester[T any] struct {
+	loader func(o ...mux.Option) *TestRouter[T]
+}
+
+// NewTester 声明一个用于测试的对象
+//
+// loader 路由的加载方法，用户需要在该函数中初始化自己的路由对象，并用此对象构建一个测试路由。
+func NewTester[T any](loader func(o ...mux.Option) *TestRouter[T]) *Tester[T] {
 	return &Tester[T]{
-		call:             c,
-		notFound:         notFound,
-		methodNotAllowed: m,
-		options:          o,
+		loader: loader,
 	}
 }
 
@@ -35,8 +41,7 @@ func NewTester[T any](c mux.CallFunc[T], notFound, trace T, m, o types.BuildNode
 //
 // f 返回一个路由处理函数，该函数必须要将获得的参数写入 route。
 func (t *Tester[T]) Params(a *assert.Assertion, f func(route *types.Route) T) {
-	router := mux.NewRouter("test", t.call, t.notFound, t.trace, t.methodNotAllowed, t.options, mux.WithDigitInterceptor("digit"))
-	a.NotNil(router)
+	router := t.loader(mux.WithAnyInterceptor("any"), mux.WithDigitInterceptor("digit"))
 
 	globalParams := types.NewRoute()
 
@@ -60,32 +65,32 @@ func (t *Tester[T]) Params(a *assert.Assertion, f func(route *types.Route) T) {
 	}
 
 	// 添加 patch /api/{version:\\d+}
-	router.Patch("/api/{version:\\d+}", f(globalParams))
+	router.Handle("/api/{version:\\d+}", f(globalParams), http.MethodPatch)
 	requestParams(http.MethodPatch, "/api/256", http.StatusOK, map[string]string{"version": "256"})
 	requestParams(http.MethodPatch, "/api/2", http.StatusOK, map[string]string{"version": "2"})
 	requestParams(http.MethodGet, "/api/256", http.StatusMethodNotAllowed, nil) // 不存在的请求方法
 
 	// 添加 patch /api/v2/{version:\\d*}
 	router.Clean()
-	router.Patch("/api/v2/{version:\\d*}", f(globalParams))
+	router.Handle("/api/v2/{version:\\d*}", f(globalParams), http.MethodPatch)
 	requestParams(http.MethodPatch, "/api/v2/2", http.StatusOK, map[string]string{"version": "2"})
 	requestParams(http.MethodPatch, "/api/v2/", http.StatusOK, map[string]string{"version": ""})
 
 	// 忽略名称捕获
 	router.Clean()
-	router.Patch("/api/v3/{-version:\\d*}", f(globalParams))
+	router.Handle("/api/v3/{-version:\\d*}", f(globalParams), http.MethodPatch)
 	requestParams(http.MethodPatch, "/api/v3/2", http.StatusOK, nil)
 	requestParams(http.MethodPatch, "/api/v3/", http.StatusOK, nil)
 
 	// 添加 patch /api/v2/{version:\\d*}/test
 	router.Clean()
-	router.Patch("/api/v2/{version:\\d*}/test", f(globalParams))
+	router.Handle("/api/v2/{version:\\d*}/test", f(globalParams), http.MethodPatch)
 	requestParams(http.MethodPatch, "/api/v2/2/test", http.StatusOK, map[string]string{"version": "2"})
 	requestParams(http.MethodPatch, "/api/v2//test", http.StatusOK, map[string]string{"version": ""})
 
 	// 中文作为值
 	router.Clean()
-	router.Patch("/api/v3/{版本:digit}", f(globalParams))
+	router.Handle("/api/v3/{版本:digit}", f(globalParams), http.MethodPatch)
 	requestParams(http.MethodPatch, "/api/v3/2", http.StatusOK, map[string]string{"版本": "2"})
 }
 
@@ -93,44 +98,36 @@ func (t *Tester[T]) Params(a *assert.Assertion, f func(route *types.Route) T) {
 //
 // h 返回路由处理函数，该函数只要输出 status 作为其状态码即可。
 func (t *Tester[T]) Serve(a *assert.Assertion, h func(status int) T) {
-	router := mux.NewRouter("test", t.call, t.notFound, t.trace, t.methodNotAllowed, t.options, mux.WithDigitInterceptor("digit"), mux.WithAnyInterceptor("any"))
+	router := t.loader(mux.WithAnyInterceptor("any"), mux.WithDigitInterceptor("digit"))
 	a.NotNil(router)
-	srv := rest.NewServer(a, router, nil)
+	srv := rest.NewServer(a, router.ServeHTTP, nil)
 
-	router.Handle("/posts/{path}.html", h(201), nil)
+	router.Handle("/posts/{path}.html", h(201))
 	srv.Get("/posts/2017/1.html").Do(nil).Status(201)
 	srv.Get("/Posts/2017/1.html").Do(nil).Status(404) // 大小写不一样
 
-	router.Handle("/posts/{path:.+}.html", h(202), nil)
+	router.Handle("/posts/{path:.+}.html", h(202))
 	srv.Get("/posts/2017/1.html").Do(nil).Status(202)
 
-	router.Handle("/posts/{id:digit}123", h(203), nil)
+	router.Handle("/posts/{id:digit}123", h(203))
 	srv.Get("/posts/123123").Do(nil).Status(203)
 
-	router.Get("///", h(201))
+	router.Handle("///", h(201), http.MethodGet)
 	srv.Get("///").Do(nil).Status(201)
 	srv.Get("//").Do(nil).Status(404)
 
 	// 对 any 拦截器和空参数的测试
 
-	router.Get("/posts1-{id}-{page}.html", h(201))
+	router.Handle("/posts1-{id}-{page}.html", h(201), http.MethodGet)
 	srv.Get("/posts1--.html").Do(nil).Status(201)
 	srv.Get("/posts1-1-0.html").Do(nil).Status(201)
 
-	router.Get("/posts2-{id:any}-{page:any}.html", h(201))
+	router.Handle("/posts2-{id:any}-{page:any}.html", h(201), http.MethodGet)
 	srv.Get("/posts2--.html").Do(nil).Status(404)
 	srv.Get("/posts2-1-0.html").Do(nil).Status(201)
 
-	router.Get("/posts3-{id}-{page:any}.html", h(201))
+	router.Handle("/posts3-{id}-{page:any}.html", h(201), http.MethodGet)
 	srv.Get("/posts3--.html").Do(nil).Status(404)
 	srv.Get("/posts3-1-0.html").Do(nil).Status(201)
 	srv.Get("/posts3--0.html").Do(nil).Status(201)
-
-	// 忽略大小写测试
-
-	router = mux.NewRouter("test", t.call, t.notFound, t.trace, t.methodNotAllowed, t.options)
-	srv = rest.NewServer(a, router, nil)
-
-	router.Handle("/posts/{path}.html", h(201), nil)
-	srv.Get("/posts/2017/1.html").Do(nil).Status(201)
 }

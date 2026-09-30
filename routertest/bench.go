@@ -24,30 +24,23 @@ import (
 //	    w.Write([]byte(r.URL.Path))
 //	}
 func (t *Tester[T]) Bench(b *testing.B, h T) {
-	allocs := t.calcMemStats(h)
+	allocs, r := t.load(h)
 	fmt.Printf("\n加载 %d 条路由总共占用 %d KB\n", len(apis), allocs/1024)
 
 	b.Run("URL", func(b *testing.B) {
-		t.benchURL(b, h)
-	})
-
-	b.Run("AddServe", func(b *testing.B) {
-		t.benchAddAndServeHTTP(b, h)
+		t.benchURL(b, r)
 	})
 
 	b.Run("Serve", func(b *testing.B) {
-		t.benchServeHTTP(b, h)
+		t.benchServeHTTP(b, r)
+	})
+
+	b.Run("AddServe", func(b *testing.B) {
+		t.benchAddAndServeHTTP(b, r, h)
 	})
 }
 
-func (t *Tester[T]) benchURL(b *testing.B, h T) {
-	const domain = "https://github.com"
-
-	router := mux.NewRouter("test", t.call, t.notFound, t.trace, t.methodNotAllowed, t.options, mux.WithLock(true), mux.WithPathPrefix(domain))
-	for _, api := range apis {
-		router.Handle(api.pattern, h, nil, api.method)
-	}
-
+func (t *Tester[T]) benchURL(b *testing.B, router *TestRouter[T]) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
@@ -58,15 +51,13 @@ func (t *Tester[T]) benchURL(b *testing.B, h T) {
 		if err != nil {
 			b.Error(err)
 		}
-		if url != domain+api.test {
+		if url != api.test {
 			b.Errorf("URL 出错，位于 %s", api.pattern)
 		}
 	}
 }
 
-func (t *Tester[T]) benchAddAndServeHTTP(b *testing.B, h T) {
-	router := mux.NewRouter("test", t.call, t.notFound, t.trace, t.methodNotAllowed, t.options, mux.WithLock(true))
-
+func (t *Tester[T]) benchAddAndServeHTTP(b *testing.B, router *TestRouter[T], h T) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
@@ -76,9 +67,9 @@ func (t *Tester[T]) benchAddAndServeHTTP(b *testing.B, h T) {
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest(api.method, api.test, nil)
 
-		router.Handle(api.pattern, h, nil, api.method)
-		router.ServeHTTP(w, r)
 		router.Remove(api.pattern, api.method)
+		router.Handle(api.pattern, h, api.method)
+		router.ServeHTTP(w, r)
 
 		if w.Body.String() != r.URL.Path {
 			b.Errorf("%s:%s", w.Body.String(), r.URL.Path)
@@ -86,12 +77,7 @@ func (t *Tester[T]) benchAddAndServeHTTP(b *testing.B, h T) {
 	}
 }
 
-func (t *Tester[T]) benchServeHTTP(b *testing.B, h T) {
-	router := mux.NewRouter("test", t.call, t.notFound, t.trace, t.methodNotAllowed, t.options)
-	for _, api := range apis {
-		router.Handle(api.pattern, h, nil, api.method)
-	}
-
+func (t *Tester[T]) benchServeHTTP(b *testing.B, router *TestRouter[T]) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
@@ -108,16 +94,10 @@ func (t *Tester[T]) benchServeHTTP(b *testing.B, h T) {
 	}
 }
 
-func (t *Tester[T]) calcMemStats(h T) uint64 {
-	return calcMemStats(func() {
-		r := mux.NewRouter("test", t.call, t.notFound, t.trace, t.methodNotAllowed, t.options, mux.WithLock(true))
-		for _, api := range apis {
-			r.Handle(api.pattern, h, nil, api.method)
-		}
-	})
-}
-
-func calcMemStats(load func()) uint64 {
+// 加载路由
+//
+// 返回分配内存大小和测试路由对象
+func (t *Tester[T]) load(h T) (uint64, *TestRouter[T]) {
 	sample := make([]metrics.Sample, 1)
 	sample[0].Name = "/gc/heap/allocs:bytes"
 
@@ -125,10 +105,13 @@ func calcMemStats(load func()) uint64 {
 	metrics.Read(sample)
 	before := sample[0].Value.Uint64()
 
-	load()
+	r := t.loader(mux.WithLock(true))
+	for _, api := range apis {
+		r.Handle(api.pattern, h, api.method)
+	}
 
 	metrics.Read(sample)
 	after := sample[0].Value.Uint64()
 
-	return after - before
+	return after - before, r
 }

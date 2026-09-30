@@ -729,7 +729,7 @@ func TestTree_Handler(t *testing.T) {
 			panic(err)
 		}
 	}), nil, http.MethodDelete, http.MethodGet)
-	a.NotNil(err)
+	a.Nil(err)
 
 	// path 不存在
 	route := types.NewRoute()

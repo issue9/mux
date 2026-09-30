@@ -12,6 +12,7 @@ import (
 	"github.com/issue9/assert/v5"
 	"github.com/issue9/assert/v5/rest"
 
+	"github.com/issue9/mux/v10"
 	"github.com/issue9/mux/v10/routertest"
 	"github.com/issue9/mux/v10/types"
 )
@@ -23,7 +24,16 @@ var (
 )
 
 func TestRouter(t *testing.T) {
-	tt := routertest.NewTester[http.Handler](call, http.NotFoundHandler(), http.HandlerFunc(trace), methodNotAllowedBuilder, optionsHandlerBuilder)
+	tt := routertest.NewTester(func(o ...mux.Option) *routertest.TestRouter[http.Handler] {
+		router := mux.NewRouter[http.Handler]("test", call, http.NotFoundHandler(), http.HandlerFunc(trace), methodNotAllowedBuilder, optionsHandlerBuilder, o...)
+		return &routertest.TestRouter[http.Handler]{
+			ServeHTTP: router.ServeHTTP,
+			Handle:    func(pattern string, h http.Handler, methods ...string) { router.Handle(pattern, h, nil, methods...) },
+			Clean:     router.Clean,
+			Remove:    router.Remove,
+			URL:       router.URL,
+		}
+	})
 
 	t.Run("params", func(t *testing.T) {
 		a := assert.New(t, false)
