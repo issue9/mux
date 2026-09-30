@@ -14,7 +14,12 @@ import (
 
 // 测试 [mux.Router] 的主要性能
 func BenchmarkRouter(b *testing.B) {
-	trace := func(w http.ResponseWriter, r *http.Request) { mux.Trace(w, r, true) }
+	trace := func(w http.ResponseWriter, r *http.Request) {
+		if err := mux.Trace(w, r, true); err != nil {
+			panic(err)
+		}
+	}
+
 	m := func(node types.Node) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusMethodNotAllowed) })
 	}
@@ -27,5 +32,9 @@ func BenchmarkRouter(b *testing.B) {
 
 	t := NewTester[http.Handler](call, http.NotFoundHandler(), http.HandlerFunc(trace), m, o)
 
-	t.Bench(b, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.Write([]byte(r.URL.Path)) }))
+	t.Bench(b, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if _, err := w.Write([]byte(r.URL.Path)); err != nil {
+			panic(err)
+		}
+	}))
 }

@@ -52,7 +52,11 @@ func BuildTestNodeHandlerFunc(status int) types.BuildNodeHandler[http.Handler] {
 func (tree *Tree[T]) Print(w io.Writer) { tree.node.print(w, 0) }
 
 func (n *node[T]) print(w io.Writer, deep int) {
-	fmt.Fprintln(w, strings.Repeat(" ", deep*4), n.segment.Value)
+	_, err := fmt.Fprintln(w, strings.Repeat(" ", deep*4), n.segment.Value)
+	if err != nil {
+		panic(err)
+	}
+
 	for _, child := range n.children {
 		child.print(w, deep+1)
 	}

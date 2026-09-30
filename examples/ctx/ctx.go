@@ -52,7 +52,11 @@ func methodNotAllowedBuilder(p types.Node) Handler {
 
 func notFound(ctx *CTX) { ctx.W.WriteHeader(http.StatusNotFound) }
 
-func trace(ctx *CTX) { mux.Trace(ctx.W, ctx.R, true) }
+func trace(ctx *CTX) {
+	if err := mux.Trace(ctx.W, ctx.R, true); err != nil {
+		panic(err)
+	}
+}
 
 func NewRouters(o ...mux.Option) *Routers {
 	return mux.NewGroup[Handler](call, HandlerFunc(notFound), HandlerFunc(trace), methodNotAllowedBuilder, optionsHandlerBuilder, o...)

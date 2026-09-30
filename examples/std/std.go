@@ -46,7 +46,9 @@ func optionsHandlerBuilder(p types.Node) http.Handler {
 }
 
 func trace(w http.ResponseWriter, r *http.Request) {
-	mux.Trace(w, r, true)
+	if err := mux.Trace(w, r, true); err != nil {
+		panic(err)
+	}
 }
 
 func NewRouters(o ...mux.Option) *Routers {

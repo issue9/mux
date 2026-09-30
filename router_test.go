@@ -32,7 +32,11 @@ var (
 
 func newRouter(a *assert.Assertion, name string, o ...Option) *Router[http.Handler] {
 	a.TB().Helper()
-	var trace http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { Trace(w, r, true) })
+	var trace http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := Trace(w, r, true); err != nil {
+			panic(err)
+		}
+	})
 	r := NewRouter(name, call, http.NotFoundHandler(), trace, methodNotAllowedBuilder, optionsHandlerBuilder, o...)
 	a.NotNil(r)
 	return r

@@ -38,7 +38,11 @@ func newTester(a *assert.Assertion, lock bool, trace http.Handler) *tester {
 	}
 }
 
-func testTrace(w http.ResponseWriter, r *http.Request) { trace.Trace(w, r, true) }
+func testTrace(w http.ResponseWriter, r *http.Request) {
+	if err := trace.Trace(w, r, true); err != nil {
+		panic(err)
+	}
+}
 
 // 添加一条路由项。code 表示该路由项返回的报头，
 // 测试路由项的 code 需要唯一，之后也是通过此值来判断其命中的路由项。
@@ -720,9 +724,12 @@ func TestTree_Handler(t *testing.T) {
 	a := assert.New(t, false)
 	tree := NewTestTree(a, false, nil, syntax.NewInterceptors())
 
-	tree.Add("/path1", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("/path1"))
+	err := tree.Add("/path1", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if _, err := w.Write([]byte("/path1")); err != nil {
+			panic(err)
+		}
 	}), nil, http.MethodDelete, http.MethodGet)
+	a.NotNil(err)
 
 	// path 不存在
 	route := types.NewRoute()

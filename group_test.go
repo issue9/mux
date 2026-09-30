@@ -20,7 +20,11 @@ var _ http.Handler = &Group[struct{}]{}
 
 func newGroup(a *assert.Assertion, o ...Option) *Group[http.Handler] {
 	a.TB().Helper()
-	var trace http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { Trace(w, r, true) })
+	var trace http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := Trace(w, r, true); err != nil {
+			panic(err)
+		}
+	})
 	g := NewGroup(call, http.NotFoundHandler(), trace, methodNotAllowedBuilder, optionsHandlerBuilder, o...)
 	a.NotNil(g)
 	return g
@@ -31,11 +35,19 @@ func TestGroup_Use(t *testing.T) {
 	g := newGroup(a)
 
 	h1 := g.New("h1", NewHosts(false, "h1.example.com"))
-	h1.Get("/posts/5.html", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("h1")) }))
+	h1.Get("/posts/5.html", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if _, err := w.Write([]byte("h1")); err != nil {
+			panic(err)
+		}
+	}))
 
 	g.Use(tree.BuildTestMiddleware(a, "m1"))
 	h2 := g.New("h2", NewHosts(false, "h2.example.com"))
-	h2.Get("/posts/5.html", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("h2")) }))
+	h2.Get("/posts/5.html", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if _, err := w.Write([]byte("h2")); err != nil {
+			panic(err)
+		}
+	}))
 
 	rest.NewRequest(a, http.MethodGet, "https://h1.example.com/posts/5.html").
 		Do(g).

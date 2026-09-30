@@ -27,7 +27,7 @@ func CheckSyntax(pattern string) error {
 // Trace 一种简单的处理 TRACE 请求的方法
 //
 // 可以传递给 [NewRouter] 或是 [NewGroup] 的 trace 参数。
-func Trace(w http.ResponseWriter, r *http.Request, body bool) { trace.Trace(w, r, body) }
+func Trace(w http.ResponseWriter, r *http.Request, body bool) error { return trace.Trace(w, r, body) }
 
 // URL 根据参数生成地址
 //
