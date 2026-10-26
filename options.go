@@ -56,6 +56,9 @@ func WithPathPrefix(prefix string) Option { return func(o *options) { o.pathPref
 // WithRecovery 用于指定路由 panic 之后的处理方法
 //
 // 如果多次指定，则最后一次启作用。
+//
+// NOTE: 即使不指定，[http.Server] 也会对 Handler 中的 panic 行为兜底，不会导致整个程序退出。
+// 所以指定 Recovery 更多的是自定义对结果的处理方式，而不是防止程序意外中止。
 func WithRecovery(f RecoverFunc) Option { return func(o *options) { o.recoverFunc = f } }
 
 // WithStatusRecovery 仅向客户端输出 status 状态码

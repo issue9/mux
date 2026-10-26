@@ -48,8 +48,7 @@ func (route *Route) SetRouterName(n string) { route.name = n }
 func (route *Route) RouterName() string { return route.name }
 
 func (route *Route) Destroy() {
-	const destroyMaxSize = 30
-	if route != nil && len(route.params) <= destroyMaxSize {
+	if route != nil && len(route.params) <= 32 {
 		routePool.Put(route)
 	}
 }

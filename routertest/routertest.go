@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	"github.com/issue9/assert/v5"
-	"github.com/issue9/assert/v5/rest"
+	"github.com/issue9/assert/v6"
+	"github.com/issue9/assert/v6/rest"
 
 	"github.com/issue9/mux/v10"
 	"github.com/issue9/mux/v10/types"
@@ -100,34 +100,34 @@ func (t *Tester[T]) Params(a *assert.Assertion, f func(route *types.Route) T) {
 func (t *Tester[T]) Serve(a *assert.Assertion, h func(status int) T) {
 	router := t.loader(mux.WithAnyInterceptor("any"), mux.WithDigitInterceptor("digit"))
 	a.NotNil(router)
-	srv := rest.NewServer(a, router.ServeHTTP, nil)
+	srv := rest.NewServer(a, router.ServeHTTP)
 
 	router.Handle("/posts/{path}.html", h(201))
-	srv.Get("/posts/2017/1.html").Do(nil).Status(201)
-	srv.Get("/Posts/2017/1.html").Do(nil).Status(404) // 大小写不一样
+	srv.Get("/posts/2017/1.html").Do().Status(201)
+	srv.Get("/Posts/2017/1.html").Do().Status(404) // 大小写不一样
 
 	router.Handle("/posts/{path:.+}.html", h(202))
-	srv.Get("/posts/2017/1.html").Do(nil).Status(202)
+	srv.Get("/posts/2017/1.html").Do().Status(202)
 
 	router.Handle("/posts/{id:digit}123", h(203))
-	srv.Get("/posts/123123").Do(nil).Status(203)
+	srv.Get("/posts/123123").Do().Status(203)
 
 	router.Handle("///", h(201), http.MethodGet)
-	srv.Get("///").Do(nil).Status(201)
-	srv.Get("//").Do(nil).Status(404)
+	srv.Get("///").Do().Status(201)
+	srv.Get("//").Do().Status(404)
 
 	// 对 any 拦截器和空参数的测试
 
 	router.Handle("/posts1-{id}-{page}.html", h(201), http.MethodGet)
-	srv.Get("/posts1--.html").Do(nil).Status(201)
-	srv.Get("/posts1-1-0.html").Do(nil).Status(201)
+	srv.Get("/posts1--.html").Do().Status(201)
+	srv.Get("/posts1-1-0.html").Do().Status(201)
 
 	router.Handle("/posts2-{id:any}-{page:any}.html", h(201), http.MethodGet)
-	srv.Get("/posts2--.html").Do(nil).Status(404)
-	srv.Get("/posts2-1-0.html").Do(nil).Status(201)
+	srv.Get("/posts2--.html").Do().Status(404)
+	srv.Get("/posts2-1-0.html").Do().Status(201)
 
 	router.Handle("/posts3-{id}-{page:any}.html", h(201), http.MethodGet)
-	srv.Get("/posts3--.html").Do(nil).Status(404)
-	srv.Get("/posts3-1-0.html").Do(nil).Status(201)
-	srv.Get("/posts3--0.html").Do(nil).Status(201)
+	srv.Get("/posts3--.html").Do().Status(404)
+	srv.Get("/posts3-1-0.html").Do().Status(201)
+	srv.Get("/posts3--0.html").Do().Status(201)
 }

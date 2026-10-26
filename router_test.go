@@ -11,8 +11,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/issue9/assert/v5"
-	"github.com/issue9/assert/v5/rest"
+	"github.com/issue9/assert/v6"
+	"github.com/issue9/assert/v6/rest"
 
 	"github.com/issue9/mux/v10/header"
 	"github.com/issue9/mux/v10/internal/tree"
@@ -53,13 +53,13 @@ func TestRouterByHTTPServer(t *testing.T) {
 		a.NotError(err)
 	}))
 
-	s := rest.NewServer(a, r, nil)
+	s := rest.NewServer(a, r)
 	println(s.URL())
 
-	s.Get("/").Do(nil).Status(201).StringBody("201")
-	s.NewRequest(http.MethodHead, "/").Do(nil).Status(201).BodyEmpty()
-	s.Get("/abc").Do(nil).Status(http.StatusNotFound)
-	s.NewRequest(http.MethodHead, "/200").Do(nil).Status(200).BodyEmpty() // 不调用 WriteHeader
+	s.Get("/").Do().Status(201).StringBody("201")
+	s.NewRequest(http.MethodHead, "/").Do().Status(201).BodyEmpty()
+	s.Get("/abc").Do().Status(http.StatusNotFound)
+	s.NewRequest(http.MethodHead, "/200").Do().Status(200).BodyEmpty() // 不调用 WriteHeader
 }
 
 func TestCaseInsensitive(t *testing.T) {
@@ -67,12 +67,12 @@ func TestCaseInsensitive(t *testing.T) {
 
 	r := newRouter(a, "def", WithCaseInsensitive(true))
 	r.Get("/abc", rest.BuildHandler(a, 201, "201", nil))
-	rest.Get(a, "/abc").Do(r).Status(201).StringBody("201")
-	rest.Get(a, "/ABC").Do(r).Status(201).StringBody("201")
+	rest.Get(a, "/abc").Handler(r).Do().Status(201).StringBody("201")
+	rest.Get(a, "/ABC").Handler(r).Do().Status(201).StringBody("201")
 
 	r = newRouter(a, "def", WithLock(true))
 	r.Get("/abc", rest.BuildHandler(a, 201, "201", nil))
-	rest.Get(a, "/ABC").Do(r).Status(404)
+	rest.Get(a, "/ABC").Handler(r).Do().Status(404)
 }
 
 func TestCleanPath(t *testing.T) {
@@ -80,12 +80,12 @@ func TestCleanPath(t *testing.T) {
 
 	r := newRouter(a, "def", WithCleanPath(true))
 	r.Get("/abc/def", rest.BuildHandler(a, 201, "201", nil))
-	rest.Get(a, "/abc//def").Do(r).Status(201).StringBody("201")
-	rest.Get(a, "/abc///def").Do(r).Status(201).StringBody("201")
+	rest.Get(a, "/abc//def").Handler(r).Do().Status(201).StringBody("201")
+	rest.Get(a, "/abc///def").Handler(r).Do().Status(201).StringBody("201")
 
 	r = newRouter(a, "def", WithLock(true))
 	r.Get("/abc/def", rest.BuildHandler(a, 201, "201", nil))
-	rest.Get(a, "/abc/def/").Do(r).Status(404)
+	rest.Get(a, "/abc/def/").Handler(r).Do().Status(404)
 }
 
 func TestRouter(t *testing.T) {
@@ -97,37 +97,37 @@ func TestRouter(t *testing.T) {
 		_, err := w.Write([]byte("200"))
 		a.NotError(err)
 	}))
-	rest.Get(a, "/").Do(r).Status(201).StringBody("201")
-	rest.NewRequest(a, http.MethodHead, "/").Do(r).Status(201).StringBody("201") // HEAD 会自动注册为与 GET 相同的路由项
-	rest.Get(a, "/abc").Do(r).Status(http.StatusNotFound)
-	rest.NewRequest(a, http.MethodHead, "/200").Do(r).Status(200).StringBody("200") // HEAD 会自动注册为与 GET 相同的路由项
-	rest.NewRequest(a, http.MethodOptions, "*").Do(r).Status(200).Header(header.Allow, "GET, OPTIONS")
+	rest.Get(a, "/").Handler(r).Do().Status(201).StringBody("201")
+	rest.NewRequest(a, http.MethodHead, "/").Handler(r).Do().Status(201).StringBody("201") // HEAD 会自动注册为与 GET 相同的路由项
+	rest.Get(a, "/abc").Handler(r).Do().Status(http.StatusNotFound)
+	rest.NewRequest(a, http.MethodHead, "/200").Handler(r).Do().Status(200).StringBody("200") // HEAD 会自动注册为与 GET 相同的路由项
+	rest.NewRequest(a, http.MethodOptions, "*").Handler(r).Do().Status(200).Header(header.Allow, "GET, OPTIONS")
 
 	r.Get("/h/1", rest.BuildHandler(a, 201, "", nil))
-	rest.Get(a, "/h/1").Do(r).Status(201)
+	rest.Get(a, "/h/1").Handler(r).Do().Status(201)
 
 	r.Post("/h/1", rest.BuildHandler(a, 202, "", nil))
-	rest.Post(a, "/h/1", nil).Do(r).Status(202)
-	rest.NewRequest(a, http.MethodOptions, "*").Do(r).Status(200).Header(header.Allow, "GET, OPTIONS, POST")
+	rest.Post(a, "/h/1", nil).Handler(r).Do().Status(202)
+	rest.NewRequest(a, http.MethodOptions, "*").Handler(r).Do().Status(200).Header(header.Allow, "GET, OPTIONS, POST")
 
 	r.Put("/h/1", rest.BuildHandler(a, 203, "", nil))
-	rest.Put(a, "/h/1", nil).Do(r).Status(203)
+	rest.Put(a, "/h/1", nil).Handler(r).Do().Status(203)
 
 	r.Patch("/h/1", rest.BuildHandler(a, 204, "", nil))
-	rest.Patch(a, "/h/1", nil).Do(r).Status(204)
+	rest.Patch(a, "/h/1", nil).Handler(r).Do().Status(204)
 
 	r.Delete("/h/1", rest.BuildHandler(a, 205, "", nil))
-	rest.Delete(a, "/h/1").Do(r).Status(205)
-	rest.NewRequest(a, http.MethodOptions, "*").Do(r).Status(200).Header(header.Allow, "DELETE, GET, OPTIONS, PATCH, POST, PUT")
+	rest.Delete(a, "/h/1").Handler(r).Do().Status(205)
+	rest.NewRequest(a, http.MethodOptions, "*").Handler(r).Do().Status(200).Header(header.Allow, "DELETE, GET, OPTIONS, PATCH, POST, PUT")
 
 	// Any
 	r.Any("/h/any", rest.BuildHandler(a, 206, "", nil))
-	rest.Delete(a, "/h/any").Do(r).Status(206)
-	rest.Get(a, "/h/any").Do(r).Status(206)
-	rest.Patch(a, "/h/any", nil).Do(r).Status(206)
-	rest.Put(a, "/h/any", nil).Do(r).Status(206)
-	rest.Post(a, "/h/any", nil).Do(r).Status(206)
-	rest.NewRequest(a, http.MethodConnect, "/h/any").Do(r).Status(206)
+	rest.Delete(a, "/h/any").Handler(r).Do().Status(206)
+	rest.Get(a, "/h/any").Handler(r).Do().Status(206)
+	rest.Patch(a, "/h/any", nil).Handler(r).Do().Status(206)
+	rest.Put(a, "/h/any", nil).Handler(r).Do().Status(206)
+	rest.Post(a, "/h/any", nil).Handler(r).Do().Status(206)
+	rest.NewRequest(a, http.MethodConnect, "/h/any").Handler(r).Do().Status(206)
 
 	// 不能主动添加 Head
 	a.PanicString(func() {
@@ -147,30 +147,30 @@ func TestRouter_Handle_Remove(t *testing.T) {
 	r.Handle("/api/1", rest.BuildHandler(a, 201, "", nil), nil, http.MethodPut)
 	r.Handle("/api/2", rest.BuildHandler(a, 202, "", nil), nil, http.MethodGet)
 
-	rest.Get(a, "/api/1").Do(r).Status(201)
-	rest.Put(a, "/api/1", nil).Do(r).Status(201)
-	rest.Get(a, "/api/2").Do(r).Status(202)
-	rest.Delete(a, "/api/1").Do(r).Status(http.StatusMethodNotAllowed) // 未实现
+	rest.Get(a, "/api/1").Handler(r).Do().Status(201)
+	rest.Put(a, "/api/1", nil).Handler(r).Do().Status(201)
+	rest.Get(a, "/api/2").Handler(r).Do().Status(202)
+	rest.Delete(a, "/api/1").Handler(r).Do().Status(http.StatusMethodNotAllowed) // 未实现
 
 	// 删除 GET /api/1
 	r.Remove("/api/1", http.MethodGet)
-	rest.Get(a, "/api/1").Do(r).Status(http.StatusMethodNotAllowed)
-	rest.Put(a, "/api/1", nil).Do(r).Status(201) // 不影响 PUT
-	rest.Get(a, "/api/2").Do(r).Status(202)
+	rest.Get(a, "/api/1").Handler(r).Do().Status(http.StatusMethodNotAllowed)
+	rest.Put(a, "/api/1", nil).Handler(r).Do().Status(201) // 不影响 PUT
+	rest.Get(a, "/api/2").Handler(r).Do().Status(202)
 
 	// 删除 GET /api/2，只有一个，所以相当于整个节点被删除
 	r.Remove("/api/2", http.MethodGet)
-	rest.Get(a, "/api/1").Do(r).Status(http.StatusMethodNotAllowed)
-	rest.Put(a, "/api/1", nil).Do(r).Status(201)            // 不影响 PUT
-	rest.Get(a, "/api/2").Do(r).Status(http.StatusNotFound) // 整个节点被删除
+	rest.Get(a, "/api/1").Handler(r).Do().Status(http.StatusMethodNotAllowed)
+	rest.Put(a, "/api/1", nil).Handler(r).Do().Status(201)            // 不影响 PUT
+	rest.Get(a, "/api/2").Handler(r).Do().Status(http.StatusNotFound) // 整个节点被删除
 
 	// 添加 POST /api/1
 	r.Handle("/api/1", rest.BuildHandler(a, 201, "", nil), nil, http.MethodPost)
-	rest.Post(a, "/api/1", nil).Do(r).Status(201)
+	rest.Post(a, "/api/1", nil).Handler(r).Do().Status(201)
 
 	// 删除 ANY /api/1
 	r.Remove("/api/1")
-	rest.Get(a, "/api/1").Do(r).Status(http.StatusNotFound) // 整个节点被删除
+	rest.Get(a, "/api/1").Handler(r).Do().Status(http.StatusNotFound) // 整个节点被删除
 }
 
 func TestRouter_Routes(t *testing.T) {
@@ -191,10 +191,10 @@ func TestRouter_Clean(t *testing.T) {
 	def.Get("/m1", rest.BuildHandler(a, 200, "", nil)).
 		Post("/m1", rest.BuildHandler(a, 201, "", nil))
 
-	rest.Get(a, "http://localhost:88/m1").Do(def).Status(200)
+	rest.Get(a, "http://localhost:88/m1").Handler(def).Do().Status(200)
 
 	def.Clean()
-	rest.Get(a, "/m1").Do(def).Status(404)
+	rest.Get(a, "/m1").Handler(def).Do().Status(404)
 }
 
 // 测试匹配顺序是否正确
@@ -209,12 +209,12 @@ func TestRouter_ServeHTTP_Order(t *testing.T) {
 	r.Get("/posts/{id:[0-9]+}", rest.BuildHandler(a, 199, "", nil)) //  两个正则，后添加的永远匹配不到
 	r.Get("/posts-{id:any}", rest.BuildHandler(a, 204, "", nil))
 	r.Get("/posts-", rest.BuildHandler(a, 205, "", nil))
-	rest.Get(a, "/posts/1").Do(r).Status(201)   // 普通路由项完全匹配
-	rest.Get(a, "/posts/2").Do(r).Status(202)   // 正则路由
-	rest.Get(a, "/posts/abc").Do(r).Status(203) // 命名路由
-	rest.Get(a, "/posts/").Do(r).Status(203)    // 命名路由
-	rest.Get(a, "/posts-5").Do(r).Status(204)   // 命名路由
-	rest.Get(a, "/posts-").Do(r).Status(205)    // 204 只匹配非空
+	rest.Get(a, "/posts/1").Handler(r).Do().Status(201)   // 普通路由项完全匹配
+	rest.Get(a, "/posts/2").Handler(r).Do().Status(202)   // 正则路由
+	rest.Get(a, "/posts/abc").Handler(r).Do().Status(203) // 命名路由
+	rest.Get(a, "/posts/").Handler(r).Do().Status(203)    // 命名路由
+	rest.Get(a, "/posts-5").Handler(r).Do().Status(204)   // 命名路由
+	rest.Get(a, "/posts-").Handler(r).Do().Status(205)    // 204 只匹配非空
 
 	// interceptor
 	r = newRouter(a, "def", WithDigitInterceptor("[0-9]+"))
@@ -223,33 +223,33 @@ func TestRouter_ServeHTTP_Order(t *testing.T) {
 	r.Get("/posts/{id:\\d+}", rest.BuildHandler(a, 202, "", nil))   // f2 永远匹配不到
 	r.Get("/posts/1", rest.BuildHandler(a, 201, "", nil))           // f1
 	r.Get("/posts/{id:[0-9]+}", rest.BuildHandler(a, 210, "", nil)) // f0 interceptor 权限比正则要高
-	rest.Get(a, "/posts/1").Do(r).Status(201)                       // f1 普通路由项完全匹配
-	rest.Get(a, "/posts/2").Do(r).Status(210)                       // f0 interceptor
-	rest.Get(a, "/posts/abc").Do(r).Status(203)                     // f3 命名路由
-	rest.Get(a, "/posts/").Do(r).Status(203)                        // f3
+	rest.Get(a, "/posts/1").Handler(r).Do().Status(201)             // f1 普通路由项完全匹配
+	rest.Get(a, "/posts/2").Handler(r).Do().Status(210)             // f0 interceptor
+	rest.Get(a, "/posts/abc").Handler(r).Do().Status(203)           // f3 命名路由
+	rest.Get(a, "/posts/").Handler(r).Do().Status(203)              // f3
 
 	r = newRouter(a, "def")
 	a.NotNil(r)
 	r.Get("/p1/{p1}/p2/{p2:\\d+}", rest.BuildHandler(a, 201, "", nil)) // f1
 	r.Get("/p1/{p1}/p2/{p2:\\w+}", rest.BuildHandler(a, 202, "", nil)) // f2
-	rest.Get(a, "/p1/1/p2/1").Do(r).Status(201)                        // f1
-	rest.Get(a, "/p1/2/p2/s").Do(r).Status(202)                        // f2
+	rest.Get(a, "/p1/1/p2/1").Handler(r).Do().Status(201)              // f1
+	rest.Get(a, "/p1/2/p2/s").Handler(r).Do().Status(202)              // f2
 
 	r = newRouter(a, "def")
 	a.NotNil(r)
 	r.Get("/posts/{id}/{page}", rest.BuildHandler(a, 202, "", nil)) // f2
 	r.Get("/posts/{id}/1", rest.BuildHandler(a, 201, "", nil))      // f1
-	rest.Get(a, "/posts/1/1").Do(r).Status(201)                     // f1 普通路由项完全匹配
-	rest.Get(a, "/posts/2/5").Do(r).Status(202)                     // f2 命名完全匹配
+	rest.Get(a, "/posts/1/1").Handler(r).Do().Status(201)           // f1 普通路由项完全匹配
+	rest.Get(a, "/posts/2/5").Handler(r).Do().Status(202)           // f2 命名完全匹配
 
 	r = newRouter(a, "def")
 	a.NotNil(r)
 	r.Get("/tags/{id}.html", rest.BuildHandler(a, 201, "", nil)) // f1
 	r.Get("/tags.html", rest.BuildHandler(a, 202, "", nil))      // f2
 	r.Get("/{path}", rest.BuildHandler(a, 203, "", nil))         // f3
-	rest.Get(a, "/tags").Do(r).Status(203)                       // f3 // 正好与 f1 的第一个节点匹配
-	rest.Get(a, "/tags/1.html").Do(r).Status(201)                // f1
-	rest.Get(a, "/tags.html").Do(r).Status(202)                  // f2
+	rest.Get(a, "/tags").Handler(r).Do().Status(203)             // f3 // 正好与 f1 的第一个节点匹配
+	rest.Get(a, "/tags/1.html").Handler(r).Do().Status(201)      // f1
+	rest.Get(a, "/tags.html").Handler(r).Do().Status(202)        // f2
 }
 
 func TestRouter_Middleware(t *testing.T) {
@@ -261,11 +261,11 @@ func TestRouter_Middleware(t *testing.T) {
 	def.Get("/get", rest.BuildHandler(a, 201, "", nil), tree.BuildTestMiddleware(a, "m0"))
 	def.Post("/get", rest.BuildHandler(a, 201, "", nil))
 
-	rest.Get(a, "/get").Do(def).Status(201).StringBody("m0m1m2m3m4")
-	rest.Post(a, "/get", nil).Do(def).Status(201).StringBody("m1m2m3m4")
+	rest.Get(a, "/get").Handler(def).Do().Status(201).StringBody("m0m1m2m3m4")
+	rest.Post(a, "/get", nil).Handler(def).Do().Status(201).StringBody("m1m2m3m4")
 
 	def.Use(tree.BuildTestMiddleware(a, "m5"), tree.BuildTestMiddleware(a, "m6"))
-	rest.Get(a, "/get").Do(def).Status(201).StringBody("m0m1m2m3m4m5m6")
+	rest.Get(a, "/get").Handler(def).Do().Status(201).StringBody("m0m1m2m3m4m5m6")
 }
 
 func TestResource(t *testing.T) {
@@ -276,38 +276,38 @@ func TestResource(t *testing.T) {
 	a.NotNil(h)
 
 	h.Get(rest.BuildHandler(a, 201, "", nil))
-	rest.Get(a, "/h/1").Do(r).Status(201)
+	rest.Get(a, "/h/1").Handler(r).Do().Status(201)
 
 	h.Post(rest.BuildHandler(a, 202, "", nil))
-	rest.Post(a, "/h/1", nil).Do(r).Status(202)
+	rest.Post(a, "/h/1", nil).Handler(r).Do().Status(202)
 
 	h.Put(rest.BuildHandler(a, 203, "", nil))
-	rest.Put(a, "/h/1", nil).Do(r).Status(203)
+	rest.Put(a, "/h/1", nil).Handler(r).Do().Status(203)
 
 	h.Patch(rest.BuildHandler(a, 204, "", nil))
-	rest.Patch(a, "/h/1", nil).Do(r).Status(204)
+	rest.Patch(a, "/h/1", nil).Handler(r).Do().Status(204)
 
 	h.Delete(rest.BuildHandler(a, 205, "", nil))
-	rest.Delete(a, "/h/1").Do(r).Status(205)
+	rest.Delete(a, "/h/1").Handler(r).Do().Status(205)
 
 	// Any
 	h = r.Resource("/h/any")
 	h.Any(rest.BuildHandler(a, 206, "", nil))
-	rest.Delete(a, "/h/any").Do(r).Status(206)
-	rest.Get(a, "/h/any").Do(r).Status(206)
-	rest.Post(a, "/h/any", nil).Do(r).Status(206)
-	rest.Put(a, "/h/any", nil).Do(r).Status(206)
-	rest.Patch(a, "/h/any", nil).Do(r).Status(206)
-	rest.NewRequest(a, http.MethodConnect, "/h/any").Do(r).Status(206)
+	rest.Delete(a, "/h/any").Handler(r).Do().Status(206)
+	rest.Get(a, "/h/any").Handler(r).Do().Status(206)
+	rest.Post(a, "/h/any", nil).Handler(r).Do().Status(206)
+	rest.Put(a, "/h/any", nil).Handler(r).Do().Status(206)
+	rest.Patch(a, "/h/any", nil).Handler(r).Do().Status(206)
+	rest.NewRequest(a, http.MethodConnect, "/h/any").Handler(r).Do().Status(206)
 
 	// remove
 	h.Remove(http.MethodGet, http.MethodPut)
-	rest.Get(a, "/h/any").Do(r).Status(405)
-	rest.Delete(a, "/h/any").Do(r).Status(206)
+	rest.Get(a, "/h/any").Handler(r).Do().Status(405)
+	rest.Delete(a, "/h/any").Handler(r).Do().Status(206)
 
 	r.Clean()
-	rest.Get(a, "/f/any").Do(r).Status(404)
-	rest.Delete(a, "/f/any").Do(r).Status(404)
+	rest.Get(a, "/f/any").Handler(r).Do().Status(404)
+	rest.Delete(a, "/f/any").Handler(r).Do().Status(404)
 }
 
 func TestRouter_Resource(t *testing.T) {
@@ -325,7 +325,7 @@ func TestRouter_Resource(t *testing.T) {
 	a.False(r1 == r2) // 不是同一个 *Resource
 
 	r2.Delete(rest.BuildHandler(a, 201, "-201-", nil), tree.BuildTestMiddleware(a, "d1"))
-	rest.Delete(a, "/abc/1").Do(def).Status(201).StringBody("-201-d1r1d1")
+	rest.Delete(a, "/abc/1").Handler(def).Do().Status(201).StringBody("-201-d1r1d1")
 }
 
 func TestPrefix_Resource(t *testing.T) {
@@ -343,12 +343,13 @@ func TestPrefix_Resource(t *testing.T) {
 	a.NotNil(r1)
 
 	r1.Delete(rest.BuildHandler(a, 201, "-201-", nil), tree.BuildTestMiddleware(a, "m1"))
-	rest.Delete(a, "/p1/abc/1").Do(def).Status(201).StringBody("-201-m1r1r2p1p2r")
-	rest.Delete(a, "/p1/abc/1").Do(def).Status(201).StringBody("-201-m1r1r2p1p2r")
-	rest.Post(a, "/p1/abc/1", nil).Do(def).Status(405).StringBody("m1r1r2p1p2r")             // 405 中间件正常使用
-	rest.Get(a, "/p1/abc/not-exist").Do(def).Status(404).StringBody("404 page not found\nr") // 404 只有通过 [Router.Use] 添加的中间件有效
+	rest.Delete(a, "/p1/abc/1").Handler(def).Do().Status(201).StringBody("-201-m1r1r2p1p2r")
+	rest.Delete(a, "/p1/abc/1").Handler(def).Do().Status(201).StringBody("-201-m1r1r2p1p2r")
+	rest.Post(a, "/p1/abc/1", nil).Handler(def).Do().Status(405).StringBody("m1r1r2p1p2r")             // 405 中间件正常使用
+	rest.Get(a, "/p1/abc/not-exist").Handler(def).Do().Status(404).StringBody("404 page not found\nr") // 404 只有通过 [Router.Use] 添加的中间件有效
 	rest.NewRequest(a, http.MethodTrace, "/p1/abc/not-exists").
-		Do(def).
+		Handler(def).
+		Do().
 		Status(http.StatusOK).BodyFunc(func(a *assert.Assertion, body []byte) {
 		a.Contains(string(body), "TRACE /p1/abc/not-exists").
 			Contains(string(body), "\nr") // TRACE 只有 [Router.Use] 的中间件有效
@@ -413,28 +414,28 @@ func TestPrefix(t *testing.T) {
 	p := r.Prefix("/p")
 
 	p.Get("/h/1", rest.BuildHandler(a, 201, "", nil))
-	rest.Get(a, "/p/h/1").Do(r).Status(201)
+	rest.Get(a, "/p/h/1").Handler(r).Do().Status(201)
 
 	p.Post("/h/1", rest.BuildHandler(a, 202, "", nil))
-	rest.Post(a, "/p/h/1", nil).Do(r).Status(202)
+	rest.Post(a, "/p/h/1", nil).Handler(r).Do().Status(202)
 
 	p.Put("/h/1", rest.BuildHandler(a, 203, "", nil))
-	rest.Put(a, "/p/h/1", nil).Do(r).Status(203)
+	rest.Put(a, "/p/h/1", nil).Handler(r).Do().Status(203)
 
 	p.Patch("/h/1", rest.BuildHandler(a, 204, "", nil))
-	rest.Patch(a, "/p/h/1", nil).Do(r).Status(204)
+	rest.Patch(a, "/p/h/1", nil).Handler(r).Do().Status(204)
 
 	p.Delete("/h/1", rest.BuildHandler(a, 205, "", nil))
-	rest.Delete(a, "/p/h/1").Do(r).Status(205)
+	rest.Delete(a, "/p/h/1").Handler(r).Do().Status(205)
 
 	// Any
 	p.Any("/h/any", rest.BuildHandler(a, 206, "", nil))
-	rest.Delete(a, "/p/h/any").Do(r).Status(206)
-	rest.Get(a, "/p/h/any").Do(r).Status(206)
-	rest.Patch(a, "/p/h/any", nil).Do(r).Status(206)
-	rest.Put(a, "/p/h/any", nil).Do(r).Status(206)
-	rest.Post(a, "/p/h/any", nil).Do(r).Status(206)
-	rest.NewRequest(a, http.MethodConnect, "/p/h/any").Do(r).Status(206)
+	rest.Delete(a, "/p/h/any").Handler(r).Do().Status(206)
+	rest.Get(a, "/p/h/any").Handler(r).Do().Status(206)
+	rest.Patch(a, "/p/h/any", nil).Handler(r).Do().Status(206)
+	rest.Put(a, "/p/h/any", nil).Handler(r).Do().Status(206)
+	rest.Post(a, "/p/h/any", nil).Handler(r).Do().Status(206)
+	rest.NewRequest(a, http.MethodConnect, "/p/h/any").Handler(r).Do().Status(206)
 
 	// remove
 	p.Remove("/h/any", http.MethodPut, http.MethodGet)
@@ -443,13 +444,13 @@ func TestPrefix(t *testing.T) {
 			s == http.MethodPut || s == http.MethodHead // 删除了 GET，HEAD 也会删除。
 	})
 	slices.Sort(methods)
-	rest.Get(a, "/p/h/any").Do(r).Status(405).Header(header.Allow, strings.Join(methods, ", ")) // 已经删除
-	rest.Delete(a, "/p/h/any").Do(r).Status(206)                                                // 未删除
+	rest.Get(a, "/p/h/any").Handler(r).Do().Status(405).Header(header.Allow, strings.Join(methods, ", ")) // 已经删除
+	rest.Delete(a, "/p/h/any").Handler(r).Do().Status(206)                                                // 未删除
 
 	// clean
 	p.Clean()
-	rest.Delete(a, "/p/h/any").Do(r).Status(404)
-	rest.NewRequest(a, http.MethodOptions, "/p/h/any").Do(r).Status(404)
+	rest.Delete(a, "/p/h/any").Handler(r).Do().Status(404)
+	rest.NewRequest(a, http.MethodOptions, "/p/h/any").Handler(r).Do().Status(404)
 }
 
 func TestPrefix_Prefix(t *testing.T) {
@@ -472,7 +473,7 @@ func TestPrefix_Prefix(t *testing.T) {
 
 		pp := p.Prefix("")
 		pp.Delete("", rest.BuildHandler(a, 201, "", nil))
-		rest.Delete(a, "/abc").Do(def).Status(201)
+		rest.Delete(a, "/abc").Handler(def).Do().Status(201)
 	})
 
 	//
@@ -488,11 +489,11 @@ func TestPrefix_Prefix(t *testing.T) {
 		pp := p.Prefix("", tree.BuildTestMiddleware(a, "p2"), tree.BuildTestMiddleware(a, "p3"))
 		pp.Delete("", rest.BuildHandler(a, 201, "-201-", nil))
 
-		rest.Delete(a, "/abc").Do(def).Status(201).StringBody("-201-p2p3p1r0")
+		rest.Delete(a, "/abc").Handler(def).Do().Status(201).StringBody("-201-p2p3p1r0")
 
 		// Trace
-		rest.NewRequest(a, http.MethodTrace, "/abc").Do(def).Status(http.StatusMethodNotAllowed)
-		rest.NewRequest(a, http.MethodTrace, "/abc/not-exists").Do(def).Status(http.StatusNotFound)
+		rest.NewRequest(a, http.MethodTrace, "/abc").Handler(def).Do().Status(http.StatusMethodNotAllowed)
+		rest.NewRequest(a, http.MethodTrace, "/abc/not-exists").Handler(def).Do().Status(http.StatusNotFound)
 	})
 }
 

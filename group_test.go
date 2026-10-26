@@ -10,8 +10,8 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/issue9/assert/v5"
-	"github.com/issue9/assert/v5/rest"
+	"github.com/issue9/assert/v6"
+	"github.com/issue9/assert/v6/rest"
 
 	"github.com/issue9/mux/v10/internal/tree"
 )
@@ -50,22 +50,26 @@ func TestGroup_Use(t *testing.T) {
 	}))
 
 	rest.NewRequest(a, http.MethodGet, "https://h1.example.com/posts/5.html").
-		Do(g).
+		Handler(g).
+		Do().
 		Status(http.StatusOK).
 		StringBody("h1m1")
 	rest.NewRequest(a, http.MethodGet, "https://h2.example.com/posts/5.html").
-		Do(g).
+		Handler(g).
+		Do().
 		Status(http.StatusOK).
 		StringBody("h2m1")
 
 	// h2 中的 notFound
 	rest.NewRequest(a, http.MethodGet, "https://h2.example.com/not-exists").
-		Do(g).
+		Handler(g).
+		Do().
 		Status(http.StatusNotFound).
 		StringBody("404 page not found\nm1")
 	// group.notFound
 	rest.NewRequest(a, http.MethodGet, "https://not-match.example.com/posts/5.html").
-		Do(g).
+		Handler(g).
+		Do().
 		Status(http.StatusNotFound).
 		StringBody("404 page not found\nm1")
 
@@ -74,22 +78,26 @@ func TestGroup_Use(t *testing.T) {
 	g.Use(tree.BuildTestMiddleware(a, "m2"))
 
 	rest.NewRequest(a, http.MethodGet, "https://h1.example.com/posts/5.html").
-		Do(g).
+		Handler(g).
+		Do().
 		Status(http.StatusOK).
 		StringBody("h1m1m2")
 	rest.NewRequest(a, http.MethodGet, "https://h2.example.com/posts/5.html").
-		Do(g).
+		Handler(g).
+		Do().
 		Status(http.StatusOK).
 		StringBody("h2m1m2")
 
 	// h2 中的 notFound
 	rest.NewRequest(a, http.MethodGet, "https://h2.example.com/not-exists").
-		Do(g).
+		Handler(g).
+		Do().
 		Status(http.StatusNotFound).
 		StringBody("404 page not found\nm1m2")
 	// group.notFound
 	rest.NewRequest(a, http.MethodGet, "https://not-match.example.com/posts/5.html").
-		Do(g).
+		Handler(g).
+		Do().
 		Status(http.StatusNotFound).
 		StringBody("404 page not found\nm1m2")
 }
@@ -139,7 +147,7 @@ func TestGroup_Remove(t *testing.T) {
 func TestGroup_empty(t *testing.T) {
 	a := assert.New(t, false)
 	g := newGroup(a)
-	rest.NewRequest(a, http.MethodGet, "/path").Do(g).Status(http.StatusNotFound)
+	rest.NewRequest(a, http.MethodGet, "/path").Handler(g).Do().Status(http.StatusNotFound)
 }
 
 func TestGroup_ServeHTTP(t *testing.T) {
@@ -156,7 +164,8 @@ func TestGroup_ServeHTTP(t *testing.T) {
 	}))
 
 	rest.NewRequest(a, http.MethodGet, "https://abc.example.com/posts/5.html").
-		Do(g).
+		Handler(g).
+		Do().
 		Status(http.StatusAccepted)
 }
 
@@ -171,13 +180,13 @@ func TestGroup_routers(t *testing.T) {
 	def.Get("/t1", rest.BuildHandler(a, 201, "", nil))
 
 	// g 限制了域名
-	rest.NewRequest(a, http.MethodGet, "/t1").Do(g).Status(404)
-	rest.NewRequest(a, http.MethodGet, "https://localhost/t1").Do(g).Status(201)
+	rest.NewRequest(a, http.MethodGet, "/t1").Handler(g).Do().Status(404)
+	rest.NewRequest(a, http.MethodGet, "https://localhost/t1").Handler(g).Do().Status(201)
 
 	// def 本身不限制域名
-	rest.NewRequest(a, http.MethodGet, "https://localhost/t1").Do(def).Status(201)
-	rest.NewRequest(a, http.MethodGet, "https://example.com/t1").Do(def).Status(201)
-	rest.NewRequest(a, http.MethodGet, "/t1").Do(def).Status(201)
+	rest.NewRequest(a, http.MethodGet, "https://localhost/t1").Handler(def).Do().Status(201)
+	rest.NewRequest(a, http.MethodGet, "https://example.com/t1").Handler(def).Do().Status(201)
+	rest.NewRequest(a, http.MethodGet, "/t1").Handler(def).Do().Status(201)
 
 	// resource
 
@@ -186,8 +195,8 @@ func TestGroup_routers(t *testing.T) {
 	g.Add(h, def)
 	res := def.Resource("/r1")
 	res.Get(rest.BuildHandler(a, 202, "", nil))
-	rest.NewRequest(a, http.MethodGet, "/r1").Do(g).Status(404)
-	rest.NewRequest(a, http.MethodGet, "https://localhost/r1").Do(g).Status(202)
+	rest.NewRequest(a, http.MethodGet, "/r1").Handler(g).Do().Status(404)
+	rest.NewRequest(a, http.MethodGet, "https://localhost/r1").Handler(g).Do().Status(202)
 
 	// prefix
 	g = newGroup(a)
@@ -195,8 +204,8 @@ func TestGroup_routers(t *testing.T) {
 	g.Add(h, def)
 	p := def.Prefix("/prefix1")
 	p.Get("/p1", rest.BuildHandler(a, 203, "", nil))
-	rest.NewRequest(a, http.MethodGet, "/prefix1/p1").Do(g).Status(404)
-	rest.NewRequest(a, http.MethodGet, "https://localhost:88/prefix1/p1").Do(g).Status(203)
+	rest.NewRequest(a, http.MethodGet, "/prefix1/p1").Handler(g).Do().Status(404)
+	rest.NewRequest(a, http.MethodGet, "https://localhost:88/prefix1/p1").Handler(g).Do().Status(203)
 
 	// prefix prefix
 	g = newGroup(a)
@@ -206,8 +215,8 @@ func TestGroup_routers(t *testing.T) {
 	p2 := p1.Prefix("/prefix2")
 	p2.Get("/p2", rest.BuildHandler(a, 204, "", nil))
 
-	rest.NewRequest(a, http.MethodGet, "/prefix1/prefix2/p2").Do(g).Status(404)
-	rest.NewRequest(a, http.MethodGet, "https://localhost/prefix1/prefix2/p2").Do(g).Status(204)
+	rest.NewRequest(a, http.MethodGet, "/prefix1/prefix2/p2").Handler(g).Do().Status(404)
+	rest.NewRequest(a, http.MethodGet, "https://localhost/prefix1/prefix2/p2").Handler(g).Do().Status(204)
 
 	// 第二个 Prefix 为域名
 	g = newGroup(a)
@@ -216,7 +225,7 @@ func TestGroup_routers(t *testing.T) {
 	p1 = def.Prefix("/prefix1")
 	p2 = p1.Prefix("example.com")
 	p2.Get("/p2", rest.BuildHandler(a, 205, "", nil))
-	rest.NewRequest(a, http.MethodGet, "/prefix1example.com/p2").Do(g).Status(205)
+	rest.NewRequest(a, http.MethodGet, "/prefix1example.com/p2").Handler(g).Do().Status(205)
 }
 
 func TestGroup_routers_multiple(t *testing.T) {
@@ -257,14 +266,14 @@ func TestGroup_routers_multiple(t *testing.T) {
 	})
 
 	// 指向 def
-	rest.NewRequest(a, http.MethodGet, "https://localhost/t1").Do(g).Status(201)
+	rest.NewRequest(a, http.MethodGet, "https://localhost/t1").Handler(g).Do().Status(201)
 
 	// 同时匹配 v1、v2，指向 v1
-	rest.NewRequest(a, http.MethodGet, "https://localhost/v1/path").Do(g).Status(202)
+	rest.NewRequest(a, http.MethodGet, "https://localhost/v1/path").Handler(g).Do().Status(202)
 
 	// 指向 v2
-	rest.NewRequest(a, http.MethodGet, "https://localhost/v2/path").Do(g).Status(203)
+	rest.NewRequest(a, http.MethodGet, "https://localhost/v2/path").Handler(g).Do().Status(203)
 
 	// 指向 v2
-	rest.NewRequest(a, http.MethodGet, "https://example.com/v2/path").Do(g).Status(203)
+	rest.NewRequest(a, http.MethodGet, "https://example.com/v2/path").Handler(g).Do().Status(203)
 }

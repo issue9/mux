@@ -10,10 +10,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
+	"testing/synctest"
 
-	"github.com/issue9/assert/v5"
-	"github.com/issue9/assert/v5/rest"
+	"github.com/issue9/assert/v6"
+	"github.com/issue9/assert/v6/rest"
 	"github.com/issue9/mux/v10/internal/cors"
 )
 
@@ -63,11 +63,14 @@ func TestRecovery(t *testing.T) {
 	a.NotPanic(func() {
 		w := httptest.NewRecorder()
 		r := rest.Get(a, "/path").Request()
-		router.ServeHTTP(w, r)
-		a.Wait(time.Microsecond*500).
-			Contains(out.String(), "panic test", out.String()).
-			Contains(out.String(), "options_test.go:43", out.String()).
-			Equal(w.Code, 404)
+		synctest.Test(t, func(t *testing.T) {
+			a := assert.New(t, false)
+			router.ServeHTTP(w, r)
+			synctest.Wait()
+			a.Contains(out.String(), "panic test", out.String()).
+				Contains(out.String(), "options_test.go:43", out.String()).
+				Equal(w.Code, 404)
+		})
 	})
 
 	// LogRecovery

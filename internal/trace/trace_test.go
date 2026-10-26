@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/issue9/assert/v5"
-	"github.com/issue9/assert/v5/rest"
+	"github.com/issue9/assert/v6"
+	"github.com/issue9/assert/v6/rest"
 
 	"github.com/issue9/mux/v10/header"
 )
