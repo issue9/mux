@@ -6,13 +6,16 @@ package routertest
 
 import (
 	"fmt"
-	"net/http"
 	"net/http/httptest"
 	"runtime"
 	"runtime/metrics"
 	"testing"
 
+	"github.com/issue9/assert/v6"
+	"github.com/issue9/assert/v6/rest"
+
 	"github.com/issue9/mux/v10"
+	"github.com/issue9/mux/v10/header"
 )
 
 // Bench 执行所有的性能测试
@@ -58,6 +61,7 @@ func (t *Tester[T]) benchURL(b *testing.B, router *TestRouter[T]) {
 }
 
 func (t *Tester[T]) benchAddAndServeHTTP(b *testing.B, router *TestRouter[T], h T) {
+	a := assert.New(b, false)
 	b.ReportAllocs()
 	b.ResetTimer()
 
@@ -65,7 +69,12 @@ func (t *Tester[T]) benchAddAndServeHTTP(b *testing.B, router *TestRouter[T], h 
 		api := apis[i%len(apis)]
 
 		w := httptest.NewRecorder()
-		r, _ := http.NewRequest(api.method, api.test, nil)
+		r := rest.NewRequest(a, api.method, api.test).
+			Header(header.Accept, "*/*").
+			Header(header.AcceptCharset, "*").
+			Header(header.AcceptEncoding, header.Identity).
+			Header(header.AcceptLanguage, "zh-CN").
+			Request()
 
 		router.Remove(api.pattern, api.method)
 		router.Handle(api.pattern, h, api.method)
@@ -78,6 +87,7 @@ func (t *Tester[T]) benchAddAndServeHTTP(b *testing.B, router *TestRouter[T], h 
 }
 
 func (t *Tester[T]) benchServeHTTP(b *testing.B, router *TestRouter[T]) {
+	a := assert.New(b, false)
 	b.ReportAllocs()
 	b.ResetTimer()
 
@@ -85,7 +95,13 @@ func (t *Tester[T]) benchServeHTTP(b *testing.B, router *TestRouter[T]) {
 		api := apis[i%len(apis)]
 
 		w := httptest.NewRecorder()
-		r, _ := http.NewRequest(api.method, api.test, nil)
+		r := rest.NewRequest(a, api.method, api.test).
+			Header(header.Accept, "*/*").
+			Header(header.AcceptCharset, "*").
+			Header(header.AcceptEncoding, header.Identity).
+			Header(header.AcceptLanguage, "zh-CN").
+			Request()
+
 		router.ServeHTTP(w, r)
 
 		if w.Body.String() != r.URL.Path {

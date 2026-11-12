@@ -13,6 +13,7 @@ import (
 	"github.com/issue9/assert/v6/rest"
 
 	"github.com/issue9/mux/v10"
+	"github.com/issue9/mux/v10/header"
 	"github.com/issue9/mux/v10/types"
 )
 
@@ -49,7 +50,12 @@ func (t *Tester[T]) Params(a *assert.Assertion, f func(route *types.Route) T) {
 		a.TB().Helper()
 
 		w := httptest.NewRecorder()
-		r := rest.NewRequest(a, method, url).Request()
+		r := rest.NewRequest(a, method, url).
+			Header(header.Accept, "*/*").
+			Header(header.AcceptCharset, "*").
+			Header(header.AcceptEncoding, header.Identity).
+			Header(header.AcceptLanguage, "zh-CN").
+			Request()
 
 		router.ServeHTTP(w, r)
 
