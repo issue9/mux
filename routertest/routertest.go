@@ -52,7 +52,6 @@ func (t *Tester[T]) Params(a *assert.Assertion, f func(route *types.Route) T) {
 		w := httptest.NewRecorder()
 		r := rest.NewRequest(a, method, url).
 			Header(header.Accept, "*/*").
-			Header(header.AcceptCharset, "*").
 			Header(header.AcceptEncoding, header.Identity).
 			Header(header.AcceptLanguage, "zh-CN").
 			Request()

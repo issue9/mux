@@ -71,7 +71,6 @@ func (t *Tester[T]) benchAddAndServeHTTP(b *testing.B, router *TestRouter[T], h 
 		w := httptest.NewRecorder()
 		r := rest.NewRequest(a, api.method, api.test).
 			Header(header.Accept, "*/*").
-			Header(header.AcceptCharset, "*").
 			Header(header.AcceptEncoding, header.Identity).
 			Header(header.AcceptLanguage, "zh-CN").
 			Request()
@@ -97,7 +96,6 @@ func (t *Tester[T]) benchServeHTTP(b *testing.B, router *TestRouter[T]) {
 		w := httptest.NewRecorder()
 		r := rest.NewRequest(a, api.method, api.test).
 			Header(header.Accept, "*/*").
-			Header(header.AcceptCharset, "*").
 			Header(header.AcceptEncoding, header.Identity).
 			Header(header.AcceptLanguage, "zh-CN").
 			Request()
