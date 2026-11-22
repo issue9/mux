@@ -20,6 +20,7 @@ func TestNewContext(t *testing.T) {
 	p.Path = "/abc"
 	a.Equal(p.Path, "/abc")
 	p.Destroy()
+	p.Destroy()
 
 	p = NewRoute()
 	p.Path = "/def"

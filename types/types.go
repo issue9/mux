@@ -9,7 +9,7 @@ import "errors"
 
 var errParamNotExists = errors.New("不存在该参数")
 
-// ErrParamNotExists 用于表示 [Params] 中参数不存在的错误
+// ErrParamNotExists 用于表示 [Route] 中参数不存在的错误
 func ErrParamNotExists() error { return errParamNotExists }
 
 // Node 路由节点

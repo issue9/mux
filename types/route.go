@@ -18,6 +18,7 @@ type Route struct {
 	params map[string]string
 	name   string
 	node   Node
+	isFree bool
 }
 
 func NewRoute() *Route {
@@ -28,6 +29,7 @@ func NewRoute() *Route {
 
 func (route *Route) Reset() {
 	route.Path = ""
+	route.isFree = false
 	clear(route.params)
 	route.name = ""
 	route.node = nil
@@ -48,7 +50,8 @@ func (route *Route) SetRouterName(n string) { route.name = n }
 func (route *Route) RouterName() string { return route.name }
 
 func (route *Route) Destroy() {
-	if route != nil && len(route.params) <= 32 {
+	if route != nil && len(route.params) <= 32 && !route.isFree {
+		route.isFree = true
 		routePool.Put(route)
 	}
 }

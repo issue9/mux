@@ -115,11 +115,11 @@ import "github.com/issue9/mux/v10"
 m := mux.NewGroup(...)
 
 def := mux.NewRouter("default")
-m.AddRouter(mux.NewPathVersion("version-key", "v1"), def)
+m.Add(mux.NewPathVersion("version-key", "v1"), def)
 def.Get("/path", h1)
 
 host := mux.NewRouter("host")
-m.AddRouter(mux.NewHosts("*.example.com"), host)
+m.Add(mux.NewHosts(true ,"*.example.com"), host)
 host.Get("/path", h2)
 
 http.ListenAndServe(":8080", m)
@@ -166,11 +166,11 @@ r := mux.NewRouter(..., interceptor)
 ```
 
 如果不拦截，最终传递给正则表达式，可能会出现编译错误，通过拦截器可以将 digit 合法化。
-目前提供了以下几个拦截器：
+目前提供了以下几个拦截器选项：
 
-- DigitInterceptor 限定为数字字符，相当于正则的 `[0-9]`；
-- WordInterceptor 相当于正则的 `[a-zA-Z0-9]`；
-- AnyInterceptor 表示匹配任意非空内容；
+- WithDigitInterceptor 限定为数字字符，相当于正则的 `[0-9]`；
+- WithWordInterceptor 相当于正则的 `[a-zA-Z0-9]`；
+- WithAnyInterceptor 表示匹配任意非空内容；
 
 用户也可以自行实现 `InterceptorFunc` 作为拦截器。具体可参考 `Interceptor` 的介绍。
 
@@ -216,7 +216,7 @@ r.Do() // 预检请求，可以正常访问
 type Context struct {
     *http.Request
     W http.ResponseWriter
-    P Params
+    P *types.Route
 }
 
 type HandlerFunc func(ctx *Context)
@@ -228,7 +228,7 @@ type MiddlewareFunc = MiddlewareFunc[HandlerFunc]
 type Middleware = Middleware[HandlerFunc]
 
 func New(name string)* Router {
-    call := func(w http.ResponseWriter, r *http.Request, rs types.Route, h HandlerFunc) {
+    call := func(w http.ResponseWriter, r *http.Request, rs *types.Route, h HandlerFunc) {
         ctx := &Context {
             R: r,
             W: w,
@@ -251,7 +251,10 @@ func New(name string)* Router {
     notFound func(ctx* Context) {
         ctx.W.WriteHeader(404)
     }
-    return NewRouter[HandlerFunc](name, call, notFound, m, opt)
+    trace func(ctx*Context) {
+        mux.Trace(ctx.W, ctx.R, true)
+    }
+    return NewRouter[HandlerFunc](name, call, notFound, trace, m, opt)
 }
 ```
 
